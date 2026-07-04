@@ -5,6 +5,7 @@
 ## Documentación
 
 - [Visión de Producto](docs/VISION.md) — el nombre, el problema, la oportunidad, el modelo de negocio y el roadmap.
+- [Plan del Proyecto](docs/PLAN.md) — estado actual, Fase 0 de fundación, roadmap del MVP y reglas estratégicas.
 
 ## Estado del proyecto
 
