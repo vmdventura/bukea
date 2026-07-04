@@ -20,6 +20,7 @@
 |---|---|
 | `bukea.do` | Posiblemente libre ✅ (prioridad #1 — registrar en nic.do) |
 | `bukea.com.do` | Posiblemente libre ✅ |
+| `bukeard.com` | **Disponible ✅ (confirmado 2026-07-04)** — "Bukea RD", excelente .com principal |
 | `bukea.io`, `getbukea.com`, `bukeaapp.com`, `bukea.net` | Posiblemente libres ✅ |
 | `bukea.com` | Resuelve — verificar si está parqueado/en venta |
 | `bukea.app` | Resuelve — tomado |
@@ -27,6 +28,7 @@
 ### Checklist de registro pendiente
 
 - [ ] Registrar `bukea.do` y `bukea.com.do` en [nic.do](https://www.nic.do)
+- [ ] Registrar `bukeard.com` como dominio .com principal (disponible, confirmado 2026-07-04)
 - [ ] Registrar `bukea.io` / `getbukea.com` como respaldo internacional
 - [ ] Reservar handles: `@bukea` / `@bukea.do` en Instagram, TikTok, X, Facebook
 - [ ] Búsqueda de marca en ONAPI (clases 35, 42 y 44) y solicitud de registro
