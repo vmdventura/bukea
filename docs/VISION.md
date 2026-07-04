@@ -32,7 +32,8 @@
 - [ ] Registrar `bukea.io` / `getbukea.com` como respaldo internacional
 - [ ] Reservar handles: `@bukea` / `@bukea.do` en Instagram, TikTok, X, Facebook
 - [ ] Búsqueda de marca en ONAPI (clases 35, 42 y 44) y solicitud de registro
-- [ ] Verificar disponibilidad del nombre en App Store y Google Play
+- [x] Verificar disponibilidad del nombre en App Store y Google Play — ✅ verificado 2026-07-04: sin coincidencias exactas en ninguna tienda (lo más cercano: Buke, BUKA, Bukia, Bykea — otras categorías/mercados)
+- [ ] Reservar "Bukea" en App Store Connect al crear la cuenta de Apple Developer (única reserva formal; en Google Play los nombres no se reservan — protege la marca vía ONAPI)
 
 ## 2. La oportunidad
 

@@ -18,7 +18,8 @@
 - [ ] Registrar respaldo internacional: `bukea.io` / `getbukea.com`
 - [ ] Reservar handles `@bukea` / `@bukea.do` en Instagram, TikTok, X y Facebook
 - [ ] Búsqueda de marca en ONAPI (clases 35, 42 y 44) y solicitud de registro
-- [ ] Verificar disponibilidad del nombre en App Store y Google Play
+- [x] Verificar disponibilidad del nombre en App Store y Google Play — ✅ verificado 2026-07-04: no existe ninguna app "Bukea" en ninguna de las dos tiendas
+- [ ] Reservar el nombre "Bukea" en App Store Connect al crear la cuenta de Apple Developer (US$99/año; la reserva expira en ~180 días sin publicar)
 - [ ] Validar con 10–15 barberos/manicuristas reales: ¿pagarían RD$500–1,500/mes por silla?
 
 **Criterio de salida:** dominios y marca asegurados, y al menos 10 profesionales que digan "yo pago eso". El código del MVP no arranca antes.
