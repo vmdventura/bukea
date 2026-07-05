@@ -143,6 +143,40 @@
   .pro-link b { color: var(--teal-700); }
   .pro-link .icon { color: var(--teal-600); }
 
+  /* ===== Splash (carga inicial con el logo) ===== */
+  .screen.splash {
+    background: linear-gradient(170deg, var(--teal-600), var(--teal-900));
+    color: #fff; text-align: center; justify-content: center; align-items: center;
+  }
+  .splash-logo {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
+    font-size: 6rem; color: #fff; line-height: 1; position: relative;
+    animation: splash-pop 600ms var(--ease);
+  }
+  .splash-logo::after {
+    content: ""; position: absolute; top: 0.9rem; right: -0.4rem;
+    width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--gold-600);
+  }
+  .splash-word {
+    font-family: "Fraunces", serif; font-weight: 600; font-size: 1.6rem;
+    color: #fff; margin-top: 0.6rem; letter-spacing: 0.01em;
+    animation: splash-pop 600ms 120ms var(--ease) both;
+  }
+  .splash-tag { font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-top: 0.4rem; animation: splash-pop 600ms 240ms var(--ease) both; }
+  @keyframes splash-pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .splash-logo, .splash-word, .splash-tag { animation: none; } }
+
+  /* Logo de marca arriba del inicio (bienvenida) */
+  .home-brand { text-align: center; margin: 0.4rem 0 1.1rem; }
+  .home-brand .mark {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
+    font-size: 2.6rem; color: var(--teal-600); line-height: 1; position: relative; display: inline-block;
+  }
+  .home-brand .mark::after {
+    content: ""; position: absolute; top: 0.35rem; right: -0.28rem;
+    width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--gold-600);
+  }
+
   /* ===== Bienvenida / login ===== */
   .screen.welcome {
     background: linear-gradient(170deg, var(--teal-600), var(--teal-900));
@@ -154,11 +188,11 @@
     width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 1.1rem;
     background: rgba(255,255,255,0.12); border: 2.5px solid var(--gold-600);
     display: flex; align-items: center; justify-content: center;
-    font-family: "Fraunces", serif; font-weight: 700; font-size: 2.6rem; color: #fff;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 2.8rem; color: #fff;
     position: relative;
   }
   .welcome-logo::after {
-    content: ""; position: absolute; top: 10px; right: 8px;
+    content: ""; position: absolute; top: 14px; right: 16px;
     width: 11px; height: 11px; border-radius: 50%; background: var(--gold-600);
   }
   .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
@@ -521,14 +555,21 @@
 
 <div class="phone">
 
-  <!-- ============ BIENVENIDA / LOGIN ============ -->
+  <!-- ============ SPLASH (carga con el logo) ============ -->
+  <div class="screen splash active" id="splash">
+    <div class="splash-logo">b</div>
+    <div class="splash-word">Bukea</div>
+    <div class="splash-tag">Bukear nunca fue tan fácil</div>
+  </div>
+
+  <!-- ============ BIENVENIDA / LOGIN (solo just-in-time) ============ -->
   <div class="screen welcome" id="welcome">
-    <div class="welcome-logo">B</div>
-    <h1>¡Te damos la bienvenida!</h1>
+    <div class="welcome-logo">b</div>
+    <h1 id="w-title">¡Te damos la bienvenida!</h1>
 
     <!-- Paso 1: teléfono -->
     <div id="w-step-phone">
-      <p class="w-sub">Ingresa tu número para continuar</p>
+      <p class="w-sub" id="w-lead">Ingresa tu número para continuar</p>
       <div class="phone-group">
         <span class="flag">🇩🇴</span><span class="prefix">+1</span>
         <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
@@ -541,7 +582,7 @@
       <button class="social-btn" disabled>Continuar con Apple <span class="soon">Próximamente</span></button>
       <button class="social-btn" disabled>Continuar con Facebook <span class="soon">Próximamente</span></button>
 
-      <button class="guest-link" onclick="continueAsGuest()">Continuar como invitado</button>
+      <button class="guest-link" id="w-guest" onclick="continueAsGuest()">Continuar como invitado</button>
     </div>
 
     <!-- Paso 2a: PIN (cuenta existente) -->
@@ -565,12 +606,14 @@
   </div>
 
   <!-- ============ INICIO ============ -->
-  <div class="screen active" id="inicio">
-    <h1 class="app-h1">¿Qué buscas hoy? 👋</h1>
+  <div class="screen" id="inicio">
+    <div class="home-brand"><span class="mark">b</span></div>
+    <h1 class="app-h1" id="home-greeting">¿Qué buscas hoy? 👋</h1>
     <p class="app-sub"><svg class="icon"><use href="#i-map-pin"/></svg> Villa Consuelo, Santo Domingo</p>
 
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
+    <p class="option-label" style="margin-bottom:0.6rem">Servicios disponibles</p>
     <div class="cats cats-hero">
       <div class="cat" onclick="openCategory('barberia','Barbería')"><svg class="icon"><use href="#i-scissors"/></svg><span class="txt">Barbería</span></div>
       <div class="cat" onclick="openCategory('unas','Uñas')"><svg class="icon"><use href="#i-sparkle"/></svg><span class="txt">Uñas</span></div>
@@ -925,7 +968,7 @@
     el.classList.add('active');
     const navKey = id.startsWith('pro-') ? 'pro' : id;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
-    document.querySelector('.navbar').style.display = (id === 'welcome') ? 'none' : 'flex';
+    document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
@@ -999,11 +1042,18 @@
 
   async function confirmBooking() {
     if (!state.professional || !state.serviceId) return;
+
+    // Registro just-in-time: solo aquí, cuando ya vas a reservar, se pide la cuenta.
+    if (!getSession()) {
+      requireAccount(confirmBooking, 'Crea tu cuenta o inicia sesión para confirmar tu cita');
+      return;
+    }
+
     const btn = document.getElementById('confirm-btn');
     const originalText = btn.innerHTML;
     btn.innerHTML = 'Confirmando…';
     btn.disabled = true;
-    const clientName = (getSession() && getSession().name) || 'Invitado';
+    const clientName = getSession().name;
     try {
       const res = await fetch('/bukea/api/bookings', {
         method: 'POST',
@@ -1281,8 +1331,23 @@
 
   function applySessionUI() {
     const s = getSession();
-    const h1 = document.querySelector('#inicio .app-h1');
-    h1.textContent = s ? '¿Qué buscas hoy, ' + firstName(s.name) + '? 👋' : '¿Qué buscas hoy? 👋';
+    const h1 = document.getElementById('home-greeting');
+    if (h1) h1.textContent = s ? '¿Qué buscas hoy, ' + firstName(s.name) + '? 👋' : '¿Qué buscas hoy? 👋';
+  }
+
+  // Login just-in-time: pide la cuenta solo cuando hace falta y luego continúa lo que ibas a hacer.
+  let pendingAfterLogin = null;
+  function requireAccount(onDone, leadText) {
+    if (getSession()) { onDone(); return; }
+    pendingAfterLogin = onDone || null;
+    welcomePhone = '';
+    document.getElementById('w-title').textContent = leadText ? 'Casi listo' : '¡Te damos la bienvenida!';
+    document.getElementById('w-lead').textContent = leadText || 'Ingresa tu número para continuar';
+    document.getElementById('w-phone').value = '';
+    // Si la cuenta es obligatoria para continuar (hay callback pendiente), no ofrecer "invitado".
+    document.getElementById('w-guest').style.display = pendingAfterLogin ? 'none' : 'block';
+    welcomeStep('phone');
+    go('welcome');
   }
 
   let welcomePhone = '';
@@ -1331,7 +1396,14 @@
     if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
     localStorage.removeItem('bukea_guest');
     applySessionUI();
-    go('inicio');
+    if (pendingAfterLogin) {
+      const cb = pendingAfterLogin;
+      pendingAfterLogin = null;
+      go('inicio');       // volver al flujo; el callback decide a dónde ir
+      cb();
+    } else {
+      go('inicio');
+    }
   }
 
   async function welcomeLogin() {
@@ -1377,20 +1449,26 @@
   }
 
   function continueAsGuest() {
-    localStorage.setItem('bukea_guest', '1');
-    applySessionUI();
+    pendingAfterLogin = null;
     go('inicio');
   }
 
-  function bootScreen() {
-    return (getSession() || localStorage.getItem('bukea_guest')) ? 'inicio' : 'welcome';
+  /* Arranque: splash con el logo → inicio (explora sin cuenta). El login se
+     pide just-in-time al reservar o al abrir "Mis citas" / "Mi negocio". */
+  const SPLASH_MS = 1400;
+  function boot() {
+    applySessionUI();
+    go('splash');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => {
+      if (document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'splash') {
+        go('inicio');
+      }
+    }, reduce ? 300 : SPLASH_MS);
   }
-
-  /* Arranque: sesión → inicio; sin sesión → bienvenida. También al restaurar desde bfcache. */
-  applySessionUI();
-  go(bootScreen());
+  boot();
   window.addEventListener('pageshow', (e) => {
-    if (e.persisted) go(bootScreen());
+    if (e.persisted) go('inicio');
   });
 </script>
 
