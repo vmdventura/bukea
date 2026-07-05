@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 
 const { ensureReady } = require('./db/init');
+const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
 
@@ -14,6 +15,7 @@ app.use(express.json());
 // bajo ese mismo prefijo en vez de en la raíz.
 const BASE = process.env.BASE_PATH || '/bukea';
 
+app.use(BASE + '/api/auth', authRouter);
 app.use(BASE + '/api/professionals', professionalsRouter);
 app.use(BASE + '/api/bookings', bookingsRouter);
 

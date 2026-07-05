@@ -143,6 +143,75 @@
   .pro-link b { color: var(--teal-700); }
   .pro-link .icon { color: var(--teal-600); }
 
+  /* ===== Bienvenida / login ===== */
+  .screen.welcome {
+    background: linear-gradient(170deg, var(--teal-600), var(--teal-900));
+    color: #fff; text-align: center;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    justify-content: center;
+  }
+  .welcome-logo {
+    width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 1.1rem;
+    background: rgba(255,255,255,0.12); border: 2.5px solid var(--gold-600);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fraunces", serif; font-weight: 700; font-size: 2.6rem; color: #fff;
+    position: relative;
+  }
+  .welcome-logo::after {
+    content: ""; position: absolute; top: 10px; right: 8px;
+    width: 11px; height: 11px; border-radius: 50%; background: var(--gold-600);
+  }
+  .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
+  .welcome .w-sub { font-size: 0.9rem; opacity: 0.85; margin: 0 0 1.6rem; }
+  .phone-group {
+    display: flex; align-items: center; gap: 0.55rem;
+    background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 15px; padding: 0.85rem 1rem; margin-bottom: 0.8rem;
+  }
+  .phone-group .flag { font-size: 1.1rem; flex: none; }
+  .phone-group .prefix { font-weight: 700; font-size: 0.95rem; flex: none; }
+  .phone-group input {
+    background: none; border: none; outline: none; flex: 1; min-width: 0;
+    font-family: inherit; font-size: 1rem; color: #fff; letter-spacing: 0.03em;
+  }
+  .phone-group input::placeholder { color: rgba(255,255,255,0.55); }
+  .welcome-field {
+    width: 100%; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 15px; padding: 0.85rem 1rem; margin-bottom: 0.8rem;
+    font-family: inherit; font-size: 1rem; color: #fff; outline: none;
+  }
+  .welcome-field::placeholder { color: rgba(255,255,255,0.55); }
+  .welcome .cta {
+    background: #fff; color: var(--teal-700); box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    margin-top: 0.4rem;
+  }
+  .welcome .cta:hover { background: var(--teal-50); }
+  .w-divider {
+    display: flex; align-items: center; gap: 0.8rem; margin: 1.5rem 0 1rem;
+    font-size: 0.76rem; opacity: 0.7;
+  }
+  .w-divider::before, .w-divider::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.3); }
+  .social-btn {
+    width: 100%; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 15px; padding: 0.8rem; margin-bottom: 0.6rem; cursor: not-allowed;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.65);
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  }
+  .social-btn .soon {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    background: rgba(255,255,255,0.15); border-radius: 999px; padding: 0.15rem 0.5rem;
+  }
+  .guest-link {
+    background: none; border: none; color: rgba(255,255,255,0.8); font-family: inherit;
+    font-size: 0.85rem; font-weight: 600; text-decoration: underline; cursor: pointer;
+    margin-top: 1.1rem;
+  }
+  .w-error { color: #ffd7d4; font-size: 0.82rem; margin: 0 0 0.7rem; display: none; }
+  .w-back {
+    background: none; border: none; color: rgba(255,255,255,0.8); font-family: inherit;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; margin-top: 0.9rem; text-decoration: underline;
+  }
+
   /* Formularios B2B */
   .field { margin-bottom: 0.9rem; }
   .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
@@ -451,6 +520,49 @@
 </svg>
 
 <div class="phone">
+
+  <!-- ============ BIENVENIDA / LOGIN ============ -->
+  <div class="screen welcome" id="welcome">
+    <div class="welcome-logo">B</div>
+    <h1>¡Te damos la bienvenida!</h1>
+
+    <!-- Paso 1: teléfono -->
+    <div id="w-step-phone">
+      <p class="w-sub">Ingresa tu número para continuar</p>
+      <div class="phone-group">
+        <span class="flag">🇩🇴</span><span class="prefix">+1</span>
+        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
+      </div>
+      <p class="w-error" id="w-error-phone"></p>
+      <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
+
+      <div class="w-divider">o usa tus redes</div>
+      <button class="social-btn" disabled>Continuar con Google <span class="soon">Próximamente</span></button>
+      <button class="social-btn" disabled>Continuar con Apple <span class="soon">Próximamente</span></button>
+      <button class="social-btn" disabled>Continuar con Facebook <span class="soon">Próximamente</span></button>
+
+      <button class="guest-link" onclick="continueAsGuest()">Continuar como invitado</button>
+    </div>
+
+    <!-- Paso 2a: PIN (cuenta existente) -->
+    <div id="w-step-pin" style="display:none">
+      <p class="w-sub" id="w-pin-greeting">Hola de nuevo 👋 — ingresa tu PIN</p>
+      <input class="welcome-field" id="w-pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
+      <p class="w-error" id="w-error-pin"></p>
+      <button class="cta" id="w-login" onclick="welcomeLogin()">Iniciar sesión</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2b: crear cuenta (número nuevo) -->
+    <div id="w-step-new" style="display:none">
+      <p class="w-sub">Ese número es nuevo — crea tu cuenta en segundos</p>
+      <input class="welcome-field" id="w-name" type="text" autocomplete="name" placeholder="Tu nombre">
+      <input class="welcome-field" id="w-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
+      <p class="w-error" id="w-error-new"></p>
+      <button class="cta" id="w-register" onclick="welcomeRegister()">Crear mi cuenta</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+  </div>
 
   <!-- ============ INICIO ============ -->
   <div class="screen active" id="inicio">
@@ -813,6 +925,7 @@
     el.classList.add('active');
     const navKey = id.startsWith('pro-') ? 'pro' : id;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
+    document.querySelector('.navbar').style.display = (id === 'welcome') ? 'none' : 'flex';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
@@ -890,6 +1003,7 @@
     const originalText = btn.innerHTML;
     btn.innerHTML = 'Confirmando…';
     btn.disabled = true;
+    const clientName = (getSession() && getSession().name) || 'Invitado';
     try {
       const res = await fetch('/bukea/api/bookings', {
         method: 'POST',
@@ -897,7 +1011,7 @@
         body: JSON.stringify({
           professionalId: state.professional.id,
           serviceId: state.serviceId,
-          clientName: 'Víctor',
+          clientName: clientName,
           dayLabel: state.day,
           timeLabel: state.time,
           paymentMethod: state.paymentMethod,
@@ -913,7 +1027,7 @@
       document.getElementById('ticket-pay').textContent = state.paymentLabel;
       document.getElementById('ticket-price').textContent = formatPrice(booking.priceCents);
       document.getElementById('wa-message').textContent =
-        '¡Confirmao, Víctor! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
+        '¡Confirmao, ' + firstName(clientName) + '! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
 
       saveClientBooking({
         professionalName: booking.professionalName,
@@ -1156,9 +1270,127 @@
     });
   }
 
-  /* Siempre arrancar en el inicio, incluso cuando Safari restaura la sesión (bfcache) */
+  /* ===== Sesión del cliente (teléfono + PIN) ===== */
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
+  }
+
+  function firstName(name) {
+    return (name || '').trim().split(/\s+/)[0] || '';
+  }
+
+  function applySessionUI() {
+    const s = getSession();
+    const h1 = document.querySelector('#inicio .app-h1');
+    h1.textContent = s ? '¿Qué buscas hoy, ' + firstName(s.name) + '? 👋' : '¿Qué buscas hoy? 👋';
+  }
+
+  let welcomePhone = '';
+
+  function welcomeStep(step) {
+    document.getElementById('w-step-phone').style.display = step === 'phone' ? 'block' : 'none';
+    document.getElementById('w-step-pin').style.display = step === 'pin' ? 'block' : 'none';
+    document.getElementById('w-step-new').style.display = step === 'new' ? 'block' : 'none';
+  }
+
+  function wError(id, msg) {
+    const el = document.getElementById(id);
+    if (!msg) { el.style.display = 'none'; return; }
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function welcomeContinue() {
+    wError('w-error-phone');
+    welcomePhone = document.getElementById('w-phone').value;
+    const btn = document.getElementById('w-continue');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/bukea/api/auth/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-phone', data.error || 'Intenta de nuevo');
+      if (data.exists) {
+        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋 — ingresa tu PIN';
+        welcomeStep('pin');
+        document.getElementById('w-pin').focus();
+      } else {
+        welcomeStep('new');
+        document.getElementById('w-name').focus();
+      }
+    } catch (err) {
+      wError('w-error-phone', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function enterApp(session) {
+    if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
+    localStorage.removeItem('bukea_guest');
+    applySessionUI();
+    go('inicio');
+  }
+
+  async function welcomeLogin() {
+    wError('w-error-pin');
+    const btn = document.getElementById('w-login');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/bukea/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone, pin: document.getElementById('w-pin').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-pin', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-pin', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function welcomeRegister() {
+    wError('w-error-new');
+    const btn = document.getElementById('w-register');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/bukea/api/auth/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: welcomePhone,
+          name: document.getElementById('w-name').value,
+          pin: document.getElementById('w-newpin').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-new', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function continueAsGuest() {
+    localStorage.setItem('bukea_guest', '1');
+    applySessionUI();
+    go('inicio');
+  }
+
+  function bootScreen() {
+    return (getSession() || localStorage.getItem('bukea_guest')) ? 'inicio' : 'welcome';
+  }
+
+  /* Arranque: sesión → inicio; sin sesión → bienvenida. También al restaurar desde bfcache. */
+  applySessionUI();
+  go(bootScreen());
   window.addEventListener('pageshow', (e) => {
-    if (e.persisted) go('inicio');
+    if (e.persisted) go(bootScreen());
   });
 </script>
 
