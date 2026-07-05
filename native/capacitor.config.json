@@ -7,7 +7,7 @@
     "cleartext": false
   },
   "ios": {
-    "backgroundColor": "#0f8583",
+    "backgroundColor": "#0f6f6b",
     "contentInset": "always"
   }
 }

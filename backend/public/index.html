@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bukea — Bukea tu cita</title>
 <meta name="description" content="Bukea tu cita de barbería, uñas, salón, maquillaje y cejas en República Dominicana. Paga en efectivo o transferencia, con recordatorio por WhatsApp.">
-<meta name="theme-color" content="#0f8583">
+<meta name="theme-color" content="#0f6f6b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Bukea">
@@ -143,57 +143,45 @@
   .pro-link b { color: var(--teal-700); }
   .pro-link .icon { color: var(--teal-600); }
 
-  /* ===== Splash (carga inicial con el logo) ===== */
+  /* Colores oficiales de marca (logo) */
+  .phone, body { --brand-teal: #0f6f6b; --brand-cream: #f1e4d2; }
+
+  /* ===== Splash (carga inicial con el logo oficial) ===== */
   .screen.splash {
-    background: linear-gradient(170deg, var(--teal-600), var(--teal-900));
-    color: #fff; text-align: center; justify-content: center; align-items: center;
+    background: var(--brand-teal);
+    color: var(--brand-cream); text-align: center; justify-content: center; align-items: center;
   }
   .splash-logo {
     font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
-    font-size: 6rem; color: #fff; line-height: 1; position: relative;
+    font-size: 6rem; color: var(--brand-cream); line-height: 1;
     animation: splash-pop 600ms var(--ease);
   }
-  .splash-logo::after {
-    content: ""; position: absolute; top: 0.9rem; right: -0.4rem;
-    width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--gold-600);
-  }
   .splash-word {
-    font-family: "Fraunces", serif; font-weight: 600; font-size: 1.6rem;
-    color: #fff; margin-top: 0.6rem; letter-spacing: 0.01em;
+    font-family: "Fraunces", serif; font-weight: 700; font-size: 1.7rem;
+    color: var(--brand-cream); margin-top: 0.5rem; letter-spacing: 0.01em;
     animation: splash-pop 600ms 120ms var(--ease) both;
   }
-  .splash-tag { font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-top: 0.4rem; animation: splash-pop 600ms 240ms var(--ease) both; }
   @keyframes splash-pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .splash-logo, .splash-word, .splash-tag { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .splash-logo, .splash-word { animation: none; } }
 
-  /* Logo de marca arriba del inicio (bienvenida) */
+  /* Logo de marca arriba del inicio (lockup teal sobre fondo claro) */
   .home-brand { text-align: center; margin: 0.4rem 0 1.1rem; }
   .home-brand .mark {
     font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
-    font-size: 2.6rem; color: var(--teal-600); line-height: 1; position: relative; display: inline-block;
-  }
-  .home-brand .mark::after {
-    content: ""; position: absolute; top: 0.35rem; right: -0.28rem;
-    width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--gold-600);
+    font-size: 2.6rem; color: var(--brand-teal); line-height: 1; display: inline-block;
   }
 
   /* ===== Bienvenida / login ===== */
   .screen.welcome {
-    background: linear-gradient(170deg, var(--teal-600), var(--teal-900));
-    color: #fff; text-align: center;
+    background: var(--brand-teal);
+    color: var(--brand-cream); text-align: center;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
     justify-content: center;
   }
   .welcome-logo {
-    width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 1.1rem;
-    background: rgba(255,255,255,0.12); border: 2.5px solid var(--gold-600);
-    display: flex; align-items: center; justify-content: center;
-    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 2.8rem; color: #fff;
-    position: relative;
-  }
-  .welcome-logo::after {
-    content: ""; position: absolute; top: 14px; right: 16px;
-    width: 11px; height: 11px; border-radius: 50%; background: var(--gold-600);
+    margin: 0 auto 0.9rem;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 3.6rem;
+    color: var(--brand-cream); line-height: 1;
   }
   .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
   .welcome .w-sub { font-size: 0.9rem; opacity: 0.85; margin: 0 0 1.6rem; }
@@ -555,11 +543,10 @@
 
 <div class="phone">
 
-  <!-- ============ SPLASH (carga con el logo) ============ -->
+  <!-- ============ SPLASH (carga con el logo oficial) ============ -->
   <div class="screen splash active" id="splash">
     <div class="splash-logo">b</div>
     <div class="splash-word">Bukea</div>
-    <div class="splash-tag">Bukear nunca fue tan fácil</div>
   </div>
 
   <!-- ============ BIENVENIDA / LOGIN (solo just-in-time) ============ -->
