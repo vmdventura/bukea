@@ -1,0 +1,10 @@
+# Dependencias
+node_modules/
+
+# iOS — CocoaPods y artefactos de compilación (se regeneran con `pod install` / build)
+ios/App/Pods/
+ios/App/build/
+ios/App/App/public/
+DerivedData/
+*.xcuserstate
+xcuserdata/

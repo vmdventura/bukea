@@ -1,0 +1,13 @@
+{
+  "appId": "com.bukea.app",
+  "appName": "Bukea",
+  "webDir": "www",
+  "server": {
+    "url": "https://vmdventura.com/bukea/",
+    "cleartext": false
+  },
+  "ios": {
+    "backgroundColor": "#0f8583",
+    "contentInset": "always"
+  }
+}

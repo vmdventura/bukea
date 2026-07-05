@@ -18,6 +18,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 | `prototype/demo-v2.html` | Demo premium v2: misma navegación, pulido de tipografía (Fraunces + Plus Jakarta Sans), iconografía SVG real, color OKLCH y micro-interacciones — ver `DESIGN.md` |
 | `PRODUCT.md` / `DESIGN.md` | Contexto de producto y sistema de diseño para trabajo con la skill `impeccable` |
 | `backend/` | MVP backend real (Node/Express + MySQL) — slice mínimo: perfil de un profesional de prueba + reserva persistida en base de datos, sin login. Desplegado en producción de prueba, ver abajo |
+| `native/` | Envoltorio nativo iOS con **Capacitor**: la app carga `vmdventura.com/bukea` en vivo en un WKWebView, se instala en el simulador/dispositivo como app real (`com.bukea.app`) y es el proyecto base para el App Store. Ver `native/README.md` para compilar. Pods y artefactos de build están gitignored. |
 
 ## Decisiones ya tomadas (no re-litigar)
 
