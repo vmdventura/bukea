@@ -672,7 +672,14 @@
     </div>
     <p class="wa-label">Así te llegará el recordatorio por WhatsApp</p>
 
-    <button class="cta" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg>Volver al inicio</button>
+    <button class="cta" style="position:static" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg>Volver al inicio</button>
+  </div>
+
+  <!-- ============ MIS CITAS ============ -->
+  <div class="screen" id="miscitas">
+    <h1 class="app-h1">Mis citas</h1>
+    <p class="app-sub">Tus reservas en Bukea</p>
+    <div id="miscitas-list"></div>
   </div>
 
   <!-- ============ FILA VIRTUAL ============ -->
@@ -705,7 +712,7 @@
   <div class="navbar">
     <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
     <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-dot"></span><span class="n-txt">Fila</span></button>
-    <button class="nav-btn" data-s="confirmacion" onclick="go('confirmacion')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
     <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Mi negocio</span></button>
   </div>
 </div>
@@ -808,6 +815,7 @@
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
+    if (id === 'miscitas') renderMisCitas();
   }
 
   function pick(btn) {
@@ -906,6 +914,16 @@
       document.getElementById('ticket-price').textContent = formatPrice(booking.priceCents);
       document.getElementById('wa-message').textContent =
         '¡Confirmao, Víctor! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
+
+      saveClientBooking({
+        professionalName: booking.professionalName,
+        businessName: booking.businessName,
+        serviceName: booking.serviceName,
+        priceCents: booking.priceCents,
+        dayLabel: booking.dayLabel,
+        timeLabel: booking.timeLabel,
+        paymentLabel: state.paymentLabel,
+      });
 
       go('confirmacion');
     } catch (err) {
@@ -1090,6 +1108,58 @@
     localStorage.removeItem('bukea_pro_slug');
     go('inicio');
   }
+
+  /* ===== Mis citas (lado cliente, guardadas en este dispositivo) ===== */
+  function getClientBookings() {
+    try {
+      return JSON.parse(localStorage.getItem('bukea_client_bookings')) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveClientBooking(b) {
+    const all = getClientBookings();
+    all.unshift(b);
+    localStorage.setItem('bukea_client_bookings', JSON.stringify(all.slice(0, 30)));
+  }
+
+  function renderMisCitas() {
+    const container = document.getElementById('miscitas-list');
+    const citas = getClientBookings();
+    container.innerHTML = '';
+    if (citas.length === 0) {
+      container.innerHTML =
+        '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Todavía no has bukeado ninguna cita. Elige una categoría en el inicio y reserva con tu profesional de confianza.</p>';
+      const btn = document.createElement('button');
+      btn.className = 'cta';
+      btn.style.position = 'static';
+      btn.innerHTML = '<svg class="icon"><use href="#i-home"/></svg>Buscar un profesional';
+      btn.addEventListener('click', () => go('inicio'));
+      container.appendChild(btn);
+      return;
+    }
+    citas.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'cita-card';
+      card.innerHTML =
+        '<div class="c-top"><span class="c-pro"></span><span class="c-price"></span></div>' +
+        '<div class="c-bottom"><span class="c-when"></span><span class="c-svc"></span></div>' +
+        '<div class="c-bottom"><span class="c-place"></span><span class="c-pay"></span></div>';
+      card.querySelector('.c-pro').textContent = c.professionalName;
+      card.querySelector('.c-price').textContent = formatPrice(c.priceCents);
+      card.querySelector('.c-when').textContent = c.dayLabel + ' · ' + c.timeLabel;
+      card.querySelector('.c-svc').textContent = c.serviceName;
+      card.querySelector('.c-place').textContent = c.businessName;
+      card.querySelector('.c-pay').textContent = c.paymentLabel || '';
+      container.appendChild(card);
+    });
+  }
+
+  /* Siempre arrancar en el inicio, incluso cuando Safari restaura la sesión (bfcache) */
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) go('inicio');
+  });
 </script>
 
 </body>
