@@ -33,10 +33,10 @@
     padding: 2.5rem 1rem 4rem;
     min-height: 100vh;
   }
-  .page-head { text-align: center; margin-bottom: 1.75rem; max-width: 44ch; }
-  .page-head .kicker { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--page-soft); }
-  .page-head h1 { font-family: "Fraunces", Georgia, serif; font-size: 1.6rem; font-weight: 600; margin: 0.3rem 0 0.35rem; letter-spacing: -0.01em; }
-  .page-head p { margin: 0; color: var(--page-soft); font-size: 0.9rem; line-height: 1.5; }
+  .kicker-top {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--page-soft); margin: 0 0 1rem;
+  }
 
   /* ===== Teléfono ===== */
   .phone {
@@ -124,7 +124,7 @@
   }
   .searchbar .icon { font-size: 1.05rem; color: var(--soft); }
 
-  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.4rem; }
+  .cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.4rem; }
   .cat {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 0.85rem 0.2rem 0.65rem; text-align: center; cursor: pointer;
@@ -397,15 +397,12 @@
 <symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5c.5 3 2 4.5 5 5-3 .5-4.5 2-5 5-.5-3-2-4.5-5-5 3-.5 4.5-2 5-5Z"/><path d="M19 14.5c.3 1.6 1 2.3 2.6 2.6-1.6.3-2.3 1-2.6 2.6-.3-1.6-1-2.3-2.6-2.6 1.6-.3 2.3-1 2.6-2.6Z" opacity=".7"/></symbol>
 <symbol id="i-hair" viewBox="0 0 24 24"><path d="M4 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/><path d="M4 13c3 0 3 3 6 3s3-3 6-3 3 3 6 3" opacity=".65"/><path d="M4 19c3 0 3 2.4 6 2.4s3-2.4 6-2.4 3 2.4 6 2.4" opacity=".4"/></symbol>
 <symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 </defs>
 </svg>
 
-<div class="page-head">
-  <p class="kicker">Bukea</p>
-  <h1>Demo premium v2</h1>
-  <p>Segunda pasada del prototipo navegable. Haz clic en las tarjetas, botones y la barra inferior.</p>
-</div>
+<p class="kicker-top">Bukea · Demo premium v2</p>
 
 <div class="phone">
   <div class="notch"></div>
@@ -421,7 +418,8 @@
       <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-scissors"/></svg><span class="txt">Barbería</span></div>
       <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-sparkle"/></svg><span class="txt">Uñas</span></div>
       <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-hair"/></svg><span class="txt">Salón</span></div>
-      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-brush"/></svg><span class="txt">Cejas &amp; MUA</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-brush"/></svg><span class="txt">Maquillaje</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-brow"/></svg><span class="txt">Cejas &amp; MUA</span></div>
     </div>
 
     <div class="fila-banner" onclick="go('fila')">
@@ -632,9 +630,10 @@
 </div>
 
 <p class="footer-note">
-  Demo premium v2 — pulido de jerarquía, tipografía (Fraunces + Plus Jakarta Sans), iconografía real e
-  interacciones intencionadas sobre el v0.1. Sigue siendo una maqueta sin backend; avatares y portafolio
-  son placeholders con textura, no fotos reales. Código en <code>prototype/demo-v2.html</code>.
+  Prototipo navegable — haz clic en las tarjetas, categorías y la barra inferior. Segunda pasada del
+  demo: pulido de jerarquía, tipografía (Fraunces + Plus Jakarta Sans), iconografía real e interacciones
+  intencionadas sobre el v0.1. Sigue siendo una maqueta sin backend; avatares y portafolio son
+  placeholders con textura, no fotos reales. Código en <code>prototype/demo-v2.html</code>.
   Ver también <code>prototype/demo.html</code> (v0.1 original) y <code>DESIGN.md</code> del repo.
 </p>
 
