@@ -1,0 +1,16 @@
+{
+  "name": "bukea-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Backend mínimo de Bukea — slice de prueba: perfil de profesional + reserva real en MySQL.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "seed": "node db/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0",
+    "dotenv": "^16.4.5"
+  }
+}

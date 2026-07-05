@@ -22,7 +22,9 @@
 - [ ] Reservar el nombre "Bukea" en App Store Connect al crear la cuenta de Apple Developer (US$99/año; la reserva expira en ~180 días sin publicar)
 - [ ] Validar con 10–15 barberos/manicuristas reales: ¿pagarían RD$500–1,500/mes por silla?
 
-**Criterio de salida:** dominios y marca asegurados, y al menos 10 profesionales que digan "yo pago eso". El código del MVP no arranca antes.
+**Criterio de salida:** dominios y marca asegurados, y al menos 10 profesionales que digan "yo pago eso".
+
+**Decisión (2026-07-05):** Víctor decidió arrancar el código del MVP en paralelo a completar la Fase 0, a sabiendas de que el criterio de salida formal (10+ profesionales validados, dominios registrados) todavía no se ha cumplido — no porque se haya dado por completado. Motivo: tener algo funcional que mostrar ayuda a la validación con profesionales reales. La Fase 0 sigue activa y sus pendientes no se tachan por este cambio.
 
 ## Roadmap del MVP
 

@@ -1,0 +1,34 @@
+CREATE TABLE IF NOT EXISTS professionals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(60) NOT NULL UNIQUE,
+  name VARCHAR(120) NOT NULL,
+  business_name VARCHAR(120) NOT NULL,
+  neighborhood VARCHAR(120) NOT NULL,
+  rating DECIMAL(2,1) NOT NULL DEFAULT 0,
+  reviews_count INT NOT NULL DEFAULT 0,
+  accepts_whatsapp TINYINT(1) NOT NULL DEFAULT 1,
+  accepts_cash TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  duration_min INT NOT NULL,
+  price_cents INT NOT NULL,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  service_id INT NOT NULL,
+  client_name VARCHAR(120) NOT NULL,
+  day_label VARCHAR(40) NOT NULL,
+  time_label VARCHAR(40) NOT NULL,
+  payment_method VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id),
+  FOREIGN KEY (service_id) REFERENCES services(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

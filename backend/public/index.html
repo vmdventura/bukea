@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bukea — Demo Premium v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+</head>
+<body>
+<style>
+  :root {
+    --page-bg: #ececeb;
+    --page-ink: #1f2a2e;
+    --page-soft: #5c6a6e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --page-bg: #14191b; --page-ink: #e8ebe9; --page-soft: #9fadb2; }
+  }
+  :root[data-theme="dark"] { --page-bg: #14191b; --page-ink: #e8ebe9; --page-soft: #9fadb2; }
+  :root[data-theme="light"] { --page-bg: #ececeb; --page-ink: #1f2a2e; --page-soft: #5c6a6e; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--page-ink);
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1rem 4rem;
+    min-height: 100vh;
+  }
+  .kicker-top {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--page-soft); margin: 0 0 1rem;
+  }
+
+  /* ===== Teléfono ===== */
+  .phone {
+    width: 390px;
+    max-width: 100%;
+    height: 800px;
+    background: var(--bg);
+    border-radius: 46px;
+    border: 10px solid #14191b;
+    box-shadow: 0 30px 70px rgba(15, 25, 28, 0.32), 0 2px 0 rgba(255,255,255,0.4) inset;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 26px; background: #14191b; border-radius: 14px; z-index: 50;
+  }
+
+  /* Design tokens — ver DESIGN.md */
+  .phone {
+    --teal-900: oklch(24% 0.045 195);
+    --teal-700: oklch(37% 0.075 195);
+    --teal-600: oklch(46% 0.09 195);
+    --teal-500: oklch(55% 0.095 195);
+    --teal-100: oklch(93% 0.035 195);
+    --teal-50:  oklch(97% 0.018 195);
+
+    --gold-600: oklch(70% 0.13 75);   /* uso decorativo (fondos, no texto) */
+    --gold-700: oklch(48% 0.11 68);   /* uso en texto — cumple 4.5:1 sobre --card */
+    --gold-100: oklch(94% 0.05 78);
+
+    --whatsapp: #25d366;
+    --whatsapp-100: #e4f8ea;
+    --cash: oklch(48% 0.1 150);
+    --cash-100: oklch(93% 0.035 150);
+
+    --ink:  oklch(21% 0.02 200);
+    --soft: oklch(44% 0.028 200);
+    --bg:   oklch(96% 0.012 195);
+    --card: oklch(99% 0.004 195);
+    --line: oklch(89% 0.014 195);
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    background: var(--bg);
+    color: var(--ink);
+    font-variant-ligatures: none;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    padding: 56px 20px 88px;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active {
+    display: flex;
+    animation: screen-in 260ms var(--ease);
+  }
+  @keyframes screen-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .screen.active { animation: none; }
+  }
+
+  .icon {
+    width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .app-h1 { font-family: "Fraunces", Georgia, serif; font-size: 1.55rem; font-weight: 600; color: var(--ink); margin: 0.3rem 0 0.15rem; letter-spacing: -0.01em; }
+  .app-sub { color: var(--soft); font-size: 0.85rem; margin: 0 0 1.15rem; display: flex; align-items: center; gap: 0.3rem; }
+  .app-sub .icon { font-size: 0.95rem; color: var(--teal-600); }
+
+  .searchbar {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.75rem 1rem; color: var(--soft); font-size: 0.88rem;
+    display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1.2rem;
+  }
+  .searchbar .icon { font-size: 1.05rem; color: var(--soft); }
+
+  .cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.4rem; }
+  .cat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.85rem 0.2rem 0.65rem; text-align: center; cursor: pointer;
+    transition: transform 180ms var(--ease), border-color 180ms var(--ease);
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  }
+  .cat:hover { transform: translateY(-2px); border-color: var(--teal-500); }
+  .cat .icon { font-size: 1.3rem; color: var(--teal-700); }
+  .cat .txt { font-size: 0.62rem; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+
+  .fila-banner {
+    background: linear-gradient(115deg, var(--teal-600), var(--teal-700));
+    color: #fff; border-radius: 18px; padding: 1rem 1.15rem; margin-bottom: 1.4rem;
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+    transition: transform 180ms var(--ease);
+  }
+  .fila-banner:hover { transform: translateY(-2px); }
+  .fila-banner .txt-wrap { display: flex; align-items: center; gap: 0.6rem; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff6b6b; flex: none; position: relative; }
+  .live-dot::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid #ff6b6b;
+    animation: pulse-ring 1.8s var(--ease) infinite;
+  }
+  @keyframes pulse-ring { 0% { opacity: 0.9; transform: scale(0.7); } 100% { opacity: 0; transform: scale(1.8); } }
+  @media (prefers-reduced-motion: reduce) { .live-dot::after { animation: none; opacity: 0.4; } }
+  .fila-banner b { display: block; font-size: 0.95rem; font-weight: 700; }
+  .fila-banner span.d { font-size: 0.78rem; opacity: 0.88; }
+  .fila-banner .arrow { font-size: 1.1rem; opacity: 0.9; }
+
+  .sec-title { font-size: 0.98rem; font-weight: 700; color: var(--ink); margin: 0 0 0.75rem; display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-title a { font-size: 0.76rem; color: var(--teal-600); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+
+  .pro-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 0.9rem; display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.7rem; cursor: pointer;
+    transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+  .pro-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,25,28,0.08); }
+  .avatar {
+    width: 54px; height: 54px; border-radius: 50%; flex: none; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fraunces", serif; font-weight: 600; color: #fff; font-size: 1.05rem;
+  }
+  .avatar::after {
+    content: ""; position: absolute; inset: 0; opacity: 0.5; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+  .pro-info { flex: 1; min-width: 0; }
+  .pro-info b { font-size: 0.93rem; color: var(--ink); display: block; font-weight: 700; }
+  .pro-info .meta { font-size: 0.76rem; color: var(--soft); display: flex; align-items: center; gap: 0.25rem; }
+  .pro-info .meta .icon { font-size: 0.85rem; }
+  .pro-info .tags { font-size: 0.7rem; color: var(--teal-600); font-weight: 600; margin-top: 0.1rem; display: block; }
+  .rating { font-size: 0.8rem; font-weight: 700; color: var(--gold-700); white-space: nowrap; display: flex; align-items: center; gap: 0.2rem; }
+  .rating .icon { font-size: 0.9rem; }
+  .rating small { color: var(--soft); font-weight: 500; }
+
+  /* Perfil */
+  .profile-head { text-align: center; margin-bottom: 1.1rem; }
+  .profile-head .avatar { width: 82px; height: 82px; margin: 0 auto 0.6rem; font-size: 1.7rem; }
+  .profile-head h2 { font-family: "Fraunces", serif; margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--ink); }
+  .profile-head .meta { color: var(--soft); font-size: 0.82rem; margin: 0.2rem 0 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem; flex-wrap: wrap; }
+  .profile-head .meta .rating { display: inline-flex; }
+  .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+  .badge {
+    font-size: 0.68rem; font-weight: 700; padding: 0.32rem 0.65rem; border-radius: 999px;
+    background: var(--teal-100); color: var(--teal-700);
+    display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .badge .icon { font-size: 0.85rem; }
+  .badge.wa { background: var(--whatsapp-100); color: #1a7d43; }
+  .badge.cash { background: var(--cash-100); color: var(--cash); }
+
+  .portfolio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.3rem; }
+  .work {
+    aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .work .icon { font-size: 1.4rem; color: rgba(255,255,255,0.92); position: relative; z-index: 1; }
+  .work::after {
+    content: ""; position: absolute; inset: 0; opacity: 0.4; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+
+  .service {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.85rem 1.05rem; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.6rem; cursor: pointer; transition: border-color 180ms var(--ease);
+  }
+  .service:hover { border-color: var(--teal-500); }
+  .service .s-name { font-size: 0.9rem; font-weight: 700; color: var(--ink); display: block; }
+  .service .s-time { font-size: 0.74rem; color: var(--soft); }
+  .service .s-price { font-weight: 800; color: var(--teal-700); font-size: 0.92rem; white-space: nowrap; }
+
+  .cta {
+    position: sticky; bottom: 0.2rem; margin-top: auto;
+    background: var(--teal-600); color: #fff; border: none; border-radius: 16px;
+    padding: 1rem; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%;
+    box-shadow: 0 10px 22px rgba(15, 90, 88, 0.32);
+    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: background 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .cta:hover { background: var(--teal-700); }
+  .cta:active { transform: scale(0.98); }
+  .cta .icon { font-size: 1.1rem; }
+
+  /* Reserva */
+  .option-group { margin-bottom: 1.2rem; }
+  .option-label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); margin-bottom: 0.55rem; display: block; }
+  .pills { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .pill-btn {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px;
+    padding: 0.48rem 0.95rem; font-size: 0.82rem; font-weight: 600; color: var(--ink); cursor: pointer;
+    font-family: inherit; transition: all 160ms var(--ease);
+  }
+  .pill-btn.sel { background: var(--teal-600); border-color: var(--teal-600); color: #fff; box-shadow: 0 4px 12px rgba(15,90,88,0.28); }
+
+  .pay-option {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 15px;
+    padding: 0.8rem 1.05rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.55rem; cursor: pointer;
+    transition: all 160ms var(--ease);
+  }
+  .pay-option .p-ico { font-size: 1.25rem; color: var(--teal-700); flex: none; width: 1.4rem; text-align: center; }
+  .pay-option.sel { border-color: var(--teal-600); background: var(--teal-100); }
+  .pay-option.sel .p-ico { color: var(--teal-700); }
+  .pay-option .p-name { font-size: 0.87rem; font-weight: 700; color: var(--ink); display: block; }
+  .pay-option .p-desc { font-size: 0.72rem; color: var(--soft); }
+  .pay-option .radio {
+    margin-left: auto; width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    transition: all 160ms var(--ease); position: relative;
+  }
+  .pay-option.sel .radio { border-color: var(--teal-600); }
+  .pay-option.sel .radio::after {
+    content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--teal-600);
+    animation: pop-in 180ms var(--ease);
+  }
+  @keyframes pop-in { from { transform: scale(0); } to { transform: scale(1); } }
+
+  .photo-attach {
+    border: 1.5px dashed var(--line); border-radius: 15px; padding: 0.9rem 1rem;
+    text-align: center; color: var(--soft); font-size: 0.82rem; cursor: pointer; margin-bottom: 1.2rem;
+    background: var(--card); display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: border-color 160ms var(--ease);
+  }
+  .photo-attach:hover { border-color: var(--teal-500); }
+  .photo-attach .icon { font-size: 1.1rem; color: var(--teal-600); }
+
+  /* Fila virtual */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; font-weight: 700;
+    color: var(--cash); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.4rem;
+  }
+  .queue-hero { text-align: center; padding: 1.3rem 0 0.7rem; }
+  .queue-num { font-family: "Fraunces", serif; font-size: 4.4rem; font-weight: 600; color: var(--teal-600); line-height: 1; font-variant-numeric: tabular-nums; }
+  .queue-hero p { color: var(--soft); font-size: 0.9rem; margin: 0.35rem 0 0; }
+  .queue-list { margin: 1.3rem 0; }
+  .queue-item {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.85rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 13px; margin-bottom: 0.5rem;
+    font-size: 0.83rem; color: var(--ink);
+  }
+  .queue-item.you { border-color: var(--teal-600); background: var(--teal-100); font-weight: 700; }
+  .queue-item .pos { font-weight: 800; color: var(--teal-600); width: 1.4rem; font-variant-numeric: tabular-nums; }
+  .queue-item .st { margin-left: auto; font-size: 0.7rem; color: var(--soft); display: flex; align-items: center; gap: 0.3rem; }
+  .queue-item .st .icon { font-size: 0.9rem; color: var(--teal-600); }
+  .wa-note {
+    background: var(--whatsapp-100); border-radius: 15px; padding: 0.85rem 1.05rem;
+    font-size: 0.82rem; color: #14532d; display: flex; gap: 0.65rem; align-items: center;
+  }
+  .wa-note .icon { color: var(--whatsapp); font-size: 1.2rem; flex: none; }
+  .wa-note span { flex: 1; min-width: 0; line-height: 1.45; }
+
+  /* Confirmación */
+  .confirm-hero { text-align: center; padding: 1.6rem 0 0.6rem; }
+  .check-circle-wrap { width: 78px; height: 78px; margin: 0 auto 0.9rem; color: var(--teal-600); }
+  .check-circle-wrap svg circle { stroke: var(--teal-600); fill: var(--teal-600); }
+  .check-circle-wrap svg path {
+    stroke: #fff; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 20; stroke-dashoffset: 20;
+  }
+  .screen.active .check-circle-wrap svg path { animation: draw-check 480ms 180ms var(--ease) forwards; }
+  @keyframes draw-check { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .check-circle-wrap svg path { animation: none; stroke-dashoffset: 0; }
+  }
+  .confirm-hero h2 { font-family: "Fraunces", serif; margin: 0; font-size: 1.4rem; font-weight: 600; color: var(--ink); }
+  .confirm-hero p { color: var(--soft); font-size: 0.86rem; margin: 0.3rem 0 0; }
+  .ticket {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 1.05rem 1.25rem; margin: 1.3rem 0;
+  }
+  .ticket-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 0.4rem 0; }
+  .ticket-row .k { color: var(--soft); display: flex; align-items: center; gap: 0.35rem; }
+  .ticket-row .k .icon { font-size: 0.95rem; color: var(--teal-600); }
+  .ticket-row .v { font-weight: 700; color: var(--ink); text-align: right; }
+  .ticket-row.total { border-top: 1px dashed var(--line); margin-top: 0.45rem; padding-top: 0.65rem; }
+  .ticket-row.total .v { color: var(--teal-700); font-size: 0.98rem; }
+
+  .wa-block { margin: 0 0 1.1rem; }
+  .wa-bubble {
+    background: #dcf8c6; border-radius: 15px 15px 4px 15px; padding: 0.8rem 1rem;
+    font-size: 0.8rem; color: #1f2a2e; margin: 0 0 0.4rem auto; max-width: 90%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08); opacity: 0; transform: translateY(4px);
+  }
+  .wa-bubble.show { animation: bubble-in 320ms var(--ease) forwards; }
+  @keyframes bubble-in { to { opacity: 1; transform: translateY(0); } }
+  .wa-bubble b { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.2rem; }
+  .wa-bubble b .icon { color: var(--whatsapp); font-size: 0.85rem; }
+  .wa-typing {
+    background: #dcf8c6; border-radius: 15px 15px 4px 15px; padding: 0.6rem 0.9rem;
+    display: flex; gap: 0.25rem; margin: 0 0 0.4rem auto; width: fit-content;
+  }
+  .wa-typing span { width: 6px; height: 6px; border-radius: 50%; background: #6b8f6b; animation: typing 1s infinite ease-in-out; }
+  .wa-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .wa-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-3px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .wa-bubble { opacity: 1; transform: none; animation: none; }
+    .wa-typing { display: none; }
+  }
+  .wa-label { font-size: 0.7rem; color: var(--soft); text-align: right; margin-bottom: 1rem; }
+
+  /* Nav inferior */
+  .navbar {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 40;
+    background: rgba(255,255,255,0.97); border-top: 1px solid var(--line);
+    display: flex; padding: 0.6rem 0.4rem calc(0.6rem + 8px);
+    backdrop-filter: blur(6px);
+  }
+  .nav-btn {
+    flex: 1; background: none; border: none; cursor: pointer; text-align: center;
+    color: var(--soft); font-family: inherit; position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+    transition: color 160ms var(--ease);
+  }
+  .nav-btn .icon { font-size: 1.2rem; }
+  .nav-btn .n-txt { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.03em; }
+  .nav-btn.active { color: var(--teal-600); }
+  .nav-btn .n-dot { position: absolute; top: -1px; right: 26%; width: 6px; height: 6px; border-radius: 50%; background: #ff6b6b; }
+
+  .back-btn {
+    background: none; border: none; color: var(--teal-600); font-weight: 700; font-size: 0.86rem;
+    cursor: pointer; padding: 0; margin-bottom: 0.4rem; text-align: left; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 0.2rem;
+  }
+  .back-btn .icon { font-size: 1rem; }
+
+  .footer-note { margin-top: 1.6rem; font-size: 0.8rem; color: var(--page-soft); text-align: center; max-width: 50ch; line-height: 1.6; }
+  .footer-note code { font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; }
+</style>
+
+<!-- Sprite de iconos — trazo consistente, ver DESIGN.md -->
+<svg style="position:absolute; width:0; height:0" aria-hidden="true">
+<defs>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><line x1="14.7" y1="14.7" x2="20" y2="20"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V19a1 1 0 0 0 1 1h3v-5.5h4V20h3a1 1 0 0 0 1-1v-8.5"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M4.8 20c0-4 3.2-6.8 7.2-6.8s7.2 2.8 7.2 6.8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.3l2.55 5.4 5.85.7-4.35 4.1 1.15 5.8L12 16.3l-5.2 2.8 1.15-5.8-4.35-4.1 5.85-.7L12 3.3Z"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 19.5 5.3 15.6A8 8 0 1 1 8.7 19L4 19.5Z"/><path d="M9 12.3l1.8 1.8 4-4.3"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.7"/><line x1="4.5" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="19.5" y2="12"/></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="4.5" y1="10" x2="4.5" y2="18"/><line x1="9.5" y1="10" x2="9.5" y2="18"/><line x1="14.5" y1="10" x2="14.5" y2="18"/><line x1="19.5" y1="10" x2="19.5" y2="18"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="2" y1="20.5" x2="22" y2="20.5"/></symbol>
+<symbol id="i-tpago" viewBox="0 0 24 24"><rect x="7.3" y="2.5" width="9" height="19" rx="2"/><line x1="10.3" y1="19" x2="13.3" y2="19"/><path d="M18.3 8.7a4.8 4.8 0 0 1 0 6.6" opacity=".65"/><path d="M20.2 6.8a7.6 7.6 0 0 1 0 10.4" opacity=".35"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><line x1="2.5" y1="10" x2="21.5" y2="10"/><line x1="5" y1="14.5" x2="9" y2="14.5"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M8.2 7 9.6 4.7h4.8L15.8 7H19a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="3.6"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M14.5 5 8 12l6.5 7"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9.5 5 16 12l-6.5 7"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v5.3l3.6 2.1"/></symbol>
+<symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6.3" cy="6.3" r="2.3"/><circle cx="6.3" cy="17.7" r="2.3"/><line x1="8.2" y1="7.7" x2="20" y2="19"/><line x1="8.2" y1="16.3" x2="20" y2="5"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5c.5 3 2 4.5 5 5-3 .5-4.5 2-5 5-.5-3-2-4.5-5-5 3-.5 4.5-2 5-5Z"/><path d="M19 14.5c.3 1.6 1 2.3 2.6 2.6-1.6.3-2.3 1-2.6 2.6-.3-1.6-1-2.3-2.6-2.6 1.6-.3 2.3-1 2.6-2.6Z" opacity=".7"/></symbol>
+<symbol id="i-hair" viewBox="0 0 24 24"><path d="M4 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/><path d="M4 13c3 0 3 3 6 3s3-3 6-3 3 3 6 3" opacity=".65"/><path d="M4 19c3 0 3 2.4 6 2.4s3-2.4 6-2.4 3 2.4 6 2.4" opacity=".4"/></symbol>
+<symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+</defs>
+</svg>
+
+<p class="kicker-top">Bukea · Demo premium v2</p>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- ============ INICIO ============ -->
+  <div class="screen active" id="inicio">
+    <h1 class="app-h1">¿Qué vas a bukear hoy? 👋</h1>
+    <p class="app-sub"><svg class="icon"><use href="#i-map-pin"/></svg> Villa Consuelo, Santo Domingo</p>
+
+    <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
+
+    <div class="cats">
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-scissors"/></svg><span class="txt">Barbería</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-sparkle"/></svg><span class="txt">Uñas</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-hair"/></svg><span class="txt">Salón</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-brush"/></svg><span class="txt">Maquillaje</span></div>
+      <div class="cat" onclick="go('perfil')"><svg class="icon"><use href="#i-brow"/></svg><span class="txt">Cejas &amp; MUA</span></div>
+    </div>
+
+    <div class="fila-banner" onclick="go('fila')">
+      <div class="txt-wrap">
+        <span class="live-dot"></span>
+        <div>
+          <b>Fila virtual en vivo</b>
+          <span class="d">Barbería El Nítido — 3 personas delante</span>
+        </div>
+      </div>
+      <svg class="icon arrow"><use href="#i-chevron-right"/></svg>
+    </div>
+
+    <p class="sec-title">Cerca de ti <a href="#" onclick="return false;"><svg class="icon"><use href="#i-map-pin"/></svg>Ver mapa</a></p>
+
+    <div class="pro-card" onclick="go('perfil')">
+      <div class="avatar" style="background:linear-gradient(150deg,#12938f,#0a4f4d)">JB</div>
+      <div class="pro-info">
+        <b>Joel "El Fino" Batista</b>
+        <span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg>Barbería El Nítido · 350 m</span>
+        <span class="tags">Degradao · Cerquillo · Diseños</span>
+      </div>
+      <div class="rating"><svg class="icon"><use href="#i-star"/></svg> 4.9 <small>(312)</small></div>
+    </div>
+
+    <div class="pro-card" onclick="go('perfil')">
+      <div class="avatar" style="background:linear-gradient(150deg,#c2447a,#7a2650)">YR</div>
+      <div class="pro-info">
+        <b>Yesenia Rodríguez</b>
+        <span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg>Yess Nails Studio · 600 m</span>
+        <span class="tags">Acrílicas · Encapsuladas · Arte</span>
+      </div>
+      <div class="rating"><svg class="icon"><use href="#i-star"/></svg> 4.8 <small>(198)</small></div>
+    </div>
+
+    <div class="pro-card" onclick="go('perfil')">
+      <div class="avatar" style="background:linear-gradient(150deg,#7654b8,#3f2c7a)">CM</div>
+      <div class="pro-info">
+        <b>Carmen la Estilista</b>
+        <span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg>Salón Carmen · 1.2 km</span>
+        <span class="tags">Desrizado · Tubi · Plancha</span>
+      </div>
+      <div class="rating"><svg class="icon"><use href="#i-star"/></svg> 4.9 <small>(421)</small></div>
+    </div>
+  </div>
+
+  <!-- ============ PERFIL ============ -->
+  <div class="screen" id="perfil">
+    <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <div class="profile-head">
+      <div class="avatar" style="background:linear-gradient(150deg,#12938f,#0a4f4d)">JB</div>
+      <h2 id="prof-name">Cargando…</h2>
+      <p class="meta"><span id="prof-business"></span> · <span id="prof-neighborhood"></span> · <span class="rating"><svg class="icon"><use href="#i-star"/></svg><span id="prof-rating"></span></span> (<span id="prof-reviews"></span> reseñas)</p>
+      <div class="badges">
+        <span class="badge wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Responde por WhatsApp</span>
+        <span class="badge cash"><svg class="icon"><use href="#i-cash"/></svg>Acepta efectivo</span>
+        <span class="badge"><svg class="icon"><use href="#i-calendar"/></svg>Cita recurrente</span>
+      </div>
+    </div>
+
+    <p class="sec-title">Sus trabajos</p>
+    <div class="portfolio">
+      <div class="work" style="background:linear-gradient(150deg,#1d3a5f,#0e1c30)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#2c5f6e,#122731)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#3d5aa8,#1a2650)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#5c3f96,#2c1c50)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#1a5c4e,#0d2e26)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#2e3a4d,#c05a4f)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+    </div>
+
+    <p class="sec-title">Servicios</p>
+    <div id="services-list">
+      <p style="color:var(--soft);font-size:0.85rem">Cargando servicios…</p>
+    </div>
+
+    <button class="cta" onclick="go('reserva')"><svg class="icon"><use href="#i-calendar"/></svg>Bukear cita</button>
+  </div>
+
+  <!-- ============ RESERVA ============ -->
+  <div class="screen" id="reserva">
+    <button class="back-btn" onclick="go('perfil')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Bukea tu cita</h1>
+    <p class="app-sub"><span id="reserva-prof-name">—</span> · <span id="svc-label">Selecciona un servicio</span></p>
+
+    <div class="option-group">
+      <span class="option-label">Día</span>
+      <div class="pills">
+        <button class="pill-btn" onclick="pick(this)">Hoy</button>
+        <button class="pill-btn sel" onclick="pick(this)">Mañana</button>
+        <button class="pill-btn" onclick="pick(this)">Sáb 6</button>
+        <button class="pill-btn" onclick="pick(this)">Dom 7</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <span class="option-label">Hora</span>
+      <div class="pills">
+        <button class="pill-btn" onclick="pick(this)">9:00 AM</button>
+        <button class="pill-btn" onclick="pick(this)">10:30 AM</button>
+        <button class="pill-btn sel" onclick="pick(this)">3:00 PM</button>
+        <button class="pill-btn" onclick="pick(this)">4:30 PM</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <span class="option-label">¿Cómo vas a pagar?</span>
+      <div class="pay-option sel" onclick="pickPay(this,'i-cash')">
+        <svg class="icon p-ico"><use href="#i-cash"/></svg>
+        <div><span class="p-name">Efectivo</span><span class="p-desc">Pagas allá, como siempre</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-bank')">
+        <svg class="icon p-ico"><use href="#i-bank"/></svg>
+        <div><span class="p-name">Transferencia</span><span class="p-desc">Popular, Banreservas, BHD</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-tpago')">
+        <svg class="icon p-ico"><use href="#i-tpago"/></svg>
+        <div><span class="p-name">tPago</span><span class="p-desc">Desde tu celular</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-card')">
+        <svg class="icon p-ico"><use href="#i-card"/></svg>
+        <div><span class="p-name">Tarjeta</span><span class="p-desc">Azul / CardNET</span></div>
+        <span class="radio"></span>
+      </div>
+    </div>
+
+    <div class="photo-attach"><svg class="icon"><use href="#i-camera"/></svg>Adjunta una foto del estilo que quieres <small>(opcional)</small></div>
+
+    <button class="cta" id="confirm-btn" onclick="confirmBooking()"><svg class="icon"><use href="#i-check"/></svg>Confirmar — mañana 3:00 PM</button>
+  </div>
+
+  <!-- ============ CONFIRMACIÓN ============ -->
+  <div class="screen" id="confirmacion">
+    <div class="confirm-hero">
+      <div class="check-circle-wrap">
+        <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11"/><path d="M6.5 12.5l3.5 3.5 7-7.5"/></svg>
+      </div>
+      <h2>¡Bukeao! 🎉</h2>
+      <p>Tu cita quedó confirmada</p>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-user"/></svg>Profesional</span><span class="v" id="ticket-prof">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-scissors"/></svg>Servicio</span><span class="v" id="ticket-svc">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-calendar"/></svg>Fecha</span><span class="v" id="ticket-date">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-map-pin"/></svg>Lugar</span><span class="v" id="ticket-place">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon" id="ticket-pay-icon"><use href="#i-cash"/></svg>Pago</span><span class="v" id="ticket-pay">—</span></div>
+      <div class="ticket-row total"><span class="k">Total</span><span class="v" id="ticket-price">—</span></div>
+    </div>
+
+    <div class="wa-block" id="wa-block">
+      <div class="wa-typing" id="wa-typing"><span></span><span></span><span></span></div>
+      <div class="wa-bubble" id="wa-bubble">
+        <b><svg class="icon"><use href="#i-whatsapp"/></svg>Bukea</b>
+        <span id="wa-message">¡Confirmao!</span> Responde <b style="display:inline">R</b> para reprogramar o <b style="display:inline">C</b> para cancelar.
+        <div style="text-align:right;font-size:0.65rem;color:#5d6f76;margin-top:0.3rem">3:42 PM ✓✓</div>
+      </div>
+    </div>
+    <p class="wa-label">Así te llegará el recordatorio por WhatsApp</p>
+
+    <button class="cta" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg>Volver al inicio</button>
+  </div>
+
+  <!-- ============ FILA VIRTUAL ============ -->
+  <div class="screen" id="fila">
+    <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1" style="display:flex; align-items:center;">Fila virtual <span class="live-badge"><span class="live-dot"></span>En vivo</span></h1>
+    <p class="app-sub">Barbería El Nítido — walk-ins sin cita</p>
+
+    <div class="queue-hero">
+      <div class="queue-num" id="queue-count">3</div>
+      <p>personas delante de ti · ~35 min</p>
+    </div>
+
+    <div class="queue-list">
+      <div class="queue-item"><span class="pos">1</span> Luis M. <span class="st"><svg class="icon"><use href="#i-scissors"/></svg>En la silla</span></div>
+      <div class="queue-item"><span class="pos">2</span> Anderson P. <span class="st"><svg class="icon"><use href="#i-clock"/></svg>Esperando</span></div>
+      <div class="queue-item"><span class="pos">3</span> Randy S. <span class="st"><svg class="icon"><use href="#i-clock"/></svg>Esperando</span></div>
+      <div class="queue-item you"><span class="pos">4</span> Tú <span class="st">~35 min</span></div>
+    </div>
+
+    <div class="wa-note">
+      <svg class="icon"><use href="#i-whatsapp"/></svg>
+      <span>Te avisamos por WhatsApp cuando falten <b>2 personas</b> — vete tranquilo, tu turno no se pierde.</span>
+    </div>
+
+    <button class="cta" id="queue-btn" onclick="joinQueue()"><svg class="icon"><use href="#i-clock"/></svg>Coger mi turno</button>
+  </div>
+
+  <!-- ============ NAV ============ -->
+  <div class="navbar">
+    <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+    <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-dot"></span><span class="n-txt">Fila</span></button>
+    <button class="nav-btn" data-s="confirmacion" onclick="go('confirmacion')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="perfil" onclick="go('perfil')"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+  </div>
+</div>
+
+<p class="footer-note">
+  Prototipo navegable — haz clic en las tarjetas, categorías y la barra inferior. Segunda pasada del
+  demo: pulido de jerarquía, tipografía (Fraunces + Plus Jakarta Sans), iconografía real e interacciones
+  intencionadas sobre el v0.1. Sigue siendo una maqueta sin backend; avatares y portafolio son
+  placeholders con textura, no fotos reales. Código en <code>prototype/demo-v2.html</code>.
+  Ver también <code>prototype/demo.html</code> (v0.1 original) y <code>DESIGN.md</code> del repo.
+</p>
+
+<script>
+  const state = {
+    professional: null,
+    serviceId: null,
+    serviceName: null,
+    priceCents: null,
+    day: 'Mañana',
+    time: '3:00 PM',
+    paymentMethod: 'cash',
+    paymentLabel: 'Efectivo',
+  };
+
+  function formatPrice(cents) {
+    return 'RD$ ' + Math.round(cents / 100);
+  }
+
+  function go(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    el.classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === id));
+    el.scrollTop = 0;
+    if (id === 'confirmacion') playWaTyping();
+  }
+
+  function pick(btn) {
+    btn.parentElement.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    const group = btn.closest('.option-group').querySelector('.option-label').textContent;
+    if (group === 'Día') state.day = btn.textContent;
+    if (group === 'Hora') state.time = btn.textContent;
+  }
+
+  const payIcons = { 'i-cash': ['cash', 'Efectivo'], 'i-bank': ['bank', 'Transferencia'], 'i-tpago': ['tpago', 'tPago'], 'i-card': ['card', 'Tarjeta'] };
+
+  function pickPay(el, iconId) {
+    el.parentElement.querySelectorAll('.pay-option').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    const [key, label] = payIcons[iconId];
+    state.paymentMethod = key;
+    state.paymentLabel = label;
+  }
+
+  function selectService(service) {
+    state.serviceId = service.id;
+    state.serviceName = service.name;
+    state.priceCents = service.priceCents;
+    document.getElementById('svc-label').textContent = service.name + ' · ' + formatPrice(service.priceCents);
+    go('reserva');
+  }
+
+  function renderProfessional(prof) {
+    state.professional = prof;
+    document.getElementById('prof-name').textContent = prof.name;
+    document.getElementById('prof-business').textContent = prof.businessName;
+    document.getElementById('prof-neighborhood').textContent = prof.neighborhood;
+    document.getElementById('prof-rating').textContent = prof.rating.toFixed(1);
+    document.getElementById('prof-reviews').textContent = prof.reviewsCount;
+    document.getElementById('reserva-prof-name').textContent = prof.name;
+
+    const list = document.getElementById('services-list');
+    list.innerHTML = '';
+    prof.services.forEach(service => {
+      const row = document.createElement('div');
+      row.className = 'service';
+      row.innerHTML =
+        '<div><span class="s-name"></span><span class="s-time"></span></div><span class="s-price"></span>';
+      row.querySelector('.s-name').textContent = service.name;
+      row.querySelector('.s-time').textContent = service.durationMin + ' min';
+      row.querySelector('.s-price').textContent = formatPrice(service.priceCents);
+      row.addEventListener('click', () => selectService(service));
+      list.appendChild(row);
+    });
+  }
+
+  async function loadProfessional() {
+    try {
+      const res = await fetch('/bukea/api/professionals/joel-el-fino');
+      if (!res.ok) throw new Error('No se pudo cargar el profesional');
+      const prof = await res.json();
+      renderProfessional(prof);
+    } catch (err) {
+      document.getElementById('services-list').innerHTML =
+        '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor. Intenta de nuevo en un momento.</p>';
+      console.error(err);
+    }
+  }
+
+  async function confirmBooking() {
+    if (!state.professional || !state.serviceId) return;
+    const btn = document.getElementById('confirm-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Confirmando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/bukea/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          professionalId: state.professional.id,
+          serviceId: state.serviceId,
+          clientName: 'Víctor',
+          dayLabel: state.day,
+          timeLabel: state.time,
+          paymentMethod: state.paymentMethod,
+        }),
+      });
+      if (!res.ok) throw new Error('No se pudo crear la reserva');
+      const booking = await res.json();
+
+      document.getElementById('ticket-prof').textContent = booking.professionalName;
+      document.getElementById('ticket-svc').textContent = booking.serviceName;
+      document.getElementById('ticket-date').textContent = booking.dayLabel + ' · ' + booking.timeLabel;
+      document.getElementById('ticket-place').textContent = booking.businessName;
+      document.getElementById('ticket-pay').textContent = state.paymentLabel;
+      document.getElementById('ticket-price').textContent = formatPrice(booking.priceCents);
+      document.getElementById('wa-message').textContent =
+        '¡Confirmao, Víctor! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
+
+      go('confirmacion');
+    } catch (err) {
+      alert('No se pudo confirmar la cita. Revisa tu conexión e intenta de nuevo.');
+      console.error(err);
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  function joinQueue() {
+    const btn = document.getElementById('queue-btn');
+    btn.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Estás en la fila — te avisamos por WhatsApp';
+    btn.style.background = 'var(--cash)';
+    btn.onclick = null;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function playWaTyping() {
+    const typing = document.getElementById('wa-typing');
+    const bubble = document.getElementById('wa-bubble');
+    bubble.classList.remove('show');
+    if (reduceMotion) { typing.style.display = 'none'; bubble.classList.add('show'); return; }
+    typing.style.display = 'flex';
+    bubble.style.display = 'none';
+    setTimeout(() => {
+      typing.style.display = 'none';
+      bubble.style.display = 'block';
+      void bubble.offsetWidth;
+      bubble.classList.add('show');
+    }, 900);
+  }
+
+  loadProfessional();
+</script>
+
+</body>
+</html>
