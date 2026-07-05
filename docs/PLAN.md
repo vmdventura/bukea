@@ -14,7 +14,8 @@
 ## Fase 0 — Fundación (antes de escribir código)
 
 - [ ] Registrar `bukea.do` y `bukea.com.do` en [nic.do](https://www.nic.do) — **prioridad #1**
-- [ ] Registrar `bukeard.com` — disponible, confirmado 2026-07-04 ("Bukea RD", el .com principal)
+- [x] Registrar `bukeard.com` — ✅ registrado (2026-07-05). "Bukea RD", el .com principal
+- [x] Logo — ✅ listo (2026-07-05): "b" itálica serif + wordmark "Bukea", variantes crema y teal, tagline "Bukear nunca fue tan fácil"
 - [ ] Registrar respaldo internacional: `bukea.io` / `getbukea.com`
 - [ ] Reservar handles `@bukea` / `@bukea.do` en Instagram, TikTok, X y Facebook
 - [ ] Búsqueda de marca en ONAPI (clases 35, 42 y 44) y solicitud de registro
