@@ -14,7 +14,9 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 |---|---|
 | `docs/VISION.md` | Visión completa: nombre, competencia (Fresha, BarberTime…), diferenciadores, verticales, modelo de negocio |
 | `docs/PLAN.md` | Plan del proyecto: estado actual, Fase 0 (fundación), roadmap MVP en 3 fases, reglas estratégicas — **mantener actualizado al completar tareas** |
-| `prototype/demo.html` | Demo interactivo v0.1 (HTML autocontenido, sin backend): inicio, perfil, reserva, fila virtual, confirmación |
+| `prototype/demo.html` | Demo interactivo v0.1 (HTML autocontenido, sin backend): primera pasada, mantenido como referencia histórica |
+| `prototype/demo-v2.html` | Demo premium v2: misma navegación, pulido de tipografía (Fraunces + Plus Jakarta Sans), iconografía SVG real, color OKLCH y micro-interacciones — ver `DESIGN.md` |
+| `PRODUCT.md` / `DESIGN.md` | Contexto de producto y sistema de diseño para trabajo con la skill `impeccable` |
 
 ## Decisiones ya tomadas (no re-litigar)
 
@@ -35,6 +37,6 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 
 ## Próximos pasos probables
 
-1. Iterar el demo (`prototype/demo.html`) con feedback de Víctor — lado B2B (agenda del barbero) aún no tiene pantallas.
+1. Iterar el demo premium (`prototype/demo-v2.html`) con feedback de Víctor — lado B2B (agenda del barbero) aún no tiene pantallas.
 2. Decidir stack del MVP (móvil + backend + WhatsApp Business API).
 3. Ejecutar la Fase 0: registrar dominios, handles, marca ONAPI, validar precio con 10–15 profesionales.
