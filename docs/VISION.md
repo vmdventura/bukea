@@ -53,7 +53,7 @@ Fresha es el marketplace de belleza y bienestar más grande del mundo (100,000+ 
 
 | Competidor | Tipo | Fortaleza | Debilidad |
 |---|---|---|---|
-| **BarberTime** (mybarbertime.app) | Marketplace local | Primera app dominicana de citas de barbería; gratis para el cliente | Solo barberías; pago tarjeta-céntrico; sin walk-ins |
+| **BarberTime** (mybarbertime.app) | Marketplace local | Competidor directo más avanzado: recordatorios WhatsApp, pagos con tarjeta/Apple Pay, reseñas, tracción en Santo Domingo. [Análisis completo](COMPETENCIA-BARBERTIME.md) | **Solo iPhone** (Android domina RD); solo barbería; tarjeta-céntrico; sin walk-ins; precio al negocio opaco |
 | **Fresha** | Marketplace global | Producto maduro; salones listados en Santo Domingo | Comisión 20%; sin localización; baja penetración |
 | **Booksy** | Marketplace global | Marca fuerte en barbería masculina | Sin operación real en RD |
 | **BarberEx** | App local a domicilio | Validó demanda de barbería móvil en RD | Solo domicilio, solo barbería |
@@ -62,6 +62,8 @@ Fresha es el marketplace de belleza y bienestar más grande del mundo (100,000+ 
 | **WhatsApp + Instagram + cuaderno** | Statu quo | Es como funciona el 90% del mercado hoy | Caótico: citas perdidas, no-shows, sin historial |
 
 **El hueco**: nadie combina (a) marketplace de consumo, (b) toda la vertical de belleza, (c) efectivo/transferencia como primera clase, (d) WhatsApp nativo y (e) walk-ins/fila virtual. Ese cuadrante está vacío y es el que ocupa Bukea.
+
+> **Nota (2026-07-05):** tras analizar a BarberTime a fondo, WhatsApp ya no es diferenciador frente a ellos en barbería. La punta de lanza operativa de Bukea pasa a ser **multivertical + funciona en cualquier teléfono** (BarberTime es solo iPhone; Android domina ~85% de RD). WhatsApp, efectivo y fila virtual siguen sumando, pero ya no cargan solos la diferenciación. Ver [COMPETENCIA-BARBERTIME.md](COMPETENCIA-BARBERTIME.md).
 
 ## 3. El esquema de producto
 

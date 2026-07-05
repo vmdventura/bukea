@@ -27,28 +27,32 @@
 |---|---|
 | `CLAUDE.md` | Contexto para sesiones de Claude Code (versión corta de este documento) |
 | `docs/VISION.md` | Visión completa: nombre, dominios, competencia, verticales, modelo de negocio, roadmap |
-| `docs/PLAN.md` | Plan del proyecto: estado, Fase 0, roadmap MVP, reglas estratégicas — **mantenerlo actualizado** |
-| `prototype/demo.html` | Demo interactivo v0.1: HTML autocontenido con 5 pantallas (inicio, perfil, reserva, confirmación, fila virtual) |
+| `docs/PLAN.md` | Plan del proyecto: estado, Fase 0, "Lo construido", roadmap MVP, reglas estratégicas — **mantenerlo actualizado** |
+| `docs/COMPETENCIA-BARBERTIME.md` | Análisis del competidor directo (BarberTime) |
+| `docs/WHATSAPP-SETUP.md` | Guía para activar el login por OTP de WhatsApp |
+| `backend/` | MVP real (Node.js + Express + MySQL) desplegado en `vmdventura.com/bukea` — sirve el frontend PWA desde `backend/public/` |
+| `prototype/demo-v2.html` | Demo premium navegable (segunda pasada) — origen del frontend actual |
+| `prototype/demo.html` | Demo v0.1 original, referencia histórica |
 
 El proyecto deportivo **DeportesDO** vive en su propio repo (`vmdventura/DeportesDO`) y no tiene relación con Bukea.
 
 ## Estado actual (5 de julio de 2026)
 
 **Hecho ✅**
-- Visión de producto, análisis de competencia y plan completos
+- Visión de producto, plan y análisis de competencia (BarberTime) completos
 - Repo propio, separado de otros proyectos
 - Nombre "Bukea" verificado libre en App Store y Google Play (2026-07-04)
-- Dominios verificados libres (sin registrar aún): `bukea.do`, `bukea.com.do`, **`bukeard.com`** (el .com principal — "Bukea RD"), `bukea.io`, `getbukea.com`, `bukeaapp.com`
-- Demo interactivo v0.1 en `prototype/demo.html`
+- **`bukeard.com` registrado** (el .com principal — "Bukea RD") y **logo listo** ("b" itálica serif + wordmark, variantes crema/teal, tagline "Bukear nunca fue tan fácil")
+- **MVP de prueba funcional en producción** en `vmdventura.com/bukea` (Node + Express + MySQL, PWA): login por teléfono + PIN, inicio por categorías, listado filtrado, reserva real en MySQL, lado B2B (registro y panel del negocio), "Mis citas". Verificación por WhatsApp lista pero dormida (falta cuenta Meta).
 
-**Pendiente ⬜ (Fase 0 — antes de escribir código de producción)**
-- Registrar `bukea.do` y `bukea.com.do` en nic.do (prioridad #1) y `bukeard.com`
+**Pendiente ⬜ (Fase 0 — sigue activa)**
+- Registrar `bukea.do` y `bukea.com.do` en nic.do (prioridad #1); respaldo `bukea.io` / `getbukea.com`
 - Reservar handles `@bukea` / `@bukea.do` en Instagram, TikTok, X, Facebook
 - Marca en ONAPI (clases 35, 42 y 44)
 - Reservar "Bukea" en App Store Connect al crear cuenta Apple Developer (US$99/año)
 - **Validar con 10–15 barberos/manicuristas reales que pagarían RD$500–1,500/mes por silla**
 
-**Criterio de salida de Fase 0:** dominios y marca asegurados + 10 profesionales que digan "yo pago eso". El código del MVP no arranca antes.
+**Criterio de salida de Fase 0:** dominios y marca asegurados + 10 profesionales que digan "yo pago eso". **Nota:** el MVP arrancó en paralelo a la Fase 0 por decisión de Víctor (tener algo funcional ayuda a validar), no porque el criterio ya se cumpliera.
 
 ## Roadmap del MVP
 
@@ -58,10 +62,14 @@ El proyecto deportivo **DeportesDO** vive en su propio repo (`vmdventura/Deporte
 
 ## Sin decidir todavía
 
-- Stack tecnológico del MVP (móvil, backend, integración WhatsApp Business API)
-- Ciudad de lanzamiento (Santo Domingo vs Santiago)
-- Pantallas B2B del demo (la agenda del barbero/dueño no está boceteada)
+- Hosting definitivo del MVP (hoy en BanaHosting compartido / cPanel Node.js — de prueba, no necesariamente el final)
+- Ciudad de lanzamiento (Santo Domingo vs Santiago) — reevaluar tras el análisis de BarberTime
+- Login real del negocio (hoy solo `localStorage`, sin contraseña)
+
+## Diferenciación (ajuste 2026-07-05)
+
+Tras analizar a BarberTime, WhatsApp ya no distingue a Bukea en barbería (ellos también lo tienen). La punta de lanza pasa a ser **multivertical + funciona en cualquier teléfono** (BarberTime es solo iPhone; Android domina ~85% de RD). Ver `docs/COMPETENCIA-BARBERTIME.md`.
 
 ## Próximo paso sugerido
 
-Iterar el demo (`prototype/demo.html`) con feedback del dueño y bocetear el lado B2B; en paralelo, ejecutar la Fase 0 (dominios y validación con negocios reales).
+Ejecutar la Fase 0 (registrar `bukea.do`, handles, ONAPI, validar precio con 10–15 profesionales — los 16 negocios públicos de BarberTime son prospectos de oro) y endurecer el MVP con ese feedback.

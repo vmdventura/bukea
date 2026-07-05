@@ -1,15 +1,15 @@
 # Bukea — Plan del Proyecto
 
-> Última actualización: 4 de julio de 2026 · Documento hermano: [Visión de Producto](VISION.md)
+> Última actualización: 5 de julio de 2026 · Documento hermano: [Visión de Producto](VISION.md)
 
 ## Dónde estamos hoy
 
 | Área | Estado |
 |---|---|
-| Definición | ✅ Visión de producto, nombre y análisis de competencia completos |
+| Definición | ✅ Visión de producto, nombre y análisis de competencia (BarberTime) completos |
 | Infraestructura | ✅ Repositorio propio `vmdventura/bukea` (privado) |
-| Marca | 🟡 Dominios verificados — falta registrarlos |
-| Producto | ⬜ Aún no hay código — MVP por iniciar |
+| Marca | 🟡 `bukeard.com` registrado y logo listo — faltan `bukea.do`, ONAPI y handles |
+| Producto | 🟡 MVP de prueba funcional en producción (ver "Lo construido") — falta validar y endurecer |
 
 ## Fase 0 — Fundación (antes de escribir código)
 
@@ -26,6 +26,17 @@
 **Criterio de salida:** dominios y marca asegurados, y al menos 10 profesionales que digan "yo pago eso".
 
 **Decisión (2026-07-05):** Víctor decidió arrancar el código del MVP en paralelo a completar la Fase 0, a sabiendas de que el criterio de salida formal (10+ profesionales validados, dominios registrados) todavía no se ha cumplido — no porque se haya dado por completado. Motivo: tener algo funcional que mostrar ayuda a la validación con profesionales reales. La Fase 0 sigue activa y sus pendientes no se tachan por este cambio.
+
+## Lo construido (MVP de prueba)
+
+App en producción en [vmdventura.com/bukea](https://vmdventura.com/bukea/) — Node.js + Express + MySQL, servida como PWA a pantalla completa (instalable, safe-areas de iOS). Código en `backend/`.
+
+- **Login del cliente** — bienvenida "drenched" en teal con logo, número dominicano (809/829/849) + PIN de 4 dígitos (hash scrypt). Opción "continuar como invitado".
+- **Verificación por WhatsApp (OTP)** — código completo y desplegado, dormido hasta configurar las credenciales de Meta (ver [WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)). Costo por código: ~US$0.013 (~RD$0.80).
+- **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
+- **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
+
+**Limitaciones conocidas (deuda técnica del slice):** la sesión del negocio es solo `localStorage` (sin login real todavía); datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo.
 
 ## Roadmap del MVP
 
@@ -62,7 +73,8 @@ Vertical con marketing dedicado: **cejas y maquillaje** (bodas, graduaciones, qu
 2. **Cero comisión.** Ataque directo al 20%/US$6 de Fresha. Suscripción plana RD$500–1,500/mes por silla; plan gratuito generoso al arrancar; gratis siempre para el cliente.
 3. **El hueco del mercado.** Nadie combina marketplace de consumo + toda la vertical de belleza + efectivo/transferencia + WhatsApp nativo + walk-ins. Ese cuadrante es de Bukea.
 4. **Efecto multivertical.** La misma clienta usa uñas + cejas + salón (3–4 citas/mes) y se captura el hogar completo en una sola cuenta.
+5. **Multivertical + funciona en cualquier teléfono son ahora la punta de lanza.** Tras analizar a BarberTime (ver [COMPETENCIA-BARBERTIME.md](COMPETENCIA-BARBERTIME.md)), WhatsApp ya no distingue frente a ellos en barbería: ellos también lo tienen. Lo que sí no tienen es Android/web (son solo iPhone, y Android domina ~85% de RD) ni verticales fuera de barbería. La PWA de Bukea corre en cualquier teléfono desde el día uno.
 
 ## Próximo paso inmediato
 
-Registrar los dominios (Fase 0) y validar el precio con negocios reales.
+Completar Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas). En paralelo, endurecer el MVP con el feedback de esa validación.
