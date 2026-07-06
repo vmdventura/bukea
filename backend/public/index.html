@@ -182,6 +182,17 @@
     padding: 0.7rem 0.85rem; border-radius: 16px;
   }
   .cats-circle .cat .txt { font-size: 0.82rem; }
+
+  /* Categorías del inicio — grid vertical (ícono arriba, nombre debajo) */
+  .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+  .cats-grid .cat {
+    flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.6rem;
+    padding: 1.05rem 0.4rem 0.9rem; border-radius: 20px; min-height: 116px;
+  }
+  .cats-grid .cat .txt { font-size: 0.72rem; text-align: center; line-height: 1.2; }
+  .cats-grid .cat-badge { width: 56px; height: 56px; }
+  .cats-grid .cat-ic { width: 29px; height: 29px; }
+
   .cat-badge {
     width: 46px; height: 46px; flex: none; border-radius: 50%;
     background: linear-gradient(150deg, var(--brand-teal), var(--teal-900));
@@ -272,14 +283,19 @@
   @media (prefers-reduced-motion: reduce) { .splash-logo, .splash-word, .splash-tag { animation: none; } }
 
   /* Logo de marca arriba del inicio (lockup teal sobre fondo claro) */
-  .home-brand { text-align: center; margin: 0.4rem 0 0.9rem; }
-  .home-brand .mark {
+  /* Logo completo de Bukea en el inicio (marca + wordmark, sobre fondo claro) */
+  .home-logo { display: flex; flex-direction: column; align-items: center; gap: 0.02rem; margin: 0.3rem 0 0.7rem; }
+  .home-logo .hl-mark {
     font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
-    font-size: 2.6rem; color: var(--brand-teal); line-height: 1; display: inline-block;
+    font-size: 2.5rem; color: var(--brand-teal); line-height: 0.95;
+  }
+  .home-logo .hl-word {
+    font-family: "Bodoni Moda", "Fraunces", serif; font-weight: 700;
+    font-size: 1.3rem; color: var(--brand-teal); line-height: 1; letter-spacing: 0.01em;
   }
   /* Encabezado centrado del inicio */
-  .home-header { text-align: center; margin-bottom: 1.2rem; }
-  .home-header .app-h1 { margin: 0 0 0.25rem; }
+  .home-header { text-align: center; margin-bottom: 1.25rem; }
+  .home-header .app-h1 { font-size: 1.35rem; margin: 0 0 0.25rem; }
   .home-header .home-loc { justify-content: center; margin: 0; }
 
   /* ===== Bienvenida / login ===== */
@@ -374,6 +390,15 @@
   }
   .panel-stat .k { font-size: 0.8rem; color: var(--soft); }
   .panel-stat .v { font-family: "Fraunces", serif; font-size: 1.3rem; font-weight: 600; color: var(--teal-700); }
+
+  .cuadre-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.6rem; }
+  .cuadre-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.7rem 0.6rem; text-align: center;
+  }
+  .cuadre-card .c-k { display: block; font-size: 0.68rem; color: var(--soft); margin-bottom: 0.25rem; }
+  .cuadre-card .c-v { display: block; font-family: "Fraunces", serif; font-size: 1.02rem; font-weight: 600; color: var(--teal-700); }
+  .cuadre-card .c-n { display: block; font-size: 0.68rem; color: var(--soft); margin-top: 0.15rem; }
 
   .cita-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
@@ -651,12 +676,12 @@
 <symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
 <!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
-<symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6.6" r="2.3"/><circle cx="6" cy="17.4" r="2.3"/><line x1="8" y1="8" x2="20" y2="18.5"/><line x1="8" y1="16" x2="20" y2="5.5"/></symbol>
-<symbol id="c-unas" viewBox="0 0 24 24"><rect x="8.5" y="9" width="7" height="10.5" rx="2"/><path d="M10 9V6.6a1.4 1.4 0 0 1 1.4-1.4h1.2A1.4 1.4 0 0 1 14 6.6V9"/><line x1="10.6" y1="3.2" x2="13.4" y2="3.2"/><line x1="12" y1="3.2" x2="12" y2="5.2"/></symbol>
-<symbol id="c-salon" viewBox="0 0 24 24"><rect x="5.5" y="6.4" width="11.6" height="7.3" rx="3.65"/><path d="M5.5 8.5 2.9 9.2a0.9 0.9 0 0 0 0 1.9l2.6 .7"/><path d="M9 13.7v4a1.5 1.5 0 0 0 1.5 1.5h1.4"/><circle cx="12.9" cy="10.05" r="1.25"/></symbol>
-<symbol id="c-maquillaje" viewBox="0 0 24 24"><rect x="8.8" y="12.4" width="6.4" height="8.1" rx="1.5"/><path d="M9.8 12.4V6l4.4-2.4V12.4"/></symbol>
-<symbol id="c-cejas" viewBox="0 0 24 24"><path d="M4 9.3c2.8-3.2 8.2-3.6 12-1.2"/><path d="M4.5 14.4c2.2-2.5 6-3.2 9.4-1.7 2 .9 3.4 2.3 4.6 4.2"/><circle cx="9" cy="15.1" r="1.5"/></symbol>
-<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.4" r="1.9"/><path d="M12 6.3V11.8"/><path d="M7 8.8 12 10.2 17 8.8"/><path d="M12 11.8 8.6 18"/><path d="M12 11.8 15.4 18"/></symbol>
+<symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6.4" cy="6.7" r="2.1"/><circle cx="6.4" cy="17.3" r="2.1"/><path d="M8.3 7.9 20 17.8"/><path d="M8.3 16.1 20 6.2"/></symbol>
+<symbol id="c-unas" viewBox="0 0 24 24"><rect x="9" y="9.2" width="6" height="10.3" rx="2"/><path d="M10.2 9.2V7a1.3 1.3 0 0 1 1.3-1.3h1A1.3 1.3 0 0 1 14.6 7v2.2"/><rect x="10.6" y="3" width="2.8" height="2.5" rx="0.8"/></symbol>
+<symbol id="c-salon" viewBox="0 0 24 24"><rect x="5.4" y="6.6" width="11.5" height="7" rx="3.5"/><path d="M5.4 8.6 3 9.3a0.85 0.85 0 0 0 0 1.8l2.4 .6"/><path d="M9 13.6v3.9a1.5 1.5 0 0 0 1.5 1.5H12"/><circle cx="13" cy="10.1" r="1.15"/></symbol>
+<symbol id="c-maquillaje" viewBox="0 0 24 24"><rect x="9" y="12.6" width="6" height="7.9" rx="1.5"/><path d="M10 12.6V6.2l4-2.2v8.6"/></symbol>
+<symbol id="c-cejas" viewBox="0 0 24 24"><path d="M4.2 9.6c2.7-3 8-3.4 11.6-1.1"/><path d="M4.6 14.2c2.1-2.3 5.8-3 9.1-1.6 1.9.8 3.3 2.2 4.5 4"/><circle cx="9" cy="14.9" r="1.4"/></symbol>
+<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.4" r="1.9"/><path d="M12 6.4V12"/><path d="M6.8 8.7 12 10.1 17.2 8.7"/><path d="M12 12 8.4 18.2"/><path d="M12 12 15.6 18.2"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 </defs>
 </svg>
@@ -716,7 +741,7 @@
   <!-- ============ INICIO ============ -->
   <div class="screen" id="inicio">
     <div class="home-header">
-      <div class="home-brand"><span class="mark">b</span></div>
+      <div class="home-logo"><span class="hl-mark">b</span><span class="hl-word">Bukea</span></div>
       <h1 class="app-h1" id="home-greeting">¿Qué buscas hoy?</h1>
       <p class="app-sub home-loc"><svg class="icon"><use href="#i-map-pin"/></svg> Ensanche Quisqueya, Santo Domingo</p>
     </div>
@@ -724,7 +749,7 @@
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
     <p class="option-label" style="margin-bottom:0.7rem">Servicios disponibles</p>
-    <div class="cats cats-circle">
+    <div class="cats cats-grid">
       <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
       <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
       <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
@@ -799,6 +824,25 @@
     <div class="panel-stat">
       <span class="k">Citas recibidas</span>
       <span class="v" id="panel-count">0</span>
+    </div>
+
+    <p class="sec-title">Mi Cuadre</p>
+    <div class="cuadre-grid">
+      <div class="cuadre-card">
+        <span class="c-k">Hoy</span>
+        <span class="c-v" id="cuadre-hoy">RD$0</span>
+        <span class="c-n" id="cuadre-hoy-n">0 citas</span>
+      </div>
+      <div class="cuadre-card">
+        <span class="c-k">7 días</span>
+        <span class="c-v" id="cuadre-7d">RD$0</span>
+        <span class="c-n" id="cuadre-7d-n">0 citas</span>
+      </div>
+      <div class="cuadre-card">
+        <span class="c-k">Este mes</span>
+        <span class="c-v" id="cuadre-mes">RD$0</span>
+        <span class="c-n" id="cuadre-mes-n">0 citas</span>
+      </div>
     </div>
 
     <p class="sec-title">Agenda <a href="#" onclick="loadPanel(); return false;">Actualizar</a></p>
@@ -1359,14 +1403,22 @@
     if (!slug) return;
     skeletonRows(document.getElementById('panel-citas'), 3);
     try {
-      const [profRes, citasRes] = await Promise.all([
+      const [profRes, citasRes, statsRes] = await Promise.all([
         fetch('/bukea/api/professionals/' + encodeURIComponent(slug)),
         fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
+        fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/stats'),
       ]);
       if (profRes.status === 404) { logoutPro(); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
       const prof = await profRes.json();
       const citas = await citasRes.json();
+
+      if (statsRes.ok) {
+        const stats = await statsRes.json();
+        renderCuadre('hoy', stats.today);
+        renderCuadre('7d', stats.last7Days);
+        renderCuadre('mes', stats.month);
+      }
 
       document.getElementById('panel-business').textContent = prof.businessName;
       document.getElementById('panel-name').textContent = prof.name;
@@ -1407,6 +1459,13 @@
         '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
       console.error(err);
     }
+  }
+
+  function renderCuadre(key, period) {
+    if (!period) return;
+    document.getElementById('cuadre-' + key).textContent = formatPrice(period.totalCents);
+    document.getElementById('cuadre-' + key + '-n').textContent =
+      period.count + (period.count === 1 ? ' cita' : ' citas');
   }
 
   function logoutPro() {
