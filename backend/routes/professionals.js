@@ -167,4 +167,38 @@ router.get('/:slug/bookings', async (req, res) => {
   );
 });
 
+// "Mi Cuadre": cuánto vendió el profesional hoy, en los últimos 7 días y en el
+// mes en curso. Los períodos se calculan sobre created_at (cuándo se hizo la
+// reserva) porque day_label es texto libre ("Hoy", "Mañana"), no una fecha real.
+router.get('/:slug/stats', async (req, res) => {
+  const [professionals] = await pool.query(
+    'SELECT id FROM professionals WHERE slug = ?',
+    [req.params.slug]
+  );
+  const professional = professionals[0];
+  if (!professional) {
+    return res.status(404).json({ error: 'Profesional no encontrado' });
+  }
+
+  const [[stats]] = await pool.query(
+    `SELECT
+       COUNT(CASE WHEN b.created_at >= CURDATE() THEN 1 END) AS today_count,
+       COALESCE(SUM(CASE WHEN b.created_at >= CURDATE() THEN s.price_cents END), 0) AS today_cents,
+       COUNT(CASE WHEN b.created_at >= CURDATE() - INTERVAL 6 DAY THEN 1 END) AS week_count,
+       COALESCE(SUM(CASE WHEN b.created_at >= CURDATE() - INTERVAL 6 DAY THEN s.price_cents END), 0) AS week_cents,
+       COUNT(CASE WHEN b.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') THEN 1 END) AS month_count,
+       COALESCE(SUM(CASE WHEN b.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') THEN s.price_cents END), 0) AS month_cents
+     FROM bookings b
+     JOIN services s ON s.id = b.service_id
+     WHERE b.professional_id = ?`,
+    [professional.id]
+  );
+
+  res.json({
+    today: { count: Number(stats.today_count), totalCents: Number(stats.today_cents) },
+    last7Days: { count: Number(stats.week_count), totalCents: Number(stats.week_cents) },
+    month: { count: Number(stats.month_count), totalCents: Number(stats.month_cents) },
+  });
+});
+
 module.exports = router;

@@ -1,6 +1,7 @@
 # Bukea — Plan del Proyecto
 
 > Última actualización: 5 de julio de 2026 · Documento hermano: [Visión de Producto](VISION.md)
+> **¿Qué hacer ahora y en qué orden?** → ver [ROADMAP.md](ROADMAP.md), el checklist secuencial de ejecución (6 etapas).
 
 ## Dónde estamos hoy
 
@@ -35,6 +36,7 @@ App en producción en [vmdventura.com/bukea](https://vmdventura.com/bukea/) — 
 - **Verificación por WhatsApp (OTP)** — código completo y desplegado, dormido hasta configurar las credenciales de Meta (ver [WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)). Costo por código: ~US$0.013 (~RD$0.80).
 - **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
+- **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; los períodos se calculan sobre `created_at` de la reserva porque `day_label` es texto libre, no fecha real — al migrar a fechas reales, el cuadre debería pasar a la fecha de la cita.
 
 **Limitaciones conocidas (deuda técnica del slice):** la sesión del negocio es solo `localStorage` (sin login real todavía); datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo.
 
@@ -49,6 +51,7 @@ Verticales: **barbería + uñas** (alta frecuencia, decisión rápida, muy Insta
 - Confirmaciones y recordatorios por **WhatsApp**
 - Pago en **efectivo y transferencia** como primera clase
 - Reserva por diseño en uñas: foto + mini-cotización antes de aceptar
+- **"Mi Cuadre" básico en "Mi negocio"**: cuánto vendió el profesional — resumen de hoy, últimos 7 días y mes ✅ ya construido en el MVP de prueba (2026-07-05, ver "Lo construido")
 
 ### Fase 2 — Lo que nadie más tiene
 
@@ -57,6 +60,7 @@ Vertical nueva: **salones** (reserva multi-servicio y multi-empleado).
 - **Fila virtual para walk-ins** — turno en vivo con aviso por WhatsApp
 - Lealtad digital (la tarjetica: 10 cortes = 1 gratis)
 - Reseñas con foto verificada
+- **"Mi Cuadre" completo — panel de detalles** (profundiza el Cuadre básico de Fase 1): cliente más recurrente, servicios más vendidos, ingreso por servicio, citas completadas vs. canceladas/no-show, horas y días pico — se alimenta de la lealtad y la recurrencia de esta fase
 
 ### Fase 3 — Monetización y eventos
 

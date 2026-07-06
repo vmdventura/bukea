@@ -43,6 +43,7 @@ El proyecto deportivo **DeportesDO** vive en su propio repo (`vmdventura/Deporte
 - Repo propio, separado de otros proyectos
 - Nombre "Bukea" verificado libre en App Store y Google Play (2026-07-04)
 - **`bukeard.com` registrado** (el .com principal — "Bukea RD") y **logo listo** ("b" itálica serif + wordmark, variantes crema/teal, tagline "Bukear nunca fue tan fácil")
+- **Landing de `bukeard.com` en producción** (BanaHosting, cPanel, SSL Let's Encrypt activo): favicon, SEO completo (title, description, Open Graph, Twitter Card, canonical). Slogan del badge del hero: **"Tu cita, en tus manos"** — candidato a eslogan principal de la marca (más fuerte que "Belleza en República Dominicana", que quedó como descripción genérica). Evaluar si se promueve a tagline oficial junto a "Bukear nunca fue tan fácil".
 - **MVP de prueba funcional en producción** en `vmdventura.com/bukea` (Node + Express + MySQL, PWA): login por teléfono + PIN, inicio por categorías, listado filtrado, reserva real en MySQL, lado B2B (registro y panel del negocio), "Mis citas". Verificación por WhatsApp lista pero dormida (falta cuenta Meta).
 
 **Pendiente ⬜ (Fase 0 — sigue activa)**

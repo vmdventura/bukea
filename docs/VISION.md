@@ -88,7 +88,8 @@ La gente es fiel a *su* barbero, *su* manicurista, *su* estilista — no a la si
 ### Lado B2B (el negocio)
 
 - Agenda multi-silla con comisiones barbero/dueño (modelo dominicano de porcentaje por silla).
-- Reporte diario de caja, clientes e inventario básico.
+- **"Mi Cuadre"** — panel de estadísticas en "Mi negocio": el profesional ve cuánto vendió con resumen por día, últimos 7 días y mes (del dominicano "cuadrar la caja"). Encima, un panel de detalles para identificarlo todo: cliente más recurrente, servicios más vendidos, ingreso por servicio, citas completadas vs. canceladas/no-show, horas y días pico. Es el cuadre de caja digital que hoy llevan en una libreta.
+- Inventario básico.
 - Facturación con NCF (DGII) — ningún player global lo ofrece.
 
 ## 4. Verticales

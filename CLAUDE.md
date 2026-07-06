@@ -41,10 +41,10 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 ## Backend de prueba (`backend/`)
 
 - Stack: Node.js + Express + MySQL (`mysql2`), sin autenticación, datos semi-fijos (un profesional de prueba: Joel "El Fino" Batista con 3 servicios).
-- Endpoints: `GET /bukea/api/professionals/:slug`, `POST /bukea/api/bookings`, `GET /bukea/api/health`.
+- Endpoints: `GET /bukea/api/professionals/:slug`, `GET /bukea/api/professionals/:slug/stats` ("Mi Cuadre": ventas de hoy / 7 días / mes, calculadas sobre `created_at` de la reserva), `POST /bukea/api/bookings`, `GET /bukea/api/health`.
 - Sirve también el frontend (`backend/public/index.html`, copia de `prototype/demo-v2.html` adaptada para consumir la API real en vez de datos hardcodeados).
 - Desplegado en el hosting de Víctor (BanaHosting, cPanel con Node.js Selector) bajo `/vmdventura.com/bukea-app/`, expuesto en `https://vmdventura.com/bukea/`. La app en cPanel está montada con URI `vmdventura.com/bukea`, y como Passenger reenvía la ruta completa sin recortar el prefijo, tanto las rutas de Express como los `fetch` del frontend usan el prefijo `/bukea` explícitamente (ver `BASE` en `backend/app.js`).
-- Credenciales de MySQL viven como variables de entorno en el panel de Node.js de cPanel (no en un `.env` en el servidor, para no exponer la contraseña en un directorio web). Localmente, `backend/.env` (gitignored) las replica para desarrollo — usar `backend/.env.example` como plantilla.
+- Credenciales de MySQL viven como variables de entorno en el panel de Node.js de cPanel (no en un `.env` en el servidor, para no exponer la contraseña en un directorio web). Localmente, `backend/.env` (gitignored) las replica para desarrollo — usar `backend/.env.example` como plantilla. **Ojo:** si la contraseña contiene `#`, va entre comillas en el `.env` (dotenv corta el valor en un `#` sin comillas). Para desarrollo local existe un MySQL de Homebrew con la misma base/usuario/contraseña que producción (creado 2026-07-05); arrancar con `brew services start mysql`.
 - Al arrancar, el servidor crea las tablas (`backend/db/schema.sql`) y siembra el profesional de prueba si no existe (`backend/db/init.js`) — no requiere ejecutar un script aparte por SSH.
 
 ## Próximos pasos probables

@@ -11,7 +11,7 @@
 | Lanzamiento | ~2026 (v1.1.5–1.2.0 entre abril y junio) |
 | Rating | 4.9★ (78 calificaciones) |
 | Tracción declarada | +20,000 citas completadas · +5,000 clientes activos · +150 negocios |
-| Modelo de cobro al negocio | **No público** en su web (fricción comercial que Bukea puede explotar) |
+| Modelo de cobro al negocio | ~~No público~~ **Actualización 2026-07-05: ya es público** — Básico RD$800, Premium RD$1,200, Negocios RD$3,000/mes; 1 mes gratis con tarjeta requerida (ver [FLUJO-BARBERTIME.md](FLUJO-BARBERTIME.md)) |
 
 ## Lo que ya tienen (y la visión de Bukea subestimaba)
 
@@ -24,13 +24,13 @@
 
 ## Debilidades explotables
 
-1. **Solo iPhone.** No tienen app Android ni web app funcional para reservar — y Android domina ~85% del mercado dominicano. La PWA de Bukea corre en cualquier teléfono desde el día uno. **Este es el hueco más grande.**
+1. **Solo iPhone — pero por poco tiempo.** ⚠️ Actualización 2026-07-05: su web ya muestra badge de Google Play con package real (`app.mibarbertime.client`), aunque el listing da 404 — el lanzamiento Android parece inminente. La ventana de "Bukea corre en Android y ellos no" se está cerrando; Android domina ~85% del mercado dominicano.
 2. **Solo barbería, hasta en el nombre.** Expandirse a uñas/salones les rompería la marca. Bukea captura a la clienta multivertical (uñas + cejas + salón = 3-4 citas/mes) que ellos no pueden atender.
 3. **Tarjeta como primera clase.** Empujan pago con tarjeta y cargos por cancelación — fricción para el 90% del mercado que funciona en efectivo/transferencia. El "pagas allá, como siempre" de Bukea sigue siendo diferenciador.
 4. **Sin fila virtual para walk-ins** — el comportamiento dominante en barberías dominicanas sigue sin dueño.
 5. **Listing descuidado**: idioma del App Store en "English", 16+.
 6. **Centrados en el local, no en el profesional.** El modelo de Bukea (el barbero es el perfil y se lleva su clientela si se muda) sigue libre.
-7. **Precio al negocio opaco** — Bukea puede golpear con transparencia: "RD$500–1,500/mes por silla, cero comisión, publicado en la web".
+7. ~~Precio al negocio opaco~~ **Obsoleta (2026-07-05): ya publican precios** (RD$800–3,000/mes). El ángulo de Bukea cambia a: **entrada más barata** (RD$500 vs RD$800) y **prueba sin tarjeta** (ellos exigen tarjeta para el mes gratis).
 
 ## Amenazas reales
 
