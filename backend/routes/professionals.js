@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
   );
 });
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates'];
 
 function slugify(text) {
   return text

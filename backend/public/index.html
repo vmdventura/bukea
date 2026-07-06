@@ -124,13 +124,59 @@
   .cat .icon { font-size: 1.3rem; color: var(--teal-700); }
   .cat .txt { font-size: 0.62rem; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
 
-  /* Categorías como héroe del inicio */
-  .cats-hero { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-  .cats-hero .cat { padding: 1.5rem 0.5rem 1.2rem; border-radius: 20px; gap: 0.6rem; }
-  .cats-hero .cat .icon { font-size: 1.9rem; }
-  .cats-hero .cat .txt { font-size: 0.78rem; }
-  .cats-hero .cat:last-child { grid-column: 1 / -1; flex-direction: row; justify-content: center; padding: 1rem 0.5rem; }
-  .cats-hero .cat:last-child .icon { font-size: 1.4rem; }
+  /* Categorías del inicio — círculo teal (Modelo 4) */
+  .cats-circle { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+  .cats-circle .cat {
+    flex-direction: row; justify-content: flex-start; gap: 0.7rem;
+    padding: 0.7rem 0.85rem; border-radius: 16px;
+  }
+  .cats-circle .cat .txt { font-size: 0.82rem; }
+  .cat-badge {
+    width: 46px; height: 46px; flex: none; border-radius: 50%;
+    background: linear-gradient(150deg, var(--brand-teal), var(--teal-900));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cat-ic {
+    width: 24px; height: 24px; fill: none; stroke: var(--brand-cream);
+    stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* Onboarding — hoja "¿Qué servicio buscas?" (bottom sheet, primera vez) */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    background: rgba(10, 30, 28, 0.45); backdrop-filter: blur(2px);
+    align-items: flex-end; justify-content: center;
+  }
+  .sheet-backdrop.show { display: flex; animation: fade-in 220ms var(--ease); }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .sheet {
+    width: 100%; max-width: 480px; background: var(--card);
+    border-radius: 26px 26px 0 0; padding: 0.7rem 1.2rem calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
+    animation: sheet-up 320ms var(--ease);
+  }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .sheet-backdrop.show { animation: none; } }
+  .sheet-handle { width: 42px; height: 5px; border-radius: 999px; background: var(--line); margin: 0.2rem auto 1rem; }
+  .sheet .s-brand { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 1.7rem; color: var(--brand-teal); line-height: 1; }
+  .sheet h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.35rem; color: var(--ink); margin: 0.5rem 0 0.25rem; }
+  .sheet .s-sub { font-size: 0.85rem; color: var(--soft); margin: 0 0 1.1rem; line-height: 1.45; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
+  .sheet-item {
+    display: flex; align-items: center; gap: 0.6rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.6rem 0.7rem; cursor: pointer; font-family: inherit;
+    font-size: 0.82rem; font-weight: 700; color: var(--ink);
+    transition: border-color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .sheet-item:hover { border-color: var(--teal-500); }
+  .sheet-item:active { transform: scale(0.98); }
+  .sheet-item .cat-badge { width: 40px; height: 40px; }
+  .sheet-item .cat-ic { width: 21px; height: 21px; }
+  .sheet-skip {
+    display: block; margin: 1.1rem auto 0.2rem; background: none; border: none;
+    font-family: inherit; font-size: 0.9rem; font-weight: 700; color: var(--soft);
+    cursor: pointer; padding: 0.5rem;
+  }
 
   .pro-link {
     background: none; border: 1.5px dashed var(--line); border-radius: 15px;
@@ -541,6 +587,13 @@
 <symbol id="i-hair" viewBox="0 0 24 24"><path d="M4 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/><path d="M4 13c3 0 3 3 6 3s3-3 6-3 3 3 6 3" opacity=".65"/><path d="M4 19c3 0 3 2.4 6 2.4s3-2.4 6-2.4 3 2.4 6 2.4" opacity=".4"/></symbol>
 <symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
+<!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
+<symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6.6" r="2.3"/><circle cx="6" cy="17.4" r="2.3"/><line x1="8" y1="8" x2="20" y2="18.5"/><line x1="8" y1="16" x2="20" y2="5.5"/></symbol>
+<symbol id="c-unas" viewBox="0 0 24 24"><rect x="8.5" y="9" width="7" height="10.5" rx="2"/><path d="M10 9V6.6a1.4 1.4 0 0 1 1.4-1.4h1.2A1.4 1.4 0 0 1 14 6.6V9"/><line x1="10.6" y1="3.2" x2="13.4" y2="3.2"/><line x1="12" y1="3.2" x2="12" y2="5.2"/></symbol>
+<symbol id="c-salon" viewBox="0 0 24 24"><rect x="5.5" y="6.4" width="11.6" height="7.3" rx="3.65"/><path d="M5.5 8.5 2.9 9.2a0.9 0.9 0 0 0 0 1.9l2.6 .7"/><path d="M9 13.7v4a1.5 1.5 0 0 0 1.5 1.5h1.4"/><circle cx="12.9" cy="10.05" r="1.25"/></symbol>
+<symbol id="c-maquillaje" viewBox="0 0 24 24"><rect x="8.8" y="12.4" width="6.4" height="8.1" rx="1.5"/><path d="M9.8 12.4V6l4.4-2.4V12.4"/></symbol>
+<symbol id="c-cejas" viewBox="0 0 24 24"><path d="M4 9.3c2.8-3.2 8.2-3.6 12-1.2"/><path d="M4.5 14.4c2.2-2.5 6-3.2 9.4-1.7 2 .9 3.4 2.3 4.6 4.2"/><circle cx="9" cy="15.1" r="1.5"/></symbol>
+<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.4" r="1.9"/><path d="M12 6.3V11.8"/><path d="M7 8.8 12 10.2 17 8.8"/><path d="M12 11.8 8.6 18"/><path d="M12 11.8 15.4 18"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 </defs>
 </svg>
@@ -606,13 +659,14 @@
 
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
-    <p class="option-label" style="margin-bottom:0.6rem">Servicios disponibles</p>
-    <div class="cats cats-hero">
-      <div class="cat" onclick="openCategory('barberia','Barbería')"><svg class="icon"><use href="#i-scissors"/></svg><span class="txt">Barbería</span></div>
-      <div class="cat" onclick="openCategory('unas','Uñas')"><svg class="icon"><use href="#i-sparkle"/></svg><span class="txt">Uñas</span></div>
-      <div class="cat" onclick="openCategory('salon','Salón')"><svg class="icon"><use href="#i-hair"/></svg><span class="txt">Salón</span></div>
-      <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><svg class="icon"><use href="#i-brush"/></svg><span class="txt">Maquillaje</span></div>
-      <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><svg class="icon"><use href="#i-brow"/></svg><span class="txt">Cejas &amp; MUA</span></div>
+    <p class="option-label" style="margin-bottom:0.7rem">Servicios disponibles</p>
+    <div class="cats cats-circle">
+      <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
+      <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
+      <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
+      <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
+      <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
+      <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
     </div>
 
     <button class="pro-link" onclick="openPro()">
@@ -658,6 +712,7 @@
         <button class="pill-btn" data-cat="salon" onclick="pickRegCat(this)">Salón</button>
         <button class="pill-btn" data-cat="maquillaje" onclick="pickRegCat(this)">Maquillaje</button>
         <button class="pill-btn" data-cat="cejas-mua" onclick="pickRegCat(this)">Cejas &amp; MUA</button>
+        <button class="pill-btn" data-cat="pilates" onclick="pickRegCat(this)">Pilates</button>
       </div>
     </div>
 
@@ -851,6 +906,25 @@
     <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-txt">Fila</span></button>
     <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
     <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Mi negocio</span></button>
+  </div>
+
+  <!-- ============ ONBOARDING (hoja: ¿qué servicio buscas?) ============ -->
+  <div class="sheet-backdrop" id="onboarding">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="s-brand">b</div>
+      <h2>¿Qué servicio buscas?</h2>
+      <p class="s-sub">Lo ponemos primero para que reserves más rápido. Puedes cambiarlo cuando quieras.</p>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="onboardPick('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span>Barbería</button>
+        <button class="sheet-item" onclick="onboardPick('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span>Uñas</button>
+        <button class="sheet-item" onclick="onboardPick('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span>Salón</button>
+        <button class="sheet-item" onclick="onboardPick('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span>Maquillaje</button>
+        <button class="sheet-item" onclick="onboardPick('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span>Cejas &amp; MUA</button>
+        <button class="sheet-item" onclick="onboardPick('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span>Pilates</button>
+      </div>
+      <button class="sheet-skip" onclick="closeOnboarding()">Ahora no</button>
+    </div>
   </div>
 </div>
 
@@ -1105,7 +1179,7 @@
   }
 
   /* ===== Lado B2B: registro y panel del profesional ===== */
-  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA' };
+  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates' };
 
   function proSlug() {
     return localStorage.getItem('bukea_pro_slug');
@@ -1435,8 +1509,24 @@
     go('inicio');
   }
 
-  /* Arranque: splash con el logo → inicio (explora sin cuenta). El login se
-     pide just-in-time al reservar o al abrir "Mis citas" / "Mi negocio". */
+  /* ===== Onboarding: "¿Qué servicio buscas?" (solo la primera vez) ===== */
+  function maybeShowOnboarding() {
+    if (localStorage.getItem('bukea_onboarded')) return;
+    document.getElementById('onboarding').classList.add('show');
+  }
+  function closeOnboarding() {
+    localStorage.setItem('bukea_onboarded', '1');
+    document.getElementById('onboarding').classList.remove('show');
+  }
+  function onboardPick(key, label) {
+    localStorage.setItem('bukea_pref_cat', key);
+    closeOnboarding();
+    openCategory(key, label);
+  }
+
+  /* Arranque: splash con el logo → inicio (explora sin cuenta), y la primera
+     vez sube la hoja de onboarding. El login se pide just-in-time al reservar
+     o al abrir "Mis citas" / "Mi negocio". */
   const SPLASH_MS = 1400;
   function boot() {
     applySessionUI();
@@ -1446,6 +1536,7 @@
       if (document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'splash') {
         go('inicio');
       }
+      maybeShowOnboarding();
     }, reduce ? 300 : SPLASH_MS);
   }
   boot();
