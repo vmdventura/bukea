@@ -93,6 +93,19 @@ Víctor compartió una propuesta de rediseño premium ("Bukea 2.0": Flutter, pal
 - [ ] Formalizar el modelo de negocio en niveles explícitos (Gratis / Pro / Premium) en vez de solo "plan gratuito + monetización posterior" — pendiente de confirmar con Víctor antes de escribirlo en VISION.md.
 - [ ] Panel de administrador interno (usuarios, negocios, moderación, analytics, suscripciones, CMS) — no estaba en el roadmap; se anota como necesidad futura de herramienta interna (no de cara al cliente ni al profesional).
 
+## Migración a WordPress en bukeard.com (decisión 2026-07-15 — en curso)
+
+Víctor decidió mover **todo** — incluido el motor de reservas, no solo el contenido/marketing — a un WordPress instalado en `bukeard.com`, en el mismo hosting compartido de BanaHosting donde corre hoy el MVP de prueba. Reemplaza el plan anterior de mantener Node/Express + MySQL como backend definitivo.
+
+**Contexto de la decisión:** se evaluó primero mantener el MVP de prueba (probado a fondo el 2026-07-15: reserva real de principio a fin, cuenta just-in-time, "Mi Cuadre" con datos reales — ver walkthrough de esa fecha) y usar WordPress solo para marketing/contenido. Víctor prefirió migrar todo el motor. Advertencia registrada en esa conversación: WooCommerce Bookings (y plugins de citas similares como Amelia/Bookly) están pensados para **un solo negocio con empleados**, no para un **marketplace de profesionales independientes** (el principio central de Bukea: "el profesional es el perfil, no el local"). Replicar ese modelo en WordPress probablemente exige combinar un plugin de reservas con uno de marketplace multivendedor (ej. Dokan/WCFM), lo cual es trabajo adicional real, no una migración directa.
+
+**Bloqueante actual:** esta sesión no tiene acceso al cPanel de BanaHosting — Víctor debe instalar WordPress ahí mismo (vía Softaculero u otro instalador) sobre `bukeard.com`. Una vez instalado, se necesita acceso (usuario/contraseña de wp-admin, y SFTP/SSH si hace falta tocar archivos) para continuar con tema, plugins y la réplica de los diferenciadores (efectivo/WhatsApp de primera clase, fila virtual, perfil por profesional).
+
+- [ ] Víctor instala WordPress en `bukeard.com` desde cPanel/Softaculous
+- [ ] Compartir acceso (wp-admin y/o SFTP) para continuar
+- [ ] Definir y confirmar el stack de plugins (booking + posible multivendedor) antes de instalar nada, dado el hueco de "profesional independiente" arriba
+- [ ] Decidir qué pasa con el MVP de prueba en `vmdventura.com/bukea` (¿se apaga, se deja como referencia, se usa de puente mientras se migra?)
+
 ## Próximo paso inmediato
 
-Completar Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas). En paralelo, endurecer el MVP con el feedback de esa validación.
+Instalar WordPress en `bukeard.com` (bloqueado en Víctor, ver sección de migración arriba) y, en paralelo, seguir la Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas).
