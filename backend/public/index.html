@@ -1059,6 +1059,7 @@
 </div>
 
 <script>
+  const BASE = location.pathname.replace(/\/$/, '');
   const state = {
     professional: null,
     serviceId: null,
@@ -1146,7 +1147,7 @@
     skeletonCards(container, 4);
     go('categoria');
     try {
-      const res = await fetch('/bukea/api/professionals?category=' + encodeURIComponent(key));
+      const res = await fetch(BASE + '/api/professionals?category=' + encodeURIComponent(key));
       if (!res.ok) throw new Error('No se pudo cargar la categoría');
       renderProCardList(container, await res.json());
     } catch (err) {
@@ -1234,7 +1235,7 @@
 
   async function loadProfessional(slug) {
     try {
-      const res = await fetch('/bukea/api/professionals/' + encodeURIComponent(slug));
+      const res = await fetch(BASE + '/api/professionals/' + encodeURIComponent(slug));
       if (!res.ok) throw new Error('No se pudo cargar el profesional');
       const prof = await res.json();
       renderProfessional(prof);
@@ -1260,7 +1261,7 @@
     btn.disabled = true;
     const clientName = getSession().name;
     try {
-      const res = await fetch('/bukea/api/bookings', {
+      const res = await fetch(BASE + '/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1398,7 +1399,7 @@
     btn.innerHTML = 'Creando cuenta…';
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/professionals', {
+      const res = await fetch(BASE + '/api/professionals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, businessName, neighborhood, category, services }),
@@ -1426,9 +1427,9 @@
     skeletonRows(document.getElementById('panel-citas'), 3);
     try {
       const [profRes, citasRes, statsRes] = await Promise.all([
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug)),
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/stats'),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug)),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats'),
       ]);
       if (profRes.status === 404) { logoutPro(); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
@@ -1593,7 +1594,7 @@
     const btn = document.getElementById('w-continue');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/check', {
+      const res = await fetch(BASE + '/api/auth/check', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: welcomePhone }),
       });
@@ -1633,7 +1634,7 @@
     const btn = document.getElementById('w-login');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/login', {
+      const res = await fetch(BASE + '/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: welcomePhone, pin: document.getElementById('w-pin').value }),
       });
@@ -1652,7 +1653,7 @@
     const btn = document.getElementById('w-register');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/register', {
+      const res = await fetch(BASE + '/api/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: welcomePhone,

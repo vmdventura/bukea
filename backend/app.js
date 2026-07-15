@@ -23,6 +23,15 @@ app.use(BASE + '/admin', adminRouter);
 
 app.get(BASE + '/api/health', (req, res) => res.json({ ok: true }));
 
+// manifest.json trae el prefijo de despliegue (start_url/scope) — se resuelve
+// en base a BASE en vez de quedar fijo, para que la PWA instale bien sin
+// importar bajo qué subruta viva (/bukea, /app, la raíz del dominio, etc).
+app.get(BASE + '/manifest.json', (req, res) => {
+  const fs = require('fs');
+  const manifest = fs.readFileSync(path.join(__dirname, 'public', 'manifest.json'), 'utf8');
+  res.type('application/manifest+json').send(manifest.replaceAll('__BASE__', BASE));
+});
+
 app.use(BASE, express.static(path.join(__dirname, 'public')));
 app.get(BASE + '/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
