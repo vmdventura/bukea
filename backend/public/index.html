@@ -485,6 +485,16 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   }
 
+  .reviews { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.3rem; }
+  .review { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 0.85rem 1rem; }
+  .review-quote {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 500; font-size: 1rem;
+    color: var(--ink); margin: 0 0 0.4rem; line-height: 1.4;
+  }
+  .review-foot { display: flex; align-items: center; justify-content: space-between; }
+  .review-author { font-size: 0.8rem; font-weight: 600; color: var(--soft); }
+  .review-stars { color: var(--gold-700); font-size: 0.8rem; letter-spacing: 0.05em; }
+
   .service {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 0.85rem 1.05rem; display: flex; justify-content: space-between; align-items: center;
@@ -880,6 +890,18 @@
       <div class="work" style="background:linear-gradient(150deg,#2e3a4d,#c05a4f)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
     </div>
 
+    <p class="sec-title">Opiniones</p>
+    <div class="reviews">
+      <div class="review">
+        <p class="review-quote">"Llegué sin cita un sábado y me avisó por WhatsApp cuando le tocaba a él. Cero espera parado en la puerta."</p>
+        <div class="review-foot"><span class="review-author">Ramón G.</span><span class="review-stars">★★★★★</span></div>
+      </div>
+      <div class="review">
+        <p class="review-quote">"Pagué transferencia sin drama y me mandó el recordatorio un día antes. Así debería ser siempre."</p>
+        <div class="review-foot"><span class="review-author">Yolanda P.</span><span class="review-stars">★★★★★</span></div>
+      </div>
+    </div>
+
     <p class="sec-title">Servicios</p>
     <div id="services-list">
       <p style="color:var(--soft);font-size:0.85rem">Cargando servicios…</p>
@@ -1037,6 +1059,7 @@
 </div>
 
 <script>
+  const BASE = location.pathname.replace(/\/$/, '');
   const state = {
     professional: null,
     serviceId: null,
@@ -1124,7 +1147,7 @@
     skeletonCards(container, 4);
     go('categoria');
     try {
-      const res = await fetch('/bukea/api/professionals?category=' + encodeURIComponent(key));
+      const res = await fetch(BASE + '/api/professionals?category=' + encodeURIComponent(key));
       if (!res.ok) throw new Error('No se pudo cargar la categoría');
       renderProCardList(container, await res.json());
     } catch (err) {
@@ -1212,7 +1235,7 @@
 
   async function loadProfessional(slug) {
     try {
-      const res = await fetch('/bukea/api/professionals/' + encodeURIComponent(slug));
+      const res = await fetch(BASE + '/api/professionals/' + encodeURIComponent(slug));
       if (!res.ok) throw new Error('No se pudo cargar el profesional');
       const prof = await res.json();
       renderProfessional(prof);
@@ -1238,7 +1261,7 @@
     btn.disabled = true;
     const clientName = getSession().name;
     try {
-      const res = await fetch('/bukea/api/bookings', {
+      const res = await fetch(BASE + '/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1376,7 +1399,7 @@
     btn.innerHTML = 'Creando cuenta…';
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/professionals', {
+      const res = await fetch(BASE + '/api/professionals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, businessName, neighborhood, category, services }),
@@ -1404,9 +1427,9 @@
     skeletonRows(document.getElementById('panel-citas'), 3);
     try {
       const [profRes, citasRes, statsRes] = await Promise.all([
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug)),
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
-        fetch('/bukea/api/professionals/' + encodeURIComponent(slug) + '/stats'),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug)),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
+        fetch(BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats'),
       ]);
       if (profRes.status === 404) { logoutPro(); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
@@ -1571,7 +1594,7 @@
     const btn = document.getElementById('w-continue');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/check', {
+      const res = await fetch(BASE + '/api/auth/check', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: welcomePhone }),
       });
@@ -1611,7 +1634,7 @@
     const btn = document.getElementById('w-login');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/login', {
+      const res = await fetch(BASE + '/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: welcomePhone, pin: document.getElementById('w-pin').value }),
       });
@@ -1630,7 +1653,7 @@
     const btn = document.getElementById('w-register');
     btn.disabled = true;
     try {
-      const res = await fetch('/bukea/api/auth/register', {
+      const res = await fetch(BASE + '/api/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: welcomePhone,

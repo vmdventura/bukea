@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bukea — Panel interno</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-900: oklch(24% 0.045 195);
+    --teal-600: oklch(46% 0.09 195);
+    --teal-100: oklch(93% 0.035 195);
+    --teal-50:  oklch(97% 0.018 195);
+    --ink:  oklch(21% 0.02 200);
+    --soft: oklch(45% 0.025 200);
+    --bg:   oklch(96% 0.012 195);
+    --card: oklch(99% 0.004 195);
+    --line: oklch(89% 0.012 195);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    padding: 1.5rem 1rem 4rem;
+  }
+  h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.5rem; margin: 0 0 0.2rem; }
+  .sub { color: var(--soft); font-size: 0.9rem; margin: 0 0 1.5rem; }
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  #login-screen { max-width: 340px; margin: 4rem auto; text-align: center; }
+  #login-screen input {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 12px;
+    font-size: 1rem; margin: 1rem 0 0.6rem; font-family: inherit; background: var(--card);
+  }
+  #login-screen button, .logout-btn {
+    width: 100%; padding: 0.75rem 1rem; border: none; border-radius: 12px;
+    background: var(--teal-600); color: #fff; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .logout-btn { width: auto; padding: 0.5rem 1rem; background: transparent; color: var(--soft);
+    border: 1px solid var(--line); font-weight: 600; }
+  #login-error { color: #b3261e; font-size: 0.85rem; min-height: 1.2em; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.75rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 1rem; }
+  .card .label { font-size: 0.75rem; color: var(--soft); text-transform: uppercase; letter-spacing: 0.03em; }
+  .card .value { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.5rem; color: var(--teal-900); margin-top: 0.2rem; }
+  .card .count { font-size: 0.78rem; color: var(--soft); }
+
+  h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.1rem; margin: 2rem 0 0.75rem; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 14px; overflow: hidden; }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; font-size: 0.88rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--soft); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  .top-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .empty { color: var(--soft); font-size: 0.88rem; padding: 1rem 0; }
+
+  #dashboard { display: none; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>Panel interno de Bukea</h1>
+  <p class="sub">Solo para Víctor. No es la app de clientes.</p>
+  <input type="password" id="pw" placeholder="Contraseña" autofocus>
+  <p id="login-error"></p>
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="dashboard">
+  <div class="wrap">
+    <div class="top-bar">
+      <div>
+        <h1>Panel interno de Bukea</h1>
+        <p class="sub">Vista de todos los profesionales y reservas, en un solo lugar.</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+
+    <div class="cards" id="totals-cards"></div>
+
+    <h2>Profesionales</h2>
+    <table id="pro-table">
+      <thead><tr><th>Nombre</th><th>Negocio</th><th>Categoría</th><th>Citas</th><th>Vendido</th><th>Última cita</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Actividad reciente</h2>
+    <table id="recent-table">
+      <thead><tr><th>Cuándo</th><th>Cliente</th><th>Profesional</th><th>Servicio</th><th>Pago</th><th>Monto</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const BASE = location.pathname.replace(/\/admin\/?$/, '');
+
+  function formatPrice(cents) {
+    return 'RD$ ' + Math.round(cents / 100).toLocaleString('es-DO');
+  }
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('es-DO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function login() {
+    const pw = document.getElementById('pw').value;
+    const res = await fetch(BASE + '/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    if (!res.ok) {
+      document.getElementById('login-error').textContent = 'Contraseña incorrecta';
+      return;
+    }
+    loadDashboard();
+  }
+
+  async function logout() {
+    await fetch(BASE + '/admin/logout', { method: 'POST' });
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'block';
+  }
+
+  function renderTotals(totals) {
+    const cards = [
+      { label: 'Profesionales', value: totals.professionalCount, count: null },
+      { label: 'Hoy', value: formatPrice(totals.today.totalCents), count: totals.today.count + ' citas' },
+      { label: 'Últimos 7 días', value: formatPrice(totals.last7Days.totalCents), count: totals.last7Days.count + ' citas' },
+      { label: 'Este mes', value: formatPrice(totals.month.totalCents), count: totals.month.count + ' citas' },
+      { label: 'Histórico', value: formatPrice(totals.allTime.totalCents), count: totals.allTime.count + ' citas' },
+    ];
+    document.getElementById('totals-cards').innerHTML = cards.map(c => `
+      <div class="card">
+        <div class="label">${c.label}</div>
+        <div class="value">${c.value}</div>
+        ${c.count ? `<div class="count">${c.count}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function renderProfessionals(list) {
+    const tbody = document.querySelector('#pro-table tbody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay profesionales.</td></tr>'; return; }
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.businessName}</td>
+        <td>${p.category}</td>
+        <td>${p.bookingsCount}</td>
+        <td>${formatPrice(p.totalCents)}</td>
+        <td>${formatDate(p.lastBookingAt)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderRecent(list) {
+    const tbody = document.querySelector('#recent-table tbody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay reservas.</td></tr>'; return; }
+    tbody.innerHTML = list.map(b => `
+      <tr>
+        <td>${formatDate(b.createdAt)}</td>
+        <td>${b.clientName}</td>
+        <td>${b.professionalName} · ${b.businessName}</td>
+        <td>${b.serviceName}</td>
+        <td>${b.paymentMethod}</td>
+        <td>${formatPrice(b.priceCents)}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadDashboard() {
+    const res = await fetch(BASE + '/admin/summary');
+    if (!res.ok) {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'block';
+      return;
+    }
+    const data = await res.json();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    renderTotals(data.totals);
+    renderProfessionals(data.byProfessional);
+    renderRecent(data.recent);
+  }
+
+  document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  loadDashboard();
+</script>
+</body>
+</html>

@@ -37,6 +37,7 @@ App en producción en [vmdventura.com/bukea](https://vmdventura.com/bukea/) — 
 - **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
 - **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; los períodos se calculan sobre `created_at` de la reserva porque `day_label` es texto libre, no fecha real — al migrar a fechas reales, el cuadre debería pasar a la fecha de la cita.
+- **Panel de administrador interno** — `/bukea/admin`, protegido con contraseña propia (no la de ningún profesional ni cliente). Muestra de un vistazo: profesionales totales, ventas hoy/7 días/mes/histórico de toda la plataforma, tabla de profesionales con sus citas y venta, y las últimas 20 reservas de cualquier profesional. Es la vista que responde "¿qué está pasando en la app?" sin entrar a phpMyAdmin ni esperar un CRM externo.
 
 **Limitaciones conocidas (deuda técnica del slice):** la sesión del negocio es solo `localStorage` (sin login real todavía); datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo.
 
@@ -79,6 +80,38 @@ Vertical con marketing dedicado: **cejas y maquillaje** (bodas, graduaciones, qu
 4. **Efecto multivertical.** La misma clienta usa uñas + cejas + salón (3–4 citas/mes) y se captura el hogar completo en una sola cuenta.
 5. **Multivertical + funciona en cualquier teléfono son ahora la punta de lanza.** Tras analizar a BarberTime (ver [COMPETENCIA-BARBERTIME.md](COMPETENCIA-BARBERTIME.md)), WhatsApp ya no distingue frente a ellos en barbería: ellos también lo tienen. Lo que sí no tienen es Android/web (son solo iPhone, y Android domina ~85% de RD) ni verticales fuera de barbería. La PWA de Bukea corre en cualquier teléfono desde el día uno.
 
+## Fusión con "Bukea 2.0" (visión alterna, 2026-07-15)
+
+Víctor compartió una propuesta de rediseño premium ("Bukea 2.0": Flutter, paleta `#00BFA5`, arquitectura de monorepo) guardada en [`docs/VISION-2.0.md`](VISION-2.0.md). Se comparó contra la dirección vigente y se decidió **combinar**: no re-litigar lo ya resuelto, pero sí absorber ideas de alcance que no chocan con lo construido.
+
+**No se adopta** (ya decidido y en producción, no re-abrir): cambio de stack a Flutter/Firebase, paleta `#00BFA5`, tipografía Playfair Display/Inter. El sistema de diseño vigente (Fraunces + Plus Jakarta Sans, teal OKLCH, ver [DESIGN.md](../DESIGN.md)) ya está implementado en `prototype/demo-v2.html` y `backend/public/index.html`.
+
+**Sí se incorpora** (ideas de alcance de producto, no de stack):
+
+- [x] "Opiniones" (reseñas de texto) en el perfil del profesional — agregado a `prototype/demo-v2.html` y `backend/public/index.html` (2026-07-15).
+- [ ] Favoritos y Ajustes del lado cliente — pendiente, candidato a Fase 2.
+- [ ] Ideas de IA (predecir cancelaciones, detectar huecos libres, sugerir horarios) — candidato para una fase posterior a la Fase 3, sin alterar el roadmap de 3 fases ya definido.
+- [ ] Formalizar el modelo de negocio en niveles explícitos (Gratis / Pro / Premium) en vez de solo "plan gratuito + monetización posterior" — pendiente de confirmar con Víctor antes de escribirlo en VISION.md.
+- [x] Panel de administrador interno básico — ✅ construido (2026-07-15): `/bukea/admin`, protegido con contraseña (`ADMIN_PASSWORD` en `.env`), muestra totales (profesionales, ventas hoy/7 días/mes/histórico), tabla de profesionales con sus citas y venta, y actividad reciente de todas las reservas. Todavía no incluye moderación, analytics avanzado, suscripciones ni CMS — eso sigue como necesidad futura.
+
+## WordPress en bukeard.com — en pausa (2026-07-15)
+
+Víctor había decidido mover todo el motor de reservas a WordPress + un plugin de booking/marketplace (Directorist + Directorist Booking, evaluado ese mismo día contra Dokan/WCFM y Booknetic SaaS). Al intentar instalarlo se descubrió que `bukeard.com` ya sirve un `index.html` estático (una landing con botones de App Store/Google Play, del 5 de julio) y que la instalación de WordPress nunca se completó (el formulario de Softaculous se llenó pero no se ejecutó). Con el MVP ya probado de punta a punta ese mismo día (reserva real, cuenta just-in-time, "Mi Cuadre" con datos reales), se decidió **pausar WordPress** y priorizar salir a validar precio con profesionales reales usando lo que ya funciona — WordPress queda como opción a retomar si esa validación confirma que vale la pena invertir en una reconstrucción mayor.
+
+## Mudanza del MVP a bukeard.com/app (decisión 2026-07-15 — en curso)
+
+En vez de WordPress, se decidió mover el MVP de prueba (Node/Express + MySQL) y el panel de administrador de `vmdventura.com/bukea` a `bukeard.com/app`, dejando la landing estática existente intacta en la raíz del dominio.
+
+**Ya listo en el código** (probado localmente sirviendo la misma app bajo `/bukea` y bajo `/app` sin diferencias):
+- [x] `backend/public/index.html` ya no tiene `/bukea/api/...` fijo — calcula la ruta base desde `location.pathname`, como ya hacía `admin.html`.
+- [x] `backend/public/manifest.json` usa un placeholder que `app.js` resuelve al servirlo, para que `start_url`/`scope` de la PWA coincidan con la ruta real de despliegue.
+
+**Pendiente — requiere acceso al cPanel de BanaHosting que esta sesión no tiene.** Guía paso a paso: [DEPLOY-BUKEARD-APP.md](DEPLOY-BUKEARD-APP.md).
+- [ ] Crear la app Node.js en cPanel (Node.js Selector) con: *Application root* una carpeta nueva bajo `bukeard.com` (ej. `bukeard.com/bukea-app`, mismo patrón que ya usa `vmdventura.com/bukea-app`), *Application URL* `bukeard.com/app`, *Startup file* `app.js`.
+- [ ] Variables de entorno en esa app: `BASE_PATH=/app`, las mismas `DB_HOST/DB_USER/DB_PASSWORD/DB_NAME` (decidir si comparte la misma base de datos que `vmdventura.com/bukea` o usa una copia), y **`ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET` propios** (no dejar los valores por defecto del código en producción).
+- [ ] Subir el código de `backend/` a esa carpeta (File Manager o Git) y correr `npm install` desde el panel de Node.js Selector.
+- [ ] Decidir qué pasa con `vmdventura.com/bukea` (¿se apaga, queda de respaldo, o corren ambos en paralelo un tiempo?)
+
 ## Próximo paso inmediato
 
-Completar Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas). En paralelo, endurecer el MVP con el feedback de esa validación.
+Mudar el MVP a `bukeard.com/app` (bloqueado en Víctor — necesita crear la app Node.js en cPanel, ver sección arriba) y, en paralelo, seguir la Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** usando la landing de `bukeard.com` + el MVP ya funcional.
