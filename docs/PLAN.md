@@ -106,7 +106,7 @@ En vez de WordPress, se decidió mover el MVP de prueba (Node/Express + MySQL) y
 - [x] `backend/public/index.html` ya no tiene `/bukea/api/...` fijo — calcula la ruta base desde `location.pathname`, como ya hacía `admin.html`.
 - [x] `backend/public/manifest.json` usa un placeholder que `app.js` resuelve al servirlo, para que `start_url`/`scope` de la PWA coincidan con la ruta real de despliegue.
 
-**Pendiente — requiere acceso al cPanel de BanaHosting que esta sesión no tiene:**
+**Pendiente — requiere acceso al cPanel de BanaHosting que esta sesión no tiene.** Guía paso a paso: [DEPLOY-BUKEARD-APP.md](DEPLOY-BUKEARD-APP.md).
 - [ ] Crear la app Node.js en cPanel (Node.js Selector) con: *Application root* una carpeta nueva bajo `bukeard.com` (ej. `bukeard.com/bukea-app`, mismo patrón que ya usa `vmdventura.com/bukea-app`), *Application URL* `bukeard.com/app`, *Startup file* `app.js`.
 - [ ] Variables de entorno en esa app: `BASE_PATH=/app`, las mismas `DB_HOST/DB_USER/DB_PASSWORD/DB_NAME` (decidir si comparte la misma base de datos que `vmdventura.com/bukea` o usa una copia), y **`ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET` propios** (no dejar los valores por defecto del código en producción).
 - [ ] Subir el código de `backend/` a esa carpeta (File Manager o Git) y correr `npm install` desde el panel de Node.js Selector.
