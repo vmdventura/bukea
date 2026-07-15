@@ -6,6 +6,7 @@ const { ensureReady } = require('./db/init');
 const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,7 @@ const BASE = process.env.BASE_PATH || '/bukea';
 app.use(BASE + '/api/auth', authRouter);
 app.use(BASE + '/api/professionals', professionalsRouter);
 app.use(BASE + '/api/bookings', bookingsRouter);
+app.use(BASE + '/admin', adminRouter);
 
 app.get(BASE + '/api/health', (req, res) => res.json({ ok: true }));
 

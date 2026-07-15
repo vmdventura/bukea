@@ -37,6 +37,7 @@ App en producción en [vmdventura.com/bukea](https://vmdventura.com/bukea/) — 
 - **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
 - **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; los períodos se calculan sobre `created_at` de la reserva porque `day_label` es texto libre, no fecha real — al migrar a fechas reales, el cuadre debería pasar a la fecha de la cita.
+- **Panel de administrador interno** — `/bukea/admin`, protegido con contraseña propia (no la de ningún profesional ni cliente). Muestra de un vistazo: profesionales totales, ventas hoy/7 días/mes/histórico de toda la plataforma, tabla de profesionales con sus citas y venta, y las últimas 20 reservas de cualquier profesional. Es la vista que responde "¿qué está pasando en la app?" sin entrar a phpMyAdmin ni esperar un CRM externo.
 
 **Limitaciones conocidas (deuda técnica del slice):** la sesión del negocio es solo `localStorage` (sin login real todavía); datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo.
 
@@ -91,7 +92,7 @@ Víctor compartió una propuesta de rediseño premium ("Bukea 2.0": Flutter, pal
 - [ ] Favoritos y Ajustes del lado cliente — pendiente, candidato a Fase 2.
 - [ ] Ideas de IA (predecir cancelaciones, detectar huecos libres, sugerir horarios) — candidato para una fase posterior a la Fase 3, sin alterar el roadmap de 3 fases ya definido.
 - [ ] Formalizar el modelo de negocio en niveles explícitos (Gratis / Pro / Premium) en vez de solo "plan gratuito + monetización posterior" — pendiente de confirmar con Víctor antes de escribirlo en VISION.md.
-- [ ] Panel de administrador interno (usuarios, negocios, moderación, analytics, suscripciones, CMS) — no estaba en el roadmap; se anota como necesidad futura de herramienta interna (no de cara al cliente ni al profesional).
+- [x] Panel de administrador interno básico — ✅ construido (2026-07-15): `/bukea/admin`, protegido con contraseña (`ADMIN_PASSWORD` en `.env`), muestra totales (profesionales, ventas hoy/7 días/mes/histórico), tabla de profesionales con sus citas y venta, y actividad reciente de todas las reservas. Todavía no incluye moderación, analytics avanzado, suscripciones ni CMS — eso sigue como necesidad futura.
 
 ## Migración a WordPress en bukeard.com (decisión 2026-07-15 — en curso)
 
