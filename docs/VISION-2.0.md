@@ -1,6 +1,8 @@
 # Bukea 2.0 — Visión del Producto
 
-> **Documento aspiracional / alterno.** Propone un rediseño premium (Flutter, nueva paleta, arquitectura de monorepo con apps separadas) que **no coincide** con las decisiones ya tomadas en [../CLAUDE.md](../CLAUDE.md) ni con lo ya construido en `backend/` (Node/Express + MySQL, teal `#0f8583`). Se guarda aquí como insumo para discusión futura — no reemplaza [VISION.md](VISION.md) ni [PLAN.md](PLAN.md), que siguen siendo la fuente de verdad vigente.
+> **Documento aspiracional / alterno — parcialmente incorporado.** Propone un rediseño premium (Flutter, nueva paleta, arquitectura de monorepo con apps separadas) que **no coincide** con las decisiones ya tomadas en [../CLAUDE.md](../CLAUDE.md) ni con lo ya construido en `backend/` (Node/Express + MySQL, teal OKLCH, Fraunces + Plus Jakarta Sans). No reemplaza [VISION.md](VISION.md), [PLAN.md](PLAN.md) ni [../DESIGN.md](../DESIGN.md), que siguen siendo la fuente de verdad vigente sobre stack, paleta y tipografía.
+>
+> **2026-07-15:** se revisó contra la dirección vigente y se decidió combinar — ver "[Fusión con Bukea 2.0](PLAN.md#fusión-con-bukea-20-visión-alterna-2026-07-15)" en PLAN.md para el detalle de qué ideas de alcance se absorbieron (opiniones en el perfil, favoritos/ajustes, ideas de IA, niveles del modelo de negocio, panel de administrador) y qué se descartó explícitamente (stack, paleta, tipografía).
 
 > La plataforma premium para descubrir, reservar y gestionar servicios de belleza y bienestar.
 

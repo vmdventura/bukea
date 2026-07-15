@@ -79,6 +79,20 @@ Vertical con marketing dedicado: **cejas y maquillaje** (bodas, graduaciones, qu
 4. **Efecto multivertical.** La misma clienta usa uñas + cejas + salón (3–4 citas/mes) y se captura el hogar completo en una sola cuenta.
 5. **Multivertical + funciona en cualquier teléfono son ahora la punta de lanza.** Tras analizar a BarberTime (ver [COMPETENCIA-BARBERTIME.md](COMPETENCIA-BARBERTIME.md)), WhatsApp ya no distingue frente a ellos en barbería: ellos también lo tienen. Lo que sí no tienen es Android/web (son solo iPhone, y Android domina ~85% de RD) ni verticales fuera de barbería. La PWA de Bukea corre en cualquier teléfono desde el día uno.
 
+## Fusión con "Bukea 2.0" (visión alterna, 2026-07-15)
+
+Víctor compartió una propuesta de rediseño premium ("Bukea 2.0": Flutter, paleta `#00BFA5`, arquitectura de monorepo) guardada en [`docs/VISION-2.0.md`](VISION-2.0.md). Se comparó contra la dirección vigente y se decidió **combinar**: no re-litigar lo ya resuelto, pero sí absorber ideas de alcance que no chocan con lo construido.
+
+**No se adopta** (ya decidido y en producción, no re-abrir): cambio de stack a Flutter/Firebase, paleta `#00BFA5`, tipografía Playfair Display/Inter. El sistema de diseño vigente (Fraunces + Plus Jakarta Sans, teal OKLCH, ver [DESIGN.md](../DESIGN.md)) ya está implementado en `prototype/demo-v2.html` y `backend/public/index.html`.
+
+**Sí se incorpora** (ideas de alcance de producto, no de stack):
+
+- [x] "Opiniones" (reseñas de texto) en el perfil del profesional — agregado a `prototype/demo-v2.html` y `backend/public/index.html` (2026-07-15).
+- [ ] Favoritos y Ajustes del lado cliente — pendiente, candidato a Fase 2.
+- [ ] Ideas de IA (predecir cancelaciones, detectar huecos libres, sugerir horarios) — candidato para una fase posterior a la Fase 3, sin alterar el roadmap de 3 fases ya definido.
+- [ ] Formalizar el modelo de negocio en niveles explícitos (Gratis / Pro / Premium) en vez de solo "plan gratuito + monetización posterior" — pendiente de confirmar con Víctor antes de escribirlo en VISION.md.
+- [ ] Panel de administrador interno (usuarios, negocios, moderación, analytics, suscripciones, CMS) — no estaba en el roadmap; se anota como necesidad futura de herramienta interna (no de cara al cliente ni al profesional).
+
 ## Próximo paso inmediato
 
 Completar Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas). En paralelo, endurecer el MVP con el feedback de esa validación.

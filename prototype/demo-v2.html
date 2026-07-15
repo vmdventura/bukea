@@ -208,6 +208,16 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   }
 
+  .reviews { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.3rem; }
+  .review { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 0.85rem 1rem; }
+  .review-quote {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 500; font-size: 1rem;
+    color: var(--ink); margin: 0 0 0.4rem; line-height: 1.4;
+  }
+  .review-foot { display: flex; align-items: center; justify-content: space-between; }
+  .review-author { font-size: 0.8rem; font-weight: 600; color: var(--soft); }
+  .review-stars { color: var(--gold-700); font-size: 0.8rem; letter-spacing: 0.05em; }
+
   .service {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 0.85rem 1.05rem; display: flex; justify-content: space-between; align-items: center;
@@ -488,6 +498,18 @@
       <div class="work" style="background:linear-gradient(150deg,#5c3f96,#2c1c50)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
       <div class="work" style="background:linear-gradient(150deg,#1a5c4e,#0d2e26)"><svg class="icon"><use href="#i-scissors"/></svg></div>
       <div class="work" style="background:linear-gradient(150deg,#2e3a4d,#c05a4f)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+    </div>
+
+    <p class="sec-title">Opiniones</p>
+    <div class="reviews">
+      <div class="review">
+        <p class="review-quote">"Llegué sin cita un sábado y me avisó por WhatsApp cuando le tocaba a él. Cero espera parado en la puerta."</p>
+        <div class="review-foot"><span class="review-author">Ramón G.</span><span class="review-stars">★★★★★</span></div>
+      </div>
+      <div class="review">
+        <p class="review-quote">"Pagué transferencia sin drama y me mandó el recordatorio un día antes. Así debería ser siempre."</p>
+        <div class="review-foot"><span class="review-author">Yolanda P.</span><span class="review-stars">★★★★★</span></div>
+      </div>
     </div>
 
     <p class="sec-title">Servicios</p>
