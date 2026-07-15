@@ -94,19 +94,24 @@ Víctor compartió una propuesta de rediseño premium ("Bukea 2.0": Flutter, pal
 - [ ] Formalizar el modelo de negocio en niveles explícitos (Gratis / Pro / Premium) en vez de solo "plan gratuito + monetización posterior" — pendiente de confirmar con Víctor antes de escribirlo en VISION.md.
 - [x] Panel de administrador interno básico — ✅ construido (2026-07-15): `/bukea/admin`, protegido con contraseña (`ADMIN_PASSWORD` en `.env`), muestra totales (profesionales, ventas hoy/7 días/mes/histórico), tabla de profesionales con sus citas y venta, y actividad reciente de todas las reservas. Todavía no incluye moderación, analytics avanzado, suscripciones ni CMS — eso sigue como necesidad futura.
 
-## Migración a WordPress en bukeard.com (decisión 2026-07-15 — en curso)
+## WordPress en bukeard.com — en pausa (2026-07-15)
 
-Víctor decidió mover **todo** — incluido el motor de reservas, no solo el contenido/marketing — a un WordPress instalado en `bukeard.com`, en el mismo hosting compartido de BanaHosting donde corre hoy el MVP de prueba. Reemplaza el plan anterior de mantener Node/Express + MySQL como backend definitivo.
+Víctor había decidido mover todo el motor de reservas a WordPress + un plugin de booking/marketplace (Directorist + Directorist Booking, evaluado ese mismo día contra Dokan/WCFM y Booknetic SaaS). Al intentar instalarlo se descubrió que `bukeard.com` ya sirve un `index.html` estático (una landing con botones de App Store/Google Play, del 5 de julio) y que la instalación de WordPress nunca se completó (el formulario de Softaculous se llenó pero no se ejecutó). Con el MVP ya probado de punta a punta ese mismo día (reserva real, cuenta just-in-time, "Mi Cuadre" con datos reales), se decidió **pausar WordPress** y priorizar salir a validar precio con profesionales reales usando lo que ya funciona — WordPress queda como opción a retomar si esa validación confirma que vale la pena invertir en una reconstrucción mayor.
 
-**Contexto de la decisión:** se evaluó primero mantener el MVP de prueba (probado a fondo el 2026-07-15: reserva real de principio a fin, cuenta just-in-time, "Mi Cuadre" con datos reales — ver walkthrough de esa fecha) y usar WordPress solo para marketing/contenido. Víctor prefirió migrar todo el motor. Advertencia registrada en esa conversación: WooCommerce Bookings (y plugins de citas similares como Amelia/Bookly) están pensados para **un solo negocio con empleados**, no para un **marketplace de profesionales independientes** (el principio central de Bukea: "el profesional es el perfil, no el local"). Replicar ese modelo en WordPress probablemente exige combinar un plugin de reservas con uno de marketplace multivendedor (ej. Dokan/WCFM), lo cual es trabajo adicional real, no una migración directa.
+## Mudanza del MVP a bukeard.com/app (decisión 2026-07-15 — en curso)
 
-**Bloqueante actual:** esta sesión no tiene acceso al cPanel de BanaHosting — Víctor debe instalar WordPress ahí mismo (vía Softaculero u otro instalador) sobre `bukeard.com`. Una vez instalado, se necesita acceso (usuario/contraseña de wp-admin, y SFTP/SSH si hace falta tocar archivos) para continuar con tema, plugins y la réplica de los diferenciadores (efectivo/WhatsApp de primera clase, fila virtual, perfil por profesional).
+En vez de WordPress, se decidió mover el MVP de prueba (Node/Express + MySQL) y el panel de administrador de `vmdventura.com/bukea` a `bukeard.com/app`, dejando la landing estática existente intacta en la raíz del dominio.
 
-- [ ] Víctor instala WordPress en `bukeard.com` desde cPanel/Softaculous
-- [ ] Compartir acceso (wp-admin y/o SFTP) para continuar
-- [ ] Definir y confirmar el stack de plugins (booking + posible multivendedor) antes de instalar nada, dado el hueco de "profesional independiente" arriba
-- [ ] Decidir qué pasa con el MVP de prueba en `vmdventura.com/bukea` (¿se apaga, se deja como referencia, se usa de puente mientras se migra?)
+**Ya listo en el código** (probado localmente sirviendo la misma app bajo `/bukea` y bajo `/app` sin diferencias):
+- [x] `backend/public/index.html` ya no tiene `/bukea/api/...` fijo — calcula la ruta base desde `location.pathname`, como ya hacía `admin.html`.
+- [x] `backend/public/manifest.json` usa un placeholder que `app.js` resuelve al servirlo, para que `start_url`/`scope` de la PWA coincidan con la ruta real de despliegue.
+
+**Pendiente — requiere acceso al cPanel de BanaHosting que esta sesión no tiene:**
+- [ ] Crear la app Node.js en cPanel (Node.js Selector) con: *Application root* una carpeta nueva bajo `bukeard.com` (ej. `bukeard.com/bukea-app`, mismo patrón que ya usa `vmdventura.com/bukea-app`), *Application URL* `bukeard.com/app`, *Startup file* `app.js`.
+- [ ] Variables de entorno en esa app: `BASE_PATH=/app`, las mismas `DB_HOST/DB_USER/DB_PASSWORD/DB_NAME` (decidir si comparte la misma base de datos que `vmdventura.com/bukea` o usa una copia), y **`ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET` propios** (no dejar los valores por defecto del código en producción).
+- [ ] Subir el código de `backend/` a esa carpeta (File Manager o Git) y correr `npm install` desde el panel de Node.js Selector.
+- [ ] Decidir qué pasa con `vmdventura.com/bukea` (¿se apaga, queda de respaldo, o corren ambos en paralelo un tiempo?)
 
 ## Próximo paso inmediato
 
-Instalar WordPress en `bukeard.com` (bloqueado en Víctor, ver sección de migración arriba) y, en paralelo, seguir la Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** (los 16 negocios públicos de BarberTime son prospectos de oro: ya adoptan tecnología de reservas).
+Mudar el MVP a `bukeard.com/app` (bloqueado en Víctor — necesita crear la app Node.js en cPanel, ver sección arriba) y, en paralelo, seguir la Fase 0: registrar `bukea.do`, reservar handles sociales, iniciar marca en ONAPI, y **validar precio con 10–15 profesionales reales** usando la landing de `bukeard.com` + el MVP ya funcional.
