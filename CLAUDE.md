@@ -27,7 +27,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 1. **El profesional es el perfil, no el local** — la clientela sigue al barbero/manicurista si se muda.
 2. **Tres diferenciadores:** WhatsApp nativo (API de WhatsApp Business), pagos a la dominicana (efectivo/transferencia/tPago primero, tarjeta vía Azul/CardNET después), fila virtual para walk-ins.
 3. **Orden de verticales:** barbería + uñas primero → salones → cejas/maquillaje.
-4. **Modelo:** suscripción plana RD$500–1,500/mes por silla, cero comisión, gratis para el cliente final.
+4. **Modelo:** **lanzamiento 100 % gratis** (decisión 2026-08-22) para ganar densidad; después suscripción plana en pesos por silla (rango a fijar con datos del piloto; Fresha cobra RD$240–360/mes en RD), cero comisión, gratis siempre para el cliente final.
 5. **Geografía:** una sola ciudad (Santo Domingo o Santiago) hasta tener densidad.
 6. **Identidad visual del demo v0.1:** teal `#0f8583` como color primario, dorado `#d99a2b` para ratings, verde WhatsApp para mensajería. Tipografía system stack.
 

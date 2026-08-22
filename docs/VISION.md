@@ -117,7 +117,7 @@ Negocio de eventos (bodas, graduaciones, quinceañeros): domicilio, horarios ext
 Ataca directo el punto débil de Fresha: **cero comisión por cliente nuevo**.
 
 - Suscripción plana en pesos: ~RD$500–1,500/mes por silla.
-- Plan gratuito generoso para arrancar y lograr densidad de oferta.
+- **Lanzamiento 100 % gratis** (decisión 2026-08-22): sin suscripción ni comisión hasta tener densidad y datos del piloto; el precio por silla se fija después (referencia: Fresha cobra RD$240–360/mes en RD).
 - Monetización posterior: destacados en el mapa, plan premium, procesamiento de pagos.
 - Gratis siempre para el cliente final.
 

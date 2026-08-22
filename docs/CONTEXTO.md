@@ -14,7 +14,7 @@
 2. **El profesional es el perfil, no el local** — la clientela sigue a *su* barbero/manicurista si se muda. Portafolio visual tipo Instagram por profesional.
 3. **Tres diferenciadores:** ① WhatsApp nativo (WhatsApp Business API: confirmaciones, recordatorios, chatbot de reserva), ② pagos a la dominicana (efectivo y transferencia primero, tPago, tarjeta vía Azul/CardNET después), ③ fila virtual para walk-ins (turno en vivo con aviso por WhatsApp).
 4. **Orden de verticales:** barbería + uñas primero → salones (2da ola) → cejas/maquillaje (con marketing dedicado al tener densidad).
-5. **Modelo de negocio:** suscripción plana RD$500–1,500/mes por silla; **cero comisión por cliente nuevo** (ataque directo a Fresha); plan gratuito generoso al inicio; gratis siempre para el cliente final.
+5. **Modelo de negocio:** **lanzamiento 100 % gratis** (decisión 2026-08-22, para atraer usuarios y ganar densidad); después suscripción plana en pesos por silla (rango a fijar con datos del piloto; Fresha cobra RD$240–360/mes en RD); **cero comisión por cliente nuevo**; gratis siempre para el cliente final.
 6. **Geografía:** una sola ciudad (Santo Domingo o Santiago) hasta lograr densidad.
 7. **Identidad visual del demo v0.1:** teal `#0f8583` primario, dorado `#d99a2b` para ratings, verde WhatsApp para mensajería.
 8. **Lado B2B clave:** agenda multi-silla con comisión barbero/dueño (modelo dominicano de porcentaje por silla), reporte de caja, facturación con NCF (DGII) — ningún player global lo ofrece.

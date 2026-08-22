@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bukea-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend", "start"],
+      "port": 3000
+    },
+    {
+      "name": "scratchpad-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8842", "--directory", "/private/tmp/claude-501/-Users-vmdventura-Documents-Claude-Projects-Bukea-App/12ad1a96-b888-4c79-a24e-e0f995f66d30/scratchpad"],
+      "port": 8842
+    }
+  ]
+}

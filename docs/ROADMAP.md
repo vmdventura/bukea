@@ -38,7 +38,7 @@ El MVP ya existe; ahora hay que dejarlo presentable para enseñarlo a profesiona
 - [ ] 2.2 Cargar 3–5 profesionales de demo realistas (barbería + uñas) con servicios y precios de mercado
 - [ ] 2.3 Guion de validación: 8–10 preguntas fijas (¿usas BarberTime? ¿qué te cobra? ¿qué te duele? ¿pagarías RD$500–1,500/mes por silla?) + hoja de registro de respuestas
 - [ ] 2.4 Lista de 20–25 prospectos: los ~16 negocios públicos de BarberTime + barberías/salones de uñas del entorno de Víctor
-- [ ] 2.5 Definir la oferta de arranque para fundadores (p. ej. "3 meses gratis sin tarjeta, luego RD$500/mes") — contraataque directo al mes gratis con tarjeta de BarberTime
+- [x] 2.5 Oferta de arranque: **Bukea gratis, sin tarjeta, sin fecha de corte por ahora** (decisión de Víctor 2026-08-22) — contraataque al mes gratis con tarjeta de BarberTime y a los RD$240–360/mes de Fresha. El precio se fija en la Etapa 5 con datos del piloto
 
 **Salida:** demo enseñable + guion + lista de prospectos. → Pasa a Etapa 3.
 
@@ -83,7 +83,7 @@ Construir solo lo que los pilotos necesitan para operar de verdad, priorizado po
 - [ ] 5.1 Montar 5–10 negocios comprometidos de la Etapa 3 (onboarding presencial si hace falta)
 - [ ] 5.2 Acompañarlos 2–4 semanas: citas reales, clientes reales, medir no-shows y uso
 - [ ] 5.3 Corregir el top de fricciones que reporten
-- [ ] 5.4 Empezar a cobrar (o confirmar la oferta fundadores) — validar que **pagan**, no solo que usan
+- [ ] 5.4 Definir el precio con datos del piloto y empezar a cobrar (los fundadores mantienen condiciones especiales) — validar que **pagan**, no solo que usan
 - [ ] 5.5 Publicar la app iOS (Capacitor ya está listo) y evaluar TWA/PWA para Android
 
 **Salida:** 5+ negocios activos con citas reales por semana. Aquí termina "el MVP demostró que funciona".
