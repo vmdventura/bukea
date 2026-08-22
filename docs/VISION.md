@@ -55,7 +55,7 @@ Fresha es el marketplace de belleza y bienestar más grande del mundo (100,000+ 
 |---|---|---|---|
 | **BarberTime** (mybarbertime.app) | Marketplace local | Competidor directo más avanzado: recordatorios WhatsApp, pagos con tarjeta/Apple Pay, reseñas, tracción en Santo Domingo. [Análisis completo](COMPETENCIA-BARBERTIME.md) | **Solo iPhone** (Android domina RD); solo barbería; tarjeta-céntrico; sin walk-ins; precio al negocio opaco |
 | **Fresha** | Marketplace global | Producto maduro; **tracción real en Santo Domingo y Santiago** (barberías con 40–200 reseñas, ver [TEST-FRESHA.md](TEST-FRESHA.md)); login por WhatsApp; lista de espera | Comisión 20% por cliente nuevo; precios en US$; sin fila en vivo ni B2B dominicano (Cuadre, NCF, comisión por silla) |
-| **Booksy** | Marketplace global | Marca fuerte en barbería masculina | Sin operación real en RD |
+| **Booksy** | Marketplace global | Marca fuerte en barbería masculina; modelo de precios simple (ver [ANALISIS-SITIO-BOOKSY.md](ANALISIS-SITIO-BOOKSY.md)): US$29,99/mes todo incluido + US$20/miembro, cero comisión salvo su función opcional "Boost" | **Confirmado 22-ago-2026: no opera en RD** (no está en su selector de país/región); ya está en México, Colombia, Argentina, Chile y Brasil — riesgo latente de expansión, no competidor activo hoy |
 | **BarberEx** | App local a domicilio | Validó demanda de barbería móvil en RD | Solo domicilio, solo barbería |
 | **ReservaSimple** | Software B2B RD | Recordatorios WhatsApp, depósitos por transferencia | Sin marketplace de consumo |
 | **AgendaPro / WeiBook / Noona** | Software B2B LATAM | Herramientas de gestión completas | Sin marca de consumo en RD |
