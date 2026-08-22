@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
@@ -21,12 +22,25 @@ app.use(BASE + '/api/bookings', bookingsRouter);
 
 app.get(BASE + '/api/health', (req, res) => res.json({ ok: true }));
 
-app.use(BASE, express.static(path.join(__dirname, 'public')));
+// index.html y manifest.json referencian BASE_PATH en su contenido (fetch()
+// del frontend, start_url/scope del manifest), así que se sirven vía
+// plantilla en vez de express.static para poder sustituir el prefijo real.
+function sendTemplated(res, filePath, contentType) {
+  const contents = fs.readFileSync(filePath, 'utf8').replace(/__BASE_PATH__/g, BASE);
+  res.type(contentType).send(contents);
+}
+
+app.get(BASE + '/manifest.json', (req, res) => {
+  sendTemplated(res, path.join(__dirname, 'public', 'manifest.json'), 'application/json');
+});
+
+app.use(BASE, express.static(path.join(__dirname, 'public'), { index: false }));
+
 app.get(BASE + '/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  sendTemplated(res, path.join(__dirname, 'public', 'index.html'), 'text/html');
 });
 app.get(BASE, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  sendTemplated(res, path.join(__dirname, 'public', 'index.html'), 'text/html');
 });
 
 const PORT = process.env.PORT || 3000;

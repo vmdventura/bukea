@@ -30,7 +30,7 @@
 | `docs/PLAN.md` | Plan del proyecto: estado, Fase 0, "Lo construido", roadmap MVP, reglas estratégicas — **mantenerlo actualizado** |
 | `docs/COMPETENCIA-BARBERTIME.md` | Análisis del competidor directo (BarberTime) |
 | `docs/WHATSAPP-SETUP.md` | Guía para activar el login por OTP de WhatsApp |
-| `backend/` | MVP real (Node.js + Express + MySQL) desplegado en `vmdventura.com/bukea` — sirve el frontend PWA desde `backend/public/` |
+| `backend/` | MVP real (Node.js + Express + MySQL) desplegado en `www.bukeard.com/app` — sirve el frontend PWA desde `backend/public/` |
 | `prototype/demo-v2.html` | Demo premium navegable (segunda pasada) — origen del frontend actual |
 | `prototype/demo.html` | Demo v0.1 original, referencia histórica |
 
@@ -44,7 +44,7 @@ El proyecto deportivo **DeportesDO** vive en su propio repo (`vmdventura/Deporte
 - Nombre "Bukea" verificado libre en App Store y Google Play (2026-07-04)
 - **`bukeard.com` registrado** (el .com principal — "Bukea RD") y **logo listo** ("b" itálica serif + wordmark, variantes crema/teal, tagline "Bukear nunca fue tan fácil")
 - **Landing de `bukeard.com` en producción** (BanaHosting, cPanel, SSL Let's Encrypt activo): favicon, SEO completo (title, description, Open Graph, Twitter Card, canonical). Slogan del badge del hero: **"Tu cita, en tus manos"** — candidato a eslogan principal de la marca (más fuerte que "Belleza en República Dominicana", que quedó como descripción genérica). Evaluar si se promueve a tagline oficial junto a "Bukear nunca fue tan fácil".
-- **MVP de prueba funcional en producción** en `vmdventura.com/bukea` (Node + Express + MySQL, PWA): login por teléfono + PIN, inicio por categorías, listado filtrado, reserva real en MySQL, lado B2B (registro y panel del negocio), "Mis citas". Verificación por WhatsApp lista pero dormida (falta cuenta Meta).
+- **MVP de prueba funcional en producción** en `www.bukeard.com/app` (Node + Express + MySQL, PWA): login por teléfono + PIN, inicio por categorías, listado filtrado, reserva real en MySQL, lado B2B (registro y panel del negocio), "Mis citas". Verificación por WhatsApp lista pero dormida (falta cuenta Meta).
 
 **Pendiente ⬜ (Fase 0 — sigue activa)**
 - Registrar `bukea.do` y `bukea.com.do` en nic.do (prioridad #1); respaldo `bukea.io` / `getbukea.com`

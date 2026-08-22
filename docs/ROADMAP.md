@@ -11,7 +11,7 @@
 - Visión, plan, análisis de competencia (Fresha + BarberTime) y flujos de referencia documentados
 - Nombre "Bukea" verificado libre en App Store y Google Play
 - `bukeard.com` registrado + logo listo
-- MVP de prueba **funcionando en producción** ([vmdventura.com/bukea](https://vmdventura.com/bukea/)): login cliente con PIN, flujo de reserva completo, registro de negocio, panel "Mi negocio" con "Mi Cuadre" básico
+- MVP de prueba **funcionando en producción** ([www.bukeard.com/app](https://www.bukeard.com/app/)): login cliente con PIN, flujo de reserva completo, registro de negocio, panel "Mi negocio" con "Mi Cuadre" básico
 - OTP por WhatsApp programado (dormido, falta configurar Meta)
 - Envoltorio iOS con Capacitor listo para compilar
 

@@ -30,7 +30,7 @@
 
 ## Lo construido (MVP de prueba)
 
-App en producción en [vmdventura.com/bukea](https://vmdventura.com/bukea/) — Node.js + Express + MySQL, servida como PWA a pantalla completa (instalable, safe-areas de iOS). Código en `backend/`.
+App en producción en [www.bukeard.com/app](https://www.bukeard.com/app/) — Node.js + Express + MySQL, servida como PWA a pantalla completa (instalable, safe-areas de iOS). Código en `backend/`.
 
 - **Login del cliente** — bienvenida "drenched" en teal con logo, número dominicano (809/829/849) + PIN de 4 dígitos (hash scrypt). Opción "continuar como invitado".
 - **Verificación por WhatsApp (OTP)** — código completo y desplegado, dormido hasta configurar las credenciales de Meta (ver [WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)). Costo por código: ~US$0.013 (~RD$0.80).

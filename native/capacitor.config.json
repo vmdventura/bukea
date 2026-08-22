@@ -3,7 +3,7 @@
   "appName": "Bukea",
   "webDir": "www",
   "server": {
-    "url": "https://vmdventura.com/bukea/",
+    "url": "https://www.bukeard.com/app/",
     "cleartext": false
   },
   "ios": {

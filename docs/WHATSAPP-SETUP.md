@@ -37,7 +37,7 @@ y cómo activar al final.
 
 ## Parte 2 — Activar en cPanel (2 minutos)
 
-En **Setup Node.js App** → editar la app `vmdventura.com/bukea-app` → *Environment variables*, agregar:
+En **Setup Node.js App** → editar la app de Node.js de Bukea (URI `www.bukeard.com/app`) → *Environment variables*, agregar:
 
 | Variable | Valor |
 |---|---|

@@ -14,7 +14,7 @@
 
 🛠️ **Fase actual:** MVP de prueba en producción, en paralelo a la Fase 0 de fundación.
 
-- **App funcional** en [vmdventura.com/bukea](https://vmdventura.com/bukea/): bienvenida con login por teléfono + PIN, inicio por categorías, listado de profesionales por categoría, reserva real (guardada en MySQL), lado B2B (registro y panel del negocio) y "Mis citas". Instalable como PWA a pantalla completa.
+- **App funcional** en [www.bukeard.com/app](https://www.bukeard.com/app/): bienvenida con login por teléfono + PIN, inicio por categorías, listado de profesionales por categoría, reserva real (guardada en MySQL), lado B2B (registro y panel del negocio) y "Mis citas". Instalable como PWA a pantalla completa.
 - **Fase 0** sigue activa: `bukeard.com` registrado y logo listo; faltan `bukea.do`, marca ONAPI, handles sociales y validar precio con 10–15 profesionales reales. Ver [PLAN.md](docs/PLAN.md).
 
 > El MVP arrancó en paralelo a la Fase 0 por decisión del dueño (tener algo funcional ayuda a la validación), no porque el criterio de salida ya se cumpliera.

@@ -1,6 +1,6 @@
 # Bukea — App nativa iOS (Capacitor)
 
-Envoltorio nativo de la app web de Bukea. Carga `https://vmdventura.com/bukea/`
+Envoltorio nativo de la app web de Bukea. Carga `https://www.bukeard.com/app/`
 en vivo dentro de un WKWebView, así que:
 
 - Se instala en el simulador o en un iPhone real como app de verdad (`com.bukea.app`),
@@ -44,7 +44,7 @@ O simplemente `npx cap open ios` y darle Run (▶) en Xcode.
 
 `capacitor.config.json`:
 - `appId`: `com.bukea.app` · `appName`: `Bukea`
-- `server.url`: `https://vmdventura.com/bukea/` — de dónde carga el contenido en vivo.
+- `server.url`: `https://www.bukeard.com/app/` — de dónde carga el contenido en vivo.
 - `webDir`: `www/` — placeholder mínimo (Capacitor lo exige aunque carguemos remoto).
 
 El ícono (la "b" itálica sobre teal con punto dorado) está en
