@@ -2,14 +2,41 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./pool');
 
-async function migrate() {
+const IGNORABLE_ALTER_ERRORS = new Set([
+  'ER_DUP_FIELDNAME', // la columna ya existe
+  'ER_DUP_KEYNAME',   // el índice/UNIQUE ya existe
+  'ER_FK_DUP_NAME',   // la llave foránea ya existe
+]);
+
+async function safeAlter(sql) {
   try {
-    await pool.query(
-      "ALTER TABLE professionals ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'barberia'"
-    );
+    await pool.query(sql);
   } catch (err) {
-    if (err.code !== 'ER_DUP_FIELDNAME') throw err;
+    if (!IGNORABLE_ALTER_ERRORS.has(err.code)) throw err;
   }
+}
+
+// Login con Google/Apple (2026-08-22): el teléfono y el PIN dejan de ser
+// obligatorios porque una cuenta puede nacer solo con proveedor social.
+async function migrate() {
+  await safeAlter(
+    "ALTER TABLE professionals ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'barberia'"
+  );
+
+  await pool.query('ALTER TABLE users MODIFY phone VARCHAR(15) NULL');
+  await pool.query('ALTER TABLE users MODIFY pin_salt VARCHAR(40) NULL');
+  await pool.query('ALTER TABLE users MODIFY pin_hash VARCHAR(80) NULL');
+  await safeAlter('ALTER TABLE users ADD COLUMN email VARCHAR(190)');
+  await safeAlter('ALTER TABLE users ADD COLUMN google_sub VARCHAR(255)');
+  await safeAlter('ALTER TABLE users ADD COLUMN apple_sub VARCHAR(255)');
+  await safeAlter('ALTER TABLE users ADD UNIQUE INDEX idx_users_google_sub (google_sub)');
+  await safeAlter('ALTER TABLE users ADD UNIQUE INDEX idx_users_apple_sub (apple_sub)');
+
+  await safeAlter('ALTER TABLE professionals ADD COLUMN owner_user_id INT');
+  await safeAlter(
+    'ALTER TABLE professionals ADD CONSTRAINT fk_professionals_owner ' +
+    'FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL'
+  );
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

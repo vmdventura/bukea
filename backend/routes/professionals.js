@@ -3,6 +3,22 @@ const pool = require('../db/pool');
 
 const router = express.Router();
 
+// Antes, "Mi negocio" solo se protegía guardando el slug en localStorage —
+// cualquiera que conociera o adivinara el slug de otro profesional veía su
+// agenda y su Cuadre. Ahora hace falta una sesión real (token de /api/auth)
+// y, para bookings/stats, que esa sesión sea la dueña del negocio.
+async function requireAuth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Inicia sesión para continuar' });
+
+  const [rows] = await pool.query('SELECT id, name, phone, email FROM users WHERE token = ?', [token]);
+  if (!rows[0]) return res.status(401).json({ error: 'Tu sesión expiró — inicia sesión de nuevo' });
+
+  req.user = rows[0];
+  next();
+}
+
 router.get('/', async (req, res) => {
   const { category } = req.query;
   const params = [];
@@ -54,7 +70,7 @@ function slugify(text) {
     .slice(0, 50);
 }
 
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   const { name, businessName, neighborhood, category, services } = req.body;
 
   if (!name || !businessName || !neighborhood || !category) {
@@ -81,9 +97,9 @@ router.post('/', async (req, res) => {
   }
 
   const [result] = await pool.query(
-    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash)
-     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1)`,
-    [slug, category, name, businessName, neighborhood]
+    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id)
+     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?)`,
+    [slug, category, name, businessName, neighborhood, req.user.id]
   );
   const professionalId = result.insertId;
 
@@ -132,14 +148,17 @@ router.get('/:slug', async (req, res) => {
   });
 });
 
-router.get('/:slug/bookings', async (req, res) => {
+router.get('/:slug/bookings', requireAuth, async (req, res) => {
   const [professionals] = await pool.query(
-    'SELECT id FROM professionals WHERE slug = ?',
+    'SELECT id, owner_user_id FROM professionals WHERE slug = ?',
     [req.params.slug]
   );
   const professional = professionals[0];
   if (!professional) {
     return res.status(404).json({ error: 'Profesional no encontrado' });
+  }
+  if (professional.owner_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes acceso a este negocio' });
   }
 
   const [bookings] = await pool.query(
@@ -170,14 +189,17 @@ router.get('/:slug/bookings', async (req, res) => {
 // "Mi Cuadre": cuánto vendió el profesional hoy, en los últimos 7 días y en el
 // mes en curso. Los períodos se calculan sobre created_at (cuándo se hizo la
 // reserva) porque day_label es texto libre ("Hoy", "Mañana"), no una fecha real.
-router.get('/:slug/stats', async (req, res) => {
+router.get('/:slug/stats', requireAuth, async (req, res) => {
   const [professionals] = await pool.query(
-    'SELECT id FROM professionals WHERE slug = ?',
+    'SELECT id, owner_user_id FROM professionals WHERE slug = ?',
     [req.params.slug]
   );
   const professional = professionals[0];
   if (!professional) {
     return res.status(404).json({ error: 'Profesional no encontrado' });
+  }
+  if (professional.owner_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes acceso a este negocio' });
   }
 
   const [[stats]] = await pool.query(

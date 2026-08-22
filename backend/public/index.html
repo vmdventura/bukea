@@ -16,6 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700;6..96,800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
 </head>
 <body>
 <style>
@@ -710,9 +712,10 @@
       <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
 
       <div class="w-divider">o usa tus redes</div>
-      <button class="social-btn" disabled>Continuar con Google <span class="soon">Próximamente</span></button>
-      <button class="social-btn" disabled>Continuar con Apple <span class="soon">Próximamente</span></button>
+      <button class="social-btn" id="btn-google" onclick="loginWithGoogle()">Continuar con Google</button>
+      <button class="social-btn" id="btn-apple" onclick="loginWithApple()">Continuar con Apple</button>
       <button class="social-btn" disabled>Continuar con Facebook <span class="soon">Próximamente</span></button>
+      <p class="w-error" id="w-error-social"></p>
 
       <button class="guest-link" id="w-guest" onclick="continueAsGuest()">Continuar como invitado</button>
     </div>
@@ -1037,6 +1040,8 @@
 
 <script>
   const API_BASE = '__BASE_PATH__';
+  const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__';
+  const APPLE_CLIENT_ID = '__APPLE_CLIENT_ID__';
   const state = {
     professional: null,
     serviceId: null,
@@ -1314,6 +1319,13 @@
   }
 
   function openPro() {
+    // El panel de negocio ahora exige sesión real (Google, Apple o
+    // teléfono+PIN) — antes bastaba con conocer el slug guardado en
+    // localStorage, y cualquiera podía ver la agenda de otro negocio.
+    if (!getSession()) {
+      requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
+      return;
+    }
     if (proSlug()) {
       loadPanel();
       go('pro-panel');
@@ -1378,7 +1390,7 @@
     try {
       const res = await fetch(API_BASE + '/api/professionals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
         body: JSON.stringify({ name, businessName, neighborhood, category, services }),
       });
       if (!res.ok) {
@@ -1405,10 +1417,11 @@
     try {
       const [profRes, citasRes, statsRes] = await Promise.all([
         fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug)),
-        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings'),
-        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats'),
+        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings', { headers: authHeaders() }),
+        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats', { headers: authHeaders() }),
       ]);
       if (profRes.status === 404) { logoutPro(); return; }
+      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
       const prof = await profRes.json();
       const citas = await citasRes.json();
@@ -1551,6 +1564,85 @@
   }
 
   let welcomePhone = '';
+
+  /* ===== Login con Google y Apple =====
+     Un solo botón "activo" sirve para el cliente y, gracias a
+     requireAccount()/openPro(), también para entrar como negocio. */
+  function initSocialLogin() {
+    const gBtn = document.getElementById('btn-google');
+    const aBtn = document.getElementById('btn-apple');
+
+    if (GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+      });
+    } else if (gBtn) {
+      gBtn.disabled = true;
+      gBtn.innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
+    }
+
+    if (APPLE_CLIENT_ID && window.AppleID) {
+      AppleID.auth.init({
+        clientId: APPLE_CLIENT_ID,
+        scope: 'name email',
+        redirectURI: window.location.origin + API_BASE + '/',
+        usePopup: true,
+      });
+    } else if (aBtn) {
+      aBtn.disabled = true;
+      aBtn.innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
+    }
+  }
+  window.addEventListener('load', initSocialLogin);
+
+  function loginWithGoogle() {
+    if (!GOOGLE_CLIENT_ID || !window.google) return;
+    google.accounts.id.prompt();
+  }
+
+  function handleGoogleCredential(response) {
+    socialLogin('/api/auth/google', { idToken: response.credential });
+  }
+
+  async function loginWithApple() {
+    if (!APPLE_CLIENT_ID || !window.AppleID) return;
+    wError('w-error-social');
+    try {
+      const result = await AppleID.auth.signIn();
+      const fullName = result.user && result.user.name
+        ? [result.user.name.firstName, result.user.name.lastName].filter(Boolean).join(' ')
+        : null;
+      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName });
+    } catch (err) {
+      if (err && err.error === 'popup_closed_by_user') return;
+      console.error(err);
+      wError('w-error-social', 'No se pudo iniciar sesión con Apple');
+    }
+  }
+
+  async function socialLogin(path, body) {
+    wError('w-error-social');
+    try {
+      const res = await fetch(API_BASE + path, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-social', data.error || 'No se pudo iniciar sesión');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-social', 'No se pudo conectar. Revisa tu internet.');
+    }
+  }
+
+  // Token de la sesión del cliente, para las llamadas del panel de negocio
+  // que ahora requieren estar autenticado (antes bastaba con el slug).
+  function authHeaders() {
+    const s = getSession();
+    return s && s.token ? { 'Authorization': 'Bearer ' + s.token } : {};
+  }
 
   function welcomeStep(step) {
     document.getElementById('w-step-phone').style.display = step === 'phone' ? 'block' : 'none';

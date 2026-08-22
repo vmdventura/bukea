@@ -38,7 +38,7 @@ App en producción en [www.bukeard.com/app](https://www.bukeard.com/app/) — No
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
 - **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; los períodos se calculan sobre `created_at` de la reserva porque `day_label` es texto libre, no fecha real — al migrar a fechas reales, el cuadre debería pasar a la fecha de la cita.
 
-**Limitaciones conocidas (deuda técnica del slice):** la sesión del negocio es solo `localStorage` (sin login real todavía); datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo.
+**Limitaciones conocidas (deuda técnica del slice):** datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo. ~~la sesión del negocio es solo `localStorage`~~ — resuelto 2026-08-22, ver "Login" en CLAUDE.md.
 
 ## Roadmap del MVP
 

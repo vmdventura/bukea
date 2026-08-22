@@ -2,8 +2,44 @@ const express = require('express');
 const crypto = require('crypto');
 const pool = require('../db/pool');
 const whatsapp = require('../lib/whatsapp');
+const oauth = require('../lib/oauth');
 
 const router = express.Router();
+
+async function issueToken(userId) {
+  const token = crypto.randomBytes(24).toString('hex');
+  await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, userId]);
+  return token;
+}
+
+// Busca una cuenta por proveedor social (o por email, para no duplicar la
+// cuenta de alguien que ya se había registrado con teléfono+PIN) y la crea
+// si no existe. Devuelve la misma forma de sesión que login/register.
+async function upsertSocialUser({ column, sub, email, name }) {
+  let [rows] = await pool.query(`SELECT * FROM users WHERE ${column} = ?`, [sub]);
+  let user = rows[0];
+
+  if (!user && email) {
+    [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    user = rows[0];
+  }
+
+  if (user) {
+    await pool.query(
+      `UPDATE users SET ${column} = COALESCE(${column}, ?), email = COALESCE(email, ?) WHERE id = ?`,
+      [sub, email, user.id]
+    );
+  } else {
+    const [result] = await pool.query(
+      `INSERT INTO users (phone, name, email, ${column}) VALUES (NULL, ?, ?, ?)`,
+      [name || 'Cliente Bukea', email, sub]
+    );
+    user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email };
+  }
+
+  const token = await issueToken(user.id);
+  return { token, name: user.name, phone: user.phone, email: user.email || email || null };
+}
 
 const PHONE_RE = /^(809|829|849)\d{7}$/;
 
@@ -138,6 +174,43 @@ router.post('/otp/verify', async (req, res) => {
     return res.json({ verified: true, exists: true, token, name: users[0].name, phone });
   }
   res.json({ verified: true, exists: false, phone });
+});
+
+/* ===== Login con Google y Apple =====
+   El frontend verifica la identidad del proveedor y nos manda el idToken;
+   aquí se valida la firma contra Google/Apple antes de crear la sesión.
+   /providers le dice al frontend si ya hay credenciales configuradas
+   (GOOGLE_CLIENT_ID / APPLE_CLIENT_ID) para mostrar los botones activos
+   o "Próximamente" mientras Víctor las da de alta. */
+
+router.get('/providers', (req, res) => {
+  res.json({ google: oauth.isGoogleConfigured(), apple: oauth.isAppleConfigured() });
+});
+
+router.post('/google', async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Google' });
+  try {
+    const payload = await oauth.verifyGoogleIdToken(idToken);
+    const session = await upsertSocialUser({ column: 'google_sub', ...payload });
+    res.json(session);
+  } catch (err) {
+    console.error('Error verificando Google:', err.message);
+    res.status(401).json({ error: 'No se pudo verificar tu cuenta de Google' });
+  }
+});
+
+router.post('/apple', async (req, res) => {
+  const { idToken, name } = req.body;
+  if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Apple' });
+  try {
+    const payload = await oauth.verifyAppleIdToken(idToken);
+    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name });
+    res.json(session);
+  } catch (err) {
+    console.error('Error verificando Apple:', err.message);
+    res.status(401).json({ error: 'No se pudo verificar tu cuenta de Apple' });
+  }
 });
 
 module.exports = router;

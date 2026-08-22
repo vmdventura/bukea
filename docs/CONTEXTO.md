@@ -30,6 +30,7 @@
 | `docs/PLAN.md` | Plan del proyecto: estado, Fase 0, "Lo construido", roadmap MVP, reglas estratégicas — **mantenerlo actualizado** |
 | `docs/COMPETENCIA-BARBERTIME.md` | Análisis del competidor directo (BarberTime) |
 | `docs/ANALISIS-SITIO-FRESHA.md` | Análisis del sitio/app de Fresha y plano para recrear `bukeard.com` (marketplace público + para negocios + precios) y `/app` |
+| `docs/LOGIN-GOOGLE-APPLE-SETUP.md` | Pasos para activar `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_ID` — el login con Google/Apple ya está construido |
 | `docs/TEST-FRESHA.md` | Test comparativo Bukea vs Fresha: protocolo, recorrido del 2026-08-22 y tabla de brechas |
 | `docs/WHATSAPP-SETUP.md` | Guía para activar el login por OTP de WhatsApp |
 | `backend/` | MVP real (Node.js + Express + MySQL) desplegado en `www.bukeard.com/app` — sirve el frontend PWA desde `backend/public/` |

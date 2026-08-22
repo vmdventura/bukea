@@ -26,7 +26,10 @@ app.get(BASE + '/api/health', (req, res) => res.json({ ok: true }));
 // del frontend, start_url/scope del manifest), así que se sirven vía
 // plantilla en vez de express.static para poder sustituir el prefijo real.
 function sendTemplated(res, filePath, contentType) {
-  const contents = fs.readFileSync(filePath, 'utf8').replace(/__BASE_PATH__/g, BASE);
+  const contents = fs.readFileSync(filePath, 'utf8')
+    .replace(/__BASE_PATH__/g, BASE)
+    .replace(/__GOOGLE_CLIENT_ID__/g, process.env.GOOGLE_CLIENT_ID || '')
+    .replace(/__APPLE_CLIENT_ID__/g, process.env.APPLE_CLIENT_ID || '');
   res.type(contentType).send(contents);
 }
 
