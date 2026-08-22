@@ -77,7 +77,8 @@ Primer recorrido comparativo documentado en [TEST-FRESHA.md](TEST-FRESHA.md). Tr
 
 1. **Fresha ya tiene densidad real en Santo Domingo** (La Universidad del Corte 141 reseñas, Fernando The Barber 196, High Level Cuts 46, Kasús Barber & Nails 52…) y landings para Santiago y SD Este. "Baja penetración" ya no aplica; Víctor mismo reserva su barbero (Olivercut) por Fresha.
 2. **Fresha ofrece "Continuar con WhatsApp"** en el login de negocios y **lista de espera** por fecha en la reserva. WhatsApp y "no hay hora" ya no distinguen por sí solos; la ventaja de Bukea debe estar en cero comisión, precio en pesos, fila en vivo y el lado B2B dominicano (Cuadre, NCF, comisión por silla).
-3. Las tres brechas que impiden enseñar Bukea a un piloto: fechas/disponibilidad reales (4.2), login real del negocio (4.1 — hoy cualquiera puede ver la agenda de otro con el slug) y agenda operable (4.3).
+3. **Precios de Fresha en RD (22-ago-2026):** Independiente **RD$359,95/mes**, Equipo **RD$239,95 por miembro/mes**, 20 WhatsApp gratis y luego RD$4,80–19 c/u; la fila "Marketplace – nuevos clientes" aparece como **"Gratis"** en la página RD (el Help Center aún habla de tarifa única — **verificar con cuenta de negocio** antes de seguir diciendo "Fresha cobra 20 %"). El rango RD$500–1.500/silla de Bukea queda por encima: **decisión pendiente de Víctor** sobre precio/posicionamiento. Plano completo del sitio y la app en [ANALISIS-SITIO-FRESHA.md](ANALISIS-SITIO-FRESHA.md).
+4. Las tres brechas que impiden enseñar Bukea a un piloto: fechas/disponibilidad reales (4.2), login real del negocio (4.1 — hoy cualquiera puede ver la agenda de otro con el slug) y agenda operable (4.3).
 
 ## Reglas estratégicas
 

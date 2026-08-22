@@ -13,6 +13,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 | Ruta | Contenido |
 |---|---|
 | `docs/VISION.md` | Visión completa: nombre, competencia (Fresha, BarberTime…), diferenciadores, verticales, modelo de negocio |
+| `docs/ANALISIS-SITIO-FRESHA.md` | Mapa del ecosistema Fresha (marketplace, app, sitio para negocios, precios RD) y plano para recrear website + app de Bukea, con orden de construcción |
 | `docs/TEST-FRESHA.md` | Protocolo y resultados del test comparativo Bukea vs Fresha (primer recorrido 2026-08-22) — repetir al cerrar cada etapa del roadmap |
 | `docs/PLAN.md` | Plan del proyecto: estado actual, Fase 0 (fundación), roadmap MVP en 3 fases, reglas estratégicas — **mantener actualizado al completar tareas** |
 | `prototype/demo.html` | Demo interactivo v0.1 (HTML autocontenido, sin backend): primera pasada, mantenido como referencia histórica |

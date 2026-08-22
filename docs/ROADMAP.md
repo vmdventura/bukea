@@ -69,6 +69,7 @@ Construir solo lo que los pilotos necesitan para operar de verdad, priorizado po
 - [ ] 4.4 Recordatorios reales por WhatsApp (confirmación + recordatorio pre-cita)
 - [ ] 4.5 Fotos reales de perfil y portafolio (el profesional es el perfil)
 - [ ] 4.6 Decidir stack/hosting definitivo (¿se queda BanaHosting o migrar?) — decidir aquí, antes de tener datos de clientes reales
+- [ ] 4.8 Convertir `bukeard.com` de landing a **marketplace público**: home con buscador y tarjetas reales, perfil público compartible `/p/:slug`, sección `/negocios` + `/precios` (plano en [ANALISIS-SITIO-FRESHA.md](ANALISIS-SITIO-FRESHA.md) §5)
 - [ ] 4.7 Onboarding self-service del negocio estilo Fresha (wizard, ver [FLUJO-REGISTRO-FRESHA.md](FLUJO-REGISTRO-FRESHA.md)) + opción asistida por WhatsApp
 
 **Salida:** un negocio real puede operar su día completo en Bukea sin ayuda.
