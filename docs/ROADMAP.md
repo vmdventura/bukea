@@ -9,6 +9,7 @@
 ## ✅ Lo que ya está hecho (no perder de vista el avance)
 
 - Visión, plan, análisis de competencia (Fresha + BarberTime) y flujos de referencia documentados
+- **Primer test comparativo Bukea vs Fresha** (2026-08-22, ver [TEST-FRESHA.md](TEST-FRESHA.md)): flujo de cliente recorrido en ambos; tabla de brechas lista
 - Nombre "Bukea" verificado libre en App Store y Google Play
 - `bukeard.com` registrado + logo listo
 - MVP de prueba **funcionando en producción** ([www.bukeard.com/app](https://www.bukeard.com/app/)): login cliente con PIN, flujo de reserva completo, registro de negocio, panel "Mi negocio" con "Mi Cuadre" básico
@@ -62,13 +63,17 @@ Construir solo lo que los pilotos necesitan para operar de verdad, priorizado po
 
 - [ ] 4.1 Login real del negocio (hoy la sesión es solo `localStorage`)
 - [ ] 4.2 Fechas reales en las reservas (hoy `day_label` es texto libre) — desbloquea agenda y "Mi Cuadre" correcto
+- [ ] 4.2b "Mis citas" del cliente leídas del servidor por usuario (hoy `localStorage`; se pierden al cambiar de teléfono)
 - [ ] 4.3 Agenda del profesional: ver/confirmar/cancelar citas, bloquear horarios
+- [ ] 4.3b Cambiar/cancelar cita desde el cliente, con política de cancelación por negocio (Fresha: 12 h + penalidad 20%)
 - [ ] 4.4 Recordatorios reales por WhatsApp (confirmación + recordatorio pre-cita)
 - [ ] 4.5 Fotos reales de perfil y portafolio (el profesional es el perfil)
 - [ ] 4.6 Decidir stack/hosting definitivo (¿se queda BanaHosting o migrar?) — decidir aquí, antes de tener datos de clientes reales
 - [ ] 4.7 Onboarding self-service del negocio estilo Fresha (wizard, ver [FLUJO-REGISTRO-FRESHA.md](FLUJO-REGISTRO-FRESHA.md)) + opción asistida por WhatsApp
 
 **Salida:** un negocio real puede operar su día completo en Bukea sin ayuda.
+
+> Prioridad y evidencia de estos puntos: [TEST-FRESHA.md](TEST-FRESHA.md) (primer recorrido comparativo, 2026-08-22). Repetir el test al cerrar 4.1–4.3.
 
 ---
 

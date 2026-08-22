@@ -1,6 +1,6 @@
 # Bukea — Plan del Proyecto
 
-> Última actualización: 5 de julio de 2026 · Documento hermano: [Visión de Producto](VISION.md)
+> Última actualización: 22 de agosto de 2026 · Documento hermano: [Visión de Producto](VISION.md)
 > **¿Qué hacer ahora y en qué orden?** → ver [ROADMAP.md](ROADMAP.md), el checklist secuencial de ejecución (6 etapas).
 
 ## Dónde estamos hoy
@@ -70,6 +70,14 @@ Vertical con marketing dedicado: **cejas y maquillaje** (bodas, graduaciones, qu
 - Facturación con **NCF (DGII)** — ningún player global lo ofrece
 - Servicio a domicilio con zona de cobertura
 - Paquetes de eventos (novia + cortejo) con depósito obligatorio
+
+## Test contra Fresha (2026-08-22)
+
+Primer recorrido comparativo documentado en [TEST-FRESHA.md](TEST-FRESHA.md). Tres hallazgos que cambian supuestos:
+
+1. **Fresha ya tiene densidad real en Santo Domingo** (La Universidad del Corte 141 reseñas, Fernando The Barber 196, High Level Cuts 46, Kasús Barber & Nails 52…) y landings para Santiago y SD Este. "Baja penetración" ya no aplica; Víctor mismo reserva su barbero (Olivercut) por Fresha.
+2. **Fresha ofrece "Continuar con WhatsApp"** en el login de negocios y **lista de espera** por fecha en la reserva. WhatsApp y "no hay hora" ya no distinguen por sí solos; la ventaja de Bukea debe estar en cero comisión, precio en pesos, fila en vivo y el lado B2B dominicano (Cuadre, NCF, comisión por silla).
+3. Las tres brechas que impiden enseñar Bukea a un piloto: fechas/disponibilidad reales (4.2), login real del negocio (4.1 — hoy cualquiera puede ver la agenda de otro con el slug) y agenda operable (4.3).
 
 ## Reglas estratégicas
 
