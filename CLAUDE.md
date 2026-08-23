@@ -113,6 +113,16 @@ A pedido de Víctor tras ver una captura de Fresha (hoja con "Abrir con Apple Ma
 
 Dónde aparece: badge "Cómo llegar" en el perfil del profesional (app), botón en el ticket de confirmación, botón por cita en "Mis citas", y una sección con los 3 botones en el perfil público `/p/:slug`. En la app usa una hoja (`#directions-sheet`, mismo patrón visual que el onboarding); en el sitio web son enlaces directos.
 
+## Colaboradores / equipo (2026-08-23)
+
+A pedido de Víctor tras ver una captura de Fresha ("Equipo": Flamante, Yenifer, Billy en Billy Boy Barber) — adelanta parte de la Fase 2 del `docs/PLAN.md` porque quería mostrarlo pronto. Primer quiebre real de "el profesional es el perfil" (decisión 1 de este archivo): un negocio (típicamente categoría `salon`) puede tener **personas adicionales reservables** además del titular, que sigue siendo el dueño del perfil.
+
+- `collaborators` (`professional_id`, `name`, `role`) — el titular **no** vive en esta tabla, es siempre `professionals.name`; la API antepone un objeto `{id: null, name, role: 'Titular'}` al listar el equipo, así el cliente y el negocio ven una sola lista (titular + colaboradores).
+- `bookings.collaborator_id` (nullable, `ON DELETE SET NULL`) — `null` significa "atiende el titular". `POST /api/bookings` valida que el `collaboratorId` recibido pertenezca al mismo negocio antes de insertar (evita colar el id de un colaborador de otro profesional).
+- `GET`/`PUT /api/professionals/:slug/collaborators` (dueño únicamente, mismo patrón reemplazar-todo que `/bank-accounts`) + sección "Mi equipo" en "Mi negocio".
+- **Decisión consciente: la disponibilidad se calcula a nivel de negocio, no por colaborador.** Todos comparten el mismo `professional_hours` y las mismas citas ocupan el mismo calendario — si Flamante y Yenifer atienden a la vez, el sistema hoy no lo distingue (una cita a las 9am con cualquiera de los dos bloquea igual ese horario para el negocio completo). Suficiente para mostrar "quién te atiende" sin construir un calendario por persona; separar la disponibilidad por colaborador es la extensión natural si un piloto lo necesita.
+- Dónde aparece: paso "¿Quién te va a atender?" en la reserva (solo se muestra si el negocio tiene más de una persona — titular + colaboradores — no aporta nada con uno solo), "Te atiende" en el ticket de confirmación, "Atiende"/"Atendió" en "Mis citas" y en la agenda de "Mi negocio", sección "Equipo" (avatares con iniciales) en el perfil público `/p/:slug`.
+
 ## Próximos pasos probables
 
 1. Búsqueda basada en mapa (Leaflet/OSM) — la pieza que falta de esta noche.

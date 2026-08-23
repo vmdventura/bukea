@@ -67,6 +67,14 @@ async function migrate() {
   // no dirección exacta.
   await safeAlter('ALTER TABLE professionals ADD COLUMN lat DECIMAL(10,7)');
   await safeAlter('ALTER TABLE professionals ADD COLUMN lng DECIMAL(10,7)');
+
+  // Colaboradores/equipo (2026-08-23) — negocios con más de una persona
+  // reservable (salones), adelantando parte de la Fase 2 a pedido de Víctor.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN collaborator_id INT');
+  await safeAlter(
+    'ALTER TABLE bookings ADD CONSTRAINT fk_bookings_collaborator ' +
+    'FOREIGN KEY (collaborator_id) REFERENCES collaborators(id) ON DELETE SET NULL'
+  );
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

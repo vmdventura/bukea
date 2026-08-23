@@ -234,6 +234,11 @@ const PROFILE_STYLE = `
   .svc-price { font-weight: 700; color: var(--teal-700); }
   .cta-row { position: sticky; bottom: 1rem; margin: 1.6rem 0; text-align: center; }
   .cta-row .btn { width: 100%; max-width: 360px; justify-content: center; padding: 0.9rem 1.5rem; font-size: 1rem; }
+  .team-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.6rem 0; }
+  .team-member { display: flex; flex-direction: column; align-items: center; text-align: center; width: 84px; }
+  .team-avatar { width: 56px; height: 56px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.4rem; }
+  .team-name { font-weight: 700; font-size: 0.8rem; line-height: 1.2; }
+  .team-role { color: var(--soft); font-size: 0.72rem; }
 </style>`;
 
 router.get('/p/:slug', async (req, res) => {
@@ -256,6 +261,10 @@ router.get('/p/:slug', async (req, res) => {
   );
   const [bankAccounts] = await pool.query(
     'SELECT bank_name, account_type, account_number, account_holder, cedula_rnc FROM professional_bank_accounts WHERE professional_id = ?',
+    [p.id]
+  );
+  const [collaboratorRows] = await pool.query(
+    'SELECT name, role FROM collaborators WHERE professional_id = ? ORDER BY id',
     [p.id]
   );
 
@@ -304,6 +313,22 @@ ${PROFILE_STYLE}
         <div class="svc-dur">${esc(b.account_holder)} · Cédula/RNC ${esc(b.cedula_rnc)}</div>
       </div>
       <div class="svc-price">${esc(b.account_number)}</div>
+    </div>`).join('')}
+  </div>` : ''}
+
+  ${collaboratorRows.length ? `
+  <h2>Equipo</h2>
+  <div class="team-grid">
+    <div class="team-member">
+      <div class="team-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
+      <div class="team-name">${esc(p.name.split(' ')[0])}</div>
+      <div class="team-role">Titular</div>
+    </div>
+    ${collaboratorRows.map(c => `
+    <div class="team-member">
+      <div class="team-avatar" style="background:${avatarGradient(c.name)}">${esc(initials(c.name))}</div>
+      <div class="team-name">${esc(c.name.split(' ')[0])}</div>
+      <div class="team-role">${esc(c.role || '')}</div>
     </div>`).join('')}
   </div>` : ''}
 

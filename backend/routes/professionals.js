@@ -142,6 +142,18 @@ router.get('/:slug', async (req, res) => {
     [professional.id]
   );
 
+  // Equipo (2026-08-23): el titular siempre aparece primero como la
+  // "persona 0" reservable, seguido de los colaboradores que el negocio
+  // haya agregado — misma agenda para todos (ver nota en schema.sql).
+  const [collaboratorRows] = await pool.query(
+    'SELECT id, name, role FROM collaborators WHERE professional_id = ? ORDER BY id',
+    [professional.id]
+  );
+  const collaborators = [
+    { id: null, name: professional.name, role: 'Titular' },
+    ...collaboratorRows.map(c => ({ id: c.id, name: c.name, role: c.role || '' })),
+  ];
+
   res.json({
     id: professional.id,
     slug: professional.slug,
@@ -169,6 +181,7 @@ router.get('/:slug', async (req, res) => {
       accountHolder: b.account_holder,
       cedulaRnc: b.cedula_rnc,
     })),
+    collaborators,
   });
 });
 
@@ -295,9 +308,11 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
   const [bookings] = await pool.query(
     `SELECT b.id, b.client_name, b.day_label, b.time_label, b.appointment_at, b.status,
             b.payment_method, b.created_at, b.receipt_path,
-            s.name AS service_name, s.price_cents, s.duration_min
+            s.name AS service_name, s.price_cents, s.duration_min,
+            c.name AS collaborator_name
      FROM bookings b
      JOIN services s ON s.id = b.service_id
+     LEFT JOIN collaborators c ON c.id = b.collaborator_id
      WHERE b.professional_id = ?
      ORDER BY COALESCE(b.appointment_at, b.created_at) DESC`,
     [professional.id]
@@ -316,6 +331,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
       durationMin: b.duration_min,
       createdAt: b.created_at,
       receiptUrl: receiptUrl(req, b.receipt_path),
+      collaboratorName: b.collaborator_name || null,
     }))
   );
 });
@@ -475,6 +491,48 @@ router.put('/:slug/bank-accounts', requireAuth, async (req, res) => {
     await pool.query(
       'INSERT INTO professional_bank_accounts (professional_id, bank_name, account_type, account_number, account_holder, cedula_rnc) VALUES (?, ?, ?, ?, ?, ?)',
       [professional.id, a.bankName, a.accountType, a.accountNumber, a.accountHolder, a.cedulaRnc]
+    );
+  }
+
+  res.json({ saved: true, count: clean.length });
+});
+
+// Equipo/colaboradores (2026-08-23) — mismo patrón que bank-accounts:
+// GET prellena el formulario en "Mi negocio", PUT reemplaza todo el equipo.
+// El titular NO vive en esta tabla (es el propio `professionals.name`), así
+// que aquí solo se listan/editan los colaboradores adicionales.
+router.get('/:slug/collaborators', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const [rows] = await pool.query(
+    'SELECT id, name, role FROM collaborators WHERE professional_id = ? ORDER BY id',
+    [professional.id]
+  );
+  res.json(rows.map(c => ({ id: c.id, name: c.name, role: c.role || '' })));
+});
+
+router.put('/:slug/collaborators', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const collaborators = Array.isArray(req.body.collaborators) ? req.body.collaborators : [];
+  const clean = [];
+  for (const c of collaborators) {
+    const name = String(c.name || '').trim();
+    const role = String(c.role || '').trim();
+    if (!name) continue;
+    clean.push({ name, role });
+  }
+
+  // Colaboradores ya asignados a citas pasadas no se pierden: la FK usa
+  // ON DELETE SET NULL, así que borrar y reinsertar (mismo patrón que
+  // bank-accounts) deja esas citas con collaborator_id NULL en vez de fallar.
+  await pool.query('DELETE FROM collaborators WHERE professional_id = ?', [professional.id]);
+  for (const c of clean) {
+    await pool.query(
+      'INSERT INTO collaborators (professional_id, name, role) VALUES (?, ?, ?)',
+      [professional.id, c.name, c.role || null]
     );
   }
 

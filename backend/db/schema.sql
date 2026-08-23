@@ -61,10 +61,26 @@ CREATE TABLE IF NOT EXISTS professional_hours (
   INDEX idx_professional_hours_pro_day (professional_id, weekday)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Colaboradores (2026-08-23): un negocio (categoría "salon" sobre todo)
+-- puede tener varias personas reservables además del profesional titular
+-- (que sigue siendo el dueño del perfil — VISION.md "el profesional es el
+-- perfil"). La disponibilidad se calcula a nivel de negocio, no por
+-- colaborador — todos comparten el mismo horario y las mismas citas
+-- ocupan el mismo calendario. Ver nota en CLAUDE.md.
+CREATE TABLE IF NOT EXISTS collaborators (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  role VARCHAR(80),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   professional_id INT NOT NULL,
   service_id INT NOT NULL,
+  collaborator_id INT,
   client_user_id INT,
   client_name VARCHAR(120) NOT NULL,
   day_label VARCHAR(40) NOT NULL,
@@ -78,6 +94,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (professional_id) REFERENCES professionals(id),
   FOREIGN KEY (service_id) REFERENCES services(id),
+  FOREIGN KEY (collaborator_id) REFERENCES collaborators(id) ON DELETE SET NULL,
   FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL,
   UNIQUE KEY uq_bookings_slot (professional_id, appointment_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
