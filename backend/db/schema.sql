@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS professional_bank_accounts (
   account_type VARCHAR(30) NOT NULL,
   account_number VARCHAR(60) NOT NULL,
   account_holder VARCHAR(120) NOT NULL,
+  cedula_rnc VARCHAR(20) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -124,7 +124,7 @@ router.get('/:slug', async (req, res) => {
   // Las cuentas bancarias las comparte el negocio a propósito para que le
   // paguen — van en el mismo endpoint público que el resto del perfil.
   const [bankAccounts] = await pool.query(
-    'SELECT id, bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ?',
+    'SELECT id, bank_name, account_type, account_number, account_holder, cedula_rnc FROM professional_bank_accounts WHERE professional_id = ?',
     [professional.id]
   );
 
@@ -151,6 +151,7 @@ router.get('/:slug', async (req, res) => {
       accountType: b.account_type,
       accountNumber: b.account_number,
       accountHolder: b.account_holder,
+      cedulaRnc: b.cedula_rnc,
     })),
   });
 });
@@ -424,7 +425,7 @@ router.get('/:slug/bank-accounts', requireAuth, async (req, res) => {
   if (error) return res.status(error[0]).json({ error: error[1] });
 
   const [rows] = await pool.query(
-    'SELECT id, bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ? ORDER BY id',
+    'SELECT id, bank_name, account_type, account_number, account_holder, cedula_rnc FROM professional_bank_accounts WHERE professional_id = ? ORDER BY id',
     [professional.id]
   );
   res.json(rows.map(b => ({
@@ -433,6 +434,7 @@ router.get('/:slug/bank-accounts', requireAuth, async (req, res) => {
     accountType: b.account_type,
     accountNumber: b.account_number,
     accountHolder: b.account_holder,
+    cedulaRnc: b.cedula_rnc,
   })));
 });
 
@@ -447,15 +449,16 @@ router.put('/:slug/bank-accounts', requireAuth, async (req, res) => {
     const accountType = String(a.accountType || '').trim();
     const accountNumber = String(a.accountNumber || '').trim();
     const accountHolder = String(a.accountHolder || '').trim();
-    if (!bankName || !accountType || !accountNumber || !accountHolder) continue;
-    clean.push({ bankName, accountType, accountNumber, accountHolder });
+    const cedulaRnc = String(a.cedulaRnc || '').trim();
+    if (!bankName || !accountType || !accountNumber || !accountHolder || !cedulaRnc) continue;
+    clean.push({ bankName, accountType, accountNumber, accountHolder, cedulaRnc });
   }
 
   await pool.query('DELETE FROM professional_bank_accounts WHERE professional_id = ?', [professional.id]);
   for (const a of clean) {
     await pool.query(
-      'INSERT INTO professional_bank_accounts (professional_id, bank_name, account_type, account_number, account_holder) VALUES (?, ?, ?, ?, ?)',
-      [professional.id, a.bankName, a.accountType, a.accountNumber, a.accountHolder]
+      'INSERT INTO professional_bank_accounts (professional_id, bank_name, account_type, account_number, account_holder, cedula_rnc) VALUES (?, ?, ?, ?, ?, ?)',
+      [professional.id, a.bankName, a.accountType, a.accountNumber, a.accountHolder, a.cedulaRnc]
     );
   }
 

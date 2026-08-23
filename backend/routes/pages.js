@@ -160,7 +160,7 @@ router.get('/p/:slug', async (req, res) => {
     [p.id]
   );
   const [bankAccounts] = await pool.query(
-    'SELECT bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ?',
+    'SELECT bank_name, account_type, account_number, account_holder, cedula_rnc FROM professional_bank_accounts WHERE professional_id = ?',
     [p.id]
   );
 
@@ -202,7 +202,7 @@ ${PROFILE_STYLE}
     <div class="svc-row">
       <div>
         <div class="svc-name">${esc(b.bank_name)} · ${esc(b.account_type)}</div>
-        <div class="svc-dur">${esc(b.account_holder)}</div>
+        <div class="svc-dur">${esc(b.account_holder)} · Cédula/RNC ${esc(b.cedula_rnc)}</div>
       </div>
       <div class="svc-price">${esc(b.account_number)}</div>
     </div>`).join('')}

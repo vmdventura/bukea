@@ -394,9 +394,9 @@
   .hour-row.closed .hour-day { color: var(--soft); }
 
   .bank-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.7rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
-  .bank-row input { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
-  .bank-row input:focus { outline: none; border-color: var(--teal-600); }
-  .bank-row .bank-holder { grid-column: 1 / -1; }
+  .bank-row input, .bank-row select { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
+  .bank-row input:focus, .bank-row select:focus { outline: none; border-color: var(--teal-600); }
+  .bank-row .bank-holder, .bank-row .bank-cedula { grid-column: 1 / -1; }
   .bank-row .bank-del { grid-column: 1 / -1; justify-self: end; background: none; border: none; color: var(--soft); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 0.2rem; }
 
   .panel-stat {
@@ -1328,7 +1328,7 @@
       row.innerHTML =
         '<div><div style="font-weight:700;font-size:0.85rem">' + a.bankName + ' · ' + a.accountType + '</div>' +
         '<div style="font-size:0.8rem;color:var(--soft)">' + a.accountNumber + '</div>' +
-        '<div style="font-size:0.75rem;color:var(--soft)">' + a.accountHolder + '</div></div>' +
+        '<div style="font-size:0.75rem;color:var(--soft)">' + a.accountHolder + ' · Cédula/RNC ' + a.cedulaRnc + '</div></div>' +
         '<button type="button" class="btn-copy">Copiar</button>';
       row.querySelector('.btn-copy').addEventListener('click', (e) => {
         navigator.clipboard.writeText(a.accountNumber).then(() => {
@@ -1776,15 +1776,47 @@
     }
   }
 
-  /* ===== Cuentas bancarias (2026-08-22 noche) — para que el cliente que
-     paga por transferencia copie el número sin llamar. ===== */
+  /* ===== Cuentas bancarias (2026-08-22/23) — para que el cliente que paga
+     por transferencia copie el número sin llamar. Banco y tipo de cuenta
+     son listas (evita "Popular" vs "banco popular" vs "BP" regados en la
+     base de datos); cédula/RNC porque así se verifica al destinatario en
+     una transferencia dominicana real. ===== */
+  const BANK_NAMES = [
+    'Banco Popular Dominicano', 'Banreservas', 'Banco BHD', 'Scotiabank',
+    'Banco Santa Cruz', 'Banco Caribe', 'Banco Vimenca', 'Banco Promerica',
+    'Banco Ademi', 'Banco López de Haro', 'Banco Múltiple Activo',
+    'APAP', 'Asociación Cibao', 'Asociación La Nacional', 'Otro',
+  ];
+  const ACCOUNT_TYPES = ['Ahorros', 'Corriente'];
+
+  function bankOptionsHtml(selected) {
+    const known = BANK_NAMES.slice(0, -1).includes(selected);
+    return BANK_NAMES.map(name => {
+      const isOtro = name === 'Otro';
+      const sel = (isOtro && !known && selected) || (!isOtro && name === selected);
+      return '<option value="' + name + '"' + (sel ? ' selected' : '') + '>' + name + '</option>';
+    }).join('');
+  }
+
+  function typeOptionsHtml(selected) {
+    return ACCOUNT_TYPES.map(t =>
+      '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>'
+    ).join('');
+  }
+
   function bankRowHtml(a) {
     a = a || {};
-    return '<input class="bank-name" type="text" placeholder="Banco (ej: Popular)" value="' + (a.bankName || '').replace(/"/g, '&quot;') + '">' +
-      '<input class="bank-type" type="text" placeholder="Tipo (Ahorro/Corriente)" value="' + (a.accountType || '').replace(/"/g, '&quot;') + '">' +
-      '<input class="bank-number" type="text" placeholder="Número de cuenta" value="' + (a.accountNumber || '').replace(/"/g, '&quot;') + '">' +
-      '<input class="bank-holder" type="text" placeholder="Titular de la cuenta" value="' + (a.accountHolder || '').replace(/"/g, '&quot;') + '">' +
-      '<button type="button" class="bank-del">Quitar</button>';
+    const bankKnown = BANK_NAMES.slice(0, -1).includes(a.bankName);
+    const otroValue = (a.bankName && !bankKnown) ? a.bankName : '';
+    return (
+      '<select class="bank-name-select" style="grid-column:1 / -1">' + bankOptionsHtml(a.bankName) + '</select>' +
+      '<input class="bank-name-other" type="text" placeholder="Escribe el nombre del banco" value="' + otroValue.replace(/"/g, '&quot;') + '" style="grid-column:1 / -1; display:' + (otroValue ? 'block' : 'none') + '">' +
+      '<select class="bank-type">' + typeOptionsHtml(a.accountType) + '</select>' +
+      '<input class="bank-number" type="text" inputmode="numeric" placeholder="Número de cuenta" value="' + (a.accountNumber || '').replace(/"/g, '&quot;') + '">' +
+      '<input class="bank-holder" type="text" placeholder="Titular de la cuenta" value="' + (a.accountHolder || '').replace(/"/g, '&quot;') + '" style="grid-column:1 / -1">' +
+      '<input class="bank-cedula" type="text" placeholder="Cédula o RNC del titular" value="' + (a.cedulaRnc || '').replace(/"/g, '&quot;') + '" style="grid-column:1 / -1">' +
+      '<button type="button" class="bank-del">Quitar</button>'
+    );
   }
 
   function addBankRow(account) {
@@ -1792,7 +1824,26 @@
     row.className = 'bank-row';
     row.innerHTML = bankRowHtml(account);
     row.querySelector('.bank-del').addEventListener('click', () => row.remove());
+    const select = row.querySelector('.bank-name-select');
+    const otherInput = row.querySelector('.bank-name-other');
+    select.addEventListener('change', () => {
+      otherInput.style.display = select.value === 'Otro' ? 'block' : 'none';
+    });
     document.getElementById('bank-rows').appendChild(row);
+  }
+
+  function bankRowValue(row) {
+    const select = row.querySelector('.bank-name-select');
+    const bankName = select.value === 'Otro'
+      ? row.querySelector('.bank-name-other').value.trim()
+      : select.value;
+    return {
+      bankName,
+      accountType: row.querySelector('.bank-type').value,
+      accountNumber: row.querySelector('.bank-number').value.trim(),
+      accountHolder: row.querySelector('.bank-holder').value.trim(),
+      cedulaRnc: row.querySelector('.bank-cedula').value.trim(),
+    };
   }
 
   async function loadBankAccounts(slug) {
@@ -1814,12 +1865,17 @@
     const slug = proSlug();
     if (!slug) return;
     document.getElementById('bank-error').style.display = 'none';
-    const accounts = [...document.querySelectorAll('#bank-rows .bank-row')].map(row => ({
-      bankName: row.querySelector('.bank-name').value.trim(),
-      accountType: row.querySelector('.bank-type').value.trim(),
-      accountNumber: row.querySelector('.bank-number').value.trim(),
-      accountHolder: row.querySelector('.bank-holder').value.trim(),
-    })).filter(a => a.bankName || a.accountNumber);
+    const accounts = [...document.querySelectorAll('#bank-rows .bank-row')]
+      .map(bankRowValue)
+      .filter(a => a.bankName || a.accountNumber);
+
+    const incomplete = accounts.some(a => !a.bankName || !a.accountType || !a.accountNumber || !a.accountHolder || !a.cedulaRnc);
+    if (incomplete) {
+      const errEl = document.getElementById('bank-error');
+      errEl.textContent = 'Completa banco, tipo, número, titular y cédula/RNC en cada cuenta (o quítala si no la vas a usar).';
+      errEl.style.display = 'block';
+      return;
+    }
 
     const btn = document.getElementById('bank-save-btn');
     const original = btn.textContent;

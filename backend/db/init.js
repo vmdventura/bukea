@@ -55,6 +55,11 @@ async function migrate() {
   // Cuentas bancarias + comprobante de pago (2026-08-22 noche)
   await safeAlter('ALTER TABLE bookings ADD COLUMN receipt_path VARCHAR(255)');
   await safeAlter('ALTER TABLE bookings ADD COLUMN receipt_uploaded_at DATETIME');
+
+  // Cédula/RNC del titular en cada cuenta bancaria (2026-08-23) — lo pide
+  // el propio flujo dominicano de transferencia para verificar al
+  // destinatario. DEFAULT '' evita romper filas ya sembradas sin este dato.
+  await safeAlter("ALTER TABLE professional_bank_accounts ADD COLUMN cedula_rnc VARCHAR(20) NOT NULL DEFAULT ''");
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {
