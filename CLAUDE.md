@@ -13,6 +13,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 | Ruta | Contenido |
 |---|---|
 | `docs/VISION.md` | Visión completa: nombre, competencia (Fresha, BarberTime…), diferenciadores, verticales, modelo de negocio |
+| `docs/VALIDACION-GUION.md` | Guion de 9 preguntas, hoja de registro y lista de ~25 prospectos reales (Fresha, CitaApp) para la validación de calle (ROADMAP Etapa 2-3) |
 | `docs/LOGIN-GOOGLE-APPLE-SETUP.md` | Pasos exactos (Google Cloud Console, Apple Developer) para activar `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_ID` — el código ya soporta login con Google y Apple, degrada solo a "Próximamente" mientras falten |
 | `docs/COMPETENCIA-LOCAL-RD.md` | CitaApp y Te Resuelvo — competidores dominicanos nativos (a diferencia de Fresha/Booksy). CitaApp ya tiene calendario con disponibilidad real por US$5–15/mes |
 | `docs/ANALISIS-SITIO-BOOKSY.md` | Análisis de Booksy: confirma que **no opera en RD**, su modelo de precios (US$29,99 + US$20/miembro, cero comisión salvo Boost opcional) y detalles de UI aprovechables |

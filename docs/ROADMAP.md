@@ -36,8 +36,8 @@ El MVP ya existe; ahora hay que dejarlo presentable para enseñarlo a profesiona
 
 - [ ] 2.1 Configurar credenciales de Meta y **despertar el OTP de WhatsApp** ([WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)) — es EL diferenciador demostrable en vivo
 - [ ] 2.2 Cargar 3–5 profesionales de demo realistas (barbería + uñas) con servicios y precios de mercado
-- [ ] 2.3 Guion de validación: 8–10 preguntas fijas (¿usas BarberTime? ¿qué te cobra? ¿qué te duele? ¿pagarías RD$500–1,500/mes por silla?) + hoja de registro de respuestas
-- [ ] 2.4 Lista de 20–25 prospectos: los ~16 negocios públicos de BarberTime + barberías/salones de uñas del entorno de Víctor
+- [x] 2.3 Guion de validación — **materiales listos 2026-08-22 noche**: 9 preguntas fijas + hoja de registro en [VALIDACION-GUION.md](VALIDACION-GUION.md) (ajustado a la oferta gratis: ya no pregunta precio, pregunta compromiso de uso)
+- [x] 2.4 Lista de prospectos — **borrador listo 2026-08-22 noche** en [VALIDACION-GUION.md](VALIDACION-GUION.md) §4: ~25 negocios reales de Fresha y CitaApp en Santo Domingo (verificados en vivo esta sesión) + BarberTime y entorno de Víctor pendientes de sumar
 - [x] 2.5 Oferta de arranque: **Bukea gratis, sin tarjeta, sin fecha de corte por ahora** (decisión de Víctor 2026-08-22) — contraataque al mes gratis con tarjeta de BarberTime y a los RD$240–360/mes de Fresha. El precio se fija en la Etapa 5 con datos del piloto
 
 **Salida:** demo enseñable + guion + lista de prospectos. → Pasa a Etapa 3.
