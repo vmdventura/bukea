@@ -62,7 +62,7 @@ Nada de lo que sigue tiene sentido sin esto. Es la única etapa que no se puede 
 Construir solo lo que los pilotos necesitan para operar de verdad, priorizado por el feedback de la Etapa 3.
 
 - [x] 4.1 Login real del negocio — **hecho 2026-08-22**: teléfono+PIN, Google y Apple (`docs/LOGIN-GOOGLE-APPLE-SETUP.md` para activar Google/Apple en producción); `professionals.owner_user_id` protege `/stats` y `/bookings`
-- [ ] 4.2 Fechas reales en las reservas (hoy `day_label` es texto libre) — desbloquea agenda y "Mi Cuadre" correcto
+- [ ] 4.2 Fechas reales en las reservas (hoy `day_label` es texto libre) — desbloquea agenda y "Mi Cuadre" correcto. **Urgencia confirmada 22-ago-2026:** CitaApp (competidor local, US$5–15/mes) ya tiene esto funcionando, ver `docs/COMPETENCIA-LOCAL-RD.md`
 - [ ] 4.2b "Mis citas" del cliente leídas del servidor por usuario (hoy `localStorage`; se pierden al cambiar de teléfono)
 - [ ] 4.3 Agenda del profesional: ver/confirmar/cancelar citas, bloquear horarios
 - [ ] 4.3b Cambiar/cancelar cita desde el cliente, con política de cancelación por negocio (Fresha: 12 h + penalidad 20%)
