@@ -1,15 +1,15 @@
 const express = require('express');
 const pool = require('../db/pool');
-const { CAT_LABELS, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
+const { CAT_LABELS, CAT_ICONS, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
 const { directionLinks } = require('../lib/geocode');
 
 const router = express.Router();
 
 const CATEGORIES = Object.keys(CAT_LABELS);
 
-function proCardHtml(p) {
+function proCardHtml(p, i) {
   return `
-    <a class="pro-card" href="/p/${esc(p.slug)}">
+    <a class="pro-card reveal" style="--i:${Math.min(i, 9)}" href="/p/${esc(p.slug)}">
       <div class="pro-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
       <div class="pro-info">
         <div class="pro-name">${esc(p.name)}</div>
@@ -22,20 +22,25 @@ function proCardHtml(p) {
 
 const HOME_STYLE = `
 <style>
-  .hero { padding: 3rem 0 2.5rem; text-align: center; }
-  .hero h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); margin: 0 0 0.6rem; color: var(--teal-900); }
-  .hero p { color: var(--soft); font-size: 1.05rem; max-width: 46ch; margin: 0 auto 1.8rem; }
+  .hero { position: relative; padding: 4.5rem 0 3rem; text-align: center; contain: layout paint; }
+  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--teal-900); }
+  .hero p { color: var(--soft); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 2rem; }
   .search-form { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; max-width: 640px; margin: 0 auto; }
-  .search-form input, .search-form select { border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 0.75rem 1.1rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); }
-  .search-form input { flex: 1 1 240px; min-width: 0; }
+  .search-field { position: relative; flex: 1 1 240px; min-width: 0; display: flex; align-items: center; }
+  .search-field .icon { position: absolute; left: 1.1rem; color: var(--soft); }
+  .search-form input { width: 100%; border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 0.8rem 1.1rem 0.8rem 2.7rem; font-size: 0.94rem; font-family: inherit; color: var(--ink); transition: border-color 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart); }
+  .search-form input:focus { outline: none; border-color: var(--teal-500); box-shadow: 0 0 0 4px var(--teal-100); }
   .search-form button { flex: none; }
-  .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
-  .chip { text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--soft); font-size: 0.85rem; font-weight: 700; }
-  .chip.active, .chip:hover { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
-  .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1rem; }
-  .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2rem 0; }
-  .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); }
-  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; }
+  .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.8rem 0 0; }
+  .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--soft); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
+  .chip .icon { width: 15px; height: 15px; }
+  .chip.active, .chip:hover { background: var(--teal-600); border-color: var(--teal-600); color: #fff; transform: translateY(-1px); }
+  .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
+  .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2.2rem 0; }
+  .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart), border-color 220ms var(--ease-out-quart); }
+  .pro-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--teal-500); }
+  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); }
+  .pro-card:hover .pro-avatar { transform: scale(1.07); }
   .pro-info { flex: 1; min-width: 0; }
   .pro-name { font-weight: 700; font-size: 0.95rem; }
   .pro-meta { color: var(--soft); font-size: 0.8rem; margin-top: 0.15rem; }
@@ -43,9 +48,10 @@ const HOME_STYLE = `
   .pro-rating { flex: none; font-weight: 700; font-size: 0.85rem; color: var(--gold-700); text-align: right; }
   .pro-rating span { display: block; font-weight: 500; color: var(--soft); font-size: 0.72rem; }
   .empty { text-align: center; color: var(--soft); padding: 3rem 1rem; }
-  .biz-cta { background: var(--teal-900); color: #fff; border-radius: 22px; padding: 2.2rem; text-align: center; margin: 3rem 0; }
-  .biz-cta h2 { color: #fff; margin: 0 0 0.5rem; font-size: 1.5rem; }
-  .biz-cta p { color: rgba(255,255,255,0.8); max-width: 42ch; margin: 0 auto 1.2rem; }
+  .biz-cta { position: relative; overflow: hidden; isolation: isolate; background: var(--teal-900); color: #fff; border-radius: 24px; padding: 2.4rem; text-align: center; margin: 3.5rem 0; }
+  .biz-cta::before { content: ""; position: absolute; z-index: -1; width: 20rem; height: 20rem; top: -8rem; right: -6rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.5; filter: blur(6px); }
+  .biz-cta h2 { color: #fff; margin: 0 0 0.5rem; font-size: 1.55rem; }
+  .biz-cta p { color: rgba(255,255,255,0.82); max-width: 42ch; margin: 0 auto 1.3rem; }
 </style>`;
 
 router.get('/', async (req, res) => {
@@ -84,7 +90,7 @@ router.get('/', async (req, res) => {
     const active = categoria === key ? ' active' : '';
     const params2 = new URLSearchParams(q ? { q } : {});
     params2.set('categoria', key);
-    return `<a class="chip${active}" href="/?${params2.toString()}">${esc(CAT_LABELS[key])}</a>`;
+    return `<a class="chip${active}" href="/?${params2.toString()}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
   }).join('');
   const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${q ? '?q=' + encodeURIComponent(q) : ''}">Todos</a>`;
 
@@ -96,20 +102,24 @@ router.get('/', async (req, res) => {
 ${HOME_STYLE}
 <div class="wrap">
   <div class="hero">
-    <h1>Bukea tu cita de belleza en República Dominicana</h1>
-    <p>Barbería, uñas, salón, cejas y maquillaje — reserva en segundos, paga en efectivo o transferencia, sin comisión.</p>
-    <form class="search-form" method="get" action="/">
-      <input type="text" name="q" value="${esc(q)}" placeholder="Busca un profesional, negocio o sector…">
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Bukea tu cita de belleza en República Dominicana</h1>
+    <p class="reveal" style="--i:1">Barbería, uñas, salón, cejas y maquillaje — reserva en segundos, paga en efectivo o transferencia, sin comisión.</p>
+    <form class="search-form reveal" style="--i:2" method="get" action="/">
+      <div class="search-field">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input type="text" name="q" value="${esc(q)}" placeholder="Busca un profesional, negocio o sector…">
+      </div>
       ${categoria ? `<input type="hidden" name="categoria" value="${esc(categoria)}">` : ''}
       <button class="btn btn-primary" type="submit">Buscar</button>
     </form>
-    <div class="chips">${allChip}${chips}</div>
-    <p class="stat-line">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
+    <div class="chips reveal" style="--i:3">${allChip}${chips}</div>
+    <p class="stat-line reveal" style="--i:4">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
   </div>
 
   <div class="pro-grid">${grid}</div>
 
-  <div class="biz-cta">
+  <div class="biz-cta reveal">
     <h2>¿Tienes un negocio de belleza?</h2>
     <p>Agenda, clientela y "Mi Cuadre" en un solo lugar — y por ahora, 100% gratis. Cero comisión, cero suscripción.</p>
     <a class="btn btn-primary" href="/negocios">Únete a Bukea</a>
@@ -154,7 +164,7 @@ router.get('/mapa', async (req, res) => {
 
   const chips = CATEGORIES.map(key => {
     const active = categoria === key ? ' active' : '';
-    return `<a class="chip${active}" href="/mapa?categoria=${key}">${esc(CAT_LABELS[key])}</a>`;
+    return `<a class="chip${active}" href="/mapa?categoria=${key}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
   }).join('');
   const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/mapa">Todos</a>`;
 
@@ -222,12 +232,13 @@ ${MAP_STYLE}
 const PROFILE_STYLE = `
 <style>
   .profile-hero { display: flex; gap: 1.4rem; align-items: center; padding: 2rem 0 1.4rem; flex-wrap: wrap; }
-  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; }
+  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); }
   .profile-hero h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
   .profile-meta { color: var(--soft); font-size: 0.95rem; }
   .profile-badges { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
   .svc-list { margin: 1.6rem 0; }
-  .svc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+  .svc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0.6rem; margin: 0 -0.6rem; border-bottom: 1px solid var(--line); border-radius: 10px; transition: background 180ms var(--ease-out-quart); }
+  .svc-row:hover { background: var(--teal-50); }
   .svc-row:last-child { border-bottom: none; }
   .svc-name { font-weight: 700; font-size: 0.95rem; }
   .svc-dur { color: var(--soft); font-size: 0.8rem; margin-top: 0.1rem; }
@@ -236,7 +247,8 @@ const PROFILE_STYLE = `
   .cta-row .btn { width: 100%; max-width: 360px; justify-content: center; padding: 0.9rem 1.5rem; font-size: 1rem; }
   .team-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.6rem 0; }
   .team-member { display: flex; flex-direction: column; align-items: center; text-align: center; width: 84px; }
-  .team-avatar { width: 56px; height: 56px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.4rem; }
+  .team-avatar { width: 56px; height: 56px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.4rem; transition: transform 220ms var(--ease-out-quart); }
+  .team-member:hover .team-avatar { transform: scale(1.08) rotate(-3deg); }
   .team-name { font-weight: 700; font-size: 0.8rem; line-height: 1.2; }
   .team-role { color: var(--soft); font-size: 0.72rem; }
 </style>`;
@@ -289,7 +301,7 @@ router.get('/p/:slug', async (req, res) => {
   const body = `
 ${PROFILE_STYLE}
 <div class="wrap">
-  <div class="profile-hero">
+  <div class="profile-hero reveal" style="--i:0">
     <div class="profile-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
     <div>
       <h1>${esc(p.name)}</h1>
@@ -300,12 +312,12 @@ ${PROFILE_STYLE}
     </div>
   </div>
 
-  <h2>Servicios</h2>
-  <div class="svc-list card" style="padding:0.4rem 1.2rem">${svcHtml}</div>
+  <h2 class="reveal" style="--i:1">Servicios</h2>
+  <div class="svc-list card reveal" style="--i:1;padding:0.4rem 1.2rem">${svcHtml}</div>
 
   ${bankAccounts.length ? `
-  <h2>Cuentas para transferir</h2>
-  <div class="svc-list card" style="padding:0.4rem 1.2rem">
+  <h2 class="reveal" style="--i:2">Cuentas para transferir</h2>
+  <div class="svc-list card reveal" style="--i:2;padding:0.4rem 1.2rem">
     ${bankAccounts.map(b => `
     <div class="svc-row">
       <div>
@@ -317,8 +329,8 @@ ${PROFILE_STYLE}
   </div>` : ''}
 
   ${collaboratorRows.length ? `
-  <h2>Equipo</h2>
-  <div class="team-grid">
+  <h2 class="reveal" style="--i:3">Equipo</h2>
+  <div class="team-grid reveal" style="--i:3">
     <div class="team-member">
       <div class="team-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
       <div class="team-name">${esc(p.name.split(' ')[0])}</div>
@@ -332,8 +344,8 @@ ${PROFILE_STYLE}
     </div>`).join('')}
   </div>` : ''}
 
-  <h2>Cómo llegar</h2>
-  <div class="svc-list card" style="padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
+  <h2 class="reveal" style="--i:4">Cómo llegar</h2>
+  <div class="svc-list card reveal" style="--i:4;padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
     <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
     <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
     <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
@@ -355,19 +367,39 @@ ${PROFILE_STYLE}
 
 const MARKETING_STYLE = `
 <style>
-  .m-hero { padding: 3rem 0 1rem; text-align: center; }
-  .m-hero h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); color: var(--teal-900); margin: 0 0 0.6rem; }
-  .m-hero p { color: var(--soft); font-size: 1.05rem; max-width: 50ch; margin: 0 auto 1.6rem; }
-  .m-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin: 2.5rem 0; }
-  .m-feature { padding: 1.4rem; }
-  .m-feature h3 { margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--teal-800, var(--teal-700)); }
-  .m-feature p { margin: 0; color: var(--soft); font-size: 0.88rem; }
-  .price-card { max-width: 420px; margin: 2.5rem auto; padding: 2rem; text-align: center; }
+  .m-hero { position: relative; padding: 4rem 0 1rem; text-align: center; contain: layout paint; }
+  .m-hero h1 { font-size: clamp(2rem, 4.5vw, 2.9rem); letter-spacing: -0.02em; color: var(--teal-900); margin: 0 0 0.7rem; }
+  .m-hero p { color: var(--soft); font-size: 1.05rem; max-width: 50ch; margin: 0 auto 1.7rem; }
+
+  /* Bento: dos tarjetas grandes (los diferenciadores) + cuatro de apoyo,
+     nunca del mismo tamaño — evita la cuadrícula idéntica de "features". */
+  .m-bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2.6rem 0; }
+  .m-feature { padding: 1.6rem; display: flex; flex-direction: column; gap: 0.7rem; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart); }
+  .m-feature:hover { transform: translateY(-3px); box-shadow: var(--sh-3); }
+  .m-feature .icon-badge { width: 42px; height: 42px; border-radius: 12px; background: var(--teal-100); color: var(--teal-700); display: flex; align-items: center; justify-content: center; flex: none; }
+  .m-feature h3 { margin: 0; font-size: 1.05rem; color: var(--teal-900); }
+  .m-feature p { margin: 0; color: var(--soft); font-size: 0.88rem; line-height: 1.5; }
+  .m-feature.-lg { grid-column: span 2; }
+  .m-feature.-lg .icon-badge { width: 50px; height: 50px; }
+  .m-feature.-lg .icon-badge .icon { width: 26px; height: 26px; }
+  .m-feature.-lg h3 { font-size: 1.3rem; }
+  .m-feature.-dark { background: var(--teal-900); border-color: var(--teal-900); color: #fff; position: relative; overflow: hidden; isolation: isolate; }
+  .m-feature.-dark::before { content: ""; position: absolute; z-index: -1; width: 14rem; height: 14rem; top: -6rem; right: -5rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.45; }
+  .m-feature.-dark h3 { color: #fff; }
+  .m-feature.-dark p { color: rgba(255,255,255,0.78); }
+  .m-feature.-dark .icon-badge { background: rgba(255,255,255,0.14); color: #fff; }
+  @media (max-width: 720px) {
+    .m-bento { grid-template-columns: 1fr; }
+    .m-feature.-lg { grid-column: span 1; }
+  }
+
+  .price-card { position: relative; overflow: hidden; isolation: isolate; max-width: 420px; margin: 2.5rem auto; padding: 2.2rem; text-align: center; }
+  .price-card::before { content: ""; position: absolute; z-index: -1; width: 16rem; height: 16rem; top: -7rem; left: -5rem; border-radius: 50%; background: radial-gradient(circle, var(--teal-100), transparent 70%); }
   .price-card .amount { font-family: "Fraunces", serif; font-size: 3rem; color: var(--teal-700); margin: 0.4rem 0; }
   .price-card .amount small { font-size: 1rem; color: var(--soft); font-weight: 400; }
   .price-list { text-align: left; list-style: none; padding: 0; margin: 1.4rem 0; color: var(--soft); font-size: 0.9rem; }
-  .price-list li { padding: 0.4rem 0; }
-  .price-list li::before { content: "✓ "; color: var(--cash); font-weight: 700; }
+  .price-list li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
+  .price-list li .icon { color: var(--cash); margin-top: 0.15rem; }
 </style>`;
 
 router.get('/negocios', (req, res) => {
@@ -376,22 +408,47 @@ router.get('/negocios', (req, res) => {
 ${MARKETING_STYLE}
 <div class="wrap">
   <div class="m-hero">
-    <h1>Tu agenda, tu clientela — cero comisión</h1>
-    <p>Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, efectivo/transferencia y fila para walk-ins, de raíz.</p>
-    <a class="btn btn-primary" href="${base}/?join=1">Únete a Bukea — es gratis</a>
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Tu agenda, tu clientela — cero comisión</h1>
+    <p class="reveal" style="--i:1">Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, efectivo/transferencia y fila para walk-ins, de raíz.</p>
+    <a class="btn btn-primary reveal" style="--i:2" href="${base}/?join=1">Únete a Bukea — es gratis</a>
   </div>
 
-  <div class="m-features">
-    <div class="card m-feature"><h3>Agenda real</h3><p>Tus clientes ven tu horario de verdad y reservan sin llamarte. Tú confirmas, cancelas y llevas el control desde tu celular.</p></div>
-    <div class="card m-feature"><h3>Mi Cuadre</h3><p>Cuánto vendiste hoy, en los últimos 7 días y en el mes — sin hoja de cálculo, sin cuaderno.</p></div>
-    <div class="card m-feature"><h3>A la dominicana</h3><p>Efectivo, transferencia y tPago desde el primer día. Tarjeta cuando la necesites.</p></div>
-    <div class="card m-feature"><h3>WhatsApp nativo</h3><p>Confirmaciones y recordatorios donde ya está tu clientela.</p></div>
-    <div class="card m-feature"><h3>Fila en vivo</h3><p>Para el walk-in que llega sin cita — turno en tiempo real, sin perder el orden.</p></div>
-    <div class="card m-feature"><h3>Cero comisión</h3><p>Nunca te cobramos por cliente nuevo. Lo que vendes es tuyo.</p></div>
+  <div class="m-bento">
+    <div class="card m-feature -lg reveal" style="--i:0">
+      <div class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></div>
+      <h3>Agenda real</h3>
+      <p>Tus clientes ven tu horario de verdad y reservan sin llamarte. Tú confirmas, cancelas y llevas el control desde tu celular.</p>
+    </div>
+    <div class="card m-feature reveal" style="--i:1">
+      <div class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></div>
+      <h3>Mi Cuadre</h3>
+      <p>Cuánto vendiste hoy, en los últimos 7 días y en el mes — sin hoja de cálculo, sin cuaderno.</p>
+    </div>
+    <div class="card m-feature reveal" style="--i:2">
+      <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
+      <h3>A la dominicana</h3>
+      <p>Efectivo, transferencia y tPago desde el primer día. Tarjeta cuando la necesites.</p>
+    </div>
+    <div class="card m-feature -lg reveal" style="--i:3">
+      <div class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></div>
+      <h3>WhatsApp nativo</h3>
+      <p>Confirmaciones y recordatorios donde ya está tu clientela — no una notificación push que nadie abre.</p>
+    </div>
+    <div class="card m-feature reveal" style="--i:4">
+      <div class="icon-badge"><svg class="icon"><use href="#i-clock"/></svg></div>
+      <h3>Fila en vivo</h3>
+      <p>Para el walk-in que llega sin cita — turno en tiempo real, sin perder el orden.</p>
+    </div>
+    <div class="card m-feature -lg -dark reveal" style="--i:5">
+      <div class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></div>
+      <h3>Cero comisión</h3>
+      <p>Nunca te cobramos por cliente nuevo. Lo que vendes es tuyo.</p>
+    </div>
   </div>
 
-  <div class="biz-cta" style="background:var(--teal-900)">
-    <h2 style="color:#fff">Móntate hoy, sin tarjeta</h2>
+  <div class="biz-cta reveal">
+    <h2>Móntate hoy, sin tarjeta</h2>
     <p>Crea tu perfil en menos de 2 minutos y comparte tu enlace por WhatsApp.</p>
     <a class="btn btn-primary" href="${base}/?join=1">Crear mi cuenta de negocio</a>
   </div>
@@ -407,33 +464,36 @@ ${MARKETING_STYLE}
 
 router.get('/precios', (req, res) => {
   const base = req.baseUrlPrefix;
+  const perks = [
+    'Perfil público con tus servicios y horario',
+    'Agenda con disponibilidad real',
+    'Reservas ilimitadas, sin comisión',
+    '"Mi Cuadre" — cuánto vendiste hoy, en la semana y en el mes',
+    'Recordatorio por WhatsApp para tus clientes',
+    'Fila en vivo para walk-ins',
+  ].map(t => `<li><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
+
   const body = `
 ${MARKETING_STYLE}
 <div class="wrap">
   <div class="m-hero">
-    <h1>Bukea es gratis</h1>
-    <p>Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Así de simple, mientras construimos la mejor app de reservas de belleza del país.</p>
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Bukea es gratis</h1>
+    <p class="reveal" style="--i:1">Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Así de simple, mientras construimos la mejor app de reservas de belleza del país.</p>
   </div>
 
-  <div class="card price-card">
+  <div class="card price-card reveal" style="--i:2">
     <div>Para tu negocio</div>
     <div class="amount">RD$0<small>/mes</small></div>
-    <ul class="price-list">
-      <li>Perfil público con tus servicios y horario</li>
-      <li>Agenda con disponibilidad real</li>
-      <li>Reservas ilimitadas, sin comisión</li>
-      <li>"Mi Cuadre" — cuánto vendiste hoy, en la semana y en el mes</li>
-      <li>Recordatorio por WhatsApp para tus clientes</li>
-      <li>Fila en vivo para walk-ins</li>
-    </ul>
+    <ul class="price-list">${perks}</ul>
     <a class="btn btn-primary" href="${base}/?join=1">Únete gratis</a>
   </div>
 
-  <p style="text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
+  <p class="reveal" style="--i:3;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
     Cuando llegue el momento de cobrar, los negocios fundadores mantienen condiciones especiales — nunca vas a pagar más que lo que aceptaste al unirte.
   </p>
 
-  <div class="m-hero" style="padding-top:0">
+  <div class="m-hero reveal" style="padding-top:0">
     <h1 style="font-size:1.6rem">Para el cliente, siempre gratis</h1>
     <p>Explora, reserva y gestiona tus citas sin costo — hoy y siempre.</p>
   </div>
