@@ -68,7 +68,11 @@ Reemplaza las etiquetas fijas ("Hoy", "Mañana", 4 horas fijas) que tenía el fl
 - `bookings.status` (`confirmed`/`cancelled`) + `POST /api/bookings/:id/cancel` (cliente dueño de la cita o dueño del negocio) — cierra ROADMAP 4.3b.
 - `GET /api/bookings/me` reemplaza el `localStorage` de "Mis citas" del cliente — cierra 4.2b.
 - "Mi Cuadre" (`/:slug/stats`) pasó de calcular sobre `created_at` a calcular sobre `appointment_at` (con `created_at` de respaldo para reservas viejas sin fecha real), excluyendo canceladas.
-- **Pendiente, a propósito fuera de esta pasada:** pantalla para editar el horario semanal, bloquear horarios sueltos (excepciones puntuales al horario semanal), y política de cancelación con penalidad (hoy se cancela sin restricción).
+- **Pendiente, a propósito fuera de esta pasada:** bloquear horarios sueltos (excepciones puntuales al horario semanal) y política de cancelación con penalidad (hoy se cancela sin restricción). ~~pantalla para editar el horario semanal~~ — resuelto la misma noche, ver abajo.
+
+## Editar horario semanal (2026-08-22 noche)
+
+`GET`/`PUT /api/professionals/:slug/hours` (dueño únicamente) + sección "Mi horario" en el panel de negocio: 7 días con casilla abierto/cerrado y hora de apertura/cierre. `PUT` reemplaza todas las filas de `professional_hours` del negocio — valida día (0-6), formato de hora y que el cierre sea después de la apertura. **Limitación consciente:** un solo rango por día en esta pantalla (el horario con hueco de almuerzo que trae el default sembrado se puede tener en la base de datos, pero editarlo desde aquí lo colapsa a un rango). Probado: guardar desde la UI persiste, la disponibilidad (`/availability/days`) refleja el cambio al instante, otro usuario no puede editar el horario de un negocio ajeno (403).
 
 ## Marketplace público (2026-08-22 noche)
 
@@ -93,5 +97,5 @@ Hasta que se haga ese cambio, `bukeard.com` sigue mostrando la landing vieja —
 ## Próximos pasos probables
 
 1. Que Víctor decida y ejecute el cambio de despliegue de arriba, para que el marketplace público quede en vivo.
-2. Pantalla para que el negocio edite su horario semanal y bloquee horarios sueltos (ROADMAP 4.3, lo que quedó pendiente).
+2. Bloquear horarios sueltos (excepciones puntuales) y política de cancelación con penalidad — lo que queda de ROADMAP 4.3.
 3. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar con 10–15 profesionales (ahora con la oferta "gratis, móntate hoy").

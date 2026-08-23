@@ -328,4 +328,75 @@ router.get('/:slug/stats', requireAuth, async (req, res) => {
   });
 });
 
+const WEEKDAY_KEYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+
+async function findOwnedProfessional(slug, userId) {
+  const [rows] = await pool.query('SELECT id, owner_user_id FROM professionals WHERE slug = ?', [slug]);
+  const professional = rows[0];
+  if (!professional) return { error: [404, 'Profesional no encontrado'] };
+  if (professional.owner_user_id !== userId) return { error: [403, 'No tienes acceso a este negocio'] };
+  return { professional };
+}
+
+// Horario semanal editable (2026-08-22) — hasta ahora solo existía el
+// horario por defecto sembrado al registrarse (mar-sáb 9am-6pm). Un solo
+// rango por día en esta pantalla; varios rangos (huecos de almuerzo) siguen
+// siendo posibles en la base de datos pero requieren editarlos a mano.
+router.get('/:slug/hours', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const [rows] = await pool.query(
+    'SELECT weekday, start_time, end_time FROM professional_hours WHERE professional_id = ? ORDER BY weekday',
+    [professional.id]
+  );
+  const byWeekday = {};
+  rows.forEach(r => { byWeekday[r.weekday] = r; });
+
+  res.json(
+    WEEKDAY_KEYS.map((key, weekday) => {
+      const row = byWeekday[weekday];
+      return {
+        weekday,
+        key,
+        open: Boolean(row),
+        startTime: row ? row.start_time.slice(0, 5) : '09:00',
+        endTime: row ? row.end_time.slice(0, 5) : '18:00',
+      };
+    })
+  );
+});
+
+router.put('/:slug/hours', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const days = Array.isArray(req.body.days) ? req.body.days : [];
+  const clean = [];
+  for (const d of days) {
+    if (!d.open) continue;
+    const weekday = Number(d.weekday);
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+      return res.status(400).json({ error: 'Día inválido' });
+    }
+    if (!/^\d{2}:\d{2}$/.test(d.startTime) || !/^\d{2}:\d{2}$/.test(d.endTime)) {
+      return res.status(400).json({ error: 'Hora inválida' });
+    }
+    if (d.startTime >= d.endTime) {
+      return res.status(400).json({ error: 'La hora de cierre debe ser después de la de apertura' });
+    }
+    clean.push({ weekday, startTime: d.startTime, endTime: d.endTime });
+  }
+
+  await pool.query('DELETE FROM professional_hours WHERE professional_id = ?', [professional.id]);
+  for (const d of clean) {
+    await pool.query(
+      'INSERT INTO professional_hours (professional_id, weekday, start_time, end_time) VALUES (?, ?, ?, ?)',
+      [professional.id, d.weekday, d.startTime + ':00', d.endTime + ':00']
+    );
+  }
+
+  res.json({ saved: true, openDays: clean.length });
+});
+
 module.exports = router;
