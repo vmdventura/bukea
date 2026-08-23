@@ -93,7 +93,7 @@ Estas páginas nuevas viven en el **mismo** proceso Node que ya sirve `/app` —
 1. **Recomendado:** cambiar la "Application URL" del Node app de `bukeard.com/app` a `bukeard.com` (la raíz) — Passenger entonces enruta todo el dominio a este Express, que ya sabe servir `/app/*` (la PWA, vía `BASE`) y `/`, `/p/*`, `/negocios`, `/precios` (el marketplace). Probablemente haya que mover o borrar los archivos de la landing vieja del docroot para que no la tapen.
 2. **Alternativa** si (1) da problemas: dejar el dominio raíz como está y exponer el marketplace en un subpath propio (ej. `bukeard.com/inicio`) — requiere ajustar los enlaces internos de `pages.js` (hoy asumen que viven en la raíz) y es un cambio de código adicional, no solo de configuración.
 
-Hasta que se haga ese cambio, `bukeard.com` sigue mostrando la landing vieja — el código nuevo se puede probar en local (`http://localhost:3000/`) pero no está en vivo.
+**Resuelto 2026-08-23.** Se cambió la "Application URL" del Node app de `bukeard.com/app` a `bukeard.com` (raíz) en *Setup Node.js App* (con Víctor logueado en su Chrome), y se renombró `index.html` (la landing vieja, 660 KB) a `landing-vieja-backup.html.bak` en `/home/hyghncjr/bukeard.com/` para que no le tapara la ruta `/` a Express. Reiniciado y verificado con `curl`: `/`, `/app`, `/negocios` y `/precios` responden 200 con el contenido nuevo (no la landing vieja). También quedó un `.htaccess` vacío (0 bytes) en `bukeard.com/bukea/` — resto de la migración del 15-jul desde `vmdventura.com/bukea`, inofensivo, se puede borrar cuando se limpie el hosting.
 
 ## Cuentas bancarias y comprobante de pago (2026-08-22 noche)
 
