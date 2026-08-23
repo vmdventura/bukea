@@ -10,11 +10,19 @@ const IGNORABLE_ALTER_ERRORS = new Set([
   'ER_FK_DUP_NAME',   // la llave foránea ya existe
 ]);
 
+// Algunas versiones de MySQL/MariaDB (visto en producción, 2026-08-23) no
+// reportan una llave foránea ya existente como ER_FK_DUP_NAME, sino como
+// ER_CANT_CREATE_TABLE con "errno: 121" incrustado en el mensaje — mismo
+// caso (nombre de FK duplicado), solo que el motor lo envuelve distinto.
+function isDuplicateForeignKey(err) {
+  return err.code === 'ER_CANT_CREATE_TABLE' && err.errno === 1005 && /errno: 121/.test(err.sqlMessage || '');
+}
+
 async function safeAlter(sql) {
   try {
     await pool.query(sql);
   } catch (err) {
-    if (!IGNORABLE_ALTER_ERRORS.has(err.code)) throw err;
+    if (!IGNORABLE_ALTER_ERRORS.has(err.code) && !isDuplicateForeignKey(err)) throw err;
   }
 }
 
