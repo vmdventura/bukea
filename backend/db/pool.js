@@ -8,6 +8,10 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 5,
+  // appointment_at guarda la hora de pared de RD tal cual, sin zona horaria.
+  // dateStrings evita que mysql2 la reinterprete como hora local del server
+  // al convertirla a un objeto Date (que podría correr en otro huso).
+  dateStrings: true,
 });
 
 module.exports = pool;

@@ -62,10 +62,10 @@ Nada de lo que sigue tiene sentido sin esto. Es la única etapa que no se puede 
 Construir solo lo que los pilotos necesitan para operar de verdad, priorizado por el feedback de la Etapa 3.
 
 - [x] 4.1 Login real del negocio — **hecho 2026-08-22**: teléfono+PIN, Google y Apple (`docs/LOGIN-GOOGLE-APPLE-SETUP.md` para activar Google/Apple en producción); `professionals.owner_user_id` protege `/stats` y `/bookings`
-- [ ] 4.2 Fechas reales en las reservas (hoy `day_label` es texto libre) — desbloquea agenda y "Mi Cuadre" correcto. **Urgencia confirmada 22-ago-2026:** CitaApp (competidor local, US$5–15/mes) ya tiene esto funcionando, ver `docs/COMPETENCIA-LOCAL-RD.md`
-- [ ] 4.2b "Mis citas" del cliente leídas del servidor por usuario (hoy `localStorage`; se pierden al cambiar de teléfono)
-- [ ] 4.3 Agenda del profesional: ver/confirmar/cancelar citas, bloquear horarios
-- [ ] 4.3b Cambiar/cancelar cita desde el cliente, con política de cancelación por negocio (Fresha: 12 h + penalidad 20%)
+- [x] 4.2 Fechas reales en las reservas — **hecho 2026-08-22**: horario semanal real por profesional (`professional_hours`, sembrado por defecto mar-sáb 9am-6pm al registrarse, editable solo por API todavía — falta pantalla), disponibilidad calculada en vivo (horario − citas ya tomadas), reserva revalidada server-side contra choques de horario y doble-booking (`UNIQUE (professional_id, appointment_at)`). `day_label`/`time_label` ahora se calculan de `appointment_at`, no son texto libre
+- [x] 4.2b "Mis citas" del cliente leídas del servidor por usuario — **hecho 2026-08-22**: `GET /api/bookings/me`, ya no vive en `localStorage`
+- [x] 4.3 Agenda del profesional: ver/cancelar citas — **hecho 2026-08-22** (`GET /:slug/bookings` ahora trae `status` y fecha real); **falta:** confirmar explícitamente y **bloquear horarios sueltos** (hoy solo hay horario semanal fijo, no excepciones puntuales)
+- [x] 4.3b Cambiar/cancelar cita desde el cliente — **hecho 2026-08-22** (`POST /api/bookings/:id/cancel`, cliente o dueño); **falta:** política de cancelación configurable con penalidad (hoy se puede cancelar sin restricción)
 - [ ] 4.4 Recordatorios reales por WhatsApp (confirmación + recordatorio pre-cita)
 - [ ] 4.5 Fotos reales de perfil y portafolio (el profesional es el perfil)
 - [ ] 4.6 Decidir stack/hosting definitivo (¿se queda BanaHosting o migrar?) — decidir aquí, antes de tener datos de clientes reales

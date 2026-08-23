@@ -519,6 +519,8 @@
     font-family: inherit; transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease), box-shadow 160ms var(--ease);
   }
   .pill-btn.sel { background: var(--brand-teal); border-color: var(--brand-teal); color: #fff; box-shadow: var(--sh-teal); }
+  .pill-btn:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+  .cta:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .pay-option {
     background: var(--card); border: 1.5px solid var(--line); border-radius: 15px;
@@ -898,22 +900,12 @@
 
     <div class="option-group">
       <span class="option-label">Día</span>
-      <div class="pills">
-        <button class="pill-btn" onclick="pick(this)">Hoy</button>
-        <button class="pill-btn sel" onclick="pick(this)">Mañana</button>
-        <button class="pill-btn" onclick="pick(this)">Sáb 6</button>
-        <button class="pill-btn" onclick="pick(this)">Dom 7</button>
-      </div>
+      <div class="pills" id="dia-pills"><p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p></div>
     </div>
 
     <div class="option-group">
       <span class="option-label">Hora</span>
-      <div class="pills">
-        <button class="pill-btn" onclick="pick(this)">9:00 AM</button>
-        <button class="pill-btn" onclick="pick(this)">10:30 AM</button>
-        <button class="pill-btn sel" onclick="pick(this)">3:00 PM</button>
-        <button class="pill-btn" onclick="pick(this)">4:30 PM</button>
-      </div>
+      <div class="pills" id="hora-pills"><p style="color:var(--soft);font-size:0.85rem">Elige un día</p></div>
     </div>
 
     <div class="option-group">
@@ -942,7 +934,7 @@
 
     <div class="photo-attach"><svg class="icon"><use href="#i-camera"/></svg>Adjunta una foto del estilo que quieres <small>(opcional)</small></div>
 
-    <button class="cta" id="confirm-btn" onclick="confirmBooking()"><svg class="icon"><use href="#i-check"/></svg>Confirmar — mañana 3:00 PM</button>
+    <button class="cta" id="confirm-btn" onclick="confirmBooking()" disabled><svg class="icon"><use href="#i-check"/></svg>Confirmar <span id="confirm-btn-when"></span></button>
   </div>
 
   <!-- ============ CONFIRMACIÓN ============ -->
@@ -1047,8 +1039,10 @@
     serviceId: null,
     serviceName: null,
     priceCents: null,
-    day: 'Mañana',
-    time: '3:00 PM',
+    date: null,       // 'YYYY-MM-DD'
+    dateLabel: null,  // 'Hoy' / 'Mañana' / 'Vie 28 ago'
+    time: null,       // 'HH:MM' 24h
+    timeLabel: null,  // '9:00 AM'
     paymentMethod: 'cash',
     paymentLabel: 'Efectivo',
     returnTo: 'inicio',
@@ -1160,14 +1154,104 @@
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
+    if (id === 'reserva') loadAvailabilityDays();
   }
 
-  function pick(btn) {
-    btn.parentElement.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('sel'));
+  /* ===== Disponibilidad real: días y horas libres del profesional ===== */
+  function updateConfirmButton() {
+    const btn = document.getElementById('confirm-btn');
+    const when = document.getElementById('confirm-btn-when');
+    if (state.date && state.time) {
+      when.textContent = '— ' + state.dateLabel.toLowerCase() + ' ' + state.timeLabel;
+      btn.disabled = false;
+    } else {
+      when.textContent = '';
+      btn.disabled = true;
+    }
+  }
+
+  async function loadAvailabilityDays() {
+    if (!state.professional || !state.serviceId) return;
+    state.date = null; state.time = null;
+    updateConfirmButton();
+    const diaEl = document.getElementById('dia-pills');
+    const horaEl = document.getElementById('hora-pills');
+    diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p>';
+    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
+    try {
+      const res = await fetch(
+        API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
+        '/availability/days?serviceId=' + state.serviceId + '&days=10'
+      );
+      if (!res.ok) throw new Error('No se pudo cargar la disponibilidad');
+      const days = await res.json();
+      diaEl.innerHTML = '';
+      let firstWithSlots = null;
+      days.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn';
+        btn.textContent = d.label;
+        btn.disabled = !d.hasSlots;
+        btn.addEventListener('click', () => pickDay(d, btn));
+        diaEl.appendChild(btn);
+        if (d.hasSlots && !firstWithSlots) firstWithSlots = { day: d, btn };
+      });
+      if (firstWithSlots) {
+        pickDay(firstWithSlots.day, firstWithSlots.btn);
+      } else {
+        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días — vuelve a intentar más tarde.</p>';
+      }
+    } catch (err) {
+      diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar la disponibilidad.</p>';
+      console.error(err);
+    }
+  }
+
+  function pickDay(day, btn) {
+    document.querySelectorAll('#dia-pills .pill-btn').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
-    const group = btn.closest('.option-group').querySelector('.option-label').textContent;
-    if (group === 'Día') state.day = btn.textContent;
-    if (group === 'Hora') state.time = btn.textContent;
+    state.date = day.date;
+    state.dateLabel = day.label;
+    state.time = null;
+    updateConfirmButton();
+    loadAvailabilityTimes();
+  }
+
+  async function loadAvailabilityTimes() {
+    const horaEl = document.getElementById('hora-pills');
+    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando horas…</p>';
+    try {
+      const res = await fetch(
+        API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
+        '/availability/times?serviceId=' + state.serviceId + '&date=' + state.date
+      );
+      if (!res.ok) throw new Error('No se pudo cargar las horas');
+      const data = await res.json();
+      horaEl.innerHTML = '';
+      if (data.times.length === 0) {
+        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Ese día no tiene horas libres.</p>';
+        return;
+      }
+      data.times.forEach((t, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn' + (i === 0 ? ' sel' : '');
+        btn.textContent = t.label;
+        btn.addEventListener('click', () => pickTime(t, btn));
+        horaEl.appendChild(btn);
+      });
+      pickTime(data.times[0], horaEl.firstChild);
+    } catch (err) {
+      horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar las horas.</p>';
+      console.error(err);
+    }
+  }
+
+  function pickTime(t, btn) {
+    document.querySelectorAll('#hora-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    state.time = t.time;
+    state.timeLabel = t.label;
+    updateConfirmButton();
   }
 
   const payIcons = { 'i-cash': ['cash', 'Efectivo'], 'i-bank': ['bank', 'Transferencia'], 'i-tpago': ['tpago', 'tPago'], 'i-card': ['card', 'Tarjeta'] };
@@ -1229,7 +1313,7 @@
   }
 
   async function confirmBooking() {
-    if (!state.professional || !state.serviceId) return;
+    if (!state.professional || !state.serviceId || !state.date || !state.time) return;
 
     // Registro just-in-time: solo aquí, cuando ya vas a reservar, se pide la cuenta.
     if (!getSession()) {
@@ -1245,17 +1329,19 @@
     try {
       const res = await fetch(API_BASE + '/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
         body: JSON.stringify({
           professionalId: state.professional.id,
           serviceId: state.serviceId,
-          clientName: clientName,
-          dayLabel: state.day,
-          timeLabel: state.time,
+          date: state.date,
+          time: state.time,
           paymentMethod: state.paymentMethod,
         }),
       });
-      if (!res.ok) throw new Error('No se pudo crear la reserva');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'No se pudo crear la reserva');
+      }
       const booking = await res.json();
 
       document.getElementById('ticket-prof').textContent = booking.professionalName;
@@ -1267,21 +1353,12 @@
       document.getElementById('wa-message').textContent =
         '¡Confirmao, ' + firstName(clientName) + '! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
 
-      saveClientBooking({
-        professionalName: booking.professionalName,
-        businessName: booking.businessName,
-        serviceName: booking.serviceName,
-        priceCents: booking.priceCents,
-        dayLabel: booking.dayLabel,
-        timeLabel: booking.timeLabel,
-        paymentLabel: state.paymentLabel,
-      });
-
       if (navigator.vibrate) navigator.vibrate(12);
       go('confirmacion');
     } catch (err) {
-      alert('No se pudo confirmar la cita. Revisa tu conexión e intenta de nuevo.');
+      alert(err.message || 'No se pudo confirmar la cita. Revisa tu conexión e intenta de nuevo.');
       console.error(err);
+      loadAvailabilityDays();
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -1436,7 +1513,7 @@
       document.getElementById('panel-business').textContent = prof.businessName;
       document.getElementById('panel-name').textContent = prof.name;
       document.getElementById('panel-cat').textContent = CAT_LABELS[prof.category] || prof.category;
-      document.getElementById('panel-count').textContent = citas.length;
+      document.getElementById('panel-count').textContent = citas.filter(c => c.status !== 'cancelled').length;
 
       const citasEl = document.getElementById('panel-citas');
       citasEl.innerHTML = '';
@@ -1451,6 +1528,19 @@
           card.querySelector('.c-price').textContent = formatPrice(c.priceCents);
           card.querySelector('.c-when').textContent = c.dayLabel + ' · ' + c.timeLabel;
           card.querySelector('.c-svc').textContent = c.serviceName;
+          if (c.status === 'cancelled') {
+            card.style.opacity = '0.55';
+            const badge = document.createElement('span');
+            badge.textContent = 'Cancelada';
+            badge.style.cssText = 'display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600';
+            card.appendChild(badge);
+          } else {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancelar cita';
+            cancelBtn.style.cssText = 'margin-top:0.5rem;background:none;border:none;color:#b3261e;font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+            cancelBtn.addEventListener('click', () => cancelBookingFromPanel(c.id));
+            card.appendChild(cancelBtn);
+          }
           citasEl.appendChild(card);
         });
       }
@@ -1474,6 +1564,20 @@
     }
   }
 
+  async function cancelBookingFromPanel(id) {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
+        method: 'POST', headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cancelar');
+      loadPanel();
+    } catch (err) {
+      alert('No se pudo cancelar la cita. Intenta de nuevo.');
+      console.error(err);
+    }
+  }
+
   function renderCuadre(key, period) {
     if (!period) return;
     document.getElementById('cuadre-' + key).textContent = formatPrice(period.totalCents);
@@ -1486,24 +1590,31 @@
     go('inicio');
   }
 
-  /* ===== Mis citas (lado cliente, guardadas en este dispositivo) ===== */
-  function getClientBookings() {
-    try {
-      return JSON.parse(localStorage.getItem('bukea_client_bookings')) || [];
-    } catch (e) {
-      return [];
-    }
-  }
+  /* ===== Mis citas (leídas del servidor por sesión — antes vivían solo en
+     localStorage y se perdían al cambiar de teléfono) ===== */
+  const PAY_LABELS = { cash: 'Efectivo', bank: 'Transferencia', tpago: 'tPago', card: 'Tarjeta' };
 
-  function saveClientBooking(b) {
-    const all = getClientBookings();
-    all.unshift(b);
-    localStorage.setItem('bukea_client_bookings', JSON.stringify(all.slice(0, 30)));
-  }
-
-  function renderMisCitas() {
+  async function renderMisCitas() {
     const container = document.getElementById('miscitas-list');
-    const citas = getClientBookings();
+    if (!getSession()) {
+      container.innerHTML =
+        '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
+      return;
+    }
+    container.innerHTML = '';
+    skeletonRows(container, 2);
+    let citas;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/me', { headers: authHeaders() });
+      if (res.status === 401) { container.innerHTML = ''; return; }
+      if (!res.ok) throw new Error('No se pudo cargar tus citas');
+      citas = await res.json();
+    } catch (err) {
+      container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
+      console.error(err);
+      return;
+    }
+
     container.innerHTML = '';
     if (citas.length === 0) {
       container.innerHTML =
@@ -1528,9 +1639,36 @@
       card.querySelector('.c-when').textContent = c.dayLabel + ' · ' + c.timeLabel;
       card.querySelector('.c-svc').textContent = c.serviceName;
       card.querySelector('.c-place').textContent = c.businessName;
-      card.querySelector('.c-pay').textContent = c.paymentLabel || '';
+      card.querySelector('.c-pay').textContent = PAY_LABELS[c.paymentMethod] || c.paymentMethod;
+      if (c.status === 'cancelled') {
+        card.style.opacity = '0.55';
+        const badge = document.createElement('span');
+        badge.textContent = 'Cancelada';
+        badge.style.cssText = 'display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600';
+        card.appendChild(badge);
+      } else if (!c.isPast) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancelar cita';
+        cancelBtn.style.cssText = 'margin-top:0.5rem;background:none;border:none;color:#b3261e;font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+        cancelBtn.addEventListener('click', () => cancelBooking(c.id));
+        card.appendChild(cancelBtn);
+      }
       container.appendChild(card);
     });
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
+        method: 'POST', headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cancelar');
+      renderMisCitas();
+    } catch (err) {
+      alert('No se pudo cancelar la cita. Intenta de nuevo.');
+      console.error(err);
+    }
   }
 
   /* ===== Sesión del cliente (teléfono + PIN) ===== */

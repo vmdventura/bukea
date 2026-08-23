@@ -45,12 +45,12 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 
 ## Backend de prueba (`backend/`)
 
-- Stack: Node.js + Express + MySQL (`mysql2`), con login (teléfono+PIN, Google, Apple — ver "Login" abajo), datos semi-fijos (un profesional de prueba: Joel "El Fino" Batista con 3 servicios).
-- Endpoints (prefijo `BASE`, en producción `/app`): `GET /app/api/professionals?category=`, `GET /app/api/professionals/:slug` (público), `GET /app/api/professionals/:slug/stats` y `/bookings` (**requieren `Authorization: Bearer <token>` del dueño**, ver abajo), `POST /app/api/professionals` (crear negocio, **requiere sesión**), `POST /app/api/bookings`, `POST /app/api/auth/{check,login,register,google,apple}`, `GET /app/api/auth/providers`, `GET /app/api/health`.
+- Stack: Node.js + Express + MySQL (`mysql2`), con login (teléfono+PIN, Google, Apple — ver "Login" abajo) y disponibilidad real (ver "Fechas y horarios reales" abajo), datos semi-fijos (tres profesionales de prueba: Joel "El Fino" Batista, Yesenia Rodríguez, Carmen la Estilista).
+- Endpoints (prefijo `BASE`, en producción `/app`): `GET /app/api/professionals?category=`, `GET /app/api/professionals/:slug` (público), `GET /app/api/professionals/:slug/availability/days` y `/availability/times` (disponibilidad real, público), `GET /app/api/professionals/:slug/stats` y `/bookings` (**requieren `Authorization: Bearer <token>` del dueño**), `POST /app/api/professionals` (crear negocio, **requiere sesión**), `POST /app/api/bookings` (**requiere sesión**), `GET /app/api/bookings/me` (**requiere sesión**), `POST /app/api/bookings/:id/cancel` (**requiere sesión** — cliente dueño de la cita o dueño del negocio), `POST /app/api/auth/{check,login,register,google,apple}`, `GET /app/api/auth/providers`, `GET /app/api/health`.
 - Sirve también el frontend (`backend/public/index.html`, copia de `prototype/demo-v2.html` adaptada para consumir la API real en vez de datos hardcodeados).
 - Desplegado en el hosting de Víctor (BanaHosting, cPanel con Node.js Selector), expuesto en `https://www.bukeard.com/app/` (migrado el 2026-07-15 desde `vmdventura.com/bukea`). Como Passenger reenvía la ruta completa sin recortar el prefijo, Express monta todo bajo `BASE` (= `process.env.BASE_PATH`, por defecto `/bukea`; en producción debe ser `/app`). `index.html` y `manifest.json` se sirven como plantilla: el servidor sustituye `__BASE_PATH__` por `BASE` (`API_BASE` en el JS del frontend, `start_url`/`scope` del manifest), así el mismo código corre en cualquier prefijo.
 - Credenciales de MySQL viven como variables de entorno en el panel de Node.js de cPanel (no en un `.env` en el servidor, para no exponer la contraseña en un directorio web). Localmente, `backend/.env` (gitignored) las replica para desarrollo — usar `backend/.env.example` como plantilla. **Ojo:** si la contraseña contiene `#`, va entre comillas en el `.env` (dotenv corta el valor en un `#` sin comillas). Para desarrollo local existe un MySQL de Homebrew con la misma base/usuario/contraseña que producción (creado 2026-07-05); arrancar con `brew services start mysql`.
-- Al arrancar, el servidor crea las tablas (`backend/db/schema.sql`) y siembra el profesional de prueba si no existe (`backend/db/init.js`) — no requiere ejecutar un script aparte por SSH.
+- Al arrancar, el servidor crea/migra las tablas (`backend/db/schema.sql` + migraciones idempotentes en `backend/db/init.js`) y siembra los profesionales de prueba si no existen — no requiere ejecutar un script aparte por SSH.
 
 ## Login (2026-08-22)
 
@@ -58,8 +58,20 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 
 Google/Apple necesitan credenciales que solo Víctor puede crear — ver `docs/LOGIN-GOOGLE-APPLE-SETUP.md`. Sin ellas, esos botones se ven como "Próximamente" y el teléfono+PIN sigue funcionando igual.
 
+## Fechas y horarios reales (2026-08-22)
+
+Reemplaza las etiquetas fijas ("Hoy", "Mañana", 4 horas fijas) que tenía el flujo de reserva desde el 5-jul — motivado por `docs/COMPETENCIA-LOCAL-RD.md`: CitaApp (competidor local mucho más simple) ya tenía esto resuelto.
+
+- `professional_hours` guarda el horario semanal (varias filas por día permiten un hueco de almuerzo). Se siembra por defecto (martes a sábado 9am-6pm) al registrar un negocio (`lib/hours.js`) — **todavía no hay pantalla para editarlo**, es la próxima pieza obvia.
+- `lib/availability.js` calcula los huecos libres en vivo: horario del día − citas ya confirmadas, en slots de 15 min, con un colchón de 30 min para no reservar "para ya mismo". Todo en huso horario de Santo Domingo, sin depender del huso del servidor.
+- `bookings.appointment_at` es ahora la fuente de verdad (antes `day_label`/`time_label` eran texto libre); esos dos campos se siguen devolviendo en las respuestas de la API pero calculados a partir de `appointment_at`. `UNIQUE (professional_id, appointment_at)` evita el doble-booking a nivel de base de datos, y `POST /bookings` revalida el horario server-side antes de insertar.
+- `bookings.status` (`confirmed`/`cancelled`) + `POST /api/bookings/:id/cancel` (cliente dueño de la cita o dueño del negocio) — cierra ROADMAP 4.3b.
+- `GET /api/bookings/me` reemplaza el `localStorage` de "Mis citas" del cliente — cierra 4.2b.
+- "Mi Cuadre" (`/:slug/stats`) pasó de calcular sobre `created_at` a calcular sobre `appointment_at` (con `created_at` de respaldo para reservas viejas sin fecha real), excluyendo canceladas.
+- **Pendiente, a propósito fuera de esta pasada:** pantalla para editar el horario semanal, bloquear horarios sueltos (excepciones puntuales al horario semanal), y política de cancelación con penalidad (hoy se cancela sin restricción).
+
 ## Próximos pasos probables
 
-1. Iterar el demo premium (`prototype/demo-v2.html`) con feedback de Víctor — lado B2B (agenda del barbero) aún no tiene pantallas.
-2. Ampliar el backend de prueba: más profesionales/servicios reales, panel de agenda para el profesional (confirmar/cancelar/bloquear, ROADMAP 4.3), fechas y horarios reales (4.2).
-3. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar precio con 10–15 profesionales.
+1. Pantalla para que el negocio edite su horario semanal y bloquee horarios sueltos (ROADMAP 4.3, lo que quedó pendiente).
+2. Convertir `bukeard.com` de landing a marketplace público — perfil compartible `/p/:slug`, `/negocios`, `/precios` (ROADMAP 4.8, plano en `docs/ANALISIS-SITIO-FRESHA.md` §5).
+3. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar con 10–15 profesionales (ahora con la oferta "gratis, móntate hoy").

@@ -47,15 +47,33 @@ CREATE TABLE IF NOT EXISTS services (
   FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Horario semanal del profesional. Varias filas por día permiten un hueco
+-- (ej. almuerzo): 09:00-13:00 y 15:00-18:00 el mismo martes.
+CREATE TABLE IF NOT EXISTS professional_hours (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  weekday TINYINT NOT NULL, -- 0=domingo … 6=sábado, igual que Date.getDay() en JS
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE,
+  INDEX idx_professional_hours_pro_day (professional_id, weekday)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   professional_id INT NOT NULL,
   service_id INT NOT NULL,
+  client_user_id INT,
   client_name VARCHAR(120) NOT NULL,
   day_label VARCHAR(40) NOT NULL,
   time_label VARCHAR(40) NOT NULL,
+  appointment_at DATETIME,
+  duration_min INT,
+  status VARCHAR(20) NOT NULL DEFAULT 'confirmed', -- confirmed | cancelled
   payment_method VARCHAR(30) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (professional_id) REFERENCES professionals(id),
-  FOREIGN KEY (service_id) REFERENCES services(id)
+  FOREIGN KEY (service_id) REFERENCES services(id),
+  FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_bookings_slot (professional_id, appointment_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

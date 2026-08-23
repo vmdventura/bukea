@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const pool = require('./pool');
+const { insertDefaultHours } = require('../lib/hours');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
   'ER_DUP_FIELDNAME', // la columna ya existe
@@ -37,6 +38,19 @@ async function migrate() {
     'ALTER TABLE professionals ADD CONSTRAINT fk_professionals_owner ' +
     'FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL'
   );
+
+  // Fechas y horas reales (2026-08-22): day_label/time_label eran texto
+  // libre ("Hoy", "Mañana"); appointment_at pasa a ser la fuente de verdad
+  // y day_label/time_label se calculan a partir de él en cada respuesta.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN client_user_id INT');
+  await safeAlter('ALTER TABLE bookings ADD COLUMN appointment_at DATETIME');
+  await safeAlter('ALTER TABLE bookings ADD COLUMN duration_min INT');
+  await safeAlter("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'confirmed'");
+  await safeAlter(
+    'ALTER TABLE bookings ADD CONSTRAINT fk_bookings_client ' +
+    'FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL'
+  );
+  await safeAlter('ALTER TABLE bookings ADD UNIQUE INDEX uq_bookings_slot (professional_id, appointment_at)');
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {
@@ -55,6 +69,22 @@ async function seedProfessional({ slug, category, name, businessName, neighborho
       'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
       [professionalId, svcName, duration, priceCents]
     );
+  }
+
+  await insertDefaultHours(professionalId);
+}
+
+// Profesionales creados antes de que existiera professional_hours (o
+// sembrados por seedProfessional en una corrida anterior) se quedarían sin
+// disponibilidad — les asigna el horario por defecto si no tienen ninguno.
+async function backfillMissingHours() {
+  const [rows] = await pool.query(
+    `SELECT p.id FROM professionals p
+     LEFT JOIN professional_hours h ON h.professional_id = p.id
+     WHERE h.id IS NULL`
+  );
+  for (const row of rows) {
+    await insertDefaultHours(row.id);
   }
 }
 
@@ -111,6 +141,8 @@ async function ensureReady() {
       ['Plancha', 45, 80000],
     ],
   });
+
+  await backfillMissingHours();
 }
 
 module.exports = { ensureReady };
