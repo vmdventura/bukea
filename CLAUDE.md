@@ -70,8 +70,28 @@ Reemplaza las etiquetas fijas ("Hoy", "Mañana", 4 horas fijas) que tenía el fl
 - "Mi Cuadre" (`/:slug/stats`) pasó de calcular sobre `created_at` a calcular sobre `appointment_at` (con `created_at` de respaldo para reservas viejas sin fecha real), excluyendo canceladas.
 - **Pendiente, a propósito fuera de esta pasada:** pantalla para editar el horario semanal, bloquear horarios sueltos (excepciones puntuales al horario semanal), y política de cancelación con penalidad (hoy se cancela sin restricción).
 
+## Marketplace público (2026-08-22 noche)
+
+`bukeard.com` deja de ser una landing estática y pasa a ser un marketplace de verdad, server-rendered (indexable, sin JS de framework), servido por el mismo Express que la app — `backend/routes/pages.js` + `backend/views/shared.js` (estilos y `pageShell()` compartidos, mismos tokens que `DESIGN.md`).
+
+- `GET /` — home con buscador (`?q=`), chips de categoría (`?categoria=`) y tarjetas reales de la BD.
+- `GET /p/:slug` — perfil público compartible de cada profesional (servicios, horario, badges, meta tags OG). Pensado para que el profesional lo pegue en su bio de Instagram/WhatsApp en vez del enlace de Fresha o CitaApp.
+- `GET /negocios` — página "para negocios" (lo que se enseña en la validación de calle).
+- `GET /precios` — "Bukea es gratis" con el detalle de qué incluye.
+- Las cuatro enlazan HACIA la app (`BASE`) para reservar o unirse: `${BASE}/?pro=slug` abre ese perfil dentro de la PWA, `${BASE}/?join=1` abre "Únete a Bukea" — soportado por un hook nuevo en `boot()` de `index.html` que lee esos query params antes de mostrar el splash.
+- Probado en local: las 4 páginas responden 200 (404 en perfil inexistente), búsqueda y filtro por categoría funcionan, ambos deep-links funcionan, mobile responsive.
+
+### ⚠️ Falta un paso de despliegue que solo Víctor puede hacer
+
+Estas páginas nuevas viven en el **mismo** proceso Node que ya sirve `/app` — pero hoy, en producción, el dominio `bukeard.com` (raíz) apunta a un hosting **estático separado** (la landing vieja, subida por FTP, fuera de este repo), mientras que el Node app en cPanel solo está montado en la URI `/app`. Para que `bukeard.com/`, `/p/:slug`, `/negocios` y `/precios` queden en vivo, hace falta uno de estos dos cambios en cPanel (Setup Node.js App), que no puedo hacer sin acceso:
+
+1. **Recomendado:** cambiar la "Application URL" del Node app de `bukeard.com/app` a `bukeard.com` (la raíz) — Passenger entonces enruta todo el dominio a este Express, que ya sabe servir `/app/*` (la PWA, vía `BASE`) y `/`, `/p/*`, `/negocios`, `/precios` (el marketplace). Probablemente haya que mover o borrar los archivos de la landing vieja del docroot para que no la tapen.
+2. **Alternativa** si (1) da problemas: dejar el dominio raíz como está y exponer el marketplace en un subpath propio (ej. `bukeard.com/inicio`) — requiere ajustar los enlaces internos de `pages.js` (hoy asumen que viven en la raíz) y es un cambio de código adicional, no solo de configuración.
+
+Hasta que se haga ese cambio, `bukeard.com` sigue mostrando la landing vieja — el código nuevo se puede probar en local (`http://localhost:3000/`) pero no está en vivo.
+
 ## Próximos pasos probables
 
-1. Pantalla para que el negocio edite su horario semanal y bloquee horarios sueltos (ROADMAP 4.3, lo que quedó pendiente).
-2. Convertir `bukeard.com` de landing a marketplace público — perfil compartible `/p/:slug`, `/negocios`, `/precios` (ROADMAP 4.8, plano en `docs/ANALISIS-SITIO-FRESHA.md` §5).
+1. Que Víctor decida y ejecute el cambio de despliegue de arriba, para que el marketplace público quede en vivo.
+2. Pantalla para que el negocio edite su horario semanal y bloquee horarios sueltos (ROADMAP 4.3, lo que quedó pendiente).
 3. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar con 10–15 profesionales (ahora con la oferta "gratis, móntate hoy").

@@ -1904,6 +1904,24 @@
   const SPLASH_MS = 1400;
   function boot() {
     applySessionUI();
+
+    // Enlaces directos desde el marketplace público (bukeard.com):
+    // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —
+    // sin esto los botones de las páginas públicas no tendrían a dónde ir.
+    const params = new URLSearchParams(window.location.search);
+    const proSlugParam = params.get('pro');
+    const joinParam = params.get('join');
+    if (proSlugParam) {
+      loadProfessional(proSlugParam);
+      go('perfil');
+      return;
+    }
+    if (joinParam) {
+      go('inicio');
+      openPro();
+      return;
+    }
+
     go('splash');
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setTimeout(() => {

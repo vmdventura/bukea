@@ -37,6 +37,7 @@ App en producción en [www.bukeard.com/app](https://www.bukeard.com/app/) — No
 - **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
 - **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; desde el 22-ago-2026 los períodos se calculan sobre `appointment_at` (fecha real de la cita, con `created_at` como respaldo para reservas viejas), no sobre cuándo se creó la reserva.
+- **Marketplace público** (código listo 22-ago-2026, **sin desplegar todavía** — ver "Marketplace público" en `CLAUDE.md`): home con buscador, perfil compartible `/p/:slug`, `/negocios`, `/precios`, servidos por el mismo Express. Falta que Víctor apunte el dominio `bukeard.com` al Node app para que quede en vivo.
 
 **Limitaciones conocidas (deuda técnica del slice):** datos de fila virtual aún fijos; sin fotos reales (avatares con iniciales); el hosting de prueba (BanaHosting compartido) no es necesariamente el definitivo. ~~la sesión del negocio es solo `localStorage`~~ — resuelto 2026-08-22, ver "Login" en CLAUDE.md.
 

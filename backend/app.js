@@ -7,6 +7,7 @@ const { ensureReady } = require('./db/init');
 const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
+const pagesRouter = require('./routes/pages');
 
 const app = express();
 app.use(express.json());
@@ -15,6 +16,14 @@ app.use(express.json());
 // URI configurada, ej. /bukea) sin recortarla, así que la app debe montarse
 // bajo ese mismo prefijo en vez de en la raíz.
 const BASE = process.env.BASE_PATH || '/bukea';
+
+// El marketplace público (home, perfil compartible, /negocios, /precios)
+// vive en la raíz del mismo Express, fuera de BASE — son páginas server-
+// rendered de verdad (indexables) que solo enlazan HACIA la app (BASE) para
+// reservar o unirse. req.baseUrlPrefix es cómo esas páginas arman esos
+// enlaces sin hardcodear el prefijo.
+app.use((req, res, next) => { req.baseUrlPrefix = BASE; next(); });
+app.use('/', pagesRouter);
 
 app.use(BASE + '/api/auth', authRouter);
 app.use(BASE + '/api/professionals', professionalsRouter);
