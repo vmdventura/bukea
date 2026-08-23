@@ -123,6 +123,16 @@ A pedido de Víctor tras ver una captura de Fresha ("Equipo": Flamante, Yenifer,
 - **Decisión consciente: la disponibilidad se calcula a nivel de negocio, no por colaborador.** Todos comparten el mismo `professional_hours` y las mismas citas ocupan el mismo calendario — si Flamante y Yenifer atienden a la vez, el sistema hoy no lo distingue (una cita a las 9am con cualquiera de los dos bloquea igual ese horario para el negocio completo). Suficiente para mostrar "quién te atiende" sin construir un calendario por persona; separar la disponibilidad por colaborador es la extensión natural si un piloto lo necesita.
 - Dónde aparece: paso "¿Quién te va a atender?" en la reserva (solo se muestra si el negocio tiene más de una persona — titular + colaboradores — no aporta nada con uno solo), "Te atiende" en el ticket de confirmación, "Atiende"/"Atendió" en "Mis citas" y en la agenda de "Mi negocio", sección "Equipo" (avatares con iniciales) en el perfil público `/p/:slug`.
 
+## Email en el registro + recuperar PIN (2026-08-23)
+
+A pedido de Víctor: el teléfono sigue siendo la base del login y de las confirmaciones por WhatsApp (no se toca), pero ahora "Crear mi cuenta" tiene un campo de **correo opcional** (`users.email`) — sirve hoy solo para recuperar el PIN si se olvida, y deja la puerta abierta a campañas de email más adelante.
+
+- `backend/lib/mailer.js` — envío por SMTP (`nodemailer`), mismo patrón que `lib/whatsapp.js`: si faltan `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`MAIL_FROM` en el entorno, `isConfigured()` da `false` y el endpoint responde 503 sin romper el resto del login.
+- `POST /api/auth/forgot-pin` (body `{email}`) manda un código de 6 dígitos por correo (vence en 15 min, máx. 3 intentos cada 10 min, mismo patrón anti-abuso que el OTP de WhatsApp). `POST /api/auth/reset-pin` (body `{email, code, newPin}`) verifica el código y cambia el PIN, con sesión automática.
+- `auth_codes` ahora sirve para dos cosas — código de WhatsApp (por `phone`) o código de recuperación (por `email`) — nunca los dos en la misma fila; `phone` pasó a ser opcional en esa tabla.
+- Pantalla nueva "¿Olvidaste tu PIN?" en el login (enlace debajo de "Iniciar sesión"): pide el correo, muestra el campo de código + PIN nuevo, y entra a la sesión automáticamente al cambiarlo.
+- **Falta activarlo en producción:** como con Google/Apple, alguien tiene que crear las credenciales SMTP (ej. una cuenta de Gmail con contraseña de aplicación, o un servicio como Amazon SES/Postmark) y ponerlas en cPanel → *Setup Node.js App* → Environment variables. Mientras no estén, el botón funciona pero el backend responde "La recuperación por correo aún no está activa".
+
 ## Próximos pasos probables
 
 1. Búsqueda basada en mapa (Leaflet/OSM) — la pieza que falta de esta noche.

@@ -11,15 +11,19 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Códigos de un solo uso — por teléfono (verificación WhatsApp) o por email
+-- (recuperar PIN olvidado, 2026-08-23). Nunca los dos a la vez en una fila.
 CREATE TABLE IF NOT EXISTS auth_codes (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  phone VARCHAR(15) NOT NULL,
+  phone VARCHAR(15),
+  email VARCHAR(190),
   code_hash VARCHAR(80) NOT NULL,
   code_salt VARCHAR(40) NOT NULL,
   expires_at DATETIME NOT NULL,
   attempts INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_auth_codes_phone (phone)
+  INDEX idx_auth_codes_phone (phone),
+  INDEX idx_auth_codes_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS professionals (

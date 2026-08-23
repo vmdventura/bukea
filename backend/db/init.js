@@ -83,6 +83,13 @@ async function migrate() {
     'ALTER TABLE bookings ADD CONSTRAINT fk_bookings_collaborator ' +
     'FOREIGN KEY (collaborator_id) REFERENCES collaborators(id) ON DELETE SET NULL'
   );
+
+  // Recuperar PIN por email (2026-08-23) — auth_codes servía solo para el
+  // código de WhatsApp (phone obligatorio); ahora también guarda el código
+  // de "olvidé mi PIN" por email, así que phone pasa a ser opcional.
+  await pool.query('ALTER TABLE auth_codes MODIFY phone VARCHAR(15) NULL');
+  await safeAlter('ALTER TABLE auth_codes ADD COLUMN email VARCHAR(190)');
+  await safeAlter('ALTER TABLE auth_codes ADD INDEX idx_auth_codes_email (email)');
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

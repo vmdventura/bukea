@@ -757,6 +757,7 @@
       <input class="welcome-field" id="w-pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
       <p class="w-error" id="w-error-pin"></p>
       <button class="cta" id="w-login" onclick="welcomeLogin()">Iniciar sesión</button>
+      <button class="guest-link" onclick="welcomeStep('forgot')">¿Olvidaste tu PIN?</button>
       <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
     </div>
 
@@ -764,9 +765,28 @@
     <div id="w-step-new" style="display:none">
       <p class="w-sub">Ese número es nuevo — crea tu cuenta en segundos</p>
       <input class="welcome-field" id="w-name" type="text" autocomplete="name" placeholder="Tu nombre">
+      <input class="welcome-field" id="w-email" type="email" autocomplete="email" placeholder="Tu correo (opcional)">
       <input class="welcome-field" id="w-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
       <p class="w-error" id="w-error-new"></p>
       <button class="cta" id="w-register" onclick="welcomeRegister()">Crear mi cuenta</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2c: olvidé mi PIN (recuperación por correo) -->
+    <div id="w-step-forgot" style="display:none">
+      <div id="forgot-request">
+        <p class="w-sub">Te mandamos un código a tu correo para crear un PIN nuevo</p>
+        <input class="welcome-field" id="w-forgot-email" type="email" autocomplete="email" placeholder="El correo de tu cuenta">
+        <p class="w-error" id="w-error-forgot"></p>
+        <button class="cta" id="w-forgot-send" onclick="sendForgotCode()">Enviar código</button>
+      </div>
+      <div id="forgot-reset" style="display:none">
+        <p class="w-sub">Revisa tu correo y escribe el código de 6 dígitos</p>
+        <input class="welcome-field" id="w-forgot-code" type="text" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" style="text-align:center; letter-spacing:0.3em">
+        <input class="welcome-field" id="w-forgot-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN nuevo" style="text-align:center; letter-spacing:0.5em">
+        <p class="w-error" id="w-error-reset"></p>
+        <button class="cta" id="w-forgot-confirm" onclick="confirmForgotReset()">Cambiar PIN</button>
+      </div>
       <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
     </div>
   </div>
@@ -2334,6 +2354,15 @@
     document.getElementById('w-step-phone').style.display = step === 'phone' ? 'block' : 'none';
     document.getElementById('w-step-pin').style.display = step === 'pin' ? 'block' : 'none';
     document.getElementById('w-step-new').style.display = step === 'new' ? 'block' : 'none';
+    document.getElementById('w-step-forgot').style.display = step === 'forgot' ? 'block' : 'none';
+    if (step === 'forgot') {
+      document.getElementById('forgot-request').style.display = 'block';
+      document.getElementById('forgot-reset').style.display = 'none';
+      wError('w-error-forgot'); wError('w-error-reset');
+      document.getElementById('w-forgot-email').value = '';
+      document.getElementById('w-forgot-code').value = '';
+      document.getElementById('w-forgot-newpin').value = '';
+    }
   }
 
   function wError(id, msg) {
@@ -2413,6 +2442,7 @@
         body: JSON.stringify({
           phone: welcomePhone,
           name: document.getElementById('w-name').value,
+          email: document.getElementById('w-email').value,
           pin: document.getElementById('w-newpin').value,
         }),
       });
@@ -2421,6 +2451,57 @@
       enterApp(data);
     } catch (err) {
       wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Olvidé mi PIN (2026-08-23) — recuperación por correo, ver
+     backend/lib/mailer.js. Si el correo no está activo en el servidor,
+     el backend responde 503 y aquí se lo decimos al usuario. ===== */
+  async function sendForgotCode() {
+    wError('w-error-forgot');
+    const email = document.getElementById('w-forgot-email').value.trim();
+    const btn = document.getElementById('w-forgot-send');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/forgot-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-forgot', data.error || 'Intenta de nuevo');
+      forgotEmail = email;
+      document.getElementById('forgot-request').style.display = 'none';
+      document.getElementById('forgot-reset').style.display = 'block';
+      document.getElementById('w-forgot-code').focus();
+    } catch (err) {
+      wError('w-error-forgot', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  let forgotEmail = '';
+
+  async function confirmForgotReset() {
+    wError('w-error-reset');
+    const btn = document.getElementById('w-forgot-confirm');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/reset-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail,
+          code: document.getElementById('w-forgot-code').value,
+          newPin: document.getElementById('w-forgot-newpin').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-reset', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
     } finally {
       btn.disabled = false;
     }

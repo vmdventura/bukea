@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const pool = require('../db/pool');
 const whatsapp = require('../lib/whatsapp');
+const mailer = require('../lib/mailer');
 const oauth = require('../lib/oauth');
 
 const router = express.Router();
@@ -61,16 +62,24 @@ router.post('/check', async (req, res) => {
   res.json({ exists: rows.length > 0, name: rows[0] ? rows[0].name : null });
 });
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 router.post('/register', async (req, res) => {
   const phone = normalizePhone(req.body.phone);
   const name = (req.body.name || '').trim();
   const pin = String(req.body.pin || '');
+  const email = String(req.body.email || '').trim().toLowerCase();
 
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Ingresa un número dominicano válido (809, 829 u 849)' });
   }
   if (!name) return res.status(400).json({ error: 'Dinos tu nombre' });
   if (!/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'El PIN debe ser de 4 dígitos' });
+  // El email es opcional al registrarse — solo sirve hoy para poder
+  // recuperar el PIN si lo olvidas, así que si lo dan debe ser válido.
+  if (email && !EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: 'Ese correo no parece válido' });
+  }
 
   const [existing] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
   if (existing.length > 0) {
@@ -80,10 +89,10 @@ router.post('/register', async (req, res) => {
   const salt = crypto.randomBytes(16).toString('hex');
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query(
-    'INSERT INTO users (phone, name, pin_salt, pin_hash, token) VALUES (?, ?, ?, ?, ?)',
-    [phone, name, salt, hashPin(pin, salt), token]
+    'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token) VALUES (?, ?, ?, ?, ?, ?)',
+    [phone, name, email || null, salt, hashPin(pin, salt), token]
   );
-  res.status(201).json({ token, name, phone });
+  res.status(201).json({ token, name, phone, email: email || null });
 });
 
 router.post('/login', async (req, res) => {
@@ -174,6 +183,89 @@ router.post('/otp/verify', async (req, res) => {
     return res.json({ verified: true, exists: true, token, name: users[0].name, phone });
   }
   res.json({ verified: true, exists: false, phone });
+});
+
+/* ===== Olvidé mi PIN (2026-08-23) =====
+   Recuperación por email en vez de WhatsApp: mismo motivo que llevó a
+   agregar el email al registro — es gratis y no depende de tener la API de
+   WhatsApp Business activa. Solo funciona para cuentas que dieron su email
+   al registrarse (o que entraron alguna vez con Google/Apple). */
+
+router.post('/forgot-pin', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: 'Ingresa un correo válido' });
+  }
+  if (!mailer.isConfigured()) {
+    return res.status(503).json({ error: 'La recuperación por correo aún no está activa' });
+  }
+
+  const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (users.length === 0) {
+    // No revela si el correo existe o no — evita que alguien use este
+    // endpoint para averiguar qué correos tienen cuenta en Bukea.
+    return res.json({ sent: true });
+  }
+
+  // Máximo 3 códigos por correo cada 10 minutos (anti-abuso, igual que el OTP de WhatsApp)
+  const [recent] = await pool.query(
+    'SELECT COUNT(*) AS n FROM auth_codes WHERE email = ? AND created_at > NOW() - INTERVAL 10 MINUTE',
+    [email]
+  );
+  if (recent[0].n >= 3) {
+    return res.status(429).json({ error: 'Demasiados intentos — espera unos minutos' });
+  }
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  const salt = crypto.randomBytes(16).toString('hex');
+  await pool.query(
+    'INSERT INTO auth_codes (email, code_hash, code_salt, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL 15 MINUTE)',
+    [email, hashPin(code, salt), salt]
+  );
+
+  try {
+    await mailer.sendPinResetCode(email, code);
+  } catch (err) {
+    console.error('Error enviando código de recuperación:', err.message);
+    return res.status(502).json({ error: 'No se pudo enviar el correo — intenta de nuevo' });
+  }
+  res.json({ sent: true });
+});
+
+router.post('/reset-pin', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const code = String(req.body.code || '');
+  const newPin = String(req.body.newPin || '');
+
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'El código es de 6 dígitos' });
+  if (!/^\d{4}$/.test(newPin)) return res.status(400).json({ error: 'El PIN debe ser de 4 dígitos' });
+
+  const [rows] = await pool.query(
+    'SELECT * FROM auth_codes WHERE email = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+    [email]
+  );
+  const record = rows[0];
+  if (!record) return res.status(404).json({ error: 'Código vencido — pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos — pide un código nuevo' });
+
+  if (hashPin(code, record.code_salt) !== record.code_hash) {
+    await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
+    return res.status(401).json({ error: 'Código incorrecto' });
+  }
+
+  const [users] = await pool.query('SELECT id, name, phone FROM users WHERE email = ?', [email]);
+  const user = users[0];
+  if (!user) return res.status(404).json({ error: 'No encontramos esa cuenta' });
+
+  await pool.query('DELETE FROM auth_codes WHERE email = ?', [email]);
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const token = crypto.randomBytes(24).toString('hex');
+  await pool.query(
+    'UPDATE users SET pin_salt = ?, pin_hash = ?, token = ? WHERE id = ?',
+    [salt, hashPin(newPin, salt), token, user.id]
+  );
+  res.json({ token, name: user.name, phone: user.phone });
 });
 
 /* ===== Login con Google y Apple =====
