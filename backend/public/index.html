@@ -344,10 +344,12 @@
   .w-divider::before, .w-divider::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.3); }
   .social-btn {
     width: 100%; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: 15px; padding: 0.8rem; margin-bottom: 0.6rem; cursor: not-allowed;
-    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.65);
+    border-radius: 15px; padding: 0.8rem; margin-bottom: 0.6rem; cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9);
     display: flex; align-items: center; justify-content: center; gap: 0.6rem;
   }
+  .social-btn:disabled { cursor: not-allowed; color: rgba(255,255,255,0.65); }
+  .social-btn .social-icon { width: 18px; height: 18px; flex: none; }
   .social-btn .soon {
     font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
     background: rgba(255,255,255,0.15); border-radius: 999px; padding: 0.15rem 0.5rem;
@@ -736,9 +738,14 @@
       <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
 
       <div class="w-divider">o usa tus redes</div>
-      <button class="social-btn" id="btn-google" onclick="loginWithGoogle()">Continuar con Google</button>
-      <button class="social-btn" id="btn-apple" onclick="loginWithApple()">Continuar con Apple</button>
-      <button class="social-btn" disabled>Continuar con Facebook <span class="soon">Próximamente</span></button>
+      <button class="social-btn" id="btn-google" onclick="loginWithGoogle()">
+        <svg class="social-icon" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        <span class="social-label">Continuar con Google</span>
+      </button>
+      <button class="social-btn" id="btn-apple" onclick="loginWithApple()">
+        <svg class="social-icon" viewBox="0 0 17 20" fill="currentColor"><path d="M13.998 10.63c-.024-2.415 1.973-3.573 2.063-3.63-1.126-1.646-2.877-1.872-3.502-1.897-1.49-.152-2.91.877-3.665.877-.755 0-1.923-.856-3.16-.833-1.627.024-3.128.946-3.965 2.402-1.692 2.933-.432 7.28 1.216 9.66.806 1.166 1.767 2.474 3.028 2.427 1.216-.048 1.674-.786 3.144-.786 1.47 0 1.883.786 3.17.762 1.31-.024 2.14-1.19 2.94-2.36.926-1.354 1.307-2.665 1.33-2.734-.03-.012-2.552-.98-2.576-3.888h-.023z"/><path d="M11.578 3.508c.668-.81 1.121-1.937.997-3.06-.964.04-2.13.643-2.822 1.452-.618.719-1.16 1.87-1.014 2.976 1.076.083 2.17-.55 2.839-1.368z"/></svg>
+        <span class="social-label">Continuar con Apple</span>
+      </button>
       <p class="w-error" id="w-error-social"></p>
 
       <button class="guest-link" id="w-guest" onclick="continueAsGuest()">Continuar como invitado</button>
@@ -2259,7 +2266,7 @@
       });
     } else if (gBtn) {
       gBtn.disabled = true;
-      gBtn.innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
+      gBtn.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
     }
 
     if (APPLE_CLIENT_ID && window.AppleID) {
@@ -2271,7 +2278,7 @@
       });
     } else if (aBtn) {
       aBtn.disabled = true;
-      aBtn.innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
+      aBtn.querySelector('.social-label').innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
     }
   }
   window.addEventListener('load', initSocialLogin);
