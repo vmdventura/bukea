@@ -9,11 +9,12 @@
     "seed": "node db/seed.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "mysql2": "^3.11.0",
     "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "google-auth-library": "^9.14.1",
     "jsonwebtoken": "^9.0.2",
-    "jwks-rsa": "^3.1.0"
+    "jwks-rsa": "^3.1.0",
+    "multer": "^2.2.0",
+    "mysql2": "^3.11.0"
   }
 }

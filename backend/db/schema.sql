@@ -71,9 +71,26 @@ CREATE TABLE IF NOT EXISTS bookings (
   duration_min INT,
   status VARCHAR(20) NOT NULL DEFAULT 'confirmed', -- confirmed | cancelled
   payment_method VARCHAR(30) NOT NULL,
+  receipt_path VARCHAR(255),
+  receipt_uploaded_at DATETIME,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (professional_id) REFERENCES professionals(id),
   FOREIGN KEY (service_id) REFERENCES services(id),
   FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL,
   UNIQUE KEY uq_bookings_slot (professional_id, appointment_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Cuentas bancarias del negocio para que el cliente transfiera y copie el
+-- número sin llamar. Información voluntariamente pública (el profesional la
+-- comparte para que le paguen) — se expone en el perfil público y en el
+-- paso de pago de la reserva, sin necesitar sesión.
+CREATE TABLE IF NOT EXISTS professional_bank_accounts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  bank_name VARCHAR(80) NOT NULL,
+  account_type VARCHAR(30) NOT NULL,
+  account_number VARCHAR(60) NOT NULL,
+  account_holder VARCHAR(120) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
+const { receiptUpload, receiptUrl } = require('../lib/uploads');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes,
 } = require('../lib/availability');
@@ -96,7 +97,7 @@ router.post('/', requireAuth, async (req, res) => {
 // solo en localStorage y se perdían al cambiar de teléfono o de dispositivo.
 router.get('/me', requireAuth, async (req, res) => {
   const [bookings] = await pool.query(
-    `SELECT b.id, b.status, b.payment_method, b.appointment_at, b.day_label, b.time_label,
+    `SELECT b.id, b.status, b.payment_method, b.appointment_at, b.day_label, b.time_label, b.receipt_path,
             p.name AS professional_name, p.business_name, p.slug AS professional_slug,
             s.name AS service_name, s.price_cents
      FROM bookings b
@@ -120,6 +121,7 @@ router.get('/me', requireAuth, async (req, res) => {
       dayLabel: b.appointment_at ? dayLabel(b.appointment_at.slice(0, 10)) : b.day_label,
       timeLabel: b.appointment_at ? formatTime12h(b.appointment_at.slice(11, 16)) : b.time_label,
       isPast: b.appointment_at ? b.appointment_at < nowInSantoDomingo().date + ' 00:00:00' : false,
+      receiptUrl: receiptUrl(req, b.receipt_path),
     }))
   );
 });
@@ -145,6 +147,30 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
 
   await pool.query("UPDATE bookings SET status = 'cancelled' WHERE id = ?", [req.params.id]);
   res.json({ id: Number(req.params.id), status: 'cancelled' });
+});
+
+// Comprobante de pago (2026-08-22 noche) — el cliente que pagó por
+// transferencia adjunta la foto/PDF del comprobante, en el momento de
+// reservar o después desde "Mis citas". Solo el cliente dueño de la cita
+// puede subirlo (no el negocio — el negocio solo lo ve).
+router.post('/:id/receipt', requireAuth, (req, res) => {
+  receiptUpload.single('receipt')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+
+    const [rows] = await pool.query('SELECT client_user_id FROM bookings WHERE id = ?', [req.params.id]);
+    const booking = rows[0];
+    if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
+    if (booking.client_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'No puedes adjuntar un comprobante a esta cita' });
+    }
+    if (!req.file) return res.status(400).json({ error: 'Falta el archivo del comprobante' });
+
+    await pool.query(
+      'UPDATE bookings SET receipt_path = ?, receipt_uploaded_at = NOW() WHERE id = ?',
+      [req.file.filename, req.params.id]
+    );
+    res.json({ id: Number(req.params.id), receiptUrl: receiptUrl(req, req.file.filename) });
+  });
 });
 
 module.exports = router;

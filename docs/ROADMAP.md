@@ -72,6 +72,8 @@ Construir solo lo que los pilotos necesitan para operar de verdad, priorizado po
 - [ ] 4.6 Decidir stack/hosting definitivo (¿se queda BanaHosting o migrar?) — decidir aquí, antes de tener datos de clientes reales
 - [x] 4.8 Convertir `bukeard.com` de landing a **marketplace público** — **código hecho 2026-08-22 noche**: home con buscador y tarjetas reales, perfil público compartible `/p/:slug`, `/negocios`, `/precios` (plano en [ANALISIS-SITIO-FRESHA.md](ANALISIS-SITIO-FRESHA.md) §5). **Falta un paso de despliegue que solo Víctor puede hacer** — ver "Marketplace público: falta apuntar el dominio" en `CLAUDE.md`. Hasta entonces, `bukeard.com` sigue mostrando la landing vieja (subida por FTP, fuera del repo) y las páginas nuevas solo viven en local/en el código
 - [ ] 4.7 Onboarding self-service del negocio estilo Fresha (wizard, ver [FLUJO-REGISTRO-FRESHA.md](FLUJO-REGISTRO-FRESHA.md)) + opción asistida por WhatsApp
+- [x] 4.9 Cuentas bancarias del negocio + comprobante de pago — **hecho 2026-08-22 noche**: el cliente copia el número de cuenta y adjunta la foto/PDF del comprobante al pagar por transferencia; el negocio lo ve en su agenda
+- [ ] 4.10 Búsqueda basada en mapa (Leaflet/OpenStreetMap, gratis) — pendiente: requiere lat/lng por profesional y geocodificar direcciones
 
 **Salida:** un negocio real puede operar su día completo en Bukea sin ayuda.
 

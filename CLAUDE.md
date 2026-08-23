@@ -95,8 +95,19 @@ Estas páginas nuevas viven en el **mismo** proceso Node que ya sirve `/app` —
 
 Hasta que se haga ese cambio, `bukeard.com` sigue mostrando la landing vieja — el código nuevo se puede probar en local (`http://localhost:3000/`) pero no está en vivo.
 
+## Cuentas bancarias y comprobante de pago (2026-08-22 noche)
+
+A pedido de Víctor tras ver capturas de Fresha/Google Maps: reforzar "transferencia" como método de pago de primera clase.
+
+- **Cuentas bancarias**: `professional_bank_accounts` (banco, tipo, número, titular) — `GET`/`PUT /api/professionals/:slug/bank-accounts` (dueño), y públicas dentro de `GET /api/professionals/:slug` (`bankAccounts[]`) porque el negocio las comparte a propósito para que le paguen. Editable desde "Mi negocio"; visibles en el perfil público (`/p/:slug`) y en el paso de pago de la reserva (con botón "Copiar" por cuenta) cuando el cliente elige "Transferencia".
+- **Comprobante de pago**: `bookings.receipt_path` + `POST /api/bookings/:id/receipt` (multipart, solo el cliente dueño de la cita, `multer`, valida tipo — JPG/PNG/WEBP/PDF — y tamaño máx. 5MB, guarda en `backend/public/uploads/receipts/` servido está bajo `BASE` por el `express.static` que ya existía). Se puede adjuntar al confirmar la reserva o después desde "Mis citas" ("Adjuntar comprobante" / "Ver comprobante"); el negocio lo ve en su agenda pero no lo sube.
+- `backend/public/uploads/receipts/*` está en `.gitignore` (son archivos de usuarios, no código) — la carpeta se versiona vacía con `.gitkeep`.
+
+**Pendiente, fuera de esta pasada:** búsqueda basada en mapa (Leaflet/OpenStreetMap, decisión de Víctor 2026-08-22 — gratis, sin API key) — requiere agregar lat/lng a `professionals` y geocodificar direcciones; no se construyó todavía.
+
 ## Próximos pasos probables
 
-1. Que Víctor decida y ejecute el cambio de despliegue de arriba, para que el marketplace público quede en vivo.
-2. Bloquear horarios sueltos (excepciones puntuales) y política de cancelación con penalidad — lo que queda de ROADMAP 4.3.
-3. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar con 10–15 profesionales (ahora con la oferta "gratis, móntate hoy").
+1. Búsqueda basada en mapa (Leaflet/OSM) — la pieza que falta de esta noche.
+2. Que Víctor decida y ejecute el cambio de despliegue del marketplace público (ver arriba).
+3. Bloquear horarios sueltos (excepciones puntuales) y política de cancelación con penalidad — lo que queda de ROADMAP 4.3.
+4. Ejecutar la Fase 0 en paralelo: registrar dominios, handles, marca ONAPI, validar con 10–15 profesionales (ahora con la oferta "gratis, móntate hoy").

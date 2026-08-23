@@ -51,6 +51,10 @@ async function migrate() {
     'FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL'
   );
   await safeAlter('ALTER TABLE bookings ADD UNIQUE INDEX uq_bookings_slot (professional_id, appointment_at)');
+
+  // Cuentas bancarias + comprobante de pago (2026-08-22 noche)
+  await safeAlter('ALTER TABLE bookings ADD COLUMN receipt_path VARCHAR(255)');
+  await safeAlter('ALTER TABLE bookings ADD COLUMN receipt_uploaded_at DATETIME');
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

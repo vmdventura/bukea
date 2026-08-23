@@ -159,6 +159,10 @@ router.get('/p/:slug', async (req, res) => {
     'SELECT name, duration_min, price_cents FROM services WHERE professional_id = ? ORDER BY id',
     [p.id]
   );
+  const [bankAccounts] = await pool.query(
+    'SELECT bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ?',
+    [p.id]
+  );
 
   const svcHtml = services.map(s => `
     <div class="svc-row">
@@ -190,6 +194,19 @@ ${PROFILE_STYLE}
 
   <h2>Servicios</h2>
   <div class="svc-list card" style="padding:0.4rem 1.2rem">${svcHtml}</div>
+
+  ${bankAccounts.length ? `
+  <h2>Cuentas para transferir</h2>
+  <div class="svc-list card" style="padding:0.4rem 1.2rem">
+    ${bankAccounts.map(b => `
+    <div class="svc-row">
+      <div>
+        <div class="svc-name">${esc(b.bank_name)} · ${esc(b.account_type)}</div>
+        <div class="svc-dur">${esc(b.account_holder)}</div>
+      </div>
+      <div class="svc-price">${esc(b.account_number)}</div>
+    </div>`).join('')}
+  </div>` : ''}
 
   <div class="cta-row">
     <a class="btn btn-primary" href="${base}/?pro=${encodeURIComponent(p.slug)}">Bukear cita con ${esc(p.name.split(' ')[0])}</a>

@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../db/pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { requireAuth } = require('../lib/auth-middleware');
+const { receiptUrl } = require('../lib/uploads');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
   timeToMinutes, minutesToHHMM, formatTime12h, computeFreeSlots,
@@ -120,6 +121,13 @@ router.get('/:slug', async (req, res) => {
     [professional.id]
   );
 
+  // Las cuentas bancarias las comparte el negocio a propósito para que le
+  // paguen — van en el mismo endpoint público que el resto del perfil.
+  const [bankAccounts] = await pool.query(
+    'SELECT id, bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ?',
+    [professional.id]
+  );
+
   res.json({
     id: professional.id,
     slug: professional.slug,
@@ -136,6 +144,13 @@ router.get('/:slug', async (req, res) => {
       name: s.name,
       durationMin: s.duration_min,
       priceCents: s.price_cents,
+    })),
+    bankAccounts: bankAccounts.map(b => ({
+      id: b.id,
+      bankName: b.bank_name,
+      accountType: b.account_type,
+      accountNumber: b.account_number,
+      accountHolder: b.account_holder,
     })),
   });
 });
@@ -262,7 +277,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
 
   const [bookings] = await pool.query(
     `SELECT b.id, b.client_name, b.day_label, b.time_label, b.appointment_at, b.status,
-            b.payment_method, b.created_at,
+            b.payment_method, b.created_at, b.receipt_path,
             s.name AS service_name, s.price_cents, s.duration_min
      FROM bookings b
      JOIN services s ON s.id = b.service_id
@@ -283,6 +298,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
       priceCents: b.price_cents,
       durationMin: b.duration_min,
       createdAt: b.created_at,
+      receiptUrl: receiptUrl(req, b.receipt_path),
     }))
   );
 });
@@ -397,6 +413,53 @@ router.put('/:slug/hours', requireAuth, async (req, res) => {
   }
 
   res.json({ saved: true, openDays: clean.length });
+});
+
+// Cuentas bancarias (2026-08-22 noche) — para que el cliente que paga por
+// transferencia copie el número sin llamar. Se editan desde "Mi negocio";
+// GET aquí es solo para prellenar ese formulario (la vista pública ya las
+// trae en GET /:slug).
+router.get('/:slug/bank-accounts', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const [rows] = await pool.query(
+    'SELECT id, bank_name, account_type, account_number, account_holder FROM professional_bank_accounts WHERE professional_id = ? ORDER BY id',
+    [professional.id]
+  );
+  res.json(rows.map(b => ({
+    id: b.id,
+    bankName: b.bank_name,
+    accountType: b.account_type,
+    accountNumber: b.account_number,
+    accountHolder: b.account_holder,
+  })));
+});
+
+router.put('/:slug/bank-accounts', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const accounts = Array.isArray(req.body.accounts) ? req.body.accounts : [];
+  const clean = [];
+  for (const a of accounts) {
+    const bankName = String(a.bankName || '').trim();
+    const accountType = String(a.accountType || '').trim();
+    const accountNumber = String(a.accountNumber || '').trim();
+    const accountHolder = String(a.accountHolder || '').trim();
+    if (!bankName || !accountType || !accountNumber || !accountHolder) continue;
+    clean.push({ bankName, accountType, accountNumber, accountHolder });
+  }
+
+  await pool.query('DELETE FROM professional_bank_accounts WHERE professional_id = ?', [professional.id]);
+  for (const a of clean) {
+    await pool.query(
+      'INSERT INTO professional_bank_accounts (professional_id, bank_name, account_type, account_number, account_holder) VALUES (?, ?, ?, ?, ?)',
+      [professional.id, a.bankName, a.accountType, a.accountNumber, a.accountHolder]
+    );
+  }
+
+  res.json({ saved: true, count: clean.length });
 });
 
 module.exports = router;

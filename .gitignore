@@ -2,3 +2,7 @@ node_modules/
 backend/.env
 .DS_Store
 .gstack/
+
+# Comprobantes de pago subidos por clientes — datos de usuarios, no código
+backend/public/uploads/receipts/*
+!backend/public/uploads/receipts/.gitkeep
