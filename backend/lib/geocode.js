@@ -39,4 +39,24 @@ async function geocodeNeighborhood(neighborhood) {
   }
 }
 
-module.exports = { geocodeNeighborhood };
+// Mismo cálculo de enlaces que usa el frontend (ver directionLinks() en
+// index.html) — server-side para el perfil público, que no corre el JS
+// de la app. Con coordenadas reales si ya se geocodificó; si no, busca por
+// texto (nombre + sector) mientras tanto.
+function directionLinks(name, neighborhood, lat, lng) {
+  const place = `${name} ${neighborhood}, Santo Domingo, República Dominicana`.trim();
+  const hasCoords = typeof lat === 'number' && typeof lng === 'number';
+  return {
+    google: hasCoords
+      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`,
+    apple: hasCoords
+      ? `https://maps.apple.com/?q=${encodeURIComponent(name)}&ll=${lat},${lng}`
+      : `https://maps.apple.com/?q=${encodeURIComponent(place)}`,
+    waze: hasCoords
+      ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      : `https://waze.com/ul?q=${encodeURIComponent(place)}&navigate=yes`,
+  };
+}
+
+module.exports = { geocodeNeighborhood, directionLinks };

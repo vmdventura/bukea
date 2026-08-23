@@ -234,6 +234,7 @@
     transition: border-color 160ms var(--ease), transform 120ms var(--ease);
   }
   .sheet-item:hover { border-color: var(--teal-500); }
+  a.sheet-item { text-decoration: none; }
   .sheet-item:active { transform: scale(0.98); }
   .sheet-item .cat-badge { width: 40px; height: 40px; }
   .sheet-item .cat-ic { width: 21px; height: 21px; }
@@ -899,6 +900,7 @@
         <span class="badge wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Responde por WhatsApp</span>
         <span class="badge cash"><svg class="icon"><use href="#i-cash"/></svg>Acepta efectivo</span>
         <span class="badge"><svg class="icon"><use href="#i-calendar"/></svg>Cita recurrente</span>
+        <span class="badge" style="cursor:pointer" onclick="openDirections(state.professional.businessName, state.professional.neighborhood, state.professional.lat, state.professional.lng)"><svg class="icon"><use href="#i-map-pin"/></svg>Cómo llegar</span>
       </div>
     </div>
 
@@ -993,6 +995,10 @@
       <div class="ticket-row total"><span class="k">Total</span><span class="v" id="ticket-price">—</span></div>
     </div>
 
+    <button class="add-svc" id="ticket-directions-btn" onclick="openDirections(state.professional.businessName, state.professional.neighborhood, state.professional.lat, state.professional.lng)">
+      <svg class="icon"><use href="#i-map-pin"/></svg> Cómo llegar
+    </button>
+
     <div class="wa-block" id="wa-block">
       <div class="wa-typing" id="wa-typing"><span></span><span></span><span></span></div>
       <div class="wa-bubble" id="wa-bubble">
@@ -1065,6 +1071,17 @@
       <button class="sheet-skip" onclick="closeOnboarding()">Ahora no</button>
     </div>
   </div>
+
+  <!-- ============ HOJA: CÓMO LLEGAR ============ -->
+  <div class="sheet-backdrop" id="directions-sheet" onclick="if(event.target===this) closeDirectionsSheet()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2>Cómo llegar</h2>
+      <p class="s-sub" id="directions-sub">—</p>
+      <div id="directions-links" style="display:flex;flex-direction:column;gap:0.55rem"></div>
+      <button class="sheet-skip" onclick="closeDirectionsSheet()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1088,6 +1105,40 @@
 
   function formatPrice(cents) {
     return 'RD$ ' + Math.round(cents / 100);
+  }
+
+  /* ===== "Cómo llegar" (2026-08-23) — abre Google Maps, Apple Maps o Waze
+     con las coordenadas reales del negocio (geocodificadas por sector) si
+     ya las tiene, o una búsqueda por texto mientras tanto. ===== */
+  function directionLinks(name, neighborhood, lat, lng) {
+    const place = (name + ' ' + neighborhood + ', Santo Domingo, República Dominicana').trim();
+    const hasCoords = typeof lat === 'number' && typeof lng === 'number';
+    return {
+      google: hasCoords
+        ? 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng
+        : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place),
+      apple: hasCoords
+        ? 'https://maps.apple.com/?q=' + encodeURIComponent(name) + '&ll=' + lat + ',' + lng
+        : 'https://maps.apple.com/?q=' + encodeURIComponent(place),
+      waze: hasCoords
+        ? 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes'
+        : 'https://waze.com/ul?q=' + encodeURIComponent(place) + '&navigate=yes',
+    };
+  }
+
+  function openDirections(name, neighborhood, lat, lng) {
+    const links = directionLinks(name, neighborhood, lat, lng);
+    document.getElementById('directions-sub').textContent = name + ' · ' + neighborhood;
+    const el = document.getElementById('directions-links');
+    el.innerHTML =
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.google + '">Abrir con Google Maps</a>' +
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.apple + '">Abrir con Apple Maps</a>' +
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.waze + '">Abrir con Waze</a>';
+    document.getElementById('directions-sheet').classList.add('show');
+  }
+
+  function closeDirectionsSheet() {
+    document.getElementById('directions-sheet').classList.remove('show');
   }
 
   /* Skeletons de carga (perceived performance) */
@@ -1957,6 +2008,14 @@
       card.querySelector('.c-svc').textContent = c.serviceName;
       card.querySelector('.c-place').textContent = c.businessName;
       card.querySelector('.c-pay').textContent = PAY_LABELS[c.paymentMethod] || c.paymentMethod;
+
+      if (c.status !== 'cancelled') {
+        const dirBtn = document.createElement('button');
+        dirBtn.textContent = 'Cómo llegar';
+        dirBtn.style.cssText = 'display:block;margin-top:0.4rem;background:none;border:none;color:var(--teal-700);font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+        dirBtn.addEventListener('click', () => openDirections(c.businessName, c.neighborhood, c.lat, c.lng));
+        card.appendChild(dirBtn);
+      }
 
       if (c.paymentMethod === 'bank' && c.status !== 'cancelled') {
         if (c.receiptUrl) {

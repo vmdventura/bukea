@@ -107,6 +107,12 @@ A pedido de Víctor tras ver capturas de Fresha/Google Maps: reforzar "transfere
 
 **Limitación consciente:** las coordenadas son a nivel de sector/barrio (centroid), no de dirección exacta — dos negocios en el mismo sector caen en el mismo pin. Subir la precisión requiere agregar un campo de dirección real al registro y volver a geocodificar. **Tampoco está en la app (PWA) todavía** — el mapa vive solo en el sitio web `bukeard.com/mapa`; llevarlo a la app es la extensión natural una vez validado.
 
+## "Cómo llegar" (2026-08-23)
+
+A pedido de Víctor tras ver una captura de Fresha (hoja con "Abrir con Apple Maps" / "Abrir con Google Maps"). `lib/geocode.js` exporta `directionLinks(name, neighborhood, lat, lng)` — arma los tres enlaces (Google Maps, Apple Maps, Waze) con coordenadas reales si el negocio ya está geocodificado, o una búsqueda por texto (nombre + sector) si no. El mismo cálculo vive duplicado en `index.html` (`directionLinks()` en JS de cliente) porque el navegador no puede `require()` el módulo de Node — ambas copias deben mantenerse en sync si cambia la lógica.
+
+Dónde aparece: badge "Cómo llegar" en el perfil del profesional (app), botón en el ticket de confirmación, botón por cita en "Mis citas", y una sección con los 3 botones en el perfil público `/p/:slug`. En la app usa una hoja (`#directions-sheet`, mismo patrón visual que el onboarding); en el sitio web son enlaces directos.
+
 ## Próximos pasos probables
 
 1. Búsqueda basada en mapa (Leaflet/OSM) — la pieza que falta de esta noche.

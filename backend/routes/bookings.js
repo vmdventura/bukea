@@ -32,7 +32,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [professionals] = await pool.query(
-    'SELECT name, business_name FROM professionals WHERE id = ?',
+    'SELECT name, business_name, neighborhood, lat, lng FROM professionals WHERE id = ?',
     [professionalId]
   );
   const professional = professionals[0];
@@ -79,6 +79,9 @@ router.post('/', requireAuth, async (req, res) => {
       id: result.insertId,
       professionalName: professional.name,
       businessName: professional.business_name,
+      neighborhood: professional.neighborhood,
+      lat: professional.lat !== null ? Number(professional.lat) : null,
+      lng: professional.lng !== null ? Number(professional.lng) : null,
       serviceName: service.name,
       priceCents: service.price_cents,
       dayLabel: dayLabel(date),
@@ -99,6 +102,7 @@ router.get('/me', requireAuth, async (req, res) => {
   const [bookings] = await pool.query(
     `SELECT b.id, b.status, b.payment_method, b.appointment_at, b.day_label, b.time_label, b.receipt_path,
             p.name AS professional_name, p.business_name, p.slug AS professional_slug,
+            p.neighborhood, p.lat, p.lng,
             s.name AS service_name, s.price_cents
      FROM bookings b
      JOIN professionals p ON p.id = b.professional_id
@@ -115,6 +119,9 @@ router.get('/me', requireAuth, async (req, res) => {
       professionalName: b.professional_name,
       professionalSlug: b.professional_slug,
       businessName: b.business_name,
+      neighborhood: b.neighborhood,
+      lat: b.lat !== null ? Number(b.lat) : null,
+      lng: b.lng !== null ? Number(b.lng) : null,
       serviceName: b.service_name,
       priceCents: b.price_cents,
       paymentMethod: b.payment_method,

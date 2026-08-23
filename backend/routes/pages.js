@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db/pool');
 const { CAT_LABELS, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
+const { directionLinks } = require('../lib/geocode');
 
 const router = express.Router();
 
@@ -272,6 +273,10 @@ router.get('/p/:slug', async (req, res) => {
     p.accepts_cash ? '<span class="badge">Acepta efectivo</span>' : '',
   ].join('');
 
+  const lat = p.lat !== null ? Number(p.lat) : null;
+  const lng = p.lng !== null ? Number(p.lng) : null;
+  const links = directionLinks(p.name, p.neighborhood, lat, lng);
+
   const body = `
 ${PROFILE_STYLE}
 <div class="wrap">
@@ -301,6 +306,13 @@ ${PROFILE_STYLE}
       <div class="svc-price">${esc(b.account_number)}</div>
     </div>`).join('')}
   </div>` : ''}
+
+  <h2>Cómo llegar</h2>
+  <div class="svc-list card" style="padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
+    <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
+    <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
+    <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
+  </div>
 
   <div class="cta-row">
     <a class="btn btn-primary" href="${base}/?pro=${encodeURIComponent(p.slug)}">Bukear cita con ${esc(p.name.split(' ')[0])}</a>

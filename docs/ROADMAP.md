@@ -74,6 +74,7 @@ Construir solo lo que los pilotos necesitan para operar de verdad, priorizado po
 - [ ] 4.7 Onboarding self-service del negocio estilo Fresha (wizard, ver [FLUJO-REGISTRO-FRESHA.md](FLUJO-REGISTRO-FRESHA.md)) + opción asistida por WhatsApp
 - [x] 4.9 Cuentas bancarias del negocio + comprobante de pago — **hecho 2026-08-22 noche**: el cliente copia el número de cuenta y adjunta la foto/PDF del comprobante al pagar por transferencia; el negocio lo ve en su agenda
 - [x] 4.10 Búsqueda basada en mapa — **hecho 2026-08-23**: `/mapa` en `bukeard.com` con Leaflet/OpenStreetMap (gratis, decisión de Víctor), geocodificación automática por sector (`lib/geocode.js`, Nominatim) al registrar un negocio o al arrancar el servidor para los que falten. Coordenadas a nivel de barrio, no de dirección exacta — falta agregar un campo de dirección real para más precisión, y llevar el mismo mapa a la app (hoy solo está en el sitio web)
+- [x] 4.11 "Cómo llegar" (Google Maps / Apple Maps / Waze) — **hecho 2026-08-23**, a pedido de Víctor tras ver una captura de Fresha: hoja con los 3 enlaces en el perfil (app), el ticket de confirmación, "Mis citas" y el perfil público `/p/:slug`
 
 **Salida:** un negocio real puede operar su día completo en Bukea sin ayuda.
 

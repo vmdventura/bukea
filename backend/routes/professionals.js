@@ -149,6 +149,8 @@ router.get('/:slug', async (req, res) => {
     name: professional.name,
     businessName: professional.business_name,
     neighborhood: professional.neighborhood,
+    lat: professional.lat !== null ? Number(professional.lat) : null,
+    lng: professional.lng !== null ? Number(professional.lng) : null,
     rating: Number(professional.rating),
     reviewsCount: professional.reviews_count,
     acceptsWhatsapp: Boolean(professional.accepts_whatsapp),
