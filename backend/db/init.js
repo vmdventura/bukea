@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./pool');
 const { insertDefaultHours } = require('../lib/hours');
+const { geocodeNeighborhood } = require('../lib/geocode');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
   'ER_DUP_FIELDNAME', // la columna ya existe
@@ -60,6 +61,12 @@ async function migrate() {
   // el propio flujo dominicano de transferencia para verificar al
   // destinatario. DEFAULT '' evita romper filas ya sembradas sin este dato.
   await safeAlter("ALTER TABLE professional_bank_accounts ADD COLUMN cedula_rnc VARCHAR(20) NOT NULL DEFAULT ''");
+
+  // Búsqueda por mapa (2026-08-23, Leaflet/OpenStreetMap — decisión de
+  // Víctor). Coordenadas a nivel de barrio: el registro solo pide "sector",
+  // no dirección exacta.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN lat DECIMAL(10,7)');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN lng DECIMAL(10,7)');
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {
@@ -94,6 +101,27 @@ async function backfillMissingHours() {
   );
   for (const row of rows) {
     await insertDefaultHours(row.id);
+  }
+}
+
+// Profesionales sin coordenadas (sembrados antes de que existiera el mapa,
+// o cuya geocodificación falló en su momento) — los ubica por su sector.
+// Nominatim pide no más de 1 solicitud/segundo; como esto corre solo al
+// arrancar el servidor y son pocos negocios, un pequeño respiro entre
+// llamadas basta para respetarlo sin necesitar una cola.
+async function backfillMissingCoordinates() {
+  // Tope por arranque para no alargar el boot sin límite si hay muchos
+  // negocios sin geocodificar todavía — el resto se completa en el próximo
+  // reinicio del servidor.
+  const [rows] = await pool.query(
+    'SELECT id, neighborhood FROM professionals WHERE lat IS NULL OR lng IS NULL LIMIT 20'
+  );
+  for (const row of rows) {
+    const point = await geocodeNeighborhood(row.neighborhood);
+    if (point) {
+      await pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, row.id]);
+    }
+    await new Promise(resolve => setTimeout(resolve, 1100));
   }
 }
 
@@ -152,6 +180,7 @@ async function ensureReady() {
   });
 
   await backfillMissingHours();
+  await backfillMissingCoordinates();
 }
 
 module.exports = { ensureReady };

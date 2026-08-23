@@ -103,7 +103,7 @@ ${HOME_STYLE}
       <button class="btn btn-primary" type="submit">Buscar</button>
     </form>
     <div class="chips">${allChip}${chips}</div>
-    <p class="stat-line">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente.</p>
+    <p class="stat-line">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
   </div>
 
   <div class="pro-grid">${grid}</div>
@@ -120,6 +120,100 @@ ${HOME_STYLE}
     title: 'Bukea — Reserva tu cita de belleza en República Dominicana',
     description: 'Bukea tu cita de barbería, uñas, salón, cejas y maquillaje en República Dominicana. Paga en efectivo o transferencia, sin comisión.',
     canonicalPath: 'https://www.bukeard.com/',
+    bodyHtml: body,
+  }));
+});
+
+const MAP_STYLE = `
+<style>
+  .map-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; margin: 1.4rem 0 1rem; }
+  .map-top h1 { font-size: 1.6rem; margin: 0; color: var(--teal-900); }
+  #bukea-map { width: 100%; height: 56vh; min-height: 340px; border-radius: 18px; border: 1px solid var(--line); margin-bottom: 1.4rem; }
+  .leaflet-popup-content b { display: block; margin-bottom: 0.15rem; }
+  .leaflet-popup-content a.btn { display: inline-block; margin-top: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.78rem; }
+</style>`;
+
+// Búsqueda por mapa (2026-08-23, Leaflet + OpenStreetMap — gratis, sin API
+// key, decisión de Víctor). Las coordenadas son a nivel de sector, no de
+// dirección exacta, porque el registro del negocio hoy solo pide "sector"
+// (ver lib/geocode.js) — suficiente para "quién está cerca de mí".
+router.get('/mapa', async (req, res) => {
+  const base = req.baseUrlPrefix;
+  const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
+
+  let sql = 'SELECT slug, name, business_name, neighborhood, category, rating, reviews_count, lat, lng FROM professionals WHERE lat IS NOT NULL AND lng IS NOT NULL';
+  const params = [];
+  if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
+
+  const [professionals] = await pool.query(sql, params);
+  const [[{ withoutPin }]] = await pool.query(
+    'SELECT COUNT(*) AS withoutPin FROM professionals WHERE lat IS NULL OR lng IS NULL' + (categoria ? ' AND category = ?' : ''),
+    categoria ? [categoria] : []
+  );
+
+  const chips = CATEGORIES.map(key => {
+    const active = categoria === key ? ' active' : '';
+    return `<a class="chip${active}" href="/mapa?categoria=${key}">${esc(CAT_LABELS[key])}</a>`;
+  }).join('');
+  const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/mapa">Todos</a>`;
+
+  const pins = professionals.map(p => ({
+    slug: p.slug,
+    name: p.name,
+    businessName: p.business_name,
+    neighborhood: p.neighborhood,
+    rating: Number(p.rating),
+    reviewsCount: p.reviews_count,
+    lat: Number(p.lat),
+    lng: Number(p.lng),
+  }));
+
+  const body = `
+${HOME_STYLE}
+${MAP_STYLE}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<div class="wrap">
+  <div class="map-top">
+    <h1>Profesionales cerca de ti</h1>
+    <a href="/${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700;text-decoration:none;font-size:0.88rem">Ver como lista →</a>
+  </div>
+  <div class="chips" style="margin-bottom:1rem">${allChip}${chips}</div>
+  <div id="bukea-map"></div>
+  <p class="stat-line">${pins.length} profesional${pins.length === 1 ? '' : 'es'} en el mapa${withoutPin > 0 ? ` · ${withoutPin} más sin ubicación todavía` : ''}.</p>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  var PINS = ${JSON.stringify(pins)};
+  var BASE = ${JSON.stringify(base)};
+  var map = L.map('bukea-map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  if (PINS.length === 0) {
+    map.setView([18.4861, -69.9312], 12); // Santo Domingo por defecto
+  } else {
+    var bounds = L.latLngBounds(PINS.map(function (p) { return [p.lat, p.lng]; }));
+    PINS.forEach(function (p) {
+      var rating = p.reviewsCount > 0 ? ('★ ' + p.rating.toFixed(1) + ' (' + p.reviewsCount + ')') : 'Nuevo en Bukea';
+      var popup = '<b>' + p.name.replace(/</g, '&lt;') + '</b>' +
+        p.businessName.replace(/</g, '&lt;') + ' · ' + p.neighborhood.replace(/</g, '&lt;') + '<br>' + rating +
+        '<br><a class="btn btn-primary" href="' + BASE + '/?pro=' + encodeURIComponent(p.slug) + '">Bukear cita</a>' +
+        ' <a href="/p/' + encodeURIComponent(p.slug) + '">Ver perfil</a>';
+      L.marker([p.lat, p.lng]).addTo(map).bindPopup(popup);
+    });
+    map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+  }
+})();
+</script>`;
+
+  res.type('html').send(pageShell({
+    base,
+    title: 'Bukea en el mapa — Profesionales de belleza cerca de ti',
+    description: 'Encuentra en el mapa barberías, salones de uñas y más cerca de ti en Santo Domingo.',
+    canonicalPath: 'https://www.bukeard.com/mapa',
     bodyHtml: body,
   }));
 });

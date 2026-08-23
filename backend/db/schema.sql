@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS professionals (
   accepts_whatsapp TINYINT(1) NOT NULL DEFAULT 1,
   accepts_cash TINYINT(1) NOT NULL DEFAULT 1,
   owner_user_id INT,
+  lat DECIMAL(10,7),
+  lng DECIMAL(10,7),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

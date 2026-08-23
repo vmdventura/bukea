@@ -3,6 +3,7 @@ const pool = require('../db/pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { requireAuth } = require('../lib/auth-middleware');
 const { receiptUrl } = require('../lib/uploads');
+const { geocodeNeighborhood } = require('../lib/geocode');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
   timeToMinutes, minutesToHHMM, formatTime12h, computeFreeSlots,
@@ -45,6 +46,8 @@ router.get('/', async (req, res) => {
       rating: Number(p.rating),
       reviewsCount: p.reviews_count,
       tags: (servicesByProfessional[p.id] || []).slice(0, 3),
+      lat: p.lat !== null ? Number(p.lat) : null,
+      lng: p.lng !== null ? Number(p.lng) : null,
     }))
   );
 });
@@ -102,6 +105,17 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   await insertDefaultHours(professionalId);
+
+  // No bloquea la respuesta — Nominatim puede tardar 1-2s y "Crear mi
+  // cuenta" debe sentirse instantáneo. El pin aparece en el mapa en cuanto
+  // resuelve, o en el próximo arranque del servidor si falla (ver
+  // backfillMissingCoordinates en db/init.js).
+  geocodeNeighborhood(neighborhood).then(point => {
+    if (point) {
+      pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, professionalId])
+        .catch(err => console.error('No se pudo guardar la geocodificación:', err.message));
+    }
+  });
 
   res.status(201).json({ slug });
 });
