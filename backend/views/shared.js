@@ -23,6 +23,20 @@ const CAT_ICONS = {
   pilates: 'c-pilates',
 };
 
+// Ciudades destacadas en el buscador del home — hoy todos los negocios
+// reales están en Santo Domingo (es el default, sin filtro); las demás
+// existen para que el buscador ya se sienta nacional y muestran el
+// estado honesto "sé el primero" cuando alguien filtra por ellas.
+const CITY_LABELS = {
+  'santo-domingo': 'Santo Domingo',
+  santiago: 'Santiago',
+  'punta-cana': 'Punta Cana',
+  'la-romana': 'La Romana',
+  'puerto-plata': 'Puerto Plata',
+};
+
+const CONTACT_EMAIL = 'hola@bukeard.com';
+
 const AVATAR_GRADIENTS = [
   'linear-gradient(150deg,#12938f,#0a4f4d)',
   'linear-gradient(150deg,#c2447a,#7a2650)',
@@ -69,6 +83,9 @@ const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hid
 <symbol id="i-chart" viewBox="0 0 24 24"><line x1="3.5" y1="20" x2="20.5" y2="20"/><rect x="5.5" y="13.5" width="3.4" height="6.5" rx="0.6"/><rect x="10.3" y="8.5" width="3.4" height="11.5" rx="0.6"/><rect x="15.1" y="4.5" width="3.4" height="15.5" rx="0.6"/></symbol>
 <symbol id="i-percent" viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.3"/><circle cx="17" cy="17" r="2.3"/><line x1="18.2" y1="5.8" x2="5.8" y2="18.2"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></symbol>
 <symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
 <symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
 <symbol id="c-salon" viewBox="0 0 24 24"><path d="M5 5.5h14v3H5z"/><path d="M6.5 8.5v11M9.7 8.5v11M12.9 8.5v11M16.1 8.5v11M19 8.5v6.5"/></symbol>
@@ -131,17 +148,43 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
+  /* Foco de teclado visible en todo el sitio — nunca lo suprimimos sin
+     un reemplazo con contraste real (WCAG 2.4.7). */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2.5px solid var(--teal-600); outline-offset: 2px; border-radius: 4px;
+  }
+
   .site-header-wrap { position: sticky; top: 0; z-index: 40; background: rgba(247,251,250,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; transition: box-shadow 260ms var(--ease-out-quart), border-color 260ms var(--ease-out-quart); }
   .site-header-wrap.scrolled { box-shadow: 0 6px 24px rgba(15,40,38,0.08); border-bottom-color: var(--line); }
   .site-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
   .brand { display: flex; align-items: center; gap: 0.55rem; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.3rem; text-decoration: none; color: var(--teal-900); }
   .brand .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--teal-600); color: #fff; display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-style: italic; font-weight: 700; transition: transform 240ms var(--ease-out-quart); }
   .brand:hover .mark { transform: rotate(-6deg) scale(1.05); }
-  .site-nav { display: flex; align-items: center; gap: 1.4rem; font-size: 0.92rem; font-weight: 600; }
-  .site-nav a:not(.btn) { text-decoration: none; color: var(--soft); position: relative; }
-  .site-nav a:not(.btn)::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -4px; height: 2px; background: var(--teal-600); border-radius: 2px; transition: right 220ms var(--ease-out-quart); }
-  .site-nav a:not(.btn):hover { color: var(--teal-700); }
-  .site-nav a:not(.btn):hover::after { right: 0; }
+  .site-nav { display: flex; align-items: center; gap: 1.1rem; font-size: 0.86rem; font-weight: 700; }
+  .site-nav a:not(.btn), .nav-dropdown-toggle {
+    display: inline-flex; align-items: center; gap: 0.3rem; min-height: 44px; padding: 0.4rem 0.15rem;
+    text-decoration: none; color: var(--soft); position: relative; background: none; border: none;
+    font: inherit; font-weight: 700; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .nav-short { display: none; }
+  .site-nav a:not(.btn)::after, .nav-dropdown-toggle::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 8px; height: 2px; background: var(--teal-600); border-radius: 2px; transition: right 220ms var(--ease-out-quart); }
+  .site-nav a:not(.btn):hover, .nav-dropdown-toggle:hover { color: var(--teal-700); }
+  .site-nav a:not(.btn):hover::after, .nav-dropdown-toggle:hover::after { right: 0; }
+  .icon-chevron { width: 14px; height: 14px; transition: transform 200ms var(--ease-out-quart); }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown.open .icon-chevron { transform: rotate(180deg); }
+  .nav-dropdown-menu {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(6px);
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sh-3);
+    padding: 0.45rem; min-width: 190px; display: flex; flex-direction: column; gap: 0.1rem;
+    opacity: 0; visibility: hidden; transition: opacity 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart);
+    z-index: 50;
+  }
+  .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  .nav-dropdown-menu a { padding: 0.7rem 0.9rem; min-height: auto; border-radius: 9px; color: var(--ink); }
+  .nav-dropdown-menu a::after { content: none; }
+  .nav-dropdown-menu a:hover { background: var(--teal-50); color: var(--teal-700); }
 
   .btn { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 0.7rem 1.3rem; font-weight: 700; font-size: 0.92rem; text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: transform 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart), background 200ms var(--ease-out-quart); }
   .btn:hover { transform: translateY(-2px); }
@@ -167,15 +210,39 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     html { scroll-behavior: auto; }
   }
 
-  .site-footer { border-top: 1px solid var(--line); margin-top: 3rem; padding: 2rem 0; color: var(--soft); font-size: 0.85rem; }
-  .site-footer a { color: var(--teal-700); text-decoration: none; }
+  .site-footer { background: var(--teal-50); border-top: 1px solid var(--line); margin-top: 4rem; font-size: 0.85rem; }
+  .site-footer a { color: var(--soft); text-decoration: none; }
+  .site-footer a:hover { color: var(--teal-700); }
+  .footer-grid { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 2rem; padding: 3rem 20px 2rem; }
+  .footer-brand p { margin: 0.9rem 0 0; max-width: 30ch; line-height: 1.55; color: var(--soft); }
+  .footer-col h4 { margin: 0 0 0.9rem; font-size: 0.85rem; color: var(--ink); font-weight: 800; }
+  .footer-col a, .footer-col .footer-soon { display: block; padding: 0.32rem 0; font-size: 0.87rem; }
+  .footer-col .footer-soon { color: var(--soft); }
+  .footer-col a { display: flex; align-items: center; gap: 0.4rem; }
+  .footer-social-arrow { color: var(--teal-600); font-size: 0.9rem; }
+  .footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1.1rem 20px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--soft); }
+  @media (max-width: 820px) {
+    .footer-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-brand { grid-column: 1 / -1; }
+  }
   @media (max-width: 640px) {
-    .site-header { flex-wrap: wrap; gap: 0.7rem; padding: 12px 0; }
+    .site-header { flex-wrap: wrap; gap: 0.3rem 0.6rem; padding: 12px 0; }
     .brand { font-size: 1.15rem; }
-    .site-nav { width: 100%; justify-content: space-between; gap: 0.7rem; font-size: 0.82rem; }
+    .site-nav { width: 100%; justify-content: space-between; gap: 0.2rem; font-size: 0.8rem; }
     .site-nav .btn { padding: 0.55rem 1rem; }
+    .site-nav a.nav-home { display: none; }
+    .site-nav .nav-long { display: none; }
+    .site-nav .nav-short { display: inline; }
+    .footer-grid { grid-template-columns: 1fr; gap: 1.6rem; padding: 2.4rem 20px 1.6rem; }
   }
 </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9P6W5CRECN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9P6W5CRECN');
+</script>
 </head>
 <body>
 ${ICON_SPRITE}
@@ -183,24 +250,75 @@ ${ICON_SPRITE}
   <div class="wrap site-header">
     <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
     <nav class="site-nav">
-      <a href="/negocios">Para negocios</a>
-      <a href="/precios">Precios</a>
-      <a class="btn btn-ghost" href="${base}/">Entrar</a>
+      <a href="/" class="nav-home">Inicio</a>
+      <a href="${base}/?join=1"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+          Menú <svg class="icon icon-chevron"><use href="#i-chevron-down"/></svg>
+        </button>
+        <div class="nav-dropdown-menu">
+          <a href="/negocios">Para negocios</a>
+          <a href="/precios">Precios</a>
+          <a href="/mapa">Ver en mapa</a>
+          <a href="${base}/">Entrar</a>
+        </div>
+      </div>
+      <a href="/contacto">Contacto</a>
     </nav>
   </div>
 </header>
 ${bodyHtml}
 <footer class="site-footer">
-  <div class="wrap">
-    Bukea — bukea tu cita de belleza en República Dominicana. Cero comisión.
-    &nbsp;·&nbsp; <a href="/negocios">Para negocios</a>
-    &nbsp;·&nbsp; <a href="/precios">Precios</a>
-    &nbsp;·&nbsp; <a href="${base}/">Abrir la app</a>
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
+      <p>Reserva tu próxima cita en República Dominicana. Cero comisión, gratis para siempre para el cliente.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Bukea</h4>
+      <a href="/">Inicio</a>
+      <a href="/negocios">Para negocios</a>
+      <a href="/precios">Precios</a>
+      <a href="/mapa">Ver en mapa</a>
+    </div>
+    <div class="footer-col">
+      <h4>Ayuda</h4>
+      <a href="/contacto">Contacto</a>
+      <a href="${base}/?join=1">Registra tu negocio</a>
+      <a href="${base}/">Abrir la app</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="/privacidad">Política de privacidad</a>
+      <a href="/terminos">Términos de servicio</a>
+    </div>
+    <div class="footer-col">
+      <h4>Síguenos en nuestras redes sociales</h4>
+      <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>Facebook</a>
+      <a href="https://www.tiktok.com/@bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>TikTok</a>
+      <a href="https://www.instagram.com/bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>Instagram</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span>© ${new Date().getFullYear()} Bukea · República Dominicana</span>
+    <span>Cero comisión, para siempre</span>
   </div>
 </footer>
 <script>
 (function () {
   document.documentElement.classList.add('js');
+  var dd = document.querySelector('.nav-dropdown');
+  if (dd) {
+    var ddToggle = dd.querySelector('.nav-dropdown-toggle');
+    var closeDD = function () { dd.classList.remove('open'); ddToggle.setAttribute('aria-expanded', 'false'); };
+    ddToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = dd.classList.toggle('open');
+      ddToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) { if (!dd.contains(e.target)) closeDD(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDD(); });
+  }
   var header = document.querySelector('.site-header-wrap');
   if (header) {
     var raf = null;
@@ -257,4 +375,4 @@ ${bodyHtml}
 </html>`;
 }
 
-module.exports = { CAT_LABELS, CAT_ICONS, avatarGradient, initials, formatPrice, esc, pageShell };
+module.exports = { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell };

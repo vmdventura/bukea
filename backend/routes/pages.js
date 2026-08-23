@@ -1,11 +1,12 @@
 const express = require('express');
 const pool = require('../db/pool');
-const { CAT_LABELS, CAT_ICONS, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
+const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
 const { directionLinks } = require('../lib/geocode');
 
 const router = express.Router();
 
 const CATEGORIES = Object.keys(CAT_LABELS);
+const CITIES = Object.keys(CITY_LABELS);
 
 function proCardHtml(p, i) {
   return `
@@ -22,16 +23,49 @@ function proCardHtml(p, i) {
 
 const HOME_STYLE = `
 <style>
-  .hero { position: relative; padding: 4.5rem 0 3rem; text-align: center; contain: layout paint; }
+  .hero {
+    position: relative; padding: 4.5rem 0 3rem; text-align: center; contain: layout paint; overflow: hidden;
+    background:
+      radial-gradient(60% 80% at 12% 8%, oklch(70% 0.1 195 / 0.5), transparent 60%),
+      radial-gradient(55% 70% at 92% 0%, oklch(84% 0.09 78 / 0.6), transparent 62%),
+      radial-gradient(90% 90% at 50% 120%, oklch(93% 0.03 195 / 0.9), transparent 70%),
+      linear-gradient(160deg, oklch(96% 0.014 195), oklch(97% 0.014 90) 70%);
+    border-radius: 26px;
+  }
+  .hero-grain {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.5; mix-blend-mode: multiply; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .hero-inner { position: relative; z-index: 1; }
   .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--teal-900); }
-  .hero p { color: var(--soft); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 2rem; }
-  .search-form { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; max-width: 640px; margin: 0 auto; }
-  .search-field { position: relative; flex: 1 1 240px; min-width: 0; display: flex; align-items: center; }
-  .search-field .icon { position: absolute; left: 1.1rem; color: var(--soft); }
-  .search-form input { width: 100%; border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 0.8rem 1.1rem 0.8rem 2.7rem; font-size: 0.94rem; font-family: inherit; color: var(--ink); transition: border-color 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart); }
-  .search-form input:focus { outline: none; border-color: var(--teal-500); box-shadow: 0 0 0 4px var(--teal-100); }
-  .search-form button { flex: none; }
-  .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.8rem 0 0; }
+  .hero h1 b { color: var(--teal-600); font-weight: inherit; }
+  .hero p { color: var(--soft); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 1.4rem; }
+  .badge-row { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: center; margin: 0 0 1.6rem; }
+  .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 0.82rem; font-weight: 700; color: var(--ink); box-shadow: var(--sh-2); }
+  .badge-pill.wa { color: #128c50; }
+  .badge-pill.wa .icon { color: var(--whatsapp); }
+  .badge-pill.cash .icon { color: var(--cash); }
+  .search-bar { display: flex; align-items: center; gap: 0.4rem; background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 0.4rem 0.5rem 0.4rem 1.2rem; max-width: 620px; margin: 0 auto; box-shadow: var(--sh-2); transition: box-shadow 200ms var(--ease-out-quart), border-color 200ms var(--ease-out-quart); }
+  .search-bar:focus-within { border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.22), var(--sh-2); }
+  .search-bar .search-field { display: flex; align-items: center; gap: 0.55rem; flex: 1; min-width: 0; color: var(--soft); }
+  .search-bar .search-field--city { flex: 0 1 152px; }
+  .search-bar input, .search-bar select { border: none; background: none; font: inherit; font-size: 0.92rem; color: var(--ink); width: 100%; padding: 0.7rem 0; appearance: none; -webkit-appearance: none; }
+  .search-bar input::placeholder { color: var(--soft); }
+  .search-bar input:focus, .search-bar select:focus { outline: none; }
+  .search-bar select { cursor: pointer; }
+  .search-divider { width: 1px; align-self: stretch; margin: 0.5rem 0; background: var(--line); flex: none; }
+  .search-bar .btn { flex: none; padding: 0.75rem 1.3rem; }
+  @media (max-width: 560px) {
+    .search-bar { flex-direction: column; align-items: stretch; border-radius: 22px; padding: 0.6rem; gap: 0.1rem; }
+    .search-bar .search-field--city { flex: none; }
+    .search-divider { width: auto; height: 1px; align-self: stretch; margin: 0.1rem 0.6rem; }
+    .search-bar .btn { width: 100%; justify-content: center; margin-top: 0.4rem; }
+  }
+  .city-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 0.9rem; margin: 1.3rem 0 0; font-size: 0.85rem; }
+  .city-links-label { color: var(--soft); font-weight: 600; }
+  .city-link { color: var(--soft); text-decoration: none; font-weight: 700; padding: 0.3rem 0.1rem; border-bottom: 2px solid transparent; transition: color 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart); }
+  .city-link:hover, .city-link.active { color: var(--teal-700); border-color: var(--teal-500); }
+  .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
   .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--soft); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
   .chip.active, .chip:hover { background: var(--teal-600); border-color: var(--teal-600); color: #fff; transform: translateY(-1px); }
@@ -58,10 +92,15 @@ router.get('/', async (req, res) => {
   const base = req.baseUrlPrefix;
   const q = String(req.query.q || '').trim();
   const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
+  const ciudad = CITIES.includes(req.query.ciudad) ? req.query.ciudad : 'santo-domingo';
 
   let sql = 'SELECT * FROM professionals WHERE 1=1';
   const params = [];
   if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
+  // Todavía no hay columna de ciudad — los negocios reales de hoy son
+  // todos de Santo Domingo, así que filtrar por otra ciudad da 0
+  // resultados a propósito (estado honesto "sé el primero", ver abajo).
+  if (ciudad !== 'santo-domingo') { sql += ' AND neighborhood LIKE ?'; params.push(`%${CITY_LABELS[ciudad]}%`); }
   if (q) {
     sql += ' AND (name LIKE ? OR business_name LIKE ? OR neighborhood LIKE ?)';
     const like = `%${q}%`;
@@ -86,41 +125,74 @@ router.get('/', async (req, res) => {
 
   const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM professionals');
 
+  const baseParams = () => {
+    const p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (ciudad !== 'santo-domingo') p.set('ciudad', ciudad);
+    return p;
+  };
+
   const chips = CATEGORIES.map(key => {
     const active = categoria === key ? ' active' : '';
-    const params2 = new URLSearchParams(q ? { q } : {});
-    params2.set('categoria', key);
-    return `<a class="chip${active}" href="/?${params2.toString()}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
+    const p = baseParams();
+    p.set('categoria', key);
+    return `<a class="chip${active}" href="/?${p.toString()}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
   }).join('');
-  const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${q ? '?q=' + encodeURIComponent(q) : ''}">Todos</a>`;
+  const allChipQs = baseParams().toString();
+  const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${allChipQs ? '?' + allChipQs : ''}">Todos</a>`;
+
+  const cityLinks = CITIES.map(key => {
+    const p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (categoria) p.set('categoria', categoria);
+    if (key !== 'santo-domingo') p.set('ciudad', key);
+    const qs = p.toString();
+    return `<a class="city-link${ciudad === key ? ' active' : ''}" href="/${qs ? '?' + qs : ''}">${esc(CITY_LABELS[key])}</a>`;
+  }).join('');
 
   const grid = professionals.length
     ? professionals.map(proCardHtml).join('')
-    : '<p class="empty">No encontramos profesionales con esa búsqueda todavía — vuelve pronto, seguimos sumando negocios.</p>';
+    : ciudad !== 'santo-domingo'
+      ? `<p class="empty">Todavía no tenemos profesionales en ${esc(CITY_LABELS[ciudad])} — <a href="/negocios" style="color:var(--teal-700);font-weight:700">sé el primero en unirte</a>.</p>`
+      : '<p class="empty">No encontramos profesionales con esa búsqueda todavía — vuelve pronto, seguimos sumando negocios.</p>';
 
   const body = `
 ${HOME_STYLE}
 <div class="wrap">
   <div class="hero">
-    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Bukea tu cita de belleza en República Dominicana</h1>
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="hero-inner">
+    <h1 class="reveal" style="--i:0">Bukea tu cita de belleza<br>en menos de <b>60 segundos</b></h1>
     <p class="reveal" style="--i:1">Barbería, uñas, salón, cejas y maquillaje — reserva en segundos, paga en efectivo o transferencia, sin comisión.</p>
-    <form class="search-form reveal" style="--i:2" method="get" action="/">
+    <div class="badge-row reveal" style="--i:2">
+      <span class="badge-pill wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Reserva por WhatsApp</span>
+      <span class="badge-pill cash"><svg class="icon"><use href="#i-cash"/></svg>Efectivo o transferencia</span>
+    </div>
+    <form class="search-bar reveal" style="--i:3" method="get" action="/">
       <div class="search-field">
         <svg class="icon"><use href="#i-search"/></svg>
-        <input type="text" name="q" value="${esc(q)}" placeholder="Busca un profesional, negocio o sector…">
+        <input type="text" name="q" value="${esc(q)}" placeholder="Servicio o profesional…">
+      </div>
+      <span class="search-divider" aria-hidden="true"></span>
+      <div class="search-field search-field--city">
+        <svg class="icon"><use href="#i-map-pin"/></svg>
+        <select name="ciudad" aria-label="Ciudad">
+          ${CITIES.map(key => `<option value="${key}"${ciudad === key ? ' selected' : ''}>${esc(CITY_LABELS[key])}</option>`).join('')}
+        </select>
       </div>
       ${categoria ? `<input type="hidden" name="categoria" value="${esc(categoria)}">` : ''}
       <button class="btn btn-primary" type="submit">Buscar</button>
     </form>
-    <div class="chips reveal" style="--i:3">${allChip}${chips}</div>
-    <p class="stat-line reveal" style="--i:4">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
+    <p class="city-links reveal" style="--i:4"><span class="city-links-label">Buscar por ciudad:</span>${cityLinks}</p>
+    <div class="chips reveal" style="--i:5">${allChip}${chips}</div>
+    <p class="stat-line reveal" style="--i:6">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
+    </div>
   </div>
 
   <div class="pro-grid">${grid}</div>
 
   <div class="biz-cta reveal">
-    <h2>¿Tienes un negocio de belleza?</h2>
+    <h2>¿Tienes un negocio con citas?</h2>
     <p>Agenda, clientela y "Mi Cuadre" en un solo lugar — y por ahora, 100% gratis. Cero comisión, cero suscripción.</p>
     <a class="btn btn-primary" href="/negocios">Únete a Bukea</a>
   </div>
@@ -376,7 +448,7 @@ const MARKETING_STYLE = `
   .m-bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2.6rem 0; }
   .m-feature { padding: 1.6rem; display: flex; flex-direction: column; gap: 0.7rem; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart); }
   .m-feature:hover { transform: translateY(-3px); box-shadow: var(--sh-3); }
-  .m-feature .icon-badge { width: 42px; height: 42px; border-radius: 12px; background: var(--teal-100); color: var(--teal-700); display: flex; align-items: center; justify-content: center; flex: none; }
+  .icon-badge { width: 42px; height: 42px; border-radius: 12px; background: var(--teal-100); color: var(--teal-700); display: flex; align-items: center; justify-content: center; flex: none; }
   .m-feature h3 { margin: 0; font-size: 1.05rem; color: var(--teal-900); }
   .m-feature p { margin: 0; color: var(--soft); font-size: 0.88rem; line-height: 1.5; }
   .m-feature.-lg { grid-column: span 2; }
@@ -503,6 +575,125 @@ ${MARKETING_STYLE}
     title: 'Precios de Bukea — Gratis para negocios y clientes',
     description: 'Bukea es 100% gratis: sin suscripción, sin comisión, sin tarjeta para empezar.',
     canonicalPath: 'https://www.bukeard.com/precios',
+    bodyHtml: body,
+  }));
+});
+
+const LEGAL_STYLE = `
+<style>
+  .legal-prose { max-width: 68ch; margin: 0 auto 3rem; }
+  .legal-prose h2 { font-size: 1.1rem; color: var(--teal-900); margin: 1.8rem 0 0.5rem; }
+  .legal-prose h2:first-child { margin-top: 0; }
+  .legal-prose p, .legal-prose li { color: var(--soft); line-height: 1.65; font-size: 0.94rem; }
+  .legal-prose ul { margin: 0 0 0.9rem; padding-left: 1.2rem; }
+  .legal-prose .updated { margin-top: 2.2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.82rem; }
+</style>`;
+
+router.get('/contacto', (req, res) => {
+  const base = req.baseUrlPrefix;
+  const body = `
+${MARKETING_STYLE}
+<div class="wrap">
+  <div class="m-hero">
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Hablemos</h1>
+    <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
+  </div>
+  <div class="card price-card reveal" style="--i:2">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.9rem;text-align:center">
+      <div class="icon-badge"><svg class="icon"><use href="#i-mail"/></svg></div>
+      <div>
+        <div style="font-weight:700;font-size:1.1rem;color:var(--teal-900)">${CONTACT_EMAIL}</div>
+        <div style="color:var(--soft);font-size:0.85rem;margin-top:0.25rem">Te respondemos en menos de 48 horas</div>
+      </div>
+      <a class="btn btn-primary" href="mailto:${CONTACT_EMAIL}">Escribir un correo</a>
+    </div>
+  </div>
+</div>`;
+  res.type('html').send(pageShell({
+    base,
+    title: 'Contacto — Bukea',
+    description: 'Escríbenos a Bukea para preguntas, soporte o alianzas.',
+    canonicalPath: 'https://www.bukeard.com/contacto',
+    bodyHtml: body,
+  }));
+});
+
+router.get('/privacidad', (req, res) => {
+  const base = req.baseUrlPrefix;
+  const body = `
+${MARKETING_STYLE}
+${LEGAL_STYLE}
+<div class="wrap">
+  <div class="m-hero" style="padding-bottom:0.5rem">
+    <h1>Política de privacidad</h1>
+  </div>
+  <div class="legal-prose">
+    <h2>Qué datos recogemos</h2>
+    <ul>
+      <li>Tu nombre y número de teléfono, para crear tu cuenta y confirmar citas.</li>
+      <li>Tu correo, solo si lo agregas — se usa únicamente para recuperar tu PIN.</li>
+      <li>El historial de tus citas.</li>
+    </ul>
+    <p>Si eres profesional o negocio, también guardamos tus servicios, horario, y las cuentas bancarias que decides mostrar a tus clientes para transferencias.</p>
+
+    <h2>Cómo lo usamos</h2>
+    <p>Solo para que la app funcione: confirmar tu identidad, mostrar y gestionar tus citas, y notificarte por WhatsApp. No vendemos tus datos a nadie.</p>
+
+    <h2>Con quién lo compartimos</h2>
+    <p>Con el profesional o negocio que reservas, para que sepa quién llega. Con Meta/WhatsApp, para enviarte confirmaciones y recordatorios. Con nadie más.</p>
+
+    <h2>Pagos</h2>
+    <p>Bukea no procesa pagos ni guarda datos de tarjetas — las citas se pagan directamente entre cliente y negocio, en efectivo o transferencia.</p>
+
+    <h2>Tus derechos</h2>
+    <p>Puedes pedirnos que borremos tu cuenta y tus datos escribiendo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700);font-weight:700">${CONTACT_EMAIL}</a>.</p>
+
+    <p class="updated">Última actualización: agosto 2026. Esta política se irá ampliando a medida que crece Bukea.</p>
+  </div>
+</div>`;
+  res.type('html').send(pageShell({
+    base,
+    title: 'Política de privacidad — Bukea',
+    description: 'Cómo Bukea recoge, usa y protege tus datos.',
+    canonicalPath: 'https://www.bukeard.com/privacidad',
+    bodyHtml: body,
+  }));
+});
+
+router.get('/terminos', (req, res) => {
+  const base = req.baseUrlPrefix;
+  const body = `
+${MARKETING_STYLE}
+${LEGAL_STYLE}
+<div class="wrap">
+  <div class="m-hero" style="padding-bottom:0.5rem">
+    <h1>Términos de servicio</h1>
+  </div>
+  <div class="legal-prose">
+    <h2>Qué es Bukea</h2>
+    <p>Bukea conecta a clientes con profesionales de belleza en República Dominicana. Facilitamos la reserva; el servicio en sí lo presta el profesional o negocio, no Bukea.</p>
+
+    <h2>Cuentas</h2>
+    <p>Eres responsable de la información que registras y de mantener tu PIN en privado.</p>
+
+    <h2>Reservas y pagos</h2>
+    <p>Las citas se pagan directamente al profesional (efectivo, transferencia u otro método que él acepte). Bukea no cobra comisión al cliente. Cancelar o reprogramar depende de la política de cada negocio.</p>
+
+    <h2>Uso aceptable</h2>
+    <p>No uses Bukea para acosar, estafar o suplantar a otra persona o negocio.</p>
+
+    <h2>Cambios</h2>
+    <p>Podemos actualizar estos términos; avisaremos los cambios importantes dentro de la app.</p>
+
+    <p class="updated">Última actualización: agosto 2026.</p>
+  </div>
+</div>`;
+  res.type('html').send(pageShell({
+    base,
+    title: 'Términos de servicio — Bukea',
+    description: 'Condiciones de uso de Bukea para clientes y negocios.',
+    canonicalPath: 'https://www.bukeard.com/terminos',
     bodyHtml: body,
   }));
 });
