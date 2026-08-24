@@ -67,16 +67,48 @@ O simplemente `npx cap open ios` y darle Run (▶) en Xcode.
 
 `capacitor.config.json`:
 - `appId`: `com.bukea.app` · `appName`: `Bukea`
-- `server.url`: `https://www.bukeard.com/app/` — de dónde carga el contenido en vivo.
-- `webDir`: `www/` — placeholder mínimo (Capacitor lo exige aunque carguemos remoto).
+- `webDir`: `www/` — el paquete generado por `build-www.js`, ver arriba.
+- `server.hostname`/`iosScheme`: sirve el contenido local bajo `https://localhost`
+  en vez del esquema `capacitor://` por defecto — mejor compatibilidad con SDKs
+  de terceros que verifican el origen.
+- `plugins.GoogleAuth`: config del login nativo de Google, ver abajo.
 
 El ícono (la "b" itálica sobre teal con punto dorado) está en
 `ios/App/App/Assets.xcassets/AppIcon.appiconset/`.
+
+## Login con Google dentro de la app (pendiente de una credencial)
+
+Google bloquea a propósito su SDK **web** de login dentro de cualquier
+WebView embebido en una app nativa (política antiphishing desde 2016: el
+script `accounts.google.com/gsi/client` ni siquiera llega a cargar ahí,
+aunque el resto de la red funcione perfecto — confirmado 2026-08-24 con
+un simulador limpio). Por eso la app usa el plugin nativo
+`@codetrix-studio/capacitor-google-auth` en vez del SDK web (el sitio
+web `bukeard.com` sigue usando el SDK web de siempre, ese no tiene el
+problema). El código en `backend/public/index.html` ya detecta el
+contexto (`window.Capacitor.isNativePlatform()`) y usa uno u otro
+automáticamente.
+
+**Falta un solo paso, que solo Víctor puede hacer** (requiere el
+Google Cloud Console del proyecto donde ya vive el Client ID web):
+
+1. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+   mismo proyecto que el Client ID web (`419876529270-l1mtt80qir3sqj6qeo224i441s86c7h6.apps.googleusercontent.com`),
+   crear una credencial nueva: **Crear credenciales → ID de cliente de OAuth → Tipo: iOS**.
+2. **Bundle ID:** `com.bukea.app`
+3. Google entrega dos cosas — un **Client ID** (`NUMEROS-hash.apps.googleusercontent.com`)
+   y un **iOS URL scheme** (`com.googleusercontent.apps.NUMEROS-hash`, el mismo
+   Client ID pero al revés).
+4. Pasarme ambos valores. Con eso yo:
+   - Reemplazo `__IOS_GOOGLE_CLIENT_ID__` en `capacitor.config.json` (`plugins.GoogleAuth.iosClientId`) por el Client ID.
+   - Agrego el URL scheme a `ios/App/App/Info.plist` (`CFBundleURLTypes`).
+   - Recompilo y pruebo el botón de Google en el simulador.
 
 ## Pendiente para publicar en App Store
 
 - ~~Empaquetar el frontend dentro de la app~~ — resuelto 2026-08-24, ver "Empaquetar el frontend" arriba.
 - ~~Cuenta Apple Developer (US$99/año)~~ — ya la tiene Víctor.
+- Login con Google dentro de la app — código listo, falta la credencial iOS de Google Cloud Console (ver arriba).
 - Firma de código (certificado de distribución + provisioning profile en App Store Connect).
 - Crear el registro de la app en App Store Connect (bundle ID `com.bukea.app`).
 - Capturas de pantalla (6.7", 6.5", 5.5" como mínimo) y ficha del App Store (descripción, palabras clave, categoría).

@@ -267,25 +267,30 @@
 
   /* ===== Splash (carga inicial con el logo oficial) ===== */
   .screen.splash {
-    background: var(--brand-teal);
-    color: var(--brand-cream); text-align: center;
+    background:
+      radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
+      radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
+      linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
+    color: #fff; text-align: center;
     justify-content: center; align-items: center; position: relative;
   }
   .splash-logo {
     font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
-    font-size: 8rem; color: var(--brand-cream); line-height: 1;
+    font-size: 8rem; color: #fff; line-height: 1;
     animation: splash-pop 600ms var(--ease);
   }
   .splash-word {
     font-family: "Bodoni Moda", "Fraunces", serif; font-weight: 700; font-size: 2.6rem;
-    color: var(--brand-cream); margin-top: 0.4rem; letter-spacing: 0.01em; line-height: 1;
+    margin-top: 0.4rem; letter-spacing: 0.01em; line-height: 1;
+    background: linear-gradient(100deg, oklch(80% 0.1 78), oklch(88% 0.09 85) 45%, oklch(74% 0.11 70));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
     animation: splash-pop 600ms 120ms var(--ease) both;
   }
   .splash-tag {
     position: absolute; left: 0; right: 0;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 2.6rem);
     font-family: "Plus Jakarta Sans", sans-serif; font-weight: 600; font-size: 1rem;
-    color: var(--brand-cream); opacity: 0.92; letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.78); letter-spacing: 0.02em;
     animation: splash-pop 600ms 260ms var(--ease) both;
   }
   @keyframes splash-pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
@@ -2770,27 +2775,61 @@
 
   /* ===== Login con Google y Apple =====
      Un solo botón "activo" sirve para el cliente y, gracias a
-     requireAccount()/openPro(), también para entrar como negocio. */
-  function initSocialLogin() {
+     requireAccount()/openPro(), también para entrar como negocio.
+
+     Google bloquea a propósito su SDK web de login dentro de cualquier
+     WebView embebido en una app nativa (política antiphishing desde 2016,
+     "This browser or app may not be secure") — el script ni siquiera
+     llega a cargar ahí, aunque la red funcione perfecto para todo lo
+     demás. Dentro de la app empaquetada (Capacitor) usamos el plugin
+     nativo (@codetrix-studio/capacitor-google-auth, vía
+     window.Capacitor.Plugins.GoogleAuth) en vez del SDK web; en el
+     navegador normal seguimos usando el SDK web de siempre. Apple no
+     tiene esa restricción — su SDK web funciona igual en ambos casos. */
+  const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+  // Reintenta unos segundos antes de rendirse: en la app empaquetada
+  // (iOS/Capacitor) el HTML local carga instantáneo, así que el evento
+  // "load" puede disparar antes de que accounts.google.com/gsi/client
+  // (script de red real) termine — sin este reintento el botón se queda
+  // marcado "Próximamente" de por vida aunque el script sí llegue a cargar.
+  function initSocialLogin(attemptsLeft) {
+    if (attemptsLeft === undefined) attemptsLeft = 20; // ~5s a 250ms por intento
     const gBtn = document.getElementById('btn-google');
     const aBtn = document.getElementById('btn-apple');
+    const googleReady = isNativeApp ? !!(window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) : (window.google && google.accounts && google.accounts.id);
+    const appleReady = window.AppleID;
 
-    if (GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-        ux_mode: 'popup',
-      });
+    if (attemptsLeft > 0 && GOOGLE_CLIENT_ID && !googleReady) {
+      return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
+    }
+    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !appleReady) {
+      return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
+    }
+
+    if (GOOGLE_CLIENT_ID && googleReady) {
+      if (isNativeApp) {
+        window.Capacitor.Plugins.GoogleAuth.initialize();
+      } else {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,
+          ux_mode: 'popup',
+        });
+      }
     } else if (gBtn) {
       gBtn.disabled = true;
       gBtn.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
     }
 
-    if (APPLE_CLIENT_ID && window.AppleID) {
+    if (APPLE_CLIENT_ID && appleReady) {
       AppleID.auth.init({
         clientId: APPLE_CLIENT_ID,
         scope: 'name email',
-        redirectURI: window.location.origin + API_BASE + '/',
+        // API_BASE ya es absoluto (empaquetado en iOS) o relativo al mismo
+        // origen (web) — anteponer location.origin aquí duplicaría el
+        // origen cuando API_BASE ya trae el suyo (https://www.bukeard.com/app).
+        redirectURI: (/^https?:\/\//.test(API_BASE) ? API_BASE : window.location.origin + API_BASE) + '/',
         usePopup: true,
       });
     } else if (aBtn) {
@@ -2798,10 +2837,24 @@
       aBtn.querySelector('.social-label').innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
     }
   }
-  window.addEventListener('load', initSocialLogin);
+  window.addEventListener('load', function () { initSocialLogin(); });
 
-  function loginWithGoogle() {
-    if (!GOOGLE_CLIENT_ID || !window.google) return;
+  async function loginWithGoogle() {
+    if (!GOOGLE_CLIENT_ID) return;
+    if (isNativeApp) {
+      if (!window.Capacitor.Plugins.GoogleAuth) return;
+      wError('w-error-social');
+      try {
+        const googleUser = await window.Capacitor.Plugins.GoogleAuth.signIn();
+        handleGoogleCredential({ credential: googleUser.authentication.idToken });
+      } catch (err) {
+        // El usuario cerró el selector de cuenta — no es un error real, no mostrar nada.
+        if (err && (err.message === 'popup_closed' || err.code === '12501' || err.code === 'SIGN_IN_CANCELLED')) return;
+        wError('w-error-social', 'No se pudo iniciar sesión con Google, intenta de nuevo');
+      }
+      return;
+    }
+    if (!window.google) return;
     google.accounts.id.prompt();
   }
 

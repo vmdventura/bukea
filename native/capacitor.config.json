@@ -2,8 +2,19 @@
   "appId": "com.bukea.app",
   "appName": "Bukea",
   "webDir": "www",
+  "server": {
+    "hostname": "localhost",
+    "iosScheme": "https"
+  },
   "ios": {
     "backgroundColor": "#0f6f6b",
     "contentInset": "always"
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "419876529270-l1mtt80qir3sqj6qeo224i441s86c7h6.apps.googleusercontent.com",
+      "iosClientId": "__IOS_GOOGLE_CLIENT_ID__"
+    }
   }
 }
