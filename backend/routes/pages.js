@@ -589,6 +589,27 @@ const LEGAL_STYLE = `
   .legal-prose .updated { margin-top: 2.2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.82rem; }
 </style>`;
 
+router.get('/blog', (req, res) => {
+  const base = req.baseUrlPrefix;
+  const body = `
+${MARKETING_STYLE}
+<div class="wrap">
+  <div class="m-hero">
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">El blog de Bukea</h1>
+    <p class="reveal" style="--i:1">Estamos preparando historias de profesionales, consejos de belleza y novedades de la app. Muy pronto por aquí.</p>
+    <a class="btn btn-primary reveal" style="--i:2" href="/">Volver al inicio</a>
+  </div>
+</div>`;
+  res.type('html').send(pageShell({
+    base,
+    title: 'Blog — Bukea',
+    description: 'Historias, consejos y novedades de Bukea. Muy pronto.',
+    canonicalPath: 'https://www.bukeard.com/blog',
+    bodyHtml: body,
+  }));
+});
+
 router.get('/contacto', (req, res) => {
   const base = req.baseUrlPrefix;
   const body = `

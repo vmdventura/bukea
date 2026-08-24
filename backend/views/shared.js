@@ -37,6 +37,30 @@ const CITY_LABELS = {
 
 const CONTACT_EMAIL = 'hola@bukeard.com';
 
+// QR decorativo para "Descargar la app" — las apps de Play Store/App
+// Store todavía no están publicadas (ver ROADMAP 5.5), así que esto es
+// a propósito un patrón que solo PARECE un QR (no codifica ninguna URL
+// real) en vez de un código escaneable que llevaría a un 404.
+function fakeQr(seed) {
+  const size = 11;
+  const cell = 4;
+  const px = size * cell;
+  let s = seed;
+  const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  let cells = '';
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const inTL = x < 3 && y < 3;
+      const inTR = x > size - 4 && y < 3;
+      const inBL = x < 3 && y > size - 4;
+      if (inTL || inTR || inBL) continue;
+      if (rand() > 0.55) cells += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}"/>`;
+    }
+  }
+  const finder = (fx, fy) => `<rect x="${fx}" y="${fy}" width="${3 * cell}" height="${3 * cell}" fill="none" stroke="currentColor" stroke-width="${cell * 0.9}"/><rect x="${fx + cell}" y="${fy + cell}" width="${cell}" height="${cell}"/>`;
+  return `<svg viewBox="0 0 ${px} ${px}" width="52" height="52" fill="currentColor" aria-hidden="true">${cells}${finder(0, 0)}${finder((size - 3) * cell, 0)}${finder(0, (size - 3) * cell)}</svg>`;
+}
+
 const AVATAR_GRADIENTS = [
   'linear-gradient(150deg,#12938f,#0a4f4d)',
   'linear-gradient(150deg,#c2447a,#7a2650)',
@@ -175,14 +199,23 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .nav-dropdown { position: relative; }
   .nav-dropdown.open .icon-chevron { transform: rotate(180deg); }
   .nav-dropdown-menu {
-    position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(6px);
+    position: absolute; top: 100%; right: 0; transform: translateY(6px);
     background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sh-3);
-    padding: 0.45rem; min-width: 190px; display: flex; flex-direction: column; gap: 0.1rem;
+    padding: 0.45rem; min-width: 230px; display: flex; flex-direction: column; gap: 0.1rem;
     opacity: 0; visibility: hidden; transition: opacity 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart);
     z-index: 50;
   }
-  .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
   .nav-dropdown-menu a { padding: 0.7rem 0.9rem; min-height: auto; border-radius: 9px; color: var(--ink); }
+  .nav-dropdown-menu a.nav-dropdown-primary { color: var(--teal-700); font-weight: 800; }
+  .nav-dropdown-menu a.nav-dropdown-primary:hover { background: var(--teal-50); }
+  .nav-dropdown-divider { height: 1px; background: var(--line); margin: 0.35rem 0.4rem; flex: none; }
+  .nav-dropdown-download { padding: 0.5rem 0.9rem 0.6rem; }
+  .nav-dropdown-label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.55rem; }
+  .qr-row { display: flex; gap: 0.7rem; }
+  .qr-item { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; flex: 1; }
+  .qr-item svg { color: var(--ink); background: var(--teal-50); border-radius: 8px; padding: 5px; }
+  .qr-item span { font-size: 0.72rem; font-weight: 700; color: var(--soft); }
   .nav-dropdown-menu a::after { content: none; }
   .nav-dropdown-menu a:hover { background: var(--teal-50); color: var(--teal-700); }
 
@@ -257,13 +290,24 @@ ${ICON_SPRITE}
           Menú <svg class="icon icon-chevron"><use href="#i-chevron-down"/></svg>
         </button>
         <div class="nav-dropdown-menu">
+          <a href="${base}/" class="nav-dropdown-primary">Entrar</a>
+          <div class="nav-dropdown-divider"></div>
           <a href="/negocios">Para negocios</a>
           <a href="/precios">Precios</a>
           <a href="/mapa">Ver en mapa</a>
-          <a href="${base}/">Entrar</a>
+          <div class="nav-dropdown-divider"></div>
+          <div class="nav-dropdown-download">
+            <span class="nav-dropdown-label">Descargar la app</span>
+            <div class="qr-row">
+              <div class="qr-item">${fakeQr(7)}<span>Google Play</span></div>
+              <div class="qr-item">${fakeQr(23)}<span>App Store</span></div>
+            </div>
+          </div>
+          <div class="nav-dropdown-divider"></div>
+          <a href="/blog">Blog</a>
+          <a href="/contacto">Ayuda y servicio al cliente</a>
         </div>
       </div>
-      <a href="/contacto">Contacto</a>
     </nav>
   </div>
 </header>
