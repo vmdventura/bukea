@@ -110,6 +110,9 @@ const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hid
 <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
 <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
 <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c0-3.4 2.8-5.8 6.2-5.8s6.2 2.4 6.2 5.8"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M15.5 14.7c2.5.4 4.2 2.4 4.2 5.3"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5l1.4-1.4a4 4 0 0 1 5.7 5.7L16.7 12"/><path d="M13 17.5l-1.4 1.4a4 4 0 0 1-5.7-5.7L7.3 12"/></symbol>
 <symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
 <symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
 <symbol id="c-salon" viewBox="0 0 24 24"><path d="M5 5.5h14v3H5z"/><path d="M6.5 8.5v11M9.7 8.5v11M12.9 8.5v11M16.1 8.5v11M19 8.5v6.5"/></symbol>
@@ -180,7 +183,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
 
   .site-header-wrap { position: sticky; top: 0; z-index: 40; background: rgba(247,251,250,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; transition: box-shadow 260ms var(--ease-out-quart), border-color 260ms var(--ease-out-quart); }
   .site-header-wrap.scrolled { box-shadow: 0 6px 24px rgba(15,40,38,0.08); border-bottom-color: var(--line); }
-  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
   .brand { display: flex; align-items: center; gap: 0.55rem; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.3rem; text-decoration: none; color: var(--teal-900); }
   .brand .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--teal-600); color: #fff; display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-style: italic; font-weight: 700; transition: transform 240ms var(--ease-out-quart); }
   .brand:hover .mark { transform: rotate(-6deg) scale(1.05); }
@@ -259,7 +262,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     .footer-brand { grid-column: 1 / -1; }
   }
   @media (max-width: 640px) {
-    .site-header { flex-wrap: wrap; gap: 0.3rem 0.6rem; padding: 12px 0; }
+    .site-header { flex-wrap: wrap; gap: 0.3rem 0.6rem; padding-top: 12px; padding-bottom: 12px; }
     .brand { font-size: 1.15rem; }
     .site-nav { width: 100%; justify-content: space-between; gap: 0.2rem; font-size: 0.8rem; }
     .site-nav .btn { padding: 0.55rem 1rem; }
@@ -284,7 +287,7 @@ ${ICON_SPRITE}
     <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
     <nav class="site-nav">
       <a href="/" class="nav-home">Inicio</a>
-      <a href="${base}/?join=1"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
+      <a href="/negocio"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
       <div class="nav-dropdown">
         <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
           Menú <svg class="icon icon-chevron"><use href="#i-chevron-down"/></svg>
@@ -328,7 +331,7 @@ ${bodyHtml}
     <div class="footer-col">
       <h4>Ayuda</h4>
       <a href="/contacto">Contacto</a>
-      <a href="${base}/?join=1">Registra tu negocio</a>
+      <a href="/negocio">Registra tu negocio</a>
       <a href="${base}/">Abrir la app</a>
     </div>
     <div class="footer-col">
@@ -419,4 +422,4 @@ ${bodyHtml}
 </html>`;
 }
 
-module.exports = { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell };
+module.exports = { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell, ICON_SPRITE };

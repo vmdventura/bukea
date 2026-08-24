@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db/pool');
 const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
+const { negocioShell } = require('../views/negocio');
 const { directionLinks } = require('../lib/geocode');
 
 const router = express.Router();
@@ -40,7 +41,7 @@ const HOME_STYLE = `
   .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--teal-900); }
   .hero h1 b { color: var(--teal-600); font-weight: inherit; }
   .hero p { color: var(--soft); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 1.4rem; }
-  .badge-row { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: center; margin: 0 0 1.6rem; }
+  .badge-row { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
   .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 0.82rem; font-weight: 700; color: var(--ink); box-shadow: var(--sh-2); }
   .badge-pill.wa { color: #128c50; }
   .badge-pill.wa .icon { color: var(--whatsapp); }
@@ -56,18 +57,22 @@ const HOME_STYLE = `
   .search-divider { width: 1px; align-self: stretch; margin: 0.5rem 0; background: var(--line); flex: none; }
   .search-bar .btn { flex: none; padding: 0.75rem 1.3rem; }
   @media (max-width: 560px) {
+    .hero { padding: 2.2rem 0 1.6rem; border-radius: 20px; }
+    .hero h1 { font-size: clamp(1.65rem, 8vw, 3.2rem); }
+    .hero p { font-size: 0.98rem; }
     .search-bar { flex-direction: column; align-items: stretch; border-radius: 22px; padding: 0.6rem; gap: 0.1rem; }
     .search-bar .search-field--city { flex: none; }
     .search-divider { width: auto; height: 1px; align-self: stretch; margin: 0.1rem 0.6rem; }
     .search-bar .btn { width: 100%; justify-content: center; margin-top: 0.4rem; }
   }
-  .city-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 0.9rem; margin: 1.3rem 0 0; font-size: 0.85rem; }
-  .city-links-label { color: var(--soft); font-weight: 600; }
-  .city-link { color: var(--soft); text-decoration: none; font-weight: 700; padding: 0.3rem 0.1rem; border-bottom: 2px solid transparent; transition: color 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart); }
-  .city-link:hover, .city-link.active { color: var(--teal-700); border-color: var(--teal-500); }
   .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
   .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--soft); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
+  @media (max-width: 560px) {
+    .badge-row, .chips { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding: 0 20px 0.3rem; margin-left: -20px; margin-right: -20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .badge-row::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
+    .badge-row .badge-pill, .chips .chip { flex: none; }
+  }
   .chip.active, .chip:hover { background: var(--teal-600); border-color: var(--teal-600); color: #fff; transform: translateY(-1px); }
   .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
   .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2.2rem 0; }
@@ -123,8 +128,6 @@ router.get('/', async (req, res) => {
   }
   professionals.forEach(p => { p.tags = (tagsById[p.id] || []).slice(0, 3); });
 
-  const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM professionals');
-
   const baseParams = () => {
     const p = new URLSearchParams();
     if (q) p.set('q', q);
@@ -141,20 +144,11 @@ router.get('/', async (req, res) => {
   const allChipQs = baseParams().toString();
   const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${allChipQs ? '?' + allChipQs : ''}">Todos</a>`;
 
-  const cityLinks = CITIES.map(key => {
-    const p = new URLSearchParams();
-    if (q) p.set('q', q);
-    if (categoria) p.set('categoria', categoria);
-    if (key !== 'santo-domingo') p.set('ciudad', key);
-    const qs = p.toString();
-    return `<a class="city-link${ciudad === key ? ' active' : ''}" href="/${qs ? '?' + qs : ''}">${esc(CITY_LABELS[key])}</a>`;
-  }).join('');
-
   const grid = professionals.length
     ? professionals.map(proCardHtml).join('')
     : ciudad !== 'santo-domingo'
-      ? `<p class="empty">Todavía no tenemos profesionales en ${esc(CITY_LABELS[ciudad])} — <a href="/negocios" style="color:var(--teal-700);font-weight:700">sé el primero en unirte</a>.</p>`
-      : '<p class="empty">No encontramos profesionales con esa búsqueda todavía — vuelve pronto, seguimos sumando negocios.</p>';
+      ? `<p class="empty">Todavía no tenemos profesionales en ${esc(CITY_LABELS[ciudad])}, <a href="/negocios" style="color:var(--teal-700);font-weight:700">sé el primero en unirte</a>.</p>`
+      : '<p class="empty">No encontramos profesionales con esa búsqueda todavía. Vuelve pronto, seguimos sumando negocios.</p>';
 
   const body = `
 ${HOME_STYLE}
@@ -162,13 +156,9 @@ ${HOME_STYLE}
   <div class="hero">
     <div class="hero-grain" aria-hidden="true"></div>
     <div class="hero-inner">
-    <h1 class="reveal" style="--i:0">Bukea tu cita de belleza<br>en menos de <b>60 segundos</b></h1>
-    <p class="reveal" style="--i:1">Barbería, uñas, salón, cejas y maquillaje — reserva en segundos, paga en efectivo o transferencia, sin comisión.</p>
-    <div class="badge-row reveal" style="--i:2">
-      <span class="badge-pill wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Reserva por WhatsApp</span>
-      <span class="badge-pill cash"><svg class="icon"><use href="#i-cash"/></svg>Efectivo o transferencia</span>
-    </div>
-    <form class="search-bar reveal" style="--i:3" method="get" action="/">
+    <h1 class="reveal" style="--i:0">Bukea tu cita<br>en menos de <b>60 segundos</b></h1>
+    <p class="reveal" style="--i:1">Barbería, uñas, salón, cejas y maquillaje, reserva en segundos, paga en efectivo o transferencia, sin comisión.</p>
+    <form class="search-bar reveal" style="--i:2" method="get" action="/">
       <div class="search-field">
         <svg class="icon"><use href="#i-search"/></svg>
         <input type="text" name="q" value="${esc(q)}" placeholder="Servicio o profesional…">
@@ -183,9 +173,11 @@ ${HOME_STYLE}
       ${categoria ? `<input type="hidden" name="categoria" value="${esc(categoria)}">` : ''}
       <button class="btn btn-primary" type="submit">Buscar</button>
     </form>
-    <p class="city-links reveal" style="--i:4"><span class="city-links-label">Buscar por ciudad:</span>${cityLinks}</p>
-    <div class="chips reveal" style="--i:5">${allChip}${chips}</div>
-    <p class="stat-line reveal" style="--i:6">${total} profesional${total === 1 ? '' : 'es'} ya en Bukea — gratis para siempre para el cliente. <a href="/mapa${categoria ? '?categoria=' + categoria : ''}" style="color:var(--teal-700);font-weight:700">Ver en mapa →</a></p>
+    <div class="badge-row reveal" style="--i:3">
+      <span class="badge-pill wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Reserva por WhatsApp</span>
+      <span class="badge-pill cash"><svg class="icon"><use href="#i-cash"/></svg>Efectivo o transferencia</span>
+    </div>
+    <div class="chips reveal" style="--i:4">${allChip}${chips}</div>
     </div>
   </div>
 
@@ -193,14 +185,14 @@ ${HOME_STYLE}
 
   <div class="biz-cta reveal">
     <h2>¿Tienes un negocio con citas?</h2>
-    <p>Agenda, clientela y "Mi Cuadre" en un solo lugar — y por ahora, 100% gratis. Cero comisión, cero suscripción.</p>
+    <p>Agenda, clientela y "Mi Cuadre" en un solo lugar, y por ahora, 100% gratis. Cero comisión, cero suscripción.</p>
     <a class="btn btn-primary" href="/negocios">Únete a Bukea</a>
   </div>
 </div>`;
 
   res.type('html').send(pageShell({
     base,
-    title: 'Bukea — Reserva tu cita de belleza en República Dominicana',
+    title: 'Bukea. Reserva tu cita de belleza en República Dominicana',
     description: 'Bukea tu cita de barbería, uñas, salón, cejas y maquillaje en República Dominicana. Paga en efectivo o transferencia, sin comisión.',
     canonicalPath: 'https://www.bukeard.com/',
     bodyHtml: body,
@@ -294,7 +286,7 @@ ${MAP_STYLE}
 
   res.type('html').send(pageShell({
     base,
-    title: 'Bukea en el mapa — Profesionales de belleza cerca de ti',
+    title: 'Bukea en el mapa. Profesionales de belleza cerca de ti',
     description: 'Encuentra en el mapa barberías, salones de uñas y más cerca de ti en Santo Domingo.',
     canonicalPath: 'https://www.bukeard.com/mapa',
     bodyHtml: body,
@@ -332,7 +324,7 @@ router.get('/p/:slug', async (req, res) => {
   if (!p) {
     return res.status(404).type('html').send(pageShell({
       base,
-      title: 'Profesional no encontrado — Bukea',
+      title: 'Profesional no encontrado. Bukea',
       description: 'No encontramos ese profesional en Bukea.',
       canonicalPath: `https://www.bukeard.com/p/${esc(req.params.slug)}`,
       bodyHtml: '<div class="wrap"><p class="empty">No encontramos ese profesional. <a href="/">Volver al inicio</a>.</p></div>',
@@ -373,7 +365,7 @@ router.get('/p/:slug', async (req, res) => {
   const body = `
 ${PROFILE_STYLE}
 <div class="wrap">
-  <div class="profile-hero reveal" style="--i:0">
+  <div class="profile-hero reveal in" style="--i:0">
     <div class="profile-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
     <div>
       <h1>${esc(p.name)}</h1>
@@ -430,7 +422,7 @@ ${PROFILE_STYLE}
 
   res.type('html').send(pageShell({
     base,
-    title: `${p.name} — ${p.business_name} | Bukea`,
+    title: `${p.name}, ${p.business_name} | Bukea`,
     description: `Reserva con ${p.name} en ${p.business_name}, ${p.neighborhood}. ${services.map(s => s.name).join(', ')}.`,
     canonicalPath: `https://www.bukeard.com/p/${esc(p.slug)}`,
     bodyHtml: body,
@@ -472,30 +464,86 @@ const MARKETING_STYLE = `
   .price-list { text-align: left; list-style: none; padding: 0; margin: 1.4rem 0; color: var(--soft); font-size: 0.9rem; }
   .price-list li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
   .price-list li .icon { color: var(--cash); margin-top: 0.15rem; }
+
+  .m-section-head { text-align: center; margin: 0 0 1.6rem; }
+  .m-section-head h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); color: var(--teal-900); margin: 0 0 0.4rem; }
+  .m-section-head p { color: var(--soft); font-size: 0.95rem; max-width: 46ch; margin: 0 auto; }
+
+  .m-steps { list-style: none; padding: 0; margin: 0 0 3.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  .m-step { padding: 1.6rem 1.4rem 1.4rem; }
+  .m-step .num { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-500); display: block; margin-bottom: 0.6rem; }
+  .m-step h3 { margin: 0 0 0.4rem; font-size: 1.02rem; color: var(--teal-900); }
+  .m-step p { margin: 0; color: var(--soft); font-size: 0.87rem; line-height: 1.55; }
+  @media (max-width: 720px) { .m-steps { grid-template-columns: 1fr; } }
+
+  .m-cats { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin: 0 0 3.5rem; }
+
+  .m-faq { max-width: 720px; margin: 0 auto 3.5rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .m-faq details { padding: 1.1rem 1.3rem; }
+  .m-faq summary { cursor: pointer; font-weight: 700; color: var(--teal-900); font-size: 0.95rem; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .m-faq summary::-webkit-details-marker { display: none; }
+  .m-faq summary::after { content: "+"; font-size: 1.3rem; line-height: 1; color: var(--teal-600); transition: transform 200ms var(--ease-out-quart); flex: none; }
+  .m-faq details[open] summary::after { transform: rotate(45deg); }
+  .m-faq p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.88rem; line-height: 1.6; }
 </style>`;
+
+// Panel de negocio de escritorio ("Mi cuenta") — pantalla completa, con su
+// propio shell de app (sidebar + calendario), separado de pageShell() porque
+// no lleva la cabecera/pie del marketplace público. Ver views/negocio.js.
+router.get('/negocio', (req, res) => {
+  res.type('html').send(negocioShell({
+    base: req.baseUrlPrefix,
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    appleClientId: process.env.APPLE_CLIENT_ID || '',
+  }));
+});
 
 router.get('/negocios', (req, res) => {
   const base = req.baseUrlPrefix;
+
+  const steps = [
+    { n: '1', h: 'Crea tu perfil', p: 'Tu nombre, tu negocio, tu categoría y tu sector. Menos de un minuto, sin tarjeta de crédito.' },
+    { n: '2', h: 'Comparte tu enlace', p: 'Tu perfil de Bukea, listo para pegar en tu bio de Instagram o en tu estado de WhatsApp.' },
+    { n: '3', h: 'Recibe reservas', p: 'Tus clientes ven tu horario real y reservan solos. Tú confirmas y cobras como prefieras.' },
+  ].map((s, i) => `
+    <li class="card m-step reveal" style="--i:${i}">
+      <span class="num">${s.n}</span>
+      <h3>${s.h}</h3>
+      <p>${s.p}</p>
+    </li>`).join('');
+
+  const categoryChips = CATEGORIES.map((key, i) =>
+    `<a class="chip reveal" style="--i:${i}" href="/?categoria=${key}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`
+  ).join('');
+
+  const faq = [
+    { q: '¿Bukea de verdad es gratis?', a: 'Sí. No hay suscripción ni comisión por cada cliente nuevo. Cuando llegue el momento de cobrar, los negocios que se unieron primero mantienen las condiciones con las que empezaron.' },
+    { q: '¿Necesito tarjeta de crédito para registrarme?', a: 'No. Creas tu cuenta con tu número de teléfono y un PIN, en menos de un minuto.' },
+    { q: '¿Mis clientes tienen que bajar una app?', a: 'No. Reservan desde tu enlace de Bukea en el navegador, sin instalar nada. Tú sí puedes usar la app o el panel de escritorio para gestionar tu negocio.' },
+    { q: '¿Cómo me pagan mis clientes?', a: 'Como tú prefieras: efectivo, transferencia (con tus cuentas bancarias visibles en tu perfil) o tPago. Tarjeta llega más adelante.' },
+    { q: '¿Puedo tener más de una persona atendiendo citas?', a: 'Sí. Puedes agregar a tu equipo. Cada quien aparece como opción al reservar, y tú ves quién atiende cada cita.' },
+  ].map(f => `<details class="card"><summary>${f.q}</summary><p>${f.a}</p></details>`).join('');
+
   const body = `
 ${MARKETING_STYLE}
 <div class="wrap">
   <div class="m-hero">
     <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Tu agenda, tu clientela — cero comisión</h1>
-    <p class="reveal" style="--i:1">Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, efectivo/transferencia y fila para walk-ins, de raíz.</p>
-    <a class="btn btn-primary reveal" style="--i:2" href="${base}/?join=1">Únete a Bukea — es gratis</a>
+    <h1 class="reveal" style="--i:0">Tu agenda y tu clientela, sin pagar comisión</h1>
+    <p class="reveal" style="--i:1">Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, pagos a la dominicana y agenda real, de raíz.</p>
+    <a class="btn btn-primary reveal" style="--i:2" href="/negocio">Únete a Bukea, es gratis</a>
   </div>
 
   <div class="m-bento">
     <div class="card m-feature -lg reveal" style="--i:0">
       <div class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></div>
       <h3>Agenda real</h3>
-      <p>Tus clientes ven tu horario de verdad y reservan sin llamarte. Tú confirmas, cancelas y llevas el control desde tu celular.</p>
+      <p>Tus clientes ven tu horario de verdad y reservan sin llamarte. Tú confirmas, cancelas y llevas el control desde tu celular o tu computadora.</p>
     </div>
     <div class="card m-feature reveal" style="--i:1">
       <div class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></div>
       <h3>Mi Cuadre</h3>
-      <p>Cuánto vendiste hoy, en los últimos 7 días y en el mes — sin hoja de cálculo, sin cuaderno.</p>
+      <p>Cuánto vendiste hoy, en los últimos 7 días y en el mes, sin hoja de cálculo, sin cuaderno.</p>
     </div>
     <div class="card m-feature reveal" style="--i:2">
       <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
@@ -505,12 +553,12 @@ ${MARKETING_STYLE}
     <div class="card m-feature -lg reveal" style="--i:3">
       <div class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></div>
       <h3>WhatsApp nativo</h3>
-      <p>Confirmaciones y recordatorios donde ya está tu clientela — no una notificación push que nadie abre.</p>
+      <p>Confirmaciones y recordatorios donde ya está tu clientela, no una notificación push que nadie abre.</p>
     </div>
     <div class="card m-feature reveal" style="--i:4">
-      <div class="icon-badge"><svg class="icon"><use href="#i-clock"/></svg></div>
-      <h3>Fila en vivo</h3>
-      <p>Para el walk-in que llega sin cita — turno en tiempo real, sin perder el orden.</p>
+      <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
+      <h3>Tu equipo también reserva</h3>
+      <p>Agrega a las personas que atienden contigo. Cada cliente elige con quién quiere su cita.</p>
     </div>
     <div class="card m-feature -lg -dark reveal" style="--i:5">
       <div class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></div>
@@ -519,15 +567,32 @@ ${MARKETING_STYLE}
     </div>
   </div>
 
+  <div class="m-section-head reveal">
+    <h2>Cómo funciona</h2>
+    <p>De cero a tu primera reserva, sin fricción.</p>
+  </div>
+  <ol class="m-steps">${steps}</ol>
+
+  <div class="m-section-head reveal">
+    <h2>¿Para quién es Bukea?</h2>
+    <p>Barbería, uñas, salón, maquillaje, cejas y pilates, cada quien con su propio perfil.</p>
+  </div>
+  <div class="m-cats">${categoryChips}</div>
+
+  <div class="m-section-head reveal">
+    <h2>Preguntas frecuentes</h2>
+  </div>
+  <div class="m-faq">${faq}</div>
+
   <div class="biz-cta reveal">
     <h2>Móntate hoy, sin tarjeta</h2>
     <p>Crea tu perfil en menos de 2 minutos y comparte tu enlace por WhatsApp.</p>
-    <a class="btn btn-primary" href="${base}/?join=1">Crear mi cuenta de negocio</a>
+    <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
   </div>
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Bukea para negocios — Agenda, WhatsApp y cero comisión',
+    title: 'Bukea para negocios. Agenda, WhatsApp y cero comisión',
     description: 'Bukea es gratis para negocios de belleza en República Dominicana: agenda real, Mi Cuadre, WhatsApp nativo y pagos a la dominicana.',
     canonicalPath: 'https://www.bukeard.com/negocios',
     bodyHtml: body,
@@ -540,9 +605,9 @@ router.get('/precios', (req, res) => {
     'Perfil público con tus servicios y horario',
     'Agenda con disponibilidad real',
     'Reservas ilimitadas, sin comisión',
-    '"Mi Cuadre" — cuánto vendiste hoy, en la semana y en el mes',
+    '"Mi Cuadre", cuánto vendiste hoy, en la semana y en el mes',
     'Recordatorio por WhatsApp para tus clientes',
-    'Fila en vivo para walk-ins',
+    'Agrega a tu equipo y deja que cada quien reciba sus propias citas',
   ].map(t => `<li><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
 
   const body = `
@@ -558,21 +623,21 @@ ${MARKETING_STYLE}
     <div>Para tu negocio</div>
     <div class="amount">RD$0<small>/mes</small></div>
     <ul class="price-list">${perks}</ul>
-    <a class="btn btn-primary" href="${base}/?join=1">Únete gratis</a>
+    <a class="btn btn-primary" href="/negocio">Únete gratis</a>
   </div>
 
   <p class="reveal" style="--i:3;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
-    Cuando llegue el momento de cobrar, los negocios fundadores mantienen condiciones especiales — nunca vas a pagar más que lo que aceptaste al unirte.
+    Cuando llegue el momento de cobrar, los negocios fundadores mantienen condiciones especiales. Nunca vas a pagar más que lo que aceptaste al unirte.
   </p>
 
   <div class="m-hero reveal" style="padding-top:0">
     <h1 style="font-size:1.6rem">Para el cliente, siempre gratis</h1>
-    <p>Explora, reserva y gestiona tus citas sin costo — hoy y siempre.</p>
+    <p>Explora, reserva y gestiona tus citas sin costo, hoy y siempre.</p>
   </div>
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Precios de Bukea — Gratis para negocios y clientes',
+    title: 'Precios de Bukea. Gratis para negocios y clientes',
     description: 'Bukea es 100% gratis: sin suscripción, sin comisión, sin tarjeta para empezar.',
     canonicalPath: 'https://www.bukeard.com/precios',
     bodyHtml: body,
@@ -603,7 +668,7 @@ ${MARKETING_STYLE}
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Blog — Bukea',
+    title: 'Blog. Bukea',
     description: 'Historias, consejos y novedades de Bukea. Muy pronto.',
     canonicalPath: 'https://www.bukeard.com/blog',
     bodyHtml: body,
@@ -633,7 +698,7 @@ ${MARKETING_STYLE}
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Contacto — Bukea',
+    title: 'Contacto. Bukea',
     description: 'Escríbenos a Bukea para preguntas, soporte o alianzas.',
     canonicalPath: 'https://www.bukeard.com/contacto',
     bodyHtml: body,
@@ -653,7 +718,7 @@ ${LEGAL_STYLE}
     <h2>Qué datos recogemos</h2>
     <ul>
       <li>Tu nombre y número de teléfono, para crear tu cuenta y confirmar citas.</li>
-      <li>Tu correo, solo si lo agregas — se usa únicamente para recuperar tu PIN.</li>
+      <li>Tu correo, solo si lo agregas. Se usa únicamente para recuperar tu PIN.</li>
       <li>El historial de tus citas.</li>
     </ul>
     <p>Si eres profesional o negocio, también guardamos tus servicios, horario, y las cuentas bancarias que decides mostrar a tus clientes para transferencias.</p>
@@ -665,7 +730,7 @@ ${LEGAL_STYLE}
     <p>Con el profesional o negocio que reservas, para que sepa quién llega. Con Meta/WhatsApp, para enviarte confirmaciones y recordatorios. Con nadie más.</p>
 
     <h2>Pagos</h2>
-    <p>Bukea no procesa pagos ni guarda datos de tarjetas — las citas se pagan directamente entre cliente y negocio, en efectivo o transferencia.</p>
+    <p>Bukea no procesa pagos ni guarda datos de tarjetas. Las citas se pagan directamente entre cliente y negocio, en efectivo o transferencia.</p>
 
     <h2>Tus derechos</h2>
     <p>Puedes pedirnos que borremos tu cuenta y tus datos escribiendo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700);font-weight:700">${CONTACT_EMAIL}</a>.</p>
@@ -675,7 +740,7 @@ ${LEGAL_STYLE}
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Política de privacidad — Bukea',
+    title: 'Política de privacidad. Bukea',
     description: 'Cómo Bukea recoge, usa y protege tus datos.',
     canonicalPath: 'https://www.bukeard.com/privacidad',
     bodyHtml: body,
@@ -712,7 +777,7 @@ ${LEGAL_STYLE}
 </div>`;
   res.type('html').send(pageShell({
     base,
-    title: 'Términos de servicio — Bukea',
+    title: 'Términos de servicio. Bukea',
     description: 'Condiciones de uso de Bukea para clientes y negocios.',
     canonicalPath: 'https://www.bukeard.com/terminos',
     bodyHtml: body,

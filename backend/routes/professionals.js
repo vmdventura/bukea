@@ -324,6 +324,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
       clientName: b.client_name,
       dayLabel: b.appointment_at ? dayLabel(b.appointment_at.slice(0, 10)) : b.day_label,
       timeLabel: b.appointment_at ? formatTime12h(b.appointment_at.slice(11, 16)) : b.time_label,
+      appointmentAt: b.appointment_at,
       status: b.status,
       paymentMethod: b.payment_method,
       serviceName: b.service_name,
@@ -386,6 +387,46 @@ async function findOwnedProfessional(slug, userId) {
   if (professional.owner_user_id !== userId) return { error: [403, 'No tienes acceso a este negocio'] };
   return { professional };
 }
+
+// Editar perfil del negocio (2026-08-24) — nombre del dueño, nombre del
+// negocio, categoría y sector, desde "Mi perfil" en el panel de escritorio.
+// El slug NO cambia aunque cambie el nombre (se generó una sola vez al
+// crear el negocio) — así no se rompen enlaces existentes ni el
+// bukea_pro_slug guardado en el navegador. Si cambia el sector, se
+// re-geocodifica en segundo plano igual que al registrarse (ver POST /).
+router.put('/:slug/profile', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const name = String(req.body.name || '').trim();
+  const businessName = String(req.body.businessName || '').trim();
+  const neighborhood = String(req.body.neighborhood || '').trim();
+  const category = req.body.category;
+
+  if (!name || !businessName || !neighborhood || !category) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  }
+  if (!VALID_CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: 'Categoría no válida' });
+  }
+
+  const [[before]] = await pool.query('SELECT neighborhood FROM professionals WHERE id = ?', [professional.id]);
+  await pool.query(
+    'UPDATE professionals SET name = ?, business_name = ?, neighborhood = ?, category = ? WHERE id = ?',
+    [name, businessName, neighborhood, category, professional.id]
+  );
+
+  if (before.neighborhood !== neighborhood) {
+    geocodeNeighborhood(neighborhood).then(point => {
+      if (point) {
+        pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, professional.id])
+          .catch(err => console.error('No se pudo guardar la geocodificación:', err.message));
+      }
+    });
+  }
+
+  res.json({ saved: true });
+});
 
 // Horario semanal editable (2026-08-22) — hasta ahora solo existía el
 // horario por defecto sembrado al registrarse (mar-sáb 9am-6pm). Un solo

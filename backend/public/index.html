@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bukea — Bukea tu cita</title>
+<title>Bukea. Bukea tu cita</title>
 <meta name="description" content="Bukea tu cita de barbería, uñas, salón, maquillaje y cejas en República Dominicana. Paga en efectivo o transferencia, con recordatorio por WhatsApp.">
 <meta name="theme-color" content="#0f6f6b">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -393,8 +393,51 @@
     background: none; border: 1.5px dashed var(--line); border-radius: 12px; width: 100%;
     padding: 0.6rem; font-family: inherit; font-size: 0.8rem; font-weight: 600; color: var(--teal-700);
     cursor: pointer; margin-bottom: 1.1rem;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
   }
   .add-svc:hover { border-color: var(--teal-500); }
+  .add-svc:active { transform: scale(0.98); }
+  .add-svc:disabled { cursor: default; opacity: 0.75; }
+  .add-svc.success { border-style: solid; border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+
+  /* Wizard de registro de negocio ("Únete a Bukea") */
+  .reg-topbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.3rem; }
+  .reg-back-btn {
+    width: 34px; height: 34px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card);
+    display: flex; align-items: center; justify-content: center; color: var(--soft); cursor: pointer; flex: none;
+    transition: border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .reg-back-btn:hover { border-color: var(--teal-500); color: var(--teal-700); }
+  .reg-progress { flex: 1; display: flex; gap: 5px; }
+  .reg-progress .seg { flex: 1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .reg-progress .seg > span { display: block; height: 100%; width: 0%; background: var(--teal-600); border-radius: 999px; transition: width 320ms var(--ease); }
+  .reg-progress .seg.done > span, .reg-progress .seg.active > span { width: 100%; }
+  .reg-stepnum { font-size: 0.72rem; font-weight: 700; color: var(--soft); white-space: nowrap; }
+
+  .reg-step { display: none; }
+  .reg-step.show { display: block; animation: screen-in 260ms var(--ease); }
+  .reg-eyebrow { font-size: 0.72rem; font-weight: 800; color: var(--teal-700); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.3rem; }
+
+  .reg-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 1.1rem; }
+  .reg-cat-card {
+    position: relative; display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 0.9rem;
+    border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); cursor: pointer;
+    text-align: left; font: inherit; color: var(--ink);
+    transition: border-color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .reg-cat-card:hover { border-color: var(--teal-500); }
+  .reg-cat-card.sel { border-color: var(--teal-600); background: var(--teal-50); }
+  .reg-cat-card .icon { font-size: 1.2rem; color: var(--teal-700); flex: none; }
+  .reg-cat-card .lbl { font-size: 0.84rem; font-weight: 700; }
+
+  .reg-success { text-align: center; padding: 1.4rem 0 0.6rem; }
+  .reg-success .app-h1, .reg-success .app-sub { text-align: center; }
+  .reg-success-check {
+    width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 999px;
+    background: linear-gradient(135deg, var(--teal-500), var(--gold-700));
+    display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-teal); color: #fff;
+  }
+  .reg-success-check .icon { font-size: 1.7rem; stroke-width: 2.4; }
 
   .hour-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
   .hour-row .hour-day { flex: 0 0 42px; font-size: 0.8rem; font-weight: 700; color: var(--ink); text-transform: capitalize; }
@@ -428,7 +471,7 @@
     padding: 0.7rem 0.6rem; text-align: center;
   }
   .cuadre-card .c-k { display: block; font-size: 0.68rem; color: var(--soft); margin-bottom: 0.25rem; }
-  .cuadre-card .c-v { display: block; font-family: "Fraunces", serif; font-size: 1.02rem; font-weight: 600; color: var(--teal-700); }
+  .cuadre-card .c-v { display: block; font-family: "Fraunces", serif; font-size: 1.02rem; font-weight: 600; color: var(--teal-700); font-variant-numeric: tabular-nums; }
   .cuadre-card .c-n { display: block; font-size: 0.68rem; color: var(--soft); margin-top: 0.15rem; }
 
   .cita-card {
@@ -463,6 +506,59 @@
 
   .sec-title { font-size: 0.98rem; font-weight: 700; color: var(--ink); margin: 0 0 0.75rem; display: flex; justify-content: space-between; align-items: baseline; }
   .sec-title a { font-size: 0.76rem; color: var(--teal-600); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+
+  /* ===== Resumen: gráfico de ventas + rankings ===== */
+  .dash-chart-total { font-family: "Fraunces", serif; font-size: 1.35rem; font-weight: 600; color: var(--teal-900); font-variant-numeric: tabular-nums; }
+  .dash-chart-meta { color: var(--soft); font-size: 0.78rem; margin: 0.1rem 0 0.6rem; }
+  .dash-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--soft); padding: 0 0 0.5rem; border-bottom: 1px solid var(--line); }
+  .dash-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 0.82rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); align-items: center; font-variant-numeric: tabular-nums; }
+  .dash-table-row:last-child { border-bottom: none; }
+  .dash-table-row span:first-child { font-weight: 700; font-variant-numeric: normal; }
+  .dash-empty { text-align: center; padding: 1.4rem 0.5rem; color: var(--soft); font-size: 0.82rem; }
+
+  .dash-fade-in { animation: dash-fade-in 240ms var(--ease); }
+  @keyframes dash-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .dash-fade-in { animation: none; } }
+
+  /* ===== Calendario mensual ===== */
+  .cal-toolbar { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
+  .cal-toolbar .cal-date { font-weight: 700; font-size: 0.92rem; color: var(--teal-900); flex: 1; text-align: center; }
+  .cal-toolbar .cal-btn {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center; color: var(--soft); flex: none;
+    transition: border-color 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .cal-toolbar .cal-btn:hover { border-color: var(--teal-500); color: var(--teal-700); }
+  .cal-toolbar .cal-btn:active { transform: scale(0.92); }
+  .cal-toolbar .cal-today {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem;
+    font-size: 0.76rem; font-weight: 700; color: var(--teal-700); flex: none;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .cal-toolbar .cal-today:hover { border-color: var(--teal-500); background: var(--teal-50); }
+  .cal-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; animation: dash-fade-in 220ms var(--ease); }
+  @media (prefers-reduced-motion: reduce) { .cal-month-grid { animation: none; } }
+  .cal-month-head { padding: 0.4rem 0.1rem; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--soft); text-align: center; background: var(--teal-50); }
+  .cal-month-cell {
+    min-height: 46px; padding: 0.25rem; border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    background: var(--card); margin: 0; font: inherit; color: inherit; cursor: pointer;
+    transition: background 140ms var(--ease);
+  }
+  .cal-month-cell:hover { background: var(--teal-50); }
+  .cal-month-cell:active { background: var(--teal-100); }
+  .cal-month-cell:nth-child(7n+1) { border-left: none; }
+  .cal-month-cell.pad { background: var(--bg); cursor: default; }
+  .cal-daynum { font-size: 0.72rem; font-weight: 700; color: var(--soft); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 140ms var(--ease), color 140ms var(--ease), box-shadow 140ms var(--ease); }
+  .cal-month-cell.today .cal-daynum { background: var(--teal-600); color: #fff; }
+  .cal-month-cell.selected .cal-daynum { box-shadow: 0 0 0 2px var(--teal-600); }
+  .cal-month-cell.selected.today .cal-daynum { box-shadow: 0 0 0 2px var(--gold-600); }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-600); }
+  .cal-dot.cancelled { background: var(--soft); opacity: 0.5; }
+  .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+
+  /* ===== Mi perfil ===== */
+  .pf-error { display: none; color: #b3261e; font-size: 0.8rem; margin: 0 0 0.6rem; }
 
   .pro-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 18px;
@@ -761,17 +857,18 @@
 
     <!-- Paso 2a: PIN (cuenta existente) -->
     <div id="w-step-pin" style="display:none">
-      <p class="w-sub" id="w-pin-greeting">Hola de nuevo 👋 — ingresa tu PIN</p>
+      <p class="w-sub" id="w-pin-greeting">Hola de nuevo 👋, ingresa tu PIN</p>
       <input class="welcome-field" id="w-pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
       <p class="w-error" id="w-error-pin"></p>
       <button class="cta" id="w-login" onclick="welcomeLogin()">Iniciar sesión</button>
       <button class="guest-link" onclick="welcomeStep('forgot')">¿Olvidaste tu PIN?</button>
+      <button class="guest-link" id="w-otp-link" style="display:none" onclick="welcomeStep('otp')">Prefiero un código por WhatsApp</button>
       <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
     </div>
 
     <!-- Paso 2b: crear cuenta (número nuevo) -->
     <div id="w-step-new" style="display:none">
-      <p class="w-sub">Ese número es nuevo — crea tu cuenta en segundos</p>
+      <p class="w-sub">Ese número es nuevo, crea tu cuenta en segundos</p>
       <input class="welcome-field" id="w-name" type="text" autocomplete="name" placeholder="Tu nombre">
       <input class="welcome-field" id="w-email" type="email" autocomplete="email" placeholder="Tu correo (opcional)">
       <input class="welcome-field" id="w-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
@@ -795,6 +892,23 @@
         <p class="w-error" id="w-error-reset"></p>
         <button class="cta" id="w-forgot-confirm" onclick="confirmForgotReset()">Cambiar PIN</button>
       </div>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2d: código por WhatsApp (alterna al PIN, ver docs/WHATSAPP-SETUP.md) -->
+    <div id="w-step-otp" style="display:none">
+      <div id="otp-request">
+        <p class="w-sub">Te mandamos un código de 6 dígitos por WhatsApp al número que ingresaste</p>
+        <p class="w-error" id="w-error-otpsend"></p>
+        <button class="cta" id="w-otp-send" onclick="sendOtpCode()">Enviar código</button>
+      </div>
+      <div id="otp-verify" style="display:none">
+        <p class="w-sub">Escribe el código que te llegó por WhatsApp</p>
+        <input class="welcome-field" id="w-otp-code" type="text" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" style="text-align:center; letter-spacing:0.3em">
+        <p class="w-error" id="w-error-otpverify"></p>
+        <button class="cta" id="w-otp-confirm" onclick="confirmOtpCode()">Confirmar código</button>
+      </div>
+      <button class="guest-link" onclick="welcomeStep('pin')">Prefiero usar mi PIN</button>
       <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
     </div>
   </div>
@@ -837,50 +951,83 @@
 
   <!-- ============ REGISTRO PROFESIONAL (B2B) ============ -->
   <div class="screen" id="pro-registro">
-    <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
-    <h1 class="app-h1">Únete a Bukea</h1>
-    <p class="app-sub">Tu negocio, tu clientela — cero comisión</p>
-
-    <div class="field">
-      <label for="reg-name">Tu nombre</label>
-      <input id="reg-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
-    </div>
-    <div class="field">
-      <label for="reg-business">Nombre del negocio</label>
-      <input id="reg-business" type="text" placeholder="Ej: Barbería El Nítido">
-    </div>
-    <div class="field">
-      <label for="reg-neighborhood">Sector</label>
-      <input id="reg-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+    <div class="reg-topbar">
+      <button class="reg-back-btn" id="reg-back-btn" onclick="regBack()" aria-label="Atrás"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+      <div class="reg-progress" id="reg-progress">
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+      </div>
+      <span class="reg-stepnum" id="reg-stepnum">Paso 1 de 4</span>
     </div>
 
-    <div class="option-group">
-      <span class="option-label">¿A qué te dedicas?</span>
-      <div class="pills" id="reg-cats">
-        <button class="pill-btn sel" data-cat="barberia" onclick="pickRegCat(this)">Barbería</button>
-        <button class="pill-btn" data-cat="unas" onclick="pickRegCat(this)">Uñas</button>
-        <button class="pill-btn" data-cat="salon" onclick="pickRegCat(this)">Salón</button>
-        <button class="pill-btn" data-cat="maquillaje" onclick="pickRegCat(this)">Maquillaje</button>
-        <button class="pill-btn" data-cat="cejas-mua" onclick="pickRegCat(this)">Cejas &amp; MUA</button>
-        <button class="pill-btn" data-cat="pilates" onclick="pickRegCat(this)">Pilates</button>
+    <div class="reg-step" data-step="1">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿Cómo te llamas?</h1>
+      <p class="app-sub">Cero comisión, gratis para siempre.</p>
+      <div class="field">
+        <label for="reg-name">Tu nombre</label>
+        <input id="reg-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      </div>
+      <div class="field">
+        <label for="reg-business">Nombre del negocio</label>
+        <input id="reg-business" type="text" placeholder="Ej: Barbería El Nítido">
       </div>
     </div>
 
-    <div class="option-group">
-      <span class="option-label">Tus servicios</span>
+    <div class="reg-step" data-step="2">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿A qué te dedicas?</h1>
+      <p class="app-sub">Así te encuentran los clientes correctos.</p>
+      <div class="reg-cat-grid" id="reg-cats">
+        <button class="reg-cat-card sel" data-cat="barberia" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
+        <button class="reg-cat-card" data-cat="unas" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-unas"/></svg><span class="lbl">Uñas</span></button>
+        <button class="reg-cat-card" data-cat="salon" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-salon"/></svg><span class="lbl">Salón</span></button>
+        <button class="reg-cat-card" data-cat="maquillaje" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-maquillaje"/></svg><span class="lbl">Maquillaje</span></button>
+        <button class="reg-cat-card" data-cat="cejas-mua" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-cejas"/></svg><span class="lbl">Cejas &amp; MUA</span></button>
+        <button class="reg-cat-card" data-cat="pilates" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-pilates"/></svg><span class="lbl">Pilates</span></button>
+      </div>
+    </div>
+
+    <div class="reg-step" data-step="3">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿Dónde queda tu negocio?</h1>
+      <p class="app-sub">Usamos tu sector para ubicarte en el mapa de Bukea.</p>
+      <div class="field">
+        <label for="reg-neighborhood">Sector</label>
+        <input id="reg-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+      </div>
+    </div>
+
+    <div class="reg-step" data-step="4">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">Tus servicios</h1>
+      <p class="app-sub">Agrega al menos uno. Puedes sumar más después.</p>
       <div id="svc-rows"></div>
       <button class="add-svc" onclick="addServiceRow()">+ Agregar otro servicio</button>
     </div>
 
-    <p id="reg-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.8rem"></p>
+    <div class="reg-step" data-step="5">
+      <div class="reg-success">
+        <div class="reg-success-check"><svg class="icon"><use href="#i-check"/></svg></div>
+        <h1 class="app-h1">¡Tu negocio ya está en Bukea!</h1>
+        <p class="app-sub">Gratis para siempre, cero comisión.</p>
+        <button class="cta" onclick="loadPanel().then(() => go('pro-panel'))"><svg class="icon"><use href="#i-check"/></svg>Ir a mi negocio</button>
+      </div>
+    </div>
 
-    <button class="cta" id="reg-btn" onclick="registerPro()"><svg class="icon"><use href="#i-check"/></svg>Crear mi cuenta</button>
+    <p id="reg-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0 0.8rem"></p>
+
+    <div class="reg-footer-nav" id="reg-footer-nav">
+      <button class="cta" id="reg-next-btn" onclick="regNext()">Continuar <svg class="icon"><use href="#i-chevron-right"/></svg></button>
+    </div>
   </div>
 
   <!-- ============ PANEL PROFESIONAL (B2B) ============ -->
   <div class="screen" id="pro-panel">
     <h1 class="app-h1" id="panel-business">Mi negocio</h1>
-    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span></p>
+    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="openMiPerfil(); return false;">Editar</a></p>
 
     <div class="panel-stat">
       <span class="k">Citas recibidas</span>
@@ -906,7 +1053,19 @@
       </div>
     </div>
 
+    <p class="sec-title">Ventas recientes</p>
+    <div class="dash-chart-total" id="chart-total">RD$0</div>
+    <p class="dash-chart-meta" id="chart-meta">0 citas</p>
+    <div id="ventas-chart" style="margin-bottom:1.1rem"></div>
+
+    <p class="sec-title">Mejores servicios</p>
+    <div id="mejores-servicios-table" style="margin-bottom:1.1rem"></div>
+
+    <p class="sec-title">Mejor miembro del equipo</p>
+    <div id="mejor-equipo-table" style="margin-bottom:1.1rem"></div>
+
     <p class="sec-title">Agenda <a href="#" onclick="loadPanel(); return false;">Actualizar</a></p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem"><a href="#" onclick="openCalendario(); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Ver calendario del mes →</a></p>
     <div id="panel-citas">
       <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
     </div>
@@ -920,20 +1079,66 @@
     <button class="add-svc" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
 
     <p class="sec-title" style="margin-top:1.1rem">Cuentas para transferencia</p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Tus clientes las verán al elegir "Transferencia" para pagar — solo copian el número.</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
     <div id="bank-rows"></div>
     <button class="add-svc" onclick="addBankRow()">+ Agregar cuenta</button>
     <p id="bank-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
 
     <p class="sec-title" style="margin-top:1.1rem">Mi equipo</p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Agrega a las personas de tu negocio que también atienden citas — tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
     <div id="collab-rows"></div>
     <button class="add-svc" onclick="addCollabRow()">+ Agregar colaborador</button>
     <p id="collab-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
 
     <button class="logout-btn" onclick="logoutPro()">Salir de mi cuenta de negocio</button>
+  </div>
+
+  <!-- ============ MI PERFIL (editar) ============ -->
+  <div class="screen" id="mi-perfil">
+    <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Mi perfil</h1>
+    <p class="app-sub">La información de tu negocio, visible en tu perfil público.</p>
+    <p id="pf-error" class="pf-error"></p>
+    <div class="field">
+      <label for="pf-name">Tu nombre</label>
+      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+    </div>
+    <div class="field">
+      <label for="pf-business">Nombre del negocio</label>
+      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+    </div>
+    <p class="field-label-standalone" style="font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--soft);margin-bottom:0.4rem">¿A qué te dedicas?</p>
+    <div class="reg-cat-grid" id="pf-cats">
+      <button class="reg-cat-card" data-cat="barberia" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
+      <button class="reg-cat-card" data-cat="unas" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-unas"/></svg><span class="lbl">Uñas</span></button>
+      <button class="reg-cat-card" data-cat="salon" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-salon"/></svg><span class="lbl">Salón</span></button>
+      <button class="reg-cat-card" data-cat="maquillaje" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-maquillaje"/></svg><span class="lbl">Maquillaje</span></button>
+      <button class="reg-cat-card" data-cat="cejas-mua" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-cejas"/></svg><span class="lbl">Cejas &amp; MUA</span></button>
+      <button class="reg-cat-card" data-cat="pilates" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-pilates"/></svg><span class="lbl">Pilates</span></button>
+    </div>
+    <div class="field">
+      <label for="pf-neighborhood">Sector</label>
+      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+    </div>
+    <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+  </div>
+
+  <!-- ============ CALENDARIO (vista mensual) ============ -->
+  <div class="screen" id="calendario">
+    <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Calendario</h1>
+    <p class="app-sub">Las citas de tu negocio, mes por mes.</p>
+    <div class="cal-toolbar">
+      <button class="cal-btn" onclick="calShiftMonth(-1)" aria-label="Mes anterior"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+      <span class="cal-date" id="cal-date-label">—</span>
+      <button class="cal-btn" onclick="calShiftMonth(1)" aria-label="Mes siguiente"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+    </div>
+    <button class="cal-today" style="display:block;margin:0 auto 0.9rem" onclick="calGoToday()">Hoy</button>
+    <div id="cal-grid"></div>
+    <p class="sec-title" style="margin-top:1.3rem" id="cal-day-title">Selecciona un día</p>
+    <div id="cal-day-list"></div>
   </div>
 
   <!-- ============ PERFIL ============ -->
@@ -1076,7 +1281,7 @@
   <div class="screen" id="fila">
     <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1" style="display:flex; align-items:center;">Fila virtual <span class="live-badge"><span class="live-dot"></span>En vivo</span></h1>
-    <p class="app-sub">Barbería El Nítido — walk-ins sin cita</p>
+    <p class="app-sub">Barbería El Nítido, walk-ins sin cita</p>
 
     <div class="queue-hero">
       <div class="queue-num" id="queue-count">3</div>
@@ -1092,7 +1297,7 @@
 
     <div class="wa-note">
       <svg class="icon"><use href="#i-whatsapp"/></svg>
-      <span>Te avisamos por WhatsApp cuando falten <b>2 personas</b> — vete tranquilo, tu turno no se pierde.</span>
+      <span>Te avisamos por WhatsApp cuando falten <b>2 personas</b>. Vete tranquilo, tu turno no se pierde.</span>
     </div>
 
     <button class="cta" id="queue-btn" onclick="joinQueue()"><svg class="icon"><use href="#i-clock"/></svg>Coger mi turno</button>
@@ -1154,6 +1359,9 @@
     paymentLabel: 'Efectivo',
     returnTo: 'inicio',
     receiptFile: null,
+    bizProfile: null,
+    bizBookings: [],
+    calMonth: null,
   };
 
   function formatPrice(cents) {
@@ -1304,7 +1512,7 @@
     const btn = document.getElementById('confirm-btn');
     const when = document.getElementById('confirm-btn-when');
     if (state.date && state.time) {
-      when.textContent = '— ' + state.dateLabel.toLowerCase() + ' ' + state.timeLabel;
+      when.textContent = state.dateLabel.toLowerCase() + ' ' + state.timeLabel;
       btn.disabled = false;
     } else {
       when.textContent = '';
@@ -1341,7 +1549,7 @@
       if (firstWithSlots) {
         pickDay(firstWithSlots.day, firstWithSlots.btn);
       } else {
-        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días — vuelve a intentar más tarde.</p>';
+        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días. Vuelve a intentar más tarde.</p>';
       }
     } catch (err) {
       diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar la disponibilidad.</p>';
@@ -1421,7 +1629,7 @@
     const el = document.getElementById('transfer-accounts');
     const accounts = (state.professional && state.professional.bankAccounts) || [];
     if (accounts.length === 0) {
-      el.innerHTML = '<p style="color:var(--soft);font-size:0.82rem">Este profesional todavía no cargó sus cuentas — coordina la transferencia por WhatsApp.</p>';
+      el.innerHTML = '<p style="color:var(--soft);font-size:0.82rem">Este profesional todavía no cargó sus cuentas. Coordina la transferencia por WhatsApp.</p>';
       return;
     }
     el.innerHTML = '';
@@ -1608,7 +1816,7 @@
 
   function joinQueue() {
     const btn = document.getElementById('queue-btn');
-    btn.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Estás en la fila — te avisamos por WhatsApp';
+    btn.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Estás en la fila, te avisamos por WhatsApp';
     btn.style.background = 'var(--cash)';
     btn.onclick = null;
   }
@@ -1649,13 +1857,71 @@
       go('pro-panel');
     } else {
       if (document.querySelectorAll('#svc-rows .svc-row').length === 0) addServiceRow();
+      regStep = 1;
+      regShowStep();
       go('pro-registro');
     }
   }
 
   function pickRegCat(btn) {
-    document.querySelectorAll('#reg-cats .pill-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelectorAll('#reg-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
+  }
+
+  /* Wizard de 4 pasos: nombre → categoría → sector → servicios, luego pantalla de éxito (paso 5) */
+  const REG_TOTAL_STEPS = 4;
+  let regStep = 1;
+
+  function regShowStep() {
+    document.querySelectorAll('.reg-step').forEach(el => {
+      el.classList.toggle('show', Number(el.dataset.step) === regStep);
+    });
+    const segs = document.querySelectorAll('#reg-progress .seg');
+    segs.forEach((seg, i) => {
+      seg.classList.toggle('done', i < regStep - 1);
+      seg.classList.toggle('active', i === regStep - 1 && regStep <= REG_TOTAL_STEPS);
+    });
+    const onSuccess = regStep > REG_TOTAL_STEPS;
+    document.getElementById('reg-stepnum').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-stepnum').textContent = 'Paso ' + regStep + ' de ' + REG_TOTAL_STEPS;
+    document.getElementById('reg-back-btn').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-footer-nav').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-next-btn').innerHTML = regStep === REG_TOTAL_STEPS
+      ? '<svg class="icon"><use href="#i-check"/></svg>Crear mi negocio'
+      : 'Continuar <svg class="icon"><use href="#i-chevron-right"/></svg>';
+    document.getElementById('reg-error').style.display = 'none';
+  }
+
+  function regValidateStep() {
+    if (regStep === 1) {
+      const name = document.getElementById('reg-name').value.trim();
+      const businessName = document.getElementById('reg-business').value.trim();
+      if (!name || !businessName) return showRegError('Completa tu nombre y el del negocio.'), false;
+    }
+    if (regStep === 2) {
+      if (!document.querySelector('#reg-cats .reg-cat-card.sel')) return showRegError('Elige una categoría.'), false;
+    }
+    if (regStep === 3) {
+      if (!document.getElementById('reg-neighborhood').value.trim()) return showRegError('Indica tu sector.'), false;
+    }
+    return true;
+  }
+
+  function regBack() {
+    if (regStep <= 1) { go('inicio'); return; }
+    regStep--;
+    regShowStep();
+  }
+
+  function regNext() {
+    if (!regValidateStep()) return;
+    document.getElementById('reg-error').style.display = 'none';
+    if (regStep < REG_TOTAL_STEPS) {
+      regStep++;
+      regShowStep();
+    } else {
+      registerPro();
+    }
   }
 
   function addServiceRow() {
@@ -1681,7 +1947,7 @@
     const name = document.getElementById('reg-name').value.trim();
     const businessName = document.getElementById('reg-business').value.trim();
     const neighborhood = document.getElementById('reg-neighborhood').value.trim();
-    const catBtn = document.querySelector('#reg-cats .pill-btn.sel');
+    const catBtn = document.querySelector('#reg-cats .reg-cat-card.sel');
     const category = catBtn ? catBtn.dataset.cat : null;
 
     const services = [];
@@ -1701,9 +1967,9 @@
       return showRegError('Agrega al menos un servicio con duración y precio.');
     }
 
-    const btn = document.getElementById('reg-btn');
+    const btn = document.getElementById('reg-next-btn');
     const original = btn.innerHTML;
-    btn.innerHTML = 'Creando cuenta…';
+    btn.innerHTML = 'Creando negocio…';
     btn.disabled = true;
     try {
       const res = await fetch(API_BASE + '/api/professionals', {
@@ -1717,8 +1983,8 @@
       }
       const { slug } = await res.json();
       localStorage.setItem('bukea_pro_slug', slug);
-      await loadPanel();
-      go('pro-panel');
+      regStep = REG_TOTAL_STEPS + 1;
+      regShowStep();
     } catch (err) {
       showRegError('No se pudo conectar con el servidor.');
       console.error(err);
@@ -1743,6 +2009,11 @@
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
       const prof = await profRes.json();
       const citas = await citasRes.json();
+      state.bizProfile = prof;
+      state.bizBookings = citas;
+      renderVentasChart();
+      renderMejoresServicios();
+      renderMejorEquipo();
 
       if (statsRes.ok) {
         const stats = await statsRes.json();
@@ -1759,7 +2030,7 @@
       const citasEl = document.getElementById('panel-citas');
       citasEl.innerHTML = '';
       if (citas.length === 0) {
-        citasEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Todavía no tienes citas — comparte tu perfil con tu clientela.</p>';
+        citasEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Todavía no tienes citas. Comparte tu perfil con tu clientela.</p>';
       } else {
         citas.forEach(c => {
           const card = document.createElement('div');
@@ -1822,6 +2093,224 @@
       console.error(err);
     }
   }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  function startOfMonth() { const d = startOfToday(); d.setDate(1); return d; }
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function capitalize(s) { return s.replace(/^./, c => c.toUpperCase()); }
+
+  /* ---------- Ventas recientes (gráfico de 7 días) ---------- */
+  const DOW_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'short', day: 'numeric' });
+  function last7Days() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) { const d = startOfToday(); d.setDate(d.getDate() - i); days.push(d); }
+    return days;
+  }
+  function renderVentasChart() {
+    const totalEl = document.getElementById('chart-total');
+    if (!totalEl) return;
+    const byDay = last7Days().map(d => {
+      const dayBookings = state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), d) && b.status !== 'cancelled');
+      return { date: d, count: dayBookings.length, cents: dayBookings.reduce((s, b) => s + (b.priceCents || 0), 0) };
+    });
+    const totalCents = byDay.reduce((s, d) => s + d.cents, 0);
+    const totalCount = byDay.reduce((s, d) => s + d.count, 0);
+    totalEl.textContent = formatPrice(totalCents) + ' vendido';
+    document.getElementById('chart-meta').textContent = totalCount + (totalCount === 1 ? ' cita' : ' citas');
+
+    const max = Math.max.apply(null, byDay.map(d => d.cents).concat([1]));
+    const W = 340, H = 130, pad = 22;
+    const stepX = (W - pad * 2) / (byDay.length - 1);
+    const points = byDay.map((d, i) => ({ x: pad + i * stepX, y: H - pad - (d.cents / max) * (H - pad * 2), d }));
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    const areaPath = linePath + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (H - pad) + ' L' + points[0].x.toFixed(1) + ',' + (H - pad) + ' Z';
+    const dotsHtml = points.map(p => '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="var(--teal-600)"><title>' + esc(DOW_FMT.format(p.d.date)) + ': ' + formatPrice(p.d.cents) + '</title></circle>').join('');
+    const labelsHtml = points.map(p => '<text x="' + p.x.toFixed(1) + '" y="' + (H - 4) + '" font-size="8" fill="var(--soft)" text-anchor="middle">' + esc(DOW_FMT.format(p.d.date)) + '</text>').join('');
+    const chartWrap = document.getElementById('ventas-chart');
+    chartWrap.classList.remove('dash-fade-in'); void chartWrap.offsetWidth; chartWrap.classList.add('dash-fade-in');
+    chartWrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:120px;display:block">' +
+        '<defs><linearGradient id="chartFadeMobile" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--teal-500)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--teal-500)" stop-opacity="0"/></linearGradient></defs>' +
+        '<path d="' + areaPath + '" fill="url(#chartFadeMobile)" stroke="none"/>' +
+        '<path d="' + linePath + '" fill="none" stroke="var(--teal-600)" stroke-width="2"/>' +
+        dotsHtml + labelsHtml +
+      '</svg>';
+  }
+
+  /* ---------- Mejores servicios / Mejor miembro del equipo ---------- */
+  function monthBounds(offset) {
+    const d = startOfMonth(); d.setMonth(d.getMonth() + offset);
+    return { start: d, end: new Date(d.getFullYear(), d.getMonth() + 1, 1) };
+  }
+  function rankedCounts(keyFn) {
+    const thisM = monthBounds(0), lastM = monthBounds(-1);
+    const counts = {};
+    state.bizBookings.forEach(b => {
+      if (!b.appointmentAt || b.status === 'cancelled') return;
+      const d = new Date(b.appointmentAt);
+      const key = keyFn(b);
+      if (!key) return;
+      counts[key] = counts[key] || { thisMonth: 0, lastMonth: 0 };
+      if (d >= thisM.start && d < thisM.end) counts[key].thisMonth++;
+      else if (d >= lastM.start && d < lastM.end) counts[key].lastMonth++;
+    });
+    return Object.keys(counts).map(key => ({ name: key, c: counts[key] }))
+      .sort((a, b) => (b.c.thisMonth - a.c.thisMonth) || (b.c.lastMonth - a.c.lastMonth));
+  }
+  function renderDashTable(elId, rows, emptyMsg, colLabel) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.classList.remove('dash-fade-in'); void el.offsetWidth; el.classList.add('dash-fade-in');
+    if (!rows.length) { el.innerHTML = '<p class="dash-empty">' + esc(emptyMsg) + '</p>'; return; }
+    el.innerHTML =
+      '<div class="dash-table-head"><span>' + esc(colLabel) + '</span><span>Este mes</span><span>Últ. mes</span></div>' +
+      rows.slice(0, 6).map(r => '<div class="dash-table-row"><span>' + esc(r.name) + '</span><span>' + r.c.thisMonth + '</span><span>' + r.c.lastMonth + '</span></div>').join('');
+  }
+  function renderMejoresServicios() {
+    renderDashTable('mejores-servicios-table', rankedCounts(b => b.serviceName), 'Sin datos todavía. Cuando tengas reservas verás aquí tus servicios más pedidos.', 'Servicio');
+  }
+  function renderMejorEquipo() {
+    renderDashTable('mejor-equipo-table', rankedCounts(b => b.collaboratorName || (state.bizProfile ? state.bizProfile.name : 'Titular')), 'Sin datos todavía. Cuando tengas reservas verás aquí quién atiende más citas.', 'Miembro del equipo');
+  }
+
+  /* ---------- Mi perfil ---------- */
+  let pfSelectedCat = null;
+  window.openMiPerfil = function () {
+    const p = state.bizProfile;
+    if (!p) return;
+    document.getElementById('pf-name').value = p.name || '';
+    document.getElementById('pf-business').value = p.businessName || '';
+    document.getElementById('pf-neighborhood').value = p.neighborhood || '';
+    pfSelectedCat = p.category;
+    document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
+    document.getElementById('pf-error').style.display = 'none';
+    go('mi-perfil');
+  };
+  window.pickPfCat = function (btn) {
+    pfSelectedCat = btn.dataset.cat;
+    document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  };
+  window.saveProfile = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    const errEl = document.getElementById('pf-error');
+    errEl.style.display = 'none';
+    const name = document.getElementById('pf-name').value.trim();
+    const businessName = document.getElementById('pf-business').value.trim();
+    const neighborhood = document.getElementById('pf-neighborhood').value.trim();
+    if (!name || !businessName || !neighborhood) {
+      errEl.textContent = 'Completa tu nombre, el del negocio y el sector.';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('pf-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…'; btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/profile', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ name, businessName, neighborhood, category: pfSelectedCat }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar tu perfil');
+      btn.textContent = '¡Guardado!';
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); loadPanel(); }, 900);
+      return;
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+    }
+    btn.disabled = false;
+  };
+
+  /* ---------- Calendario mensual ---------- */
+  const CAL_DAY_HEADS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const CAL_MONTH_FMT = new Intl.DateTimeFormat('es-DO', { month: 'long', year: 'numeric' });
+  const CAL_DATE_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long' });
+  let calSelectedDay = null;
+  window.openCalendario = function () {
+    if (!state.calMonth) state.calMonth = startOfMonth();
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+    go('calendario');
+  };
+  window.calShiftMonth = function (delta) {
+    const d = new Date(state.calMonth); d.setDate(1); d.setMonth(d.getMonth() + delta);
+    state.calMonth = d;
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+  };
+  window.calGoToday = function () {
+    state.calMonth = startOfMonth();
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+  };
+  function renderCalendar() {
+    document.getElementById('cal-date-label').textContent = capitalize(CAL_MONTH_FMT.format(state.calMonth));
+    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    const startOffset = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+    const today = startOfToday();
+
+    const byDay = {};
+    state.bizBookings.forEach(b => {
+      if (!b.appointmentAt) return;
+      const d = new Date(b.appointmentAt);
+      if (d.getFullYear() !== year || d.getMonth() !== month) return;
+      (byDay[d.getDate()] = byDay[d.getDate()] || []).push(b);
+    });
+
+    const headsHtml = CAL_DAY_HEADS.map(n => '<div class="cal-month-head">' + n + '</div>').join('');
+    let cellsHtml = '';
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - startOffset + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) { cellsHtml += '<div class="cal-month-cell pad"></div>'; continue; }
+      const isToday = sameDay(new Date(year, month, dayNum), today);
+      const isSelected = calSelectedDay === dayNum;
+      const evs = byDay[dayNum] || [];
+      const dotsHtml = evs.slice(0, 5).map(b => '<span class="cal-dot' + (b.status === 'cancelled' ? ' cancelled' : '') + '"></span>').join('');
+      const label = capitalize(CAL_DATE_FMT.format(new Date(year, month, dayNum))) + (evs.length ? ', ' + evs.length + (evs.length === 1 ? ' cita' : ' citas') : ', sin citas');
+      cellsHtml +=
+        '<button type="button" class="cal-month-cell' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '" aria-label="' + esc(label) + '" onclick="showCalDay(' + dayNum + ')">' +
+          '<span class="cal-daynum">' + dayNum + '</span><span class="cal-dots">' + dotsHtml + '</span>' +
+        '</button>';
+    }
+    document.getElementById('cal-grid').innerHTML = '<div class="cal-month-grid">' + headsHtml + cellsHtml + '</div>';
+  }
+  window.showCalDay = function (dayNum) {
+    calSelectedDay = dayNum;
+    renderCalendar();
+    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    const date = new Date(year, month, dayNum);
+    const evs = state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), date))
+      .sort((a, b) => new Date(a.appointmentAt) - new Date(b.appointmentAt));
+    document.getElementById('cal-day-title').textContent = capitalize(CAL_DATE_FMT.format(date));
+    const list = document.getElementById('cal-day-list');
+    list.classList.remove('dash-fade-in'); void list.offsetWidth; list.classList.add('dash-fade-in');
+    if (!evs.length) { list.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No hay citas este día.</p>'; return; }
+    list.innerHTML = evs.map(b => {
+      const cancelled = b.status === 'cancelled';
+      return '<div class="cita-card"' + (cancelled ? ' style="opacity:0.55"' : '') + '>' +
+        '<div class="c-top"><span>' + esc(b.clientName) + '</span><span>' + formatPrice(b.priceCents) + '</span></div>' +
+        '<div class="c-bottom"><span>' + esc(b.timeLabel) + '</span><span>' + esc(b.serviceName) + (b.collaboratorName ? ' · ' + esc(b.collaboratorName) : '') + '</span></div>' +
+        (cancelled ? '<span style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600">Cancelada</span>' : '') +
+        '</div>';
+    }).join('');
+  };
 
   async function cancelBookingFromPanel(id) {
     if (!confirm('¿Cancelar esta cita?')) return;
@@ -2363,6 +2852,7 @@
     document.getElementById('w-step-pin').style.display = step === 'pin' ? 'block' : 'none';
     document.getElementById('w-step-new').style.display = step === 'new' ? 'block' : 'none';
     document.getElementById('w-step-forgot').style.display = step === 'forgot' ? 'block' : 'none';
+    document.getElementById('w-step-otp').style.display = step === 'otp' ? 'block' : 'none';
     if (step === 'forgot') {
       document.getElementById('forgot-request').style.display = 'block';
       document.getElementById('forgot-reset').style.display = 'none';
@@ -2370,6 +2860,12 @@
       document.getElementById('w-forgot-email').value = '';
       document.getElementById('w-forgot-code').value = '';
       document.getElementById('w-forgot-newpin').value = '';
+    }
+    if (step === 'otp') {
+      document.getElementById('otp-request').style.display = 'block';
+      document.getElementById('otp-verify').style.display = 'none';
+      wError('w-error-otpsend'); wError('w-error-otpverify');
+      document.getElementById('w-otp-code').value = '';
     }
   }
 
@@ -2393,7 +2889,7 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-phone', data.error || 'Intenta de nuevo');
       if (data.exists) {
-        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋 — ingresa tu PIN';
+        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋, ingresa tu PIN';
         welcomeStep('pin');
         document.getElementById('w-pin').focus();
       } else {
@@ -2510,6 +3006,61 @@
       enterApp(data);
     } catch (err) {
       wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Código por WhatsApp (2026-08-24) — alterna al PIN para una cuenta
+     ya existente (welcomePhone ya viene confirmado desde welcomeContinue()).
+     Ver docs/WHATSAPP-SETUP.md: dormido hasta que Meta apruebe las
+     credenciales, GET /otp/status dice si ya está activo. ===== */
+  async function checkOtpStatus() {
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/status');
+      const data = await res.json();
+      const link = document.getElementById('w-otp-link');
+      if (link) link.style.display = data.enabled ? 'block' : 'none';
+    } catch (err) { /* si falla, el enlace se queda oculto */ }
+  }
+  window.addEventListener('load', checkOtpStatus);
+
+  async function sendOtpCode() {
+    wError('w-error-otpsend');
+    const btn = document.getElementById('w-otp-send');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-otpsend', data.error || 'Intenta de nuevo');
+      document.getElementById('otp-request').style.display = 'none';
+      document.getElementById('otp-verify').style.display = 'block';
+      document.getElementById('w-otp-code').focus();
+    } catch (err) {
+      wError('w-error-otpsend', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function confirmOtpCode() {
+    wError('w-error-otpverify');
+    const btn = document.getElementById('w-otp-confirm');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone, code: document.getElementById('w-otp-code').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-otpverify', data.error || 'Intenta de nuevo');
+      if (!data.exists) return wError('w-error-otpverify', 'Esa cuenta no existe todavía. Usa "Usar otro número" para crearla');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-otpverify', 'No se pudo conectar. Revisa tu internet.');
     } finally {
       btn.disabled = false;
     }

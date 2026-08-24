@@ -83,7 +83,7 @@ router.post('/register', async (req, res) => {
 
   const [existing] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
   if (existing.length > 0) {
-    return res.status(409).json({ error: 'Ese número ya tiene cuenta — inicia sesión con tu PIN' });
+    return res.status(409).json({ error: 'Ese número ya tiene cuenta, inicia sesión con tu PIN' });
   }
 
   const salt = crypto.randomBytes(16).toString('hex');
@@ -134,7 +134,7 @@ router.post('/otp/send', async (req, res) => {
     [phone]
   );
   if (recent[0].n >= 3) {
-    return res.status(429).json({ error: 'Demasiados intentos — espera unos minutos' });
+    return res.status(429).json({ error: 'Demasiados intentos, espera unos minutos' });
   }
 
   const code = String(crypto.randomInt(100000, 1000000));
@@ -148,7 +148,7 @@ router.post('/otp/send', async (req, res) => {
     await whatsapp.sendAuthCode(phone, code);
   } catch (err) {
     console.error('Error enviando OTP por WhatsApp:', err.message);
-    return res.status(502).json({ error: 'No se pudo enviar el código por WhatsApp — intenta de nuevo' });
+    return res.status(502).json({ error: 'No se pudo enviar el código por WhatsApp, intenta de nuevo' });
   }
   res.json({ sent: true });
 });
@@ -165,8 +165,8 @@ router.post('/otp/verify', async (req, res) => {
     [phone]
   );
   const record = rows[0];
-  if (!record) return res.status(404).json({ error: 'Código vencido — pide uno nuevo' });
-  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos — pide un código nuevo' });
+  if (!record) return res.status(404).json({ error: 'Código vencido, pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos, pide un código nuevo' });
 
   if (hashPin(code, record.code_salt) !== record.code_hash) {
     await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
@@ -213,7 +213,7 @@ router.post('/forgot-pin', async (req, res) => {
     [email]
   );
   if (recent[0].n >= 3) {
-    return res.status(429).json({ error: 'Demasiados intentos — espera unos minutos' });
+    return res.status(429).json({ error: 'Demasiados intentos, espera unos minutos' });
   }
 
   const code = String(crypto.randomInt(100000, 1000000));
@@ -227,7 +227,7 @@ router.post('/forgot-pin', async (req, res) => {
     await mailer.sendPinResetCode(email, code);
   } catch (err) {
     console.error('Error enviando código de recuperación:', err.message);
-    return res.status(502).json({ error: 'No se pudo enviar el correo — intenta de nuevo' });
+    return res.status(502).json({ error: 'No se pudo enviar el correo, intenta de nuevo' });
   }
   res.json({ sent: true });
 });
@@ -245,8 +245,8 @@ router.post('/reset-pin', async (req, res) => {
     [email]
   );
   const record = rows[0];
-  if (!record) return res.status(404).json({ error: 'Código vencido — pide uno nuevo' });
-  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos — pide un código nuevo' });
+  if (!record) return res.status(404).json({ error: 'Código vencido, pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos, pide un código nuevo' });
 
   if (hashPin(code, record.code_salt) !== record.code_hash) {
     await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);

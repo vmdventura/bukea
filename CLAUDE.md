@@ -7,6 +7,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 - **Toda la comunicación, documentación, commits y copy del producto en español** (español dominicano para el copy de la app: "bukear", "confirmao", "la tarjetica").
 - Precios siempre en RD$ (pesos dominicanos).
 - El dueño del proyecto es Víctor (vmdventura).
+- **Nunca uses guiones largos (`—`), guiones cortos (`-`) ni guiones medios (`–`) como separadores de texto, títulos o subtítulos en la interfaz de usuario.** Si hace falta separar frases o ideas en copy visible al usuario, usa un punto, una coma o un salto de línea. (No aplica a usos que no son separadores: palabras compuestas con guion, nombres de clase/CSS, atributos HTML, código, ni a rangos horarios tipo "9:00 - 6:00" si ya son el estándar del producto — ante la duda, preguntar.)
 
 ## Estructura del repositorio
 

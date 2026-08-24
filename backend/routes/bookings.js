@@ -67,12 +67,12 @@ router.post('/', requireAuth, async (req, res) => {
     h => startMin >= timeToMinutes(h.start_time) && startMin + service.duration_min <= timeToMinutes(h.end_time)
   );
   if (!withinHours) {
-    return res.status(409).json({ error: 'Ese horario ya no está disponible — elige otro' });
+    return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
   }
 
   const { date: today, minutes: nowMinutes } = nowInSantoDomingo();
   if (date < today || (date === today && startMin <= nowMinutes)) {
-    return res.status(409).json({ error: 'Esa hora ya pasó — elige otra' });
+    return res.status(409).json({ error: 'Esa hora ya pasó, elige otra' });
   }
 
   const appointmentAt = `${date} ${time}:00`;
@@ -106,7 +106,7 @@ router.post('/', requireAuth, async (req, res) => {
     });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Alguien acaba de tomar ese horario — elige otro' });
+      return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
     }
     throw err;
   }
