@@ -192,7 +192,7 @@ ${HOME_STYLE}
 
   res.type('html').send(pageShell({
     base,
-    title: 'Bukea. Reserva tu cita de belleza en República Dominicana',
+    title: 'Bukea, tu cita en 60 segundos',
     description: 'Bukea tu cita de barbería, uñas, salón, cejas y maquillaje en República Dominicana. Paga en efectivo o transferencia, sin comisión.',
     canonicalPath: 'https://www.bukeard.com/',
     bodyHtml: body,

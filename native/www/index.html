@@ -1,3 +1,3129 @@
-<!doctype html><meta charset="utf-8">
-<title>Bukea</title>
-<p>Cargando Bukea…</p>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bukea, tu cita en 60 segundos</title>
+<meta name="description" content="Bukea tu cita de barbería, uñas, salón, maquillaje y cejas en República Dominicana. Paga en efectivo o transferencia, con recordatorio por WhatsApp.">
+<meta name="theme-color" content="#0f6f6b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bukea">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700;6..96,800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9P6W5CRECN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9P6W5CRECN');
+</script>
+</head>
+<body>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background: var(--bg, #f2f5f4);
+    overscroll-behavior: none;
+  }
+
+  /* ===== App a pantalla completa (estilo nativo) ===== */
+  .phone {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  /* En desktop, una línea sutil delimita la columna de la app */
+  @media (min-width: 520px) {
+    .phone { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  }
+
+  /* Design tokens — ver DESIGN.md */
+  .phone, body {
+    --teal-900: oklch(24% 0.045 195);
+    --teal-700: oklch(37% 0.075 195);
+    --teal-600: oklch(46% 0.09 195);
+    --teal-500: oklch(55% 0.095 195);
+    --teal-100: oklch(93% 0.035 195);
+    --teal-50:  oklch(97% 0.018 195);
+
+    --gold-600: oklch(70% 0.13 75);   /* uso decorativo (fondos, no texto) */
+    --gold-700: oklch(48% 0.11 68);   /* uso en texto — cumple 4.5:1 sobre --card */
+    --gold-100: oklch(94% 0.05 78);
+
+    --whatsapp: #25d366;
+    --whatsapp-100: #e4f8ea;
+    --cash: oklch(48% 0.1 150);
+    --cash-100: oklch(93% 0.035 150);
+
+    --ink:  oklch(21% 0.02 200);
+    --soft: oklch(44% 0.028 200);
+    --bg:   oklch(96% 0.012 195);
+    --card: oklch(99% 0.004 195);
+    --line: oklch(89% 0.014 195);
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    background: var(--bg);
+    color: var(--ink);
+    font-variant-ligatures: none;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top, 0px) + 18px) 20px calc(env(safe-area-inset-bottom, 0px) + 88px);
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active {
+    display: flex;
+    animation: screen-in 260ms var(--ease);
+  }
+  @keyframes screen-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .screen.active { animation: none; }
+  }
+
+  .icon {
+    width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ===== Pase de pulido premium (Soft UI Evolution) ===== */
+  /* Escala de sombra unificada, suave y consistente */
+  .phone, body {
+    --sh-1: 0 1px 2px rgba(15,40,38,0.05);
+    --sh-2: 0 4px 14px rgba(15,40,38,0.07);
+    --sh-3: 0 10px 30px rgba(15,40,38,0.10);
+    --sh-teal: 0 8px 20px rgba(10,79,77,0.28);
+  }
+
+  /* Feedback de toque universal en elementos interactivos */
+  .cat, .pro-card, .service, .pay-option, .pill-btn, .sheet-item,
+  .cta, .nav-btn, .pro-link, .queue-item.tap, .cat-badge-tap {
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .cat:active, .pro-card:active, .service:active, .pay-option:active,
+  .sheet-item:active, .pro-link:active { transform: scale(0.98); }
+  .pill-btn:active, .nav-btn:active { transform: scale(0.94); }
+
+  /* Estados de foco visibles (accesibilidad / teclado) */
+  button:focus-visible, input:focus-visible, .cat:focus-visible,
+  .pro-card:focus-visible, .service:focus-visible, .pay-option:focus-visible,
+  .sheet-item:focus-visible {
+    outline: 2px solid var(--teal-600); outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
+
+  /* Skeletons de carga (perceived performance) */
+  .sk { position: relative; overflow: hidden; background: var(--line); border-radius: 8px; }
+  .sk::after {
+    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: sk-shimmer 1.3s infinite;
+  }
+  @keyframes sk-shimmer { 100% { transform: translateX(100%); } }
+  .sk-card {
+    display: flex; gap: 0.85rem; align-items: center; padding: 0.9rem;
+    border: 1px solid var(--line); border-radius: 18px; margin-bottom: 0.7rem; background: var(--card);
+  }
+  .sk-avatar { width: 54px; height: 54px; border-radius: 50%; flex: none; }
+  .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+  .sk-line { height: 11px; }
+  .sk-line.w70 { width: 70%; } .sk-line.w45 { width: 45%; } .sk-line.w90 { width: 90%; }
+  .sk-row { height: 46px; border-radius: 16px; margin-bottom: 0.6rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cat:active, .pro-card:active, .service:active, .pay-option:active,
+    .sheet-item:active, .pro-link:active, .pill-btn:active, .nav-btn:active { transform: none; }
+    .sk::after { animation: none; }
+  }
+
+  .app-h1 { font-family: "Fraunces", Georgia, serif; font-size: 1.55rem; font-weight: 600; color: var(--ink); margin: 0.3rem 0 0.15rem; letter-spacing: -0.01em; }
+  .app-sub { color: var(--soft); font-size: 0.85rem; margin: 0 0 1.15rem; display: flex; align-items: center; gap: 0.3rem; }
+  .app-sub .icon { font-size: 0.95rem; color: var(--teal-600); }
+
+  .searchbar {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.75rem 1rem; color: var(--soft); font-size: 0.88rem;
+    display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1.2rem;
+  }
+  .searchbar .icon { font-size: 1.05rem; color: var(--soft); }
+
+  .cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.4rem; }
+  .cat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.85rem 0.2rem 0.65rem; text-align: center; cursor: pointer;
+    box-shadow: var(--sh-1);
+    transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  }
+  .cat:hover { transform: translateY(-2px); border-color: var(--teal-500); box-shadow: var(--sh-2); }
+  .cat .icon { font-size: 1.3rem; color: var(--teal-700); }
+  .cat .txt { font-size: 0.62rem; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+
+  /* Categorías del inicio — círculo teal (Modelo 4) */
+  .cats-circle { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+  .cats-circle .cat {
+    flex-direction: row; justify-content: flex-start; gap: 0.7rem;
+    padding: 0.7rem 0.85rem; border-radius: 16px;
+  }
+  .cats-circle .cat .txt { font-size: 0.82rem; }
+
+  /* Categorías del inicio — grid vertical (ícono arriba, nombre debajo) */
+  .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+  .cats-grid .cat {
+    flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.6rem;
+    padding: 1.05rem 0.4rem 0.9rem; border-radius: 20px; min-height: 116px;
+  }
+  .cats-grid .cat .txt { font-size: 0.72rem; text-align: center; line-height: 1.2; }
+  .cats-grid .cat-badge { width: 56px; height: 56px; }
+  .cats-grid .cat-ic { width: 29px; height: 29px; }
+
+  .cat-badge {
+    width: 46px; height: 46px; flex: none; border-radius: 16px;
+    background: var(--teal-100);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cat-ic {
+    width: 24px; height: 24px; fill: none; stroke: var(--teal-900);
+    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* Onboarding — hoja "¿Qué servicio buscas?" (bottom sheet, primera vez) */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    background: rgba(10, 30, 28, 0.45); backdrop-filter: blur(2px);
+    align-items: flex-end; justify-content: center;
+  }
+  .sheet-backdrop.show { display: flex; animation: fade-in 220ms var(--ease); }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .sheet {
+    width: 100%; max-width: 480px; background: var(--card);
+    border-radius: 26px 26px 0 0; padding: 0.7rem 1.2rem calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
+    box-shadow: 0 -12px 40px rgba(10,40,38,0.22);
+    animation: sheet-up 340ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .sheet-backdrop.show { animation: none; } }
+  .sheet-handle { width: 42px; height: 5px; border-radius: 999px; background: var(--line); margin: 0.2rem auto 1rem; }
+  .sheet .s-brand { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 1.7rem; color: var(--brand-teal); line-height: 1; text-align: center; }
+  .sheet h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.35rem; color: var(--ink); margin: 0.5rem 0 0.25rem; text-align: center; }
+  .sheet .s-sub { font-size: 0.85rem; color: var(--soft); margin: 0 0 1.1rem; line-height: 1.45; text-align: center; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
+  .sheet-item {
+    display: flex; align-items: center; gap: 0.6rem; text-align: left;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.6rem 0.7rem; cursor: pointer; font-family: inherit;
+    font-size: 0.82rem; font-weight: 700; color: var(--ink);
+    transition: border-color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .sheet-item:hover { border-color: var(--teal-500); }
+  a.sheet-item { text-decoration: none; }
+  .sheet-item:active { transform: scale(0.98); }
+  .sheet-item .cat-badge { width: 40px; height: 40px; }
+  .sheet-item .cat-ic { width: 21px; height: 21px; }
+  .sheet-skip {
+    display: block; margin: 1.1rem auto 0.2rem; background: none; border: none;
+    font-family: inherit; font-size: 0.9rem; font-weight: 700; color: var(--soft);
+    cursor: pointer; padding: 0.5rem;
+  }
+
+  .pro-link {
+    background: none; border: 1.5px dashed var(--line); border-radius: 15px;
+    padding: 0.85rem 1rem; margin-top: auto; cursor: pointer; width: 100%;
+    font-family: inherit; font-size: 0.8rem; color: var(--soft); text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+    transition: border-color 160ms var(--ease);
+  }
+  .pro-link:hover { border-color: var(--teal-500); }
+  .pro-link b { color: var(--teal-700); }
+  .pro-link .icon { color: var(--teal-600); }
+
+  /* Colores oficiales de marca (logo) */
+  .phone, body { --brand-teal: #0f6f6b; --brand-cream: #f1e4d2; }
+
+  /* ===== Splash (carga inicial con el logo oficial) ===== */
+  .screen.splash {
+    background: var(--brand-teal);
+    color: var(--brand-cream); text-align: center;
+    justify-content: center; align-items: center; position: relative;
+  }
+  .splash-logo {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
+    font-size: 8rem; color: var(--brand-cream); line-height: 1;
+    animation: splash-pop 600ms var(--ease);
+  }
+  .splash-word {
+    font-family: "Bodoni Moda", "Fraunces", serif; font-weight: 700; font-size: 2.6rem;
+    color: var(--brand-cream); margin-top: 0.4rem; letter-spacing: 0.01em; line-height: 1;
+    animation: splash-pop 600ms 120ms var(--ease) both;
+  }
+  .splash-tag {
+    position: absolute; left: 0; right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 2.6rem);
+    font-family: "Plus Jakarta Sans", sans-serif; font-weight: 600; font-size: 1rem;
+    color: var(--brand-cream); opacity: 0.92; letter-spacing: 0.02em;
+    animation: splash-pop 600ms 260ms var(--ease) both;
+  }
+  @keyframes splash-pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .splash-logo, .splash-word, .splash-tag { animation: none; } }
+
+  /* Logo de marca arriba del inicio (lockup teal sobre fondo claro) */
+  /* Logo completo de Bukea en el inicio (marca + wordmark, sobre fondo claro) */
+  .home-logo { display: flex; flex-direction: column; align-items: center; gap: 0.02rem; margin: 0.3rem 0 0.7rem; }
+  .home-logo .hl-mark {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700;
+    font-size: 2.5rem; color: var(--brand-teal); line-height: 0.95;
+  }
+  .home-logo .hl-word {
+    font-family: "Bodoni Moda", "Fraunces", serif; font-weight: 700;
+    font-size: 1.3rem; color: var(--brand-teal); line-height: 1; letter-spacing: 0.01em;
+  }
+  /* Encabezado centrado del inicio */
+  .home-header { text-align: center; margin-bottom: 1.25rem; }
+  .home-header .app-h1 { font-size: 1.35rem; margin: 0 0 0.25rem; }
+  .home-header .home-loc { justify-content: center; margin: 0; }
+
+  /* ===== Bienvenida / login ===== */
+  .screen.welcome {
+    background: var(--brand-teal);
+    color: var(--brand-cream); text-align: center;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    justify-content: center;
+  }
+  .welcome-logo {
+    margin: 0 auto 0.9rem;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 3.6rem;
+    color: var(--brand-cream); line-height: 1;
+  }
+  .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
+  .welcome .w-sub { font-size: 0.9rem; opacity: 0.85; margin: 0 0 1.6rem; }
+  .phone-group {
+    display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+    background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 15px; padding: 0.85rem 1rem; margin-bottom: 0.8rem;
+  }
+  .phone-group .flag { font-size: 1.1rem; flex: none; }
+  .phone-group .prefix { font-weight: 700; font-size: 0.95rem; flex: none; }
+  .phone-group input {
+    background: none; border: none; outline: none; flex: none; width: 10ch;
+    font-family: inherit; font-size: 1rem; color: #fff; letter-spacing: 0.03em;
+    text-align: center;
+  }
+  .phone-group input::placeholder { color: rgba(255,255,255,0.55); }
+  .welcome-field {
+    width: 100%; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 15px; padding: 0.85rem 1rem; margin-bottom: 0.8rem;
+    font-family: inherit; font-size: 1rem; color: #fff; outline: none;
+  }
+  .welcome-field::placeholder { color: rgba(255,255,255,0.55); }
+  .welcome .cta {
+    background: #fff; color: var(--teal-700); box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    margin-top: 0.4rem;
+  }
+  .welcome .cta:hover { background: var(--teal-50); }
+  .w-divider {
+    display: flex; align-items: center; gap: 0.8rem; margin: 1.5rem 0 1rem;
+    font-size: 0.76rem; opacity: 0.7;
+  }
+  .w-divider::before, .w-divider::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.3); }
+  .social-btn {
+    width: 100%; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 15px; padding: 0.8rem; margin-bottom: 0.6rem; cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  }
+  .social-btn:disabled { cursor: not-allowed; color: rgba(255,255,255,0.65); }
+  .social-btn .social-icon { width: 18px; height: 18px; flex: none; }
+  .social-btn .soon {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    background: rgba(255,255,255,0.15); border-radius: 999px; padding: 0.15rem 0.5rem;
+  }
+  .guest-link {
+    background: none; border: none; color: rgba(255,255,255,0.8); font-family: inherit;
+    font-size: 0.85rem; font-weight: 600; text-decoration: underline; cursor: pointer;
+    margin-top: 1.1rem;
+  }
+  .w-error { color: #ffd7d4; font-size: 0.82rem; margin: 0 0 0.7rem; display: none; }
+  .w-back {
+    background: none; border: none; color: rgba(255,255,255,0.8); font-family: inherit;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; margin-top: 0.9rem; text-decoration: underline;
+  }
+
+  /* Formularios B2B */
+  .field { margin-bottom: 0.9rem; }
+  .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
+  .field input {
+    width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
+    padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
+  }
+  .field input:focus { outline: none; border-color: var(--teal-600); }
+
+  .svc-row { display: flex; gap: 0.45rem; margin-bottom: 0.5rem; align-items: center; }
+  .svc-row input { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
+  .svc-row input:focus { outline: none; border-color: var(--teal-600); }
+  .svc-row .svc-name { flex: 2.2; }
+  .svc-row .svc-min { flex: 1; }
+  .svc-row .svc-price { flex: 1.3; }
+  .svc-row .svc-del { background: none; border: none; color: var(--soft); cursor: pointer; font-size: 1rem; padding: 0.2rem; flex: none; }
+  .add-svc {
+    background: none; border: 1.5px dashed var(--line); border-radius: 12px; width: 100%;
+    padding: 0.6rem; font-family: inherit; font-size: 0.8rem; font-weight: 600; color: var(--teal-700);
+    cursor: pointer; margin-bottom: 1.1rem;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .add-svc:hover { border-color: var(--teal-500); }
+  .add-svc:active { transform: scale(0.98); }
+  .add-svc:disabled { cursor: default; opacity: 0.75; }
+  .add-svc.success { border-style: solid; border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+
+  /* Wizard de registro de negocio ("Únete a Bukea") */
+  .reg-topbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.3rem; }
+  .reg-back-btn {
+    width: 34px; height: 34px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card);
+    display: flex; align-items: center; justify-content: center; color: var(--soft); cursor: pointer; flex: none;
+    transition: border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .reg-back-btn:hover { border-color: var(--teal-500); color: var(--teal-700); }
+  .reg-progress { flex: 1; display: flex; gap: 5px; }
+  .reg-progress .seg { flex: 1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .reg-progress .seg > span { display: block; height: 100%; width: 0%; background: var(--teal-600); border-radius: 999px; transition: width 320ms var(--ease); }
+  .reg-progress .seg.done > span, .reg-progress .seg.active > span { width: 100%; }
+  .reg-stepnum { font-size: 0.72rem; font-weight: 700; color: var(--soft); white-space: nowrap; }
+
+  .reg-step { display: none; }
+  .reg-step.show { display: block; animation: screen-in 260ms var(--ease); }
+  .reg-eyebrow { font-size: 0.72rem; font-weight: 800; color: var(--teal-700); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.3rem; }
+
+  .reg-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 1.1rem; }
+  .reg-cat-card {
+    position: relative; display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 0.9rem;
+    border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); cursor: pointer;
+    text-align: left; font: inherit; color: var(--ink);
+    transition: border-color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .reg-cat-card:hover { border-color: var(--teal-500); }
+  .reg-cat-card.sel { border-color: var(--teal-600); background: var(--teal-50); }
+  .reg-cat-card .icon { font-size: 1.2rem; color: var(--teal-700); flex: none; }
+  .reg-cat-card .lbl { font-size: 0.84rem; font-weight: 700; }
+
+  .reg-success { text-align: center; padding: 1.4rem 0 0.6rem; }
+  .reg-success .app-h1, .reg-success .app-sub { text-align: center; }
+  .reg-success-check {
+    width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 999px;
+    background: linear-gradient(135deg, var(--teal-500), var(--gold-700));
+    display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-teal); color: #fff;
+  }
+  .reg-success-check .icon { font-size: 1.7rem; stroke-width: 2.4; }
+
+  .hour-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .hour-row .hour-day { flex: 0 0 42px; font-size: 0.8rem; font-weight: 700; color: var(--ink); text-transform: capitalize; }
+  .hour-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal-600); flex: none; }
+  .hour-row input[type="time"] { background: var(--card); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.45rem 0.5rem; font-size: 0.8rem; font-family: inherit; color: var(--ink); flex: 1; min-width: 0; }
+  .hour-row input[type="time"]:disabled { opacity: 0.4; }
+  .hour-row .hour-sep { color: var(--soft); font-size: 0.78rem; flex: none; }
+  .hour-row.closed .hour-day { color: var(--soft); }
+
+  .bank-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.7rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
+  .bank-row input, .bank-row select { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
+  .bank-row input:focus, .bank-row select:focus { outline: none; border-color: var(--teal-600); }
+  .bank-row .bank-holder, .bank-row .bank-cedula { grid-column: 1 / -1; }
+  .bank-row .bank-del { grid-column: 1 / -1; justify-self: end; background: none; border: none; color: var(--soft); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 0.2rem; }
+
+  .collab-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.7rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
+  .collab-row input { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
+  .collab-row input:focus { outline: none; border-color: var(--teal-600); }
+  .collab-row .collab-del { grid-column: 1 / -1; justify-self: end; background: none; border: none; color: var(--soft); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 0.2rem; }
+
+  .panel-stat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.9rem 1.05rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel-stat .k { font-size: 0.8rem; color: var(--soft); }
+  .panel-stat .v { font-family: "Fraunces", serif; font-size: 1.3rem; font-weight: 600; color: var(--teal-700); }
+
+  .cuadre-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.6rem; }
+  .cuadre-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.7rem 0.6rem; text-align: center;
+  }
+  .cuadre-card .c-k { display: block; font-size: 0.68rem; color: var(--soft); margin-bottom: 0.25rem; }
+  .cuadre-card .c-v { display: block; font-family: "Fraunces", serif; font-size: 1.02rem; font-weight: 600; color: var(--teal-700); font-variant-numeric: tabular-nums; }
+  .cuadre-card .c-n { display: block; font-size: 0.68rem; color: var(--soft); margin-top: 0.15rem; }
+
+  .cita-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.75rem 0.95rem; margin-bottom: 0.55rem;
+  }
+  .cita-card .c-top { display: flex; justify-content: space-between; font-size: 0.87rem; font-weight: 700; color: var(--ink); }
+  .cita-card .c-bottom { display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--soft); margin-top: 0.2rem; }
+  .logout-btn {
+    background: none; border: none; color: var(--soft); font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; text-decoration: underline; margin: 0.8rem auto 0; display: block;
+  }
+
+  .fila-banner {
+    background: linear-gradient(115deg, var(--teal-600), var(--teal-700));
+    color: #fff; border-radius: 18px; padding: 1rem 1.15rem; margin-bottom: 1.4rem;
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+    transition: transform 180ms var(--ease);
+  }
+  .fila-banner:hover { transform: translateY(-2px); }
+  .fila-banner .txt-wrap { display: flex; align-items: center; gap: 0.6rem; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff6b6b; flex: none; position: relative; }
+  .live-dot::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid #ff6b6b;
+    animation: pulse-ring 1.8s var(--ease) infinite;
+  }
+  @keyframes pulse-ring { 0% { opacity: 0.9; transform: scale(0.7); } 100% { opacity: 0; transform: scale(1.8); } }
+  @media (prefers-reduced-motion: reduce) { .live-dot::after { animation: none; opacity: 0.4; } }
+  .fila-banner b { display: block; font-size: 0.95rem; font-weight: 700; }
+  .fila-banner span.d { font-size: 0.78rem; opacity: 0.88; }
+  .fila-banner .arrow { font-size: 1.1rem; opacity: 0.9; }
+
+  .sec-title { font-size: 0.98rem; font-weight: 700; color: var(--ink); margin: 0 0 0.75rem; display: flex; justify-content: space-between; align-items: baseline; }
+  .sec-title a { font-size: 0.76rem; color: var(--teal-600); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+
+  /* ===== Resumen: gráfico de ventas + rankings ===== */
+  .dash-chart-total { font-family: "Fraunces", serif; font-size: 1.35rem; font-weight: 600; color: var(--teal-900); font-variant-numeric: tabular-nums; }
+  .dash-chart-meta { color: var(--soft); font-size: 0.78rem; margin: 0.1rem 0 0.6rem; }
+  .dash-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--soft); padding: 0 0 0.5rem; border-bottom: 1px solid var(--line); }
+  .dash-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 0.82rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); align-items: center; font-variant-numeric: tabular-nums; }
+  .dash-table-row:last-child { border-bottom: none; }
+  .dash-table-row span:first-child { font-weight: 700; font-variant-numeric: normal; }
+  .dash-empty { text-align: center; padding: 1.4rem 0.5rem; color: var(--soft); font-size: 0.82rem; }
+
+  .dash-fade-in { animation: dash-fade-in 240ms var(--ease); }
+  @keyframes dash-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .dash-fade-in { animation: none; } }
+
+  /* ===== Calendario mensual ===== */
+  .cal-toolbar { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
+  .cal-toolbar .cal-date { font-weight: 700; font-size: 0.92rem; color: var(--teal-900); flex: 1; text-align: center; }
+  .cal-toolbar .cal-btn {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center; color: var(--soft); flex: none;
+    transition: border-color 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .cal-toolbar .cal-btn:hover { border-color: var(--teal-500); color: var(--teal-700); }
+  .cal-toolbar .cal-btn:active { transform: scale(0.92); }
+  .cal-toolbar .cal-today {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem;
+    font-size: 0.76rem; font-weight: 700; color: var(--teal-700); flex: none;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .cal-toolbar .cal-today:hover { border-color: var(--teal-500); background: var(--teal-50); }
+  .cal-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; animation: dash-fade-in 220ms var(--ease); }
+  @media (prefers-reduced-motion: reduce) { .cal-month-grid { animation: none; } }
+  .cal-month-head { padding: 0.4rem 0.1rem; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--soft); text-align: center; background: var(--teal-50); }
+  .cal-month-cell {
+    min-height: 46px; padding: 0.25rem; border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    background: var(--card); margin: 0; font: inherit; color: inherit; cursor: pointer;
+    transition: background 140ms var(--ease);
+  }
+  .cal-month-cell:hover { background: var(--teal-50); }
+  .cal-month-cell:active { background: var(--teal-100); }
+  .cal-month-cell:nth-child(7n+1) { border-left: none; }
+  .cal-month-cell.pad { background: var(--bg); cursor: default; }
+  .cal-daynum { font-size: 0.72rem; font-weight: 700; color: var(--soft); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 140ms var(--ease), color 140ms var(--ease), box-shadow 140ms var(--ease); }
+  .cal-month-cell.today .cal-daynum { background: var(--teal-600); color: #fff; }
+  .cal-month-cell.selected .cal-daynum { box-shadow: 0 0 0 2px var(--teal-600); }
+  .cal-month-cell.selected.today .cal-daynum { box-shadow: 0 0 0 2px var(--gold-600); }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-600); }
+  .cal-dot.cancelled { background: var(--soft); opacity: 0.5; }
+  .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+
+  /* ===== Mi perfil ===== */
+  .pf-error { display: none; color: #b3261e; font-size: 0.8rem; margin: 0 0 0.6rem; }
+
+  .pro-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 0.9rem; display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.7rem; cursor: pointer;
+    box-shadow: var(--sh-1);
+    transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+  .pro-card:hover { transform: translateY(-2px); box-shadow: var(--sh-3); }
+  .avatar {
+    width: 54px; height: 54px; border-radius: 50%; flex: none; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fraunces", serif; font-weight: 600; color: #fff; font-size: 1.05rem;
+  }
+  .avatar::after {
+    content: ""; position: absolute; inset: 0; opacity: 0.5; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+  .pro-info { flex: 1; min-width: 0; }
+  .pro-info b { font-size: 0.93rem; color: var(--ink); display: block; font-weight: 700; }
+  .pro-info .meta { font-size: 0.76rem; color: var(--soft); display: flex; align-items: center; gap: 0.25rem; }
+  .pro-info .meta .icon { font-size: 0.85rem; }
+  .pro-info .tags { font-size: 0.7rem; color: var(--teal-600); font-weight: 600; margin-top: 0.1rem; display: block; }
+  .rating { font-size: 0.8rem; font-weight: 700; color: var(--gold-700); white-space: nowrap; display: flex; align-items: center; gap: 0.2rem; }
+  .rating .icon { font-size: 0.9rem; }
+  .rating small { color: var(--soft); font-weight: 500; }
+
+  /* Perfil */
+  .profile-head { text-align: center; margin-bottom: 1.1rem; }
+  .profile-head .avatar { width: 82px; height: 82px; margin: 0 auto 0.6rem; font-size: 1.7rem; }
+  .profile-head h2 { font-family: "Fraunces", serif; margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--ink); }
+  .profile-head .meta { color: var(--soft); font-size: 0.82rem; margin: 0.2rem 0 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem; flex-wrap: wrap; }
+  .profile-head .meta .rating { display: inline-flex; }
+  .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+  .badge {
+    font-size: 0.68rem; font-weight: 700; padding: 0.32rem 0.65rem; border-radius: 999px;
+    background: var(--teal-100); color: var(--teal-700);
+    display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .badge .icon { font-size: 0.85rem; }
+  .badge.wa { background: var(--whatsapp-100); color: #1a7d43; }
+  .badge.cash { background: var(--cash-100); color: var(--cash); }
+
+  .portfolio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.3rem; }
+  .work {
+    aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .work .icon { font-size: 1.4rem; color: rgba(255,255,255,0.92); position: relative; z-index: 1; }
+  .work::after {
+    content: ""; position: absolute; inset: 0; opacity: 0.4; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+
+  .service {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 0.85rem 1.05rem; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.6rem; cursor: pointer; transition: border-color 180ms var(--ease);
+  }
+  .service:hover { border-color: var(--teal-500); }
+  .service .s-name { font-size: 0.9rem; font-weight: 700; color: var(--ink); display: block; }
+  .service .s-time { font-size: 0.74rem; color: var(--soft); }
+  .service .s-price { font-weight: 800; color: var(--teal-700); font-size: 0.92rem; white-space: nowrap; }
+
+  .cta {
+    margin-top: auto;
+    background: var(--brand-teal); color: #fff; border: none; border-radius: 16px;
+    padding: 1rem; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%;
+    box-shadow: var(--sh-teal);
+    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: background 160ms var(--ease), transform 120ms var(--ease), box-shadow 160ms var(--ease);
+  }
+  .cta:hover { background: var(--teal-900); }
+  .cta:active { transform: scale(0.98); box-shadow: var(--sh-2); }
+  .cta[disabled] { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+  .cta .icon { font-size: 1.1rem; }
+
+  /* Reserva */
+  .option-group { margin-bottom: 1.2rem; }
+  .option-label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); margin-bottom: 0.55rem; display: block; }
+  .pills { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .pill-btn {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 999px;
+    min-height: 42px; padding: 0.55rem 1rem; font-size: 0.82rem; font-weight: 600; color: var(--ink); cursor: pointer;
+    font-family: inherit; transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease), box-shadow 160ms var(--ease);
+  }
+  .pill-btn.sel { background: var(--brand-teal); border-color: var(--brand-teal); color: #fff; box-shadow: var(--sh-teal); }
+  .pill-btn:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+  .cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .pay-option {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 15px;
+    padding: 0.8rem 1.05rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.55rem; cursor: pointer;
+    transition: all 160ms var(--ease);
+  }
+  .pay-option .p-ico { font-size: 1.25rem; color: var(--teal-700); flex: none; width: 1.4rem; text-align: center; }
+  .pay-option.sel { border-color: var(--teal-600); background: var(--teal-100); }
+  .pay-option.sel .p-ico { color: var(--teal-700); }
+  .pay-option .p-name { font-size: 0.87rem; font-weight: 700; color: var(--ink); display: block; }
+  .pay-option .p-desc { font-size: 0.72rem; color: var(--soft); }
+  .pay-option .radio {
+    margin-left: auto; width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    transition: all 160ms var(--ease); position: relative;
+  }
+  .pay-option.sel .radio { border-color: var(--teal-600); }
+  .pay-option.sel .radio::after {
+    content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--teal-600);
+    animation: pop-in 180ms var(--ease);
+  }
+  @keyframes pop-in { from { transform: scale(0); } to { transform: scale(1); } }
+
+  .photo-attach {
+    border: 1.5px dashed var(--line); border-radius: 15px; padding: 0.9rem 1rem;
+    text-align: center; color: var(--soft); font-size: 0.82rem; cursor: pointer; margin-bottom: 1.2rem;
+    background: var(--card); display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: border-color 160ms var(--ease);
+  }
+  .photo-attach:hover { border-color: var(--teal-500); }
+  .btn-copy { flex: none; background: var(--teal-100); color: var(--teal-700); border: none; border-radius: 999px; padding: 0.5rem 0.9rem; font-size: 0.78rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+  .btn-copy:hover { background: var(--teal-600); color: #fff; }
+  .photo-attach .icon { font-size: 1.1rem; color: var(--teal-600); }
+
+  /* Fila virtual */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; font-weight: 700;
+    color: var(--cash); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.4rem;
+  }
+  .queue-hero { text-align: center; padding: 1.3rem 0 0.7rem; }
+  .queue-num { font-family: "Fraunces", serif; font-size: 4.4rem; font-weight: 600; color: var(--teal-600); line-height: 1; font-variant-numeric: tabular-nums; }
+  .queue-hero p { color: var(--soft); font-size: 0.9rem; margin: 0.35rem 0 0; }
+  .queue-list { margin: 1.3rem 0; }
+  .queue-item {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.85rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 13px; margin-bottom: 0.5rem;
+    font-size: 0.83rem; color: var(--ink);
+  }
+  .queue-item.you { border-color: var(--teal-600); background: var(--teal-100); font-weight: 700; }
+  .queue-item .pos { font-weight: 800; color: var(--teal-600); width: 1.4rem; font-variant-numeric: tabular-nums; }
+  .queue-item .st { margin-left: auto; font-size: 0.7rem; color: var(--soft); display: flex; align-items: center; gap: 0.3rem; }
+  .queue-item .st .icon { font-size: 0.9rem; color: var(--teal-600); }
+  .wa-note {
+    background: var(--whatsapp-100); border-radius: 15px; padding: 0.85rem 1.05rem;
+    font-size: 0.82rem; color: #14532d; display: flex; gap: 0.65rem; align-items: center;
+  }
+  .wa-note .icon { color: var(--whatsapp); font-size: 1.2rem; flex: none; }
+  .wa-note span { flex: 1; min-width: 0; line-height: 1.45; }
+
+  /* Confirmación */
+  .confirm-hero { text-align: center; padding: 1.6rem 0 0.6rem; }
+  .check-circle-wrap { width: 78px; height: 78px; margin: 0 auto 0.9rem; color: var(--teal-600); }
+  .check-circle-wrap svg circle { stroke: var(--teal-600); fill: var(--teal-600); }
+  .check-circle-wrap svg path {
+    stroke: #fff; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 20; stroke-dashoffset: 20;
+  }
+  .screen.active .check-circle-wrap svg path { animation: draw-check 480ms 180ms var(--ease) forwards; }
+  @keyframes draw-check { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .check-circle-wrap svg path { animation: none; stroke-dashoffset: 0; }
+  }
+  .confirm-hero h2 { font-family: "Fraunces", serif; margin: 0; font-size: 1.4rem; font-weight: 600; color: var(--ink); }
+  .confirm-hero p { color: var(--soft); font-size: 0.86rem; margin: 0.3rem 0 0; }
+  .ticket {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 1.05rem 1.25rem; margin: 1.3rem 0;
+  }
+  .ticket-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 0.4rem 0; }
+  .ticket-row .k { color: var(--soft); display: flex; align-items: center; gap: 0.35rem; }
+  .ticket-row .k .icon { font-size: 0.95rem; color: var(--teal-600); }
+  .ticket-row .v { font-weight: 700; color: var(--ink); text-align: right; }
+  .ticket-row.total { border-top: 1px dashed var(--line); margin-top: 0.45rem; padding-top: 0.65rem; }
+  .ticket-row.total .v { color: var(--teal-700); font-size: 0.98rem; }
+
+  .wa-block { margin: 0 0 1.1rem; }
+  .wa-bubble {
+    background: #dcf8c6; border-radius: 15px 15px 4px 15px; padding: 0.8rem 1rem;
+    font-size: 0.8rem; color: #1f2a2e; margin: 0 0 0.4rem auto; max-width: 90%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08); opacity: 0; transform: translateY(4px);
+  }
+  .wa-bubble.show { animation: bubble-in 320ms var(--ease) forwards; }
+  @keyframes bubble-in { to { opacity: 1; transform: translateY(0); } }
+  .wa-bubble b { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.2rem; }
+  .wa-bubble b .icon { color: var(--whatsapp); font-size: 0.85rem; }
+  .wa-typing {
+    background: #dcf8c6; border-radius: 15px 15px 4px 15px; padding: 0.6rem 0.9rem;
+    display: flex; gap: 0.25rem; margin: 0 0 0.4rem auto; width: fit-content;
+  }
+  .wa-typing span { width: 6px; height: 6px; border-radius: 50%; background: #6b8f6b; animation: typing 1s infinite ease-in-out; }
+  .wa-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .wa-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-3px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .wa-bubble { opacity: 1; transform: none; animation: none; }
+    .wa-typing { display: none; }
+  }
+  .wa-label { font-size: 0.7rem; color: var(--soft); text-align: right; margin-bottom: 1rem; }
+
+  /* Nav inferior */
+  .navbar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px; z-index: 40;
+    background: rgba(255,255,255,0.97); border-top: 1px solid var(--line);
+    display: flex; padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 8px));
+    backdrop-filter: blur(6px);
+  }
+  .nav-btn {
+    flex: 1; background: none; border: none; cursor: pointer; text-align: center;
+    color: var(--soft); font-family: inherit; position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+    transition: color 160ms var(--ease);
+  }
+  .nav-btn .icon { font-size: 1.2rem; }
+  .nav-btn .n-txt { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.03em; }
+  .nav-btn.active { color: var(--teal-600); }
+  .nav-btn .n-dot { position: absolute; top: -1px; right: 26%; width: 6px; height: 6px; border-radius: 50%; background: #ff6b6b; }
+
+  .back-btn {
+    background: none; border: none; color: var(--teal-600); font-weight: 700; font-size: 0.86rem;
+    cursor: pointer; padding: 0; margin-bottom: 0.4rem; text-align: left; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 0.2rem;
+  }
+  .back-btn .icon { font-size: 1rem; }
+
+</style>
+
+<!-- Sprite de iconos — trazo consistente, ver DESIGN.md -->
+<svg style="position:absolute; width:0; height:0" aria-hidden="true">
+<defs>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><line x1="14.7" y1="14.7" x2="20" y2="20"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V19a1 1 0 0 0 1 1h3v-5.5h4V20h3a1 1 0 0 0 1-1v-8.5"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M4.8 20c0-4 3.2-6.8 7.2-6.8s7.2 2.8 7.2 6.8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.3l2.55 5.4 5.85.7-4.35 4.1 1.15 5.8L12 16.3l-5.2 2.8 1.15-5.8-4.35-4.1 5.85-.7L12 3.3Z"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 19.5 5.3 15.6A8 8 0 1 1 8.7 19L4 19.5Z"/><path d="M9 12.3l1.8 1.8 4-4.3"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.7"/><line x1="4.5" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="19.5" y2="12"/></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="4.5" y1="10" x2="4.5" y2="18"/><line x1="9.5" y1="10" x2="9.5" y2="18"/><line x1="14.5" y1="10" x2="14.5" y2="18"/><line x1="19.5" y1="10" x2="19.5" y2="18"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="2" y1="20.5" x2="22" y2="20.5"/></symbol>
+<symbol id="i-tpago" viewBox="0 0 24 24"><rect x="7.3" y="2.5" width="9" height="19" rx="2"/><line x1="10.3" y1="19" x2="13.3" y2="19"/><path d="M18.3 8.7a4.8 4.8 0 0 1 0 6.6" opacity=".65"/><path d="M20.2 6.8a7.6 7.6 0 0 1 0 10.4" opacity=".35"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><line x1="2.5" y1="10" x2="21.5" y2="10"/><line x1="5" y1="14.5" x2="9" y2="14.5"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M8.2 7 9.6 4.7h4.8L15.8 7H19a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="3.6"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M14.5 5 8 12l6.5 7"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9.5 5 16 12l-6.5 7"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v5.3l3.6 2.1"/></symbol>
+<symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6.3" cy="6.3" r="2.3"/><circle cx="6.3" cy="17.7" r="2.3"/><line x1="8.2" y1="7.7" x2="20" y2="19"/><line x1="8.2" y1="16.3" x2="20" y2="5"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5c.5 3 2 4.5 5 5-3 .5-4.5 2-5 5-.5-3-2-4.5-5-5 3-.5 4.5-2 5-5Z"/><path d="M19 14.5c.3 1.6 1 2.3 2.6 2.6-1.6.3-2.3 1-2.6 2.6-.3-1.6-1-2.3-2.6-2.6 1.6-.3 2.3-1 2.6-2.6Z" opacity=".7"/></symbol>
+<symbol id="i-hair" viewBox="0 0 24 24"><path d="M4 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/><path d="M4 13c3 0 3 3 6 3s3-3 6-3 3 3 6 3" opacity=".65"/><path d="M4 19c3 0 3 2.4 6 2.4s3-2.4 6-2.4 3 2.4 6 2.4" opacity=".4"/></symbol>
+<symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
+<!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
+<symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
+<symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
+<symbol id="c-salon" viewBox="0 0 24 24"><path d="M5 5.5h14v3H5z"/><path d="M6.5 8.5v11M9.7 8.5v11M12.9 8.5v11M16.1 8.5v11M19 8.5v6.5"/></symbol>
+<symbol id="c-maquillaje" viewBox="0 0 24 24"><path d="M9.3 10.6 11 5.4h2l1.7 5.2"/><rect x="9.4" y="10.6" width="5.2" height="5.4" rx="0.6"/><rect x="9" y="16" width="6" height="5.4" rx="1.2"/></symbol>
+<symbol id="c-cejas" viewBox="0 0 24 24"><path d="M18.4 2.9 14 7.3l-1.6-1.6a1.6 1.6 0 0 0-2.3 0L8.3 7.5l8.2 8.2 1.8-1.8a1.6 1.6 0 0 0 0-2.3L16.7 10l4.4-4.4a1.8 1.8 0 1 0-2.7-2.7Z"/><path d="M9.2 8.6c-1.8 2.7-3.6 3.2-6.2 3.6l7.2 9c1.8-.9 5.4-4.4 5.4-6.2"/><path d="M13.6 16.4 4.8 14.2"/></symbol>
+<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.3" r="1.9"/><path d="M12 6.6v5.6"/><path d="M12 8.4 7.4 5.6"/><path d="M12 8.4l4.6-2.8"/><path d="M12 12.2 8.3 20"/><path d="M12 12.2l3.7 7.8"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+</defs>
+</svg>
+
+<div class="phone">
+
+  <!-- ============ SPLASH (carga con el logo oficial) ============ -->
+  <div class="screen splash active" id="splash">
+    <div class="splash-logo">b</div>
+    <div class="splash-word">Bukea</div>
+    <div class="splash-tag">Bukear nunca fue tan fácil</div>
+  </div>
+
+  <!-- ============ BIENVENIDA / LOGIN (solo just-in-time) ============ -->
+  <div class="screen welcome" id="welcome">
+    <div class="welcome-logo">b</div>
+    <h1 id="w-title">¡Te damos la bienvenida!</h1>
+
+    <!-- Paso 1: teléfono -->
+    <div id="w-step-phone">
+      <p class="w-sub" id="w-lead">Ingresa tu número para continuar</p>
+      <div class="phone-group">
+        <span class="flag">🇩🇴</span><span class="prefix">+1</span>
+        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
+      </div>
+      <p class="w-error" id="w-error-phone"></p>
+      <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
+
+      <div class="w-divider">o usa tus redes</div>
+      <button class="social-btn" id="btn-google" onclick="loginWithGoogle()">
+        <svg class="social-icon" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        <span class="social-label">Continuar con Google</span>
+      </button>
+      <button class="social-btn" id="btn-apple" onclick="loginWithApple()">
+        <svg class="social-icon" viewBox="0 0 17 20" fill="currentColor"><path d="M13.998 10.63c-.024-2.415 1.973-3.573 2.063-3.63-1.126-1.646-2.877-1.872-3.502-1.897-1.49-.152-2.91.877-3.665.877-.755 0-1.923-.856-3.16-.833-1.627.024-3.128.946-3.965 2.402-1.692 2.933-.432 7.28 1.216 9.66.806 1.166 1.767 2.474 3.028 2.427 1.216-.048 1.674-.786 3.144-.786 1.47 0 1.883.786 3.17.762 1.31-.024 2.14-1.19 2.94-2.36.926-1.354 1.307-2.665 1.33-2.734-.03-.012-2.552-.98-2.576-3.888h-.023z"/><path d="M11.578 3.508c.668-.81 1.121-1.937.997-3.06-.964.04-2.13.643-2.822 1.452-.618.719-1.16 1.87-1.014 2.976 1.076.083 2.17-.55 2.839-1.368z"/></svg>
+        <span class="social-label">Continuar con Apple</span>
+      </button>
+      <p class="w-error" id="w-error-social"></p>
+
+      <button class="guest-link" id="w-guest" onclick="continueAsGuest()">Continuar como invitado</button>
+    </div>
+
+    <!-- Paso 2a: PIN (cuenta existente) -->
+    <div id="w-step-pin" style="display:none">
+      <p class="w-sub" id="w-pin-greeting">Hola de nuevo 👋, ingresa tu PIN</p>
+      <input class="welcome-field" id="w-pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
+      <p class="w-error" id="w-error-pin"></p>
+      <button class="cta" id="w-login" onclick="welcomeLogin()">Iniciar sesión</button>
+      <button class="guest-link" onclick="welcomeStep('forgot')">¿Olvidaste tu PIN?</button>
+      <button class="guest-link" id="w-otp-link" style="display:none" onclick="welcomeStep('otp')">Prefiero un código por WhatsApp</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2b: crear cuenta (número nuevo) -->
+    <div id="w-step-new" style="display:none">
+      <p class="w-sub">Ese número es nuevo, crea tu cuenta en segundos</p>
+      <input class="welcome-field" id="w-name" type="text" autocomplete="name" placeholder="Tu nombre">
+      <input class="welcome-field" id="w-email" type="email" autocomplete="email" placeholder="Tu correo (opcional)">
+      <input class="welcome-field" id="w-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
+      <p class="w-error" id="w-error-new"></p>
+      <button class="cta" id="w-register" onclick="welcomeRegister()">Crear mi cuenta</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2c: olvidé mi PIN (recuperación por correo) -->
+    <div id="w-step-forgot" style="display:none">
+      <div id="forgot-request">
+        <p class="w-sub">Te mandamos un código a tu correo para crear un PIN nuevo</p>
+        <input class="welcome-field" id="w-forgot-email" type="email" autocomplete="email" placeholder="El correo de tu cuenta">
+        <p class="w-error" id="w-error-forgot"></p>
+        <button class="cta" id="w-forgot-send" onclick="sendForgotCode()">Enviar código</button>
+      </div>
+      <div id="forgot-reset" style="display:none">
+        <p class="w-sub">Revisa tu correo y escribe el código de 6 dígitos</p>
+        <input class="welcome-field" id="w-forgot-code" type="text" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" style="text-align:center; letter-spacing:0.3em">
+        <input class="welcome-field" id="w-forgot-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN nuevo" style="text-align:center; letter-spacing:0.5em">
+        <p class="w-error" id="w-error-reset"></p>
+        <button class="cta" id="w-forgot-confirm" onclick="confirmForgotReset()">Cambiar PIN</button>
+      </div>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+
+    <!-- Paso 2d: código por WhatsApp (alterna al PIN, ver docs/WHATSAPP-SETUP.md) -->
+    <div id="w-step-otp" style="display:none">
+      <div id="otp-request">
+        <p class="w-sub">Te mandamos un código de 6 dígitos por WhatsApp al número que ingresaste</p>
+        <p class="w-error" id="w-error-otpsend"></p>
+        <button class="cta" id="w-otp-send" onclick="sendOtpCode()">Enviar código</button>
+      </div>
+      <div id="otp-verify" style="display:none">
+        <p class="w-sub">Escribe el código que te llegó por WhatsApp</p>
+        <input class="welcome-field" id="w-otp-code" type="text" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" style="text-align:center; letter-spacing:0.3em">
+        <p class="w-error" id="w-error-otpverify"></p>
+        <button class="cta" id="w-otp-confirm" onclick="confirmOtpCode()">Confirmar código</button>
+      </div>
+      <button class="guest-link" onclick="welcomeStep('pin')">Prefiero usar mi PIN</button>
+      <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
+    </div>
+  </div>
+
+  <!-- ============ INICIO ============ -->
+  <div class="screen" id="inicio">
+    <div class="home-header">
+      <div class="home-logo"><span class="hl-mark">b</span><span class="hl-word">Bukea</span></div>
+      <h1 class="app-h1" id="home-greeting">¿Qué buscas hoy?</h1>
+      <p class="app-sub home-loc"><svg class="icon"><use href="#i-map-pin"/></svg> Ensanche Quisqueya, Santo Domingo</p>
+    </div>
+
+    <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
+
+    <p class="option-label" style="margin-bottom:0.7rem">Servicios disponibles</p>
+    <div class="cats cats-grid">
+      <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
+      <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
+      <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
+      <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
+      <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
+      <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
+    </div>
+
+    <button class="pro-link" onclick="openPro()">
+      <svg class="icon"><use href="#i-scissors"/></svg>
+      ¿Eres barbero, estilista o tienes un negocio? <b>Únete a Bukea</b>
+    </button>
+  </div>
+
+  <!-- ============ CATEGORÍA ============ -->
+  <div class="screen" id="categoria">
+    <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1" id="categoria-title">Categoría</h1>
+    <p class="app-sub">Profesionales cerca de ti</p>
+    <div id="categoria-list">
+      <p style="color:var(--soft);font-size:0.85rem">Cargando…</p>
+    </div>
+  </div>
+
+  <!-- ============ REGISTRO PROFESIONAL (B2B) ============ -->
+  <div class="screen" id="pro-registro">
+    <div class="reg-topbar">
+      <button class="reg-back-btn" id="reg-back-btn" onclick="regBack()" aria-label="Atrás"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+      <div class="reg-progress" id="reg-progress">
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+        <div class="seg"><span></span></div>
+      </div>
+      <span class="reg-stepnum" id="reg-stepnum">Paso 1 de 4</span>
+    </div>
+
+    <div class="reg-step" data-step="1">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿Cómo te llamas?</h1>
+      <p class="app-sub">Cero comisión, gratis para siempre.</p>
+      <div class="field">
+        <label for="reg-name">Tu nombre</label>
+        <input id="reg-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      </div>
+      <div class="field">
+        <label for="reg-business">Nombre del negocio</label>
+        <input id="reg-business" type="text" placeholder="Ej: Barbería El Nítido">
+      </div>
+    </div>
+
+    <div class="reg-step" data-step="2">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿A qué te dedicas?</h1>
+      <p class="app-sub">Así te encuentran los clientes correctos.</p>
+      <div class="reg-cat-grid" id="reg-cats">
+        <button class="reg-cat-card sel" data-cat="barberia" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
+        <button class="reg-cat-card" data-cat="unas" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-unas"/></svg><span class="lbl">Uñas</span></button>
+        <button class="reg-cat-card" data-cat="salon" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-salon"/></svg><span class="lbl">Salón</span></button>
+        <button class="reg-cat-card" data-cat="maquillaje" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-maquillaje"/></svg><span class="lbl">Maquillaje</span></button>
+        <button class="reg-cat-card" data-cat="cejas-mua" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-cejas"/></svg><span class="lbl">Cejas &amp; MUA</span></button>
+        <button class="reg-cat-card" data-cat="pilates" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-pilates"/></svg><span class="lbl">Pilates</span></button>
+      </div>
+    </div>
+
+    <div class="reg-step" data-step="3">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">¿Dónde queda tu negocio?</h1>
+      <p class="app-sub">Usamos tu sector para ubicarte en el mapa de Bukea.</p>
+      <div class="field">
+        <label for="reg-neighborhood">Sector</label>
+        <input id="reg-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+      </div>
+    </div>
+
+    <div class="reg-step" data-step="4">
+      <p class="reg-eyebrow">Únete a Bukea</p>
+      <h1 class="app-h1">Tus servicios</h1>
+      <p class="app-sub">Agrega al menos uno. Puedes sumar más después.</p>
+      <div id="svc-rows"></div>
+      <button class="add-svc" onclick="addServiceRow()">+ Agregar otro servicio</button>
+    </div>
+
+    <div class="reg-step" data-step="5">
+      <div class="reg-success">
+        <div class="reg-success-check"><svg class="icon"><use href="#i-check"/></svg></div>
+        <h1 class="app-h1">¡Tu negocio ya está en Bukea!</h1>
+        <p class="app-sub">Gratis para siempre, cero comisión.</p>
+        <button class="cta" onclick="loadPanel().then(() => go('pro-panel'))"><svg class="icon"><use href="#i-check"/></svg>Ir a mi negocio</button>
+      </div>
+    </div>
+
+    <p id="reg-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0 0.8rem"></p>
+
+    <div class="reg-footer-nav" id="reg-footer-nav">
+      <button class="cta" id="reg-next-btn" onclick="regNext()">Continuar <svg class="icon"><use href="#i-chevron-right"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ============ PANEL PROFESIONAL (B2B) ============ -->
+  <div class="screen" id="pro-panel">
+    <h1 class="app-h1" id="panel-business">Mi negocio</h1>
+    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="openMiPerfil(); return false;">Editar</a></p>
+
+    <div class="panel-stat">
+      <span class="k">Citas recibidas</span>
+      <span class="v" id="panel-count">0</span>
+    </div>
+
+    <p class="sec-title">Mi Cuadre</p>
+    <div class="cuadre-grid">
+      <div class="cuadre-card">
+        <span class="c-k">Hoy</span>
+        <span class="c-v" id="cuadre-hoy">RD$0</span>
+        <span class="c-n" id="cuadre-hoy-n">0 citas</span>
+      </div>
+      <div class="cuadre-card">
+        <span class="c-k">7 días</span>
+        <span class="c-v" id="cuadre-7d">RD$0</span>
+        <span class="c-n" id="cuadre-7d-n">0 citas</span>
+      </div>
+      <div class="cuadre-card">
+        <span class="c-k">Este mes</span>
+        <span class="c-v" id="cuadre-mes">RD$0</span>
+        <span class="c-n" id="cuadre-mes-n">0 citas</span>
+      </div>
+    </div>
+
+    <p class="sec-title">Ventas recientes</p>
+    <div class="dash-chart-total" id="chart-total">RD$0</div>
+    <p class="dash-chart-meta" id="chart-meta">0 citas</p>
+    <div id="ventas-chart" style="margin-bottom:1.1rem"></div>
+
+    <p class="sec-title">Mejores servicios</p>
+    <div id="mejores-servicios-table" style="margin-bottom:1.1rem"></div>
+
+    <p class="sec-title">Mejor miembro del equipo</p>
+    <div id="mejor-equipo-table" style="margin-bottom:1.1rem"></div>
+
+    <p class="sec-title">Agenda <a href="#" onclick="loadPanel(); return false;">Actualizar</a></p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem"><a href="#" onclick="openCalendario(); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Ver calendario del mes →</a></p>
+    <div id="panel-citas">
+      <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
+    </div>
+
+    <p class="sec-title" style="margin-top:1.1rem">Mis servicios</p>
+    <div id="panel-servicios"></div>
+
+    <p class="sec-title" style="margin-top:1.1rem">Mi horario</p>
+    <div id="panel-horario"></div>
+    <p id="horario-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
+    <button class="add-svc" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
+
+    <p class="sec-title" style="margin-top:1.1rem">Cuentas para transferencia</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
+    <div id="bank-rows"></div>
+    <button class="add-svc" onclick="addBankRow()">+ Agregar cuenta</button>
+    <p id="bank-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
+    <button class="add-svc" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
+
+    <p class="sec-title" style="margin-top:1.1rem">Mi equipo</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
+    <div id="collab-rows"></div>
+    <button class="add-svc" onclick="addCollabRow()">+ Agregar colaborador</button>
+    <p id="collab-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
+    <button class="add-svc" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
+
+    <button class="logout-btn" onclick="logoutPro()">Salir de mi cuenta de negocio</button>
+  </div>
+
+  <!-- ============ MI PERFIL (editar) ============ -->
+  <div class="screen" id="mi-perfil">
+    <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Mi perfil</h1>
+    <p class="app-sub">La información de tu negocio, visible en tu perfil público.</p>
+    <p id="pf-error" class="pf-error"></p>
+    <div class="field">
+      <label for="pf-name">Tu nombre</label>
+      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+    </div>
+    <div class="field">
+      <label for="pf-business">Nombre del negocio</label>
+      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+    </div>
+    <p class="field-label-standalone" style="font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--soft);margin-bottom:0.4rem">¿A qué te dedicas?</p>
+    <div class="reg-cat-grid" id="pf-cats">
+      <button class="reg-cat-card" data-cat="barberia" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
+      <button class="reg-cat-card" data-cat="unas" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-unas"/></svg><span class="lbl">Uñas</span></button>
+      <button class="reg-cat-card" data-cat="salon" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-salon"/></svg><span class="lbl">Salón</span></button>
+      <button class="reg-cat-card" data-cat="maquillaje" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-maquillaje"/></svg><span class="lbl">Maquillaje</span></button>
+      <button class="reg-cat-card" data-cat="cejas-mua" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-cejas"/></svg><span class="lbl">Cejas &amp; MUA</span></button>
+      <button class="reg-cat-card" data-cat="pilates" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-pilates"/></svg><span class="lbl">Pilates</span></button>
+    </div>
+    <div class="field">
+      <label for="pf-neighborhood">Sector</label>
+      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+    </div>
+    <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+  </div>
+
+  <!-- ============ CALENDARIO (vista mensual) ============ -->
+  <div class="screen" id="calendario">
+    <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Calendario</h1>
+    <p class="app-sub">Las citas de tu negocio, mes por mes.</p>
+    <div class="cal-toolbar">
+      <button class="cal-btn" onclick="calShiftMonth(-1)" aria-label="Mes anterior"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+      <span class="cal-date" id="cal-date-label">—</span>
+      <button class="cal-btn" onclick="calShiftMonth(1)" aria-label="Mes siguiente"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+    </div>
+    <button class="cal-today" style="display:block;margin:0 auto 0.9rem" onclick="calGoToday()">Hoy</button>
+    <div id="cal-grid"></div>
+    <p class="sec-title" style="margin-top:1.3rem" id="cal-day-title">Selecciona un día</p>
+    <div id="cal-day-list"></div>
+  </div>
+
+  <!-- ============ PERFIL ============ -->
+  <div class="screen" id="perfil">
+    <button class="back-btn" onclick="goBackFromPerfil()"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <div class="profile-head">
+      <div class="avatar" id="prof-avatar"></div>
+      <h2 id="prof-name">Cargando…</h2>
+      <p class="meta"><span id="prof-business"></span> · <span id="prof-neighborhood"></span> · <span class="rating"><svg class="icon"><use href="#i-star"/></svg><span id="prof-rating"></span></span> (<span id="prof-reviews"></span> reseñas)</p>
+      <div class="badges">
+        <span class="badge wa"><svg class="icon"><use href="#i-whatsapp"/></svg>Responde por WhatsApp</span>
+        <span class="badge cash"><svg class="icon"><use href="#i-cash"/></svg>Acepta efectivo</span>
+        <span class="badge"><svg class="icon"><use href="#i-calendar"/></svg>Cita recurrente</span>
+        <span class="badge" style="cursor:pointer" onclick="openDirections(state.professional.businessName, state.professional.neighborhood, state.professional.lat, state.professional.lng)"><svg class="icon"><use href="#i-map-pin"/></svg>Cómo llegar</span>
+      </div>
+    </div>
+
+    <p class="sec-title">Sus trabajos</p>
+    <div class="portfolio">
+      <div class="work" style="background:linear-gradient(150deg,#1d3a5f,#0e1c30)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#2c5f6e,#122731)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#3d5aa8,#1a2650)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#5c3f96,#2c1c50)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#1a5c4e,#0d2e26)"><svg class="icon"><use href="#i-scissors"/></svg></div>
+      <div class="work" style="background:linear-gradient(150deg,#2e3a4d,#c05a4f)"><svg class="icon"><use href="#i-sparkle"/></svg></div>
+    </div>
+
+    <p class="sec-title">Servicios</p>
+    <div id="services-list">
+      <p style="color:var(--soft);font-size:0.85rem">Cargando servicios…</p>
+    </div>
+
+    <button class="cta" onclick="go('reserva')"><svg class="icon"><use href="#i-calendar"/></svg>Bukear cita</button>
+  </div>
+
+  <!-- ============ RESERVA ============ -->
+  <div class="screen" id="reserva">
+    <button class="back-btn" onclick="go('perfil')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Bukea tu cita</h1>
+    <p class="app-sub"><span id="reserva-prof-name">—</span> · <span id="svc-label">Selecciona un servicio</span></p>
+
+    <div class="option-group">
+      <span class="option-label">Día</span>
+      <div class="pills" id="dia-pills"><p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p></div>
+    </div>
+
+    <div class="option-group">
+      <span class="option-label">Hora</span>
+      <div class="pills" id="hora-pills"><p style="color:var(--soft);font-size:0.85rem">Elige un día</p></div>
+    </div>
+
+    <div class="option-group" id="quien-group" style="display:none">
+      <span class="option-label">¿Quién te va a atender?</span>
+      <div class="pills" id="quien-pills"></div>
+    </div>
+
+    <div class="option-group">
+      <span class="option-label">¿Cómo vas a pagar?</span>
+      <div class="pay-option sel" onclick="pickPay(this,'i-cash')">
+        <svg class="icon p-ico"><use href="#i-cash"/></svg>
+        <div><span class="p-name">Efectivo</span><span class="p-desc">Pagas allá, como siempre</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-bank')">
+        <svg class="icon p-ico"><use href="#i-bank"/></svg>
+        <div><span class="p-name">Transferencia</span><span class="p-desc">Popular, Banreservas, BHD</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-tpago')">
+        <svg class="icon p-ico"><use href="#i-tpago"/></svg>
+        <div><span class="p-name">tPago</span><span class="p-desc">Desde tu celular</span></div>
+        <span class="radio"></span>
+      </div>
+      <div class="pay-option" onclick="pickPay(this,'i-card')">
+        <svg class="icon p-ico"><use href="#i-card"/></svg>
+        <div><span class="p-name">Tarjeta</span><span class="p-desc">Azul / CardNET</span></div>
+        <span class="radio"></span>
+      </div>
+    </div>
+
+    <div id="transfer-info" class="option-group" style="display:none">
+      <span class="option-label">Cuentas para transferir</span>
+      <div id="transfer-accounts"></div>
+      <div class="photo-attach" id="receipt-attach" onclick="document.getElementById('receipt-input').click()">
+        <svg class="icon"><use href="#i-camera"/></svg><span id="receipt-attach-label">Adjunta el comprobante de pago <small>(opcional, puedes hacerlo después)</small></span>
+      </div>
+      <input type="file" id="receipt-input" accept="image/*,application/pdf" style="display:none" onchange="onReceiptChosen()">
+    </div>
+
+    <div class="photo-attach"><svg class="icon"><use href="#i-camera"/></svg>Adjunta una foto del estilo que quieres <small>(opcional)</small></div>
+
+    <button class="cta" id="confirm-btn" onclick="confirmBooking()" disabled><svg class="icon"><use href="#i-check"/></svg>Confirmar <span id="confirm-btn-when"></span></button>
+  </div>
+
+  <!-- ============ CONFIRMACIÓN ============ -->
+  <div class="screen" id="confirmacion">
+    <div class="confirm-hero">
+      <div class="check-circle-wrap">
+        <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11"/><path d="M6.5 12.5l3.5 3.5 7-7.5"/></svg>
+      </div>
+      <h2>¡Bukeao! 🎉</h2>
+      <p>Tu cita quedó confirmada</p>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-user"/></svg>Profesional</span><span class="v" id="ticket-prof">—</span></div>
+      <div class="ticket-row" id="ticket-quien-row" style="display:none"><span class="k"><svg class="icon"><use href="#i-user"/></svg>Te atiende</span><span class="v" id="ticket-quien">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-scissors"/></svg>Servicio</span><span class="v" id="ticket-svc">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-calendar"/></svg>Fecha</span><span class="v" id="ticket-date">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-map-pin"/></svg>Lugar</span><span class="v" id="ticket-place">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon" id="ticket-pay-icon"><use href="#i-cash"/></svg>Pago</span><span class="v" id="ticket-pay">—</span></div>
+      <div class="ticket-row total"><span class="k">Total</span><span class="v" id="ticket-price">—</span></div>
+    </div>
+
+    <button class="add-svc" id="ticket-directions-btn" onclick="openDirections(state.professional.businessName, state.professional.neighborhood, state.professional.lat, state.professional.lng)">
+      <svg class="icon"><use href="#i-map-pin"/></svg> Cómo llegar
+    </button>
+
+    <div class="wa-block" id="wa-block">
+      <div class="wa-typing" id="wa-typing"><span></span><span></span><span></span></div>
+      <div class="wa-bubble" id="wa-bubble">
+        <b><svg class="icon"><use href="#i-whatsapp"/></svg>Bukea</b>
+        <span id="wa-message">¡Confirmao!</span> Responde <b style="display:inline">R</b> para reprogramar o <b style="display:inline">C</b> para cancelar.
+        <div style="text-align:right;font-size:0.65rem;color:#5d6f76;margin-top:0.3rem">3:42 PM ✓✓</div>
+      </div>
+    </div>
+    <p class="wa-label">Así te llegará el recordatorio por WhatsApp</p>
+
+    <button class="cta" style="position:static" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg>Volver al inicio</button>
+  </div>
+
+  <!-- ============ MIS CITAS ============ -->
+  <div class="screen" id="miscitas">
+    <h1 class="app-h1">Mis citas</h1>
+    <p class="app-sub">Tus reservas en Bukea</p>
+    <div id="miscitas-list"></div>
+  </div>
+
+  <!-- ============ FILA VIRTUAL ============ -->
+  <div class="screen" id="fila">
+    <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1" style="display:flex; align-items:center;">Fila virtual <span class="live-badge"><span class="live-dot"></span>En vivo</span></h1>
+    <p class="app-sub">Barbería El Nítido, walk-ins sin cita</p>
+
+    <div class="queue-hero">
+      <div class="queue-num" id="queue-count">3</div>
+      <p>personas delante de ti · ~35 min</p>
+    </div>
+
+    <div class="queue-list">
+      <div class="queue-item"><span class="pos">1</span> Luis M. <span class="st"><svg class="icon"><use href="#i-scissors"/></svg>En la silla</span></div>
+      <div class="queue-item"><span class="pos">2</span> Anderson P. <span class="st"><svg class="icon"><use href="#i-clock"/></svg>Esperando</span></div>
+      <div class="queue-item"><span class="pos">3</span> Randy S. <span class="st"><svg class="icon"><use href="#i-clock"/></svg>Esperando</span></div>
+      <div class="queue-item you"><span class="pos">4</span> Tú <span class="st">~35 min</span></div>
+    </div>
+
+    <div class="wa-note">
+      <svg class="icon"><use href="#i-whatsapp"/></svg>
+      <span>Te avisamos por WhatsApp cuando falten <b>2 personas</b>. Vete tranquilo, tu turno no se pierde.</span>
+    </div>
+
+    <button class="cta" id="queue-btn" onclick="joinQueue()"><svg class="icon"><use href="#i-clock"/></svg>Coger mi turno</button>
+  </div>
+
+  <!-- ============ NAV ============ -->
+  <div class="navbar">
+    <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+    <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-txt">Fila</span></button>
+    <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+  </div>
+
+  <!-- ============ ONBOARDING (hoja: ¿qué servicio buscas?) ============ -->
+  <div class="sheet-backdrop" id="onboarding">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="s-brand">b</div>
+      <h2>¿Qué servicio buscas?</h2>
+      <p class="s-sub">Lo ponemos primero para que reserves más rápido. Puedes cambiarlo cuando quieras.</p>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="onboardPick('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span>Barbería</button>
+        <button class="sheet-item" onclick="onboardPick('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span>Uñas</button>
+        <button class="sheet-item" onclick="onboardPick('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span>Salón</button>
+        <button class="sheet-item" onclick="onboardPick('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span>Maquillaje</button>
+        <button class="sheet-item" onclick="onboardPick('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span>Cejas &amp; MUA</button>
+        <button class="sheet-item" onclick="onboardPick('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span>Pilates</button>
+      </div>
+      <button class="sheet-skip" onclick="closeOnboarding()">Ahora no</button>
+    </div>
+  </div>
+
+  <!-- ============ HOJA: CÓMO LLEGAR ============ -->
+  <div class="sheet-backdrop" id="directions-sheet" onclick="if(event.target===this) closeDirectionsSheet()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2>Cómo llegar</h2>
+      <p class="s-sub" id="directions-sub">—</p>
+      <div id="directions-links" style="display:flex;flex-direction:column;gap:0.55rem"></div>
+      <button class="sheet-skip" onclick="closeDirectionsSheet()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://www.bukeard.com/app';
+  const GOOGLE_CLIENT_ID = '419876529270-l1mtt80qir3sqj6qeo224i441s86c7h6.apps.googleusercontent.com';
+  const APPLE_CLIENT_ID = 'com.bukea.web';
+  const state = {
+    professional: null,
+    serviceId: null,
+    serviceName: null,
+    priceCents: null,
+    date: null,       // 'YYYY-MM-DD'
+    dateLabel: null,  // 'Hoy' / 'Mañana' / 'Vie 28 ago'
+    time: null,       // 'HH:MM' 24h
+    timeLabel: null,  // '9:00 AM'
+    paymentMethod: 'cash',
+    paymentLabel: 'Efectivo',
+    returnTo: 'inicio',
+    receiptFile: null,
+    bizProfile: null,
+    bizBookings: [],
+    calMonth: null,
+  };
+
+  function formatPrice(cents) {
+    return 'RD$ ' + Math.round(cents / 100);
+  }
+
+  /* ===== "Cómo llegar" (2026-08-23) — abre Google Maps, Apple Maps o Waze
+     con las coordenadas reales del negocio (geocodificadas por sector) si
+     ya las tiene, o una búsqueda por texto mientras tanto. ===== */
+  function directionLinks(name, neighborhood, lat, lng) {
+    const place = (name + ' ' + neighborhood + ', Santo Domingo, República Dominicana').trim();
+    const hasCoords = typeof lat === 'number' && typeof lng === 'number';
+    return {
+      google: hasCoords
+        ? 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng
+        : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place),
+      apple: hasCoords
+        ? 'https://maps.apple.com/?q=' + encodeURIComponent(name) + '&ll=' + lat + ',' + lng
+        : 'https://maps.apple.com/?q=' + encodeURIComponent(place),
+      waze: hasCoords
+        ? 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes'
+        : 'https://waze.com/ul?q=' + encodeURIComponent(place) + '&navigate=yes',
+    };
+  }
+
+  function openDirections(name, neighborhood, lat, lng) {
+    const links = directionLinks(name, neighborhood, lat, lng);
+    document.getElementById('directions-sub').textContent = name + ' · ' + neighborhood;
+    const el = document.getElementById('directions-links');
+    el.innerHTML =
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.google + '">Abrir con Google Maps</a>' +
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.apple + '">Abrir con Apple Maps</a>' +
+      '<a class="sheet-item" style="justify-content:center" target="_blank" rel="noopener" href="' + links.waze + '">Abrir con Waze</a>';
+    document.getElementById('directions-sheet').classList.add('show');
+  }
+
+  function closeDirectionsSheet() {
+    document.getElementById('directions-sheet').classList.remove('show');
+  }
+
+  /* Skeletons de carga (perceived performance) */
+  function skeletonCards(container, n) {
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      html += '<div class="sk-card"><div class="sk sk-avatar"></div>' +
+        '<div class="sk-lines"><div class="sk sk-line w70"></div>' +
+        '<div class="sk sk-line w45"></div><div class="sk sk-line w90"></div></div></div>';
+    }
+    container.innerHTML = html;
+  }
+  function skeletonRows(container, n) {
+    let html = '';
+    for (let i = 0; i < n; i++) html += '<div class="sk sk-row"></div>';
+    container.innerHTML = html;
+  }
+
+  const AVATAR_GRADIENTS = [
+    'linear-gradient(150deg,#12938f,#0a4f4d)',
+    'linear-gradient(150deg,#c2447a,#7a2650)',
+    'linear-gradient(150deg,#7654b8,#3f2c7a)',
+    'linear-gradient(150deg,#3d6ea5,#1b3a5c)',
+    'linear-gradient(150deg,#a5763d,#5c3a1b)',
+  ];
+
+  function avatarGradient(slug) {
+    let hash = 0;
+    for (const ch of slug) hash = (hash * 31 + ch.charCodeAt(0)) % AVATAR_GRADIENTS.length;
+    return AVATAR_GRADIENTS[hash];
+  }
+
+  function initials(name) {
+    const clean = name.replace(/"[^"]*"/g, '');
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return '?';
+    if (words.length === 1) return words[0][0].toUpperCase();
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  }
+
+  function renderProCardList(container, professionals) {
+    container.innerHTML = '';
+    if (professionals.length === 0) {
+      container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Todavía no tenemos profesionales en esta categoría.</p>';
+      return;
+    }
+    professionals.forEach(prof => {
+      const card = document.createElement('div');
+      card.className = 'pro-card';
+      card.innerHTML =
+        '<div class="avatar"></div>' +
+        '<div class="pro-info"><b></b><span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg><span class="meta-text"></span></span><span class="tags"></span></div>' +
+        '<div class="rating"><svg class="icon"><use href="#i-star"/></svg><span class="rating-num"></span> <small></small></div>';
+      const avatar = card.querySelector('.avatar');
+      avatar.style.background = avatarGradient(prof.slug);
+      avatar.textContent = initials(prof.name);
+      card.querySelector('.pro-info b').textContent = prof.name;
+      card.querySelector('.meta-text').textContent = prof.businessName + ' · ' + prof.neighborhood;
+      card.querySelector('.tags').textContent = prof.tags.join(' · ');
+      card.querySelector('.rating-num').textContent = prof.rating.toFixed(1);
+      card.querySelector('.rating small').textContent = '(' + prof.reviewsCount + ')';
+      card.addEventListener('click', () => selectProfessional(prof.slug));
+      container.appendChild(card);
+    });
+  }
+
+  async function openCategory(key, label) {
+    state.returnTo = 'categoria';
+    document.getElementById('categoria-title').textContent = label;
+    const container = document.getElementById('categoria-list');
+    skeletonCards(container, 4);
+    go('categoria');
+    try {
+      const res = await fetch(API_BASE + '/api/professionals?category=' + encodeURIComponent(key));
+      if (!res.ok) throw new Error('No se pudo cargar la categoría');
+      renderProCardList(container, await res.json());
+    } catch (err) {
+      container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
+      console.error(err);
+    }
+  }
+
+  async function selectProfessional(slug) {
+    // Ir al perfil de inmediato con nombre/servicios en skeleton mientras carga
+    document.getElementById('prof-name').textContent = 'Cargando…';
+    skeletonRows(document.getElementById('services-list'), 3);
+    go('perfil');
+    await loadProfessional(slug);
+  }
+
+  function goBackFromPerfil() {
+    go(state.returnTo || 'inicio');
+  }
+
+  function go(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    el.classList.add('active');
+    const navKey = id.startsWith('pro-') ? 'pro' : id;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
+    document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
+    el.scrollTop = 0;
+    if (id === 'confirmacion') playWaTyping();
+    if (id === 'miscitas') renderMisCitas();
+    if (id === 'reserva') loadAvailabilityDays();
+  }
+
+  /* ===== Disponibilidad real: días y horas libres del profesional ===== */
+  function updateConfirmButton() {
+    const btn = document.getElementById('confirm-btn');
+    const when = document.getElementById('confirm-btn-when');
+    if (state.date && state.time) {
+      when.textContent = state.dateLabel.toLowerCase() + ' ' + state.timeLabel;
+      btn.disabled = false;
+    } else {
+      when.textContent = '';
+      btn.disabled = true;
+    }
+  }
+
+  async function loadAvailabilityDays() {
+    if (!state.professional || !state.serviceId) return;
+    state.date = null; state.time = null;
+    updateConfirmButton();
+    const diaEl = document.getElementById('dia-pills');
+    const horaEl = document.getElementById('hora-pills');
+    diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p>';
+    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
+    try {
+      const res = await fetch(
+        API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
+        '/availability/days?serviceId=' + state.serviceId + '&days=10'
+      );
+      if (!res.ok) throw new Error('No se pudo cargar la disponibilidad');
+      const days = await res.json();
+      diaEl.innerHTML = '';
+      let firstWithSlots = null;
+      days.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn';
+        btn.textContent = d.label;
+        btn.disabled = !d.hasSlots;
+        btn.addEventListener('click', () => pickDay(d, btn));
+        diaEl.appendChild(btn);
+        if (d.hasSlots && !firstWithSlots) firstWithSlots = { day: d, btn };
+      });
+      if (firstWithSlots) {
+        pickDay(firstWithSlots.day, firstWithSlots.btn);
+      } else {
+        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días. Vuelve a intentar más tarde.</p>';
+      }
+    } catch (err) {
+      diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar la disponibilidad.</p>';
+      console.error(err);
+    }
+  }
+
+  function pickDay(day, btn) {
+    document.querySelectorAll('#dia-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    state.date = day.date;
+    state.dateLabel = day.label;
+    state.time = null;
+    updateConfirmButton();
+    loadAvailabilityTimes();
+  }
+
+  async function loadAvailabilityTimes() {
+    const horaEl = document.getElementById('hora-pills');
+    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando horas…</p>';
+    try {
+      const res = await fetch(
+        API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
+        '/availability/times?serviceId=' + state.serviceId + '&date=' + state.date
+      );
+      if (!res.ok) throw new Error('No se pudo cargar las horas');
+      const data = await res.json();
+      horaEl.innerHTML = '';
+      if (data.times.length === 0) {
+        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Ese día no tiene horas libres.</p>';
+        return;
+      }
+      data.times.forEach((t, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn' + (i === 0 ? ' sel' : '');
+        btn.textContent = t.label;
+        btn.addEventListener('click', () => pickTime(t, btn));
+        horaEl.appendChild(btn);
+      });
+      pickTime(data.times[0], horaEl.firstChild);
+    } catch (err) {
+      horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar las horas.</p>';
+      console.error(err);
+    }
+  }
+
+  function pickTime(t, btn) {
+    document.querySelectorAll('#hora-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    state.time = t.time;
+    state.timeLabel = t.label;
+    updateConfirmButton();
+  }
+
+  const payIcons = { 'i-cash': ['cash', 'Efectivo'], 'i-bank': ['bank', 'Transferencia'], 'i-tpago': ['tpago', 'tPago'], 'i-card': ['card', 'Tarjeta'] };
+
+  function pickPay(el, iconId) {
+    el.parentElement.querySelectorAll('.pay-option').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    const [key, label] = payIcons[iconId];
+    state.paymentMethod = key;
+    state.paymentLabel = label;
+    state.receiptFile = null;
+    document.getElementById('receipt-input').value = '';
+    document.getElementById('receipt-attach-label').innerHTML = 'Adjunta el comprobante de pago <small>(opcional, puedes hacerlo después)</small>';
+
+    const transferBox = document.getElementById('transfer-info');
+    if (key === 'bank') {
+      transferBox.style.display = 'block';
+      renderTransferAccounts();
+    } else {
+      transferBox.style.display = 'none';
+    }
+  }
+
+  function renderTransferAccounts() {
+    const el = document.getElementById('transfer-accounts');
+    const accounts = (state.professional && state.professional.bankAccounts) || [];
+    if (accounts.length === 0) {
+      el.innerHTML = '<p style="color:var(--soft);font-size:0.82rem">Este profesional todavía no cargó sus cuentas. Coordina la transferencia por WhatsApp.</p>';
+      return;
+    }
+    el.innerHTML = '';
+    accounts.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'card';
+      row.style.cssText = 'padding:0.7rem 0.9rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;gap:0.6rem';
+      row.innerHTML =
+        '<div><div style="font-weight:700;font-size:0.85rem">' + a.bankName + ' · ' + a.accountType + '</div>' +
+        '<div style="font-size:0.8rem;color:var(--soft)">' + a.accountNumber + '</div>' +
+        '<div style="font-size:0.75rem;color:var(--soft)">' + a.accountHolder + ' · Cédula/RNC ' + a.cedulaRnc + '</div></div>' +
+        '<button type="button" class="btn-copy">Copiar</button>';
+      row.querySelector('.btn-copy').addEventListener('click', (e) => {
+        navigator.clipboard.writeText(a.accountNumber).then(() => {
+          e.target.textContent = '¡Copiado!';
+          setTimeout(() => { e.target.textContent = 'Copiar'; }, 1500);
+        });
+      });
+      el.appendChild(row);
+    });
+  }
+
+  function onReceiptChosen() {
+    const input = document.getElementById('receipt-input');
+    state.receiptFile = input.files[0] || null;
+    document.getElementById('receipt-attach-label').textContent =
+      state.receiptFile ? state.receiptFile.name : 'Adjunta el comprobante de pago (opcional, puedes hacerlo después)';
+  }
+
+  async function uploadReceipt(bookingId, file) {
+    const form = new FormData();
+    form.append('receipt', file);
+    try {
+      await fetch(API_BASE + '/api/bookings/' + bookingId + '/receipt', {
+        method: 'POST', headers: authHeaders(), body: form,
+      });
+    } catch (err) {
+      console.error('No se pudo subir el comprobante:', err);
+    }
+  }
+
+  function selectService(service) {
+    state.serviceId = service.id;
+    state.serviceName = service.name;
+    state.priceCents = service.priceCents;
+    document.getElementById('svc-label').textContent = service.name + ' · ' + formatPrice(service.priceCents);
+    go('reserva');
+  }
+
+  function renderProfessional(prof) {
+    state.professional = prof;
+    const avatar = document.getElementById('prof-avatar');
+    avatar.style.background = avatarGradient(prof.slug);
+    avatar.textContent = initials(prof.name);
+    document.getElementById('prof-name').textContent = prof.name;
+    document.getElementById('prof-business').textContent = prof.businessName;
+    document.getElementById('prof-neighborhood').textContent = prof.neighborhood;
+    document.getElementById('prof-rating').textContent = prof.rating.toFixed(1);
+    document.getElementById('prof-reviews').textContent = prof.reviewsCount;
+    document.getElementById('reserva-prof-name').textContent = prof.name;
+
+    const list = document.getElementById('services-list');
+    list.innerHTML = '';
+    prof.services.forEach(service => {
+      const row = document.createElement('div');
+      row.className = 'service';
+      row.innerHTML =
+        '<div><span class="s-name"></span><span class="s-time"></span></div><span class="s-price"></span>';
+      row.querySelector('.s-name').textContent = service.name;
+      row.querySelector('.s-time').textContent = service.durationMin + ' min';
+      row.querySelector('.s-price').textContent = formatPrice(service.priceCents);
+      row.addEventListener('click', () => selectService(service));
+      list.appendChild(row);
+    });
+
+    renderQuienPills(prof.collaborators || []);
+  }
+
+  // "¿Quién te va a atender?" (2026-08-23) — solo se muestra si el negocio
+  // tiene colaboradores agregados; con un único titular no aporta nada.
+  function renderQuienPills(collaborators) {
+    const group = document.getElementById('quien-group');
+    const el = document.getElementById('quien-pills');
+    el.innerHTML = '';
+    state.collaboratorId = null;
+    state.collaboratorName = null;
+    if (!collaborators || collaborators.length < 2) {
+      group.style.display = 'none';
+      return;
+    }
+    group.style.display = 'block';
+    collaborators.forEach((c, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'pill-btn' + (i === 0 ? ' sel' : '');
+      btn.textContent = c.name.split(' ')[0];
+      btn.addEventListener('click', () => pickQuien(c, btn));
+      el.appendChild(btn);
+    });
+    pickQuien(collaborators[0], el.firstChild);
+  }
+
+  function pickQuien(c, btn) {
+    document.querySelectorAll('#quien-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    state.collaboratorId = c.id;
+    state.collaboratorName = c.name;
+  }
+
+  async function loadProfessional(slug) {
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+      if (!res.ok) throw new Error('No se pudo cargar el profesional');
+      const prof = await res.json();
+      renderProfessional(prof);
+    } catch (err) {
+      document.getElementById('services-list').innerHTML =
+        '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor. Intenta de nuevo en un momento.</p>';
+      console.error(err);
+    }
+  }
+
+  async function confirmBooking() {
+    if (!state.professional || !state.serviceId || !state.date || !state.time) return;
+
+    // Registro just-in-time: solo aquí, cuando ya vas a reservar, se pide la cuenta.
+    if (!getSession()) {
+      requireAccount(confirmBooking, 'Crea tu cuenta o inicia sesión para confirmar tu cita');
+      return;
+    }
+
+    const btn = document.getElementById('confirm-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Confirmando…';
+    btn.disabled = true;
+    const clientName = getSession().name;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({
+          professionalId: state.professional.id,
+          serviceId: state.serviceId,
+          date: state.date,
+          time: state.time,
+          paymentMethod: state.paymentMethod,
+          collaboratorId: state.collaboratorId,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'No se pudo crear la reserva');
+      }
+      const booking = await res.json();
+
+      document.getElementById('ticket-prof').textContent = booking.professionalName;
+      const quienRow = document.getElementById('ticket-quien-row');
+      if (booking.collaboratorName) {
+        document.getElementById('ticket-quien').textContent = booking.collaboratorName;
+        quienRow.style.display = 'flex';
+      } else {
+        quienRow.style.display = 'none';
+      }
+      document.getElementById('ticket-svc').textContent = booking.serviceName;
+      document.getElementById('ticket-date').textContent = booking.dayLabel + ' · ' + booking.timeLabel;
+      document.getElementById('ticket-place').textContent = booking.businessName;
+      document.getElementById('ticket-pay').textContent = state.paymentLabel;
+      document.getElementById('ticket-price').textContent = formatPrice(booking.priceCents);
+      document.getElementById('wa-message').textContent =
+        '¡Confirmao, ' + firstName(clientName) + '! ' + booking.dayLabel + ' ' + booking.timeLabel + ' con ' + booking.professionalName + ' en ' + booking.businessName + '.';
+
+      if (state.receiptFile) await uploadReceipt(booking.id, state.receiptFile);
+
+      if (navigator.vibrate) navigator.vibrate(12);
+      go('confirmacion');
+    } catch (err) {
+      alert(err.message || 'No se pudo confirmar la cita. Revisa tu conexión e intenta de nuevo.');
+      console.error(err);
+      loadAvailabilityDays();
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  function joinQueue() {
+    const btn = document.getElementById('queue-btn');
+    btn.innerHTML = '<svg class="icon"><use href="#i-check"/></svg>Estás en la fila, te avisamos por WhatsApp';
+    btn.style.background = 'var(--cash)';
+    btn.onclick = null;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function playWaTyping() {
+    const typing = document.getElementById('wa-typing');
+    const bubble = document.getElementById('wa-bubble');
+    bubble.classList.remove('show');
+    if (reduceMotion) { typing.style.display = 'none'; bubble.classList.add('show'); return; }
+    typing.style.display = 'flex';
+    bubble.style.display = 'none';
+    setTimeout(() => {
+      typing.style.display = 'none';
+      bubble.style.display = 'block';
+      void bubble.offsetWidth;
+      bubble.classList.add('show');
+    }, 900);
+  }
+
+  /* ===== Lado B2B: registro y panel del profesional ===== */
+  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates' };
+
+  function proSlug() {
+    return localStorage.getItem('bukea_pro_slug');
+  }
+
+  function openPro() {
+    // El panel de negocio ahora exige sesión real (Google, Apple o
+    // teléfono+PIN) — antes bastaba con conocer el slug guardado en
+    // localStorage, y cualquiera podía ver la agenda de otro negocio.
+    if (!getSession()) {
+      requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
+      return;
+    }
+    if (proSlug()) {
+      loadPanel();
+      go('pro-panel');
+    } else {
+      if (document.querySelectorAll('#svc-rows .svc-row').length === 0) addServiceRow();
+      regStep = 1;
+      regShowStep();
+      go('pro-registro');
+    }
+  }
+
+  function pickRegCat(btn) {
+    document.querySelectorAll('#reg-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  }
+
+  /* Wizard de 4 pasos: nombre → categoría → sector → servicios, luego pantalla de éxito (paso 5) */
+  const REG_TOTAL_STEPS = 4;
+  let regStep = 1;
+
+  function regShowStep() {
+    document.querySelectorAll('.reg-step').forEach(el => {
+      el.classList.toggle('show', Number(el.dataset.step) === regStep);
+    });
+    const segs = document.querySelectorAll('#reg-progress .seg');
+    segs.forEach((seg, i) => {
+      seg.classList.toggle('done', i < regStep - 1);
+      seg.classList.toggle('active', i === regStep - 1 && regStep <= REG_TOTAL_STEPS);
+    });
+    const onSuccess = regStep > REG_TOTAL_STEPS;
+    document.getElementById('reg-stepnum').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-stepnum').textContent = 'Paso ' + regStep + ' de ' + REG_TOTAL_STEPS;
+    document.getElementById('reg-back-btn').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-footer-nav').style.display = onSuccess ? 'none' : '';
+    document.getElementById('reg-next-btn').innerHTML = regStep === REG_TOTAL_STEPS
+      ? '<svg class="icon"><use href="#i-check"/></svg>Crear mi negocio'
+      : 'Continuar <svg class="icon"><use href="#i-chevron-right"/></svg>';
+    document.getElementById('reg-error').style.display = 'none';
+  }
+
+  function regValidateStep() {
+    if (regStep === 1) {
+      const name = document.getElementById('reg-name').value.trim();
+      const businessName = document.getElementById('reg-business').value.trim();
+      if (!name || !businessName) return showRegError('Completa tu nombre y el del negocio.'), false;
+    }
+    if (regStep === 2) {
+      if (!document.querySelector('#reg-cats .reg-cat-card.sel')) return showRegError('Elige una categoría.'), false;
+    }
+    if (regStep === 3) {
+      if (!document.getElementById('reg-neighborhood').value.trim()) return showRegError('Indica tu sector.'), false;
+    }
+    return true;
+  }
+
+  function regBack() {
+    if (regStep <= 1) { go('inicio'); return; }
+    regStep--;
+    regShowStep();
+  }
+
+  function regNext() {
+    if (!regValidateStep()) return;
+    document.getElementById('reg-error').style.display = 'none';
+    if (regStep < REG_TOTAL_STEPS) {
+      regStep++;
+      regShowStep();
+    } else {
+      registerPro();
+    }
+  }
+
+  function addServiceRow() {
+    const row = document.createElement('div');
+    row.className = 'svc-row';
+    row.innerHTML =
+      '<input class="svc-name" type="text" placeholder="Servicio (ej: Corte clásico)">' +
+      '<input class="svc-min" type="number" min="5" step="5" placeholder="Min">' +
+      '<input class="svc-price" type="number" min="0" step="50" placeholder="RD$">' +
+      '<button class="svc-del" title="Quitar servicio">✕</button>';
+    row.querySelector('.svc-del').addEventListener('click', () => row.remove());
+    document.getElementById('svc-rows').appendChild(row);
+  }
+
+  function showRegError(msg) {
+    const el = document.getElementById('reg-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function registerPro() {
+    document.getElementById('reg-error').style.display = 'none';
+    const name = document.getElementById('reg-name').value.trim();
+    const businessName = document.getElementById('reg-business').value.trim();
+    const neighborhood = document.getElementById('reg-neighborhood').value.trim();
+    const catBtn = document.querySelector('#reg-cats .reg-cat-card.sel');
+    const category = catBtn ? catBtn.dataset.cat : null;
+
+    const services = [];
+    document.querySelectorAll('#svc-rows .svc-row').forEach(row => {
+      const svcName = row.querySelector('.svc-name').value.trim();
+      const min = Number(row.querySelector('.svc-min').value);
+      const price = Number(row.querySelector('.svc-price').value);
+      if (svcName && min > 0 && price > 0) {
+        services.push({ name: svcName, durationMin: min, priceCents: Math.round(price * 100) });
+      }
+    });
+
+    if (!name || !businessName || !neighborhood) {
+      return showRegError('Completa tu nombre, el del negocio y el sector.');
+    }
+    if (services.length === 0) {
+      return showRegError('Agrega al menos un servicio con duración y precio.');
+    }
+
+    const btn = document.getElementById('reg-next-btn');
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Creando negocio…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ name, businessName, neighborhood, category, services }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return showRegError(data.error || 'No se pudo crear la cuenta. Intenta de nuevo.');
+      }
+      const { slug } = await res.json();
+      localStorage.setItem('bukea_pro_slug', slug);
+      regStep = REG_TOTAL_STEPS + 1;
+      regShowStep();
+    } catch (err) {
+      showRegError('No se pudo conectar con el servidor.');
+      console.error(err);
+    } finally {
+      btn.innerHTML = original;
+      btn.disabled = false;
+    }
+  }
+
+  async function loadPanel() {
+    const slug = proSlug();
+    if (!slug) return;
+    skeletonRows(document.getElementById('panel-citas'), 3);
+    try {
+      const [profRes, citasRes, statsRes] = await Promise.all([
+        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug)),
+        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings', { headers: authHeaders() }),
+        fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats', { headers: authHeaders() }),
+      ]);
+      if (profRes.status === 404) { logoutPro(); return; }
+      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(); return; }
+      if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
+      const prof = await profRes.json();
+      const citas = await citasRes.json();
+      state.bizProfile = prof;
+      state.bizBookings = citas;
+      renderVentasChart();
+      renderMejoresServicios();
+      renderMejorEquipo();
+
+      if (statsRes.ok) {
+        const stats = await statsRes.json();
+        renderCuadre('hoy', stats.today);
+        renderCuadre('7d', stats.last7Days);
+        renderCuadre('mes', stats.month);
+      }
+
+      document.getElementById('panel-business').textContent = prof.businessName;
+      document.getElementById('panel-name').textContent = prof.name;
+      document.getElementById('panel-cat').textContent = CAT_LABELS[prof.category] || prof.category;
+      document.getElementById('panel-count').textContent = citas.filter(c => c.status !== 'cancelled').length;
+
+      const citasEl = document.getElementById('panel-citas');
+      citasEl.innerHTML = '';
+      if (citas.length === 0) {
+        citasEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Todavía no tienes citas. Comparte tu perfil con tu clientela.</p>';
+      } else {
+        citas.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'cita-card';
+          card.innerHTML = '<div class="c-top"><span class="c-client"></span><span class="c-price"></span></div><div class="c-bottom"><span class="c-when"></span><span class="c-svc"></span></div>';
+          card.querySelector('.c-client').textContent = c.clientName;
+          card.querySelector('.c-price').textContent = formatPrice(c.priceCents);
+          card.querySelector('.c-when').textContent = c.dayLabel + ' · ' + c.timeLabel;
+          card.querySelector('.c-svc').textContent = c.serviceName + (c.collaboratorName ? ' · Atendió: ' + c.collaboratorName : '');
+          if (c.paymentMethod === 'bank' && c.receiptUrl) {
+            const link = document.createElement('a');
+            link.href = c.receiptUrl;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = 'Ver comprobante';
+            link.style.cssText = 'display:block;margin-top:0.3rem;font-size:0.78rem;font-weight:600;color:var(--teal-700)';
+            card.appendChild(link);
+          } else if (c.paymentMethod === 'bank') {
+            const pending = document.createElement('span');
+            pending.textContent = 'Sin comprobante todavía';
+            pending.style.cssText = 'display:block;margin-top:0.3rem;font-size:0.76rem;color:var(--soft)';
+            card.appendChild(pending);
+          }
+          if (c.status === 'cancelled') {
+            card.style.opacity = '0.55';
+            const badge = document.createElement('span');
+            badge.textContent = 'Cancelada';
+            badge.style.cssText = 'display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600';
+            card.appendChild(badge);
+          } else {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancelar cita';
+            cancelBtn.style.cssText = 'margin-top:0.5rem;background:none;border:none;color:#b3261e;font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+            cancelBtn.addEventListener('click', () => cancelBookingFromPanel(c.id));
+            card.appendChild(cancelBtn);
+          }
+          citasEl.appendChild(card);
+        });
+      }
+
+      const svcEl = document.getElementById('panel-servicios');
+      svcEl.innerHTML = '';
+      prof.services.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'service';
+        row.style.cursor = 'default';
+        row.innerHTML = '<div><span class="s-name"></span><span class="s-time"></span></div><span class="s-price"></span>';
+        row.querySelector('.s-name').textContent = s.name;
+        row.querySelector('.s-time').textContent = s.durationMin + ' min';
+        row.querySelector('.s-price').textContent = formatPrice(s.priceCents);
+        svcEl.appendChild(row);
+      });
+
+      loadHours(slug);
+      loadBankAccounts(slug);
+      loadCollaborators(slug);
+    } catch (err) {
+      document.getElementById('panel-citas').innerHTML =
+        '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
+      console.error(err);
+    }
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  function startOfMonth() { const d = startOfToday(); d.setDate(1); return d; }
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function capitalize(s) { return s.replace(/^./, c => c.toUpperCase()); }
+
+  /* ---------- Ventas recientes (gráfico de 7 días) ---------- */
+  const DOW_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'short', day: 'numeric' });
+  function last7Days() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) { const d = startOfToday(); d.setDate(d.getDate() - i); days.push(d); }
+    return days;
+  }
+  function renderVentasChart() {
+    const totalEl = document.getElementById('chart-total');
+    if (!totalEl) return;
+    const byDay = last7Days().map(d => {
+      const dayBookings = state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), d) && b.status !== 'cancelled');
+      return { date: d, count: dayBookings.length, cents: dayBookings.reduce((s, b) => s + (b.priceCents || 0), 0) };
+    });
+    const totalCents = byDay.reduce((s, d) => s + d.cents, 0);
+    const totalCount = byDay.reduce((s, d) => s + d.count, 0);
+    totalEl.textContent = formatPrice(totalCents) + ' vendido';
+    document.getElementById('chart-meta').textContent = totalCount + (totalCount === 1 ? ' cita' : ' citas');
+
+    const max = Math.max.apply(null, byDay.map(d => d.cents).concat([1]));
+    const W = 340, H = 130, pad = 22;
+    const stepX = (W - pad * 2) / (byDay.length - 1);
+    const points = byDay.map((d, i) => ({ x: pad + i * stepX, y: H - pad - (d.cents / max) * (H - pad * 2), d }));
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    const areaPath = linePath + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (H - pad) + ' L' + points[0].x.toFixed(1) + ',' + (H - pad) + ' Z';
+    const dotsHtml = points.map(p => '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="var(--teal-600)"><title>' + esc(DOW_FMT.format(p.d.date)) + ': ' + formatPrice(p.d.cents) + '</title></circle>').join('');
+    const labelsHtml = points.map(p => '<text x="' + p.x.toFixed(1) + '" y="' + (H - 4) + '" font-size="8" fill="var(--soft)" text-anchor="middle">' + esc(DOW_FMT.format(p.d.date)) + '</text>').join('');
+    const chartWrap = document.getElementById('ventas-chart');
+    chartWrap.classList.remove('dash-fade-in'); void chartWrap.offsetWidth; chartWrap.classList.add('dash-fade-in');
+    chartWrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:120px;display:block">' +
+        '<defs><linearGradient id="chartFadeMobile" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--teal-500)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--teal-500)" stop-opacity="0"/></linearGradient></defs>' +
+        '<path d="' + areaPath + '" fill="url(#chartFadeMobile)" stroke="none"/>' +
+        '<path d="' + linePath + '" fill="none" stroke="var(--teal-600)" stroke-width="2"/>' +
+        dotsHtml + labelsHtml +
+      '</svg>';
+  }
+
+  /* ---------- Mejores servicios / Mejor miembro del equipo ---------- */
+  function monthBounds(offset) {
+    const d = startOfMonth(); d.setMonth(d.getMonth() + offset);
+    return { start: d, end: new Date(d.getFullYear(), d.getMonth() + 1, 1) };
+  }
+  function rankedCounts(keyFn) {
+    const thisM = monthBounds(0), lastM = monthBounds(-1);
+    const counts = {};
+    state.bizBookings.forEach(b => {
+      if (!b.appointmentAt || b.status === 'cancelled') return;
+      const d = new Date(b.appointmentAt);
+      const key = keyFn(b);
+      if (!key) return;
+      counts[key] = counts[key] || { thisMonth: 0, lastMonth: 0 };
+      if (d >= thisM.start && d < thisM.end) counts[key].thisMonth++;
+      else if (d >= lastM.start && d < lastM.end) counts[key].lastMonth++;
+    });
+    return Object.keys(counts).map(key => ({ name: key, c: counts[key] }))
+      .sort((a, b) => (b.c.thisMonth - a.c.thisMonth) || (b.c.lastMonth - a.c.lastMonth));
+  }
+  function renderDashTable(elId, rows, emptyMsg, colLabel) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.classList.remove('dash-fade-in'); void el.offsetWidth; el.classList.add('dash-fade-in');
+    if (!rows.length) { el.innerHTML = '<p class="dash-empty">' + esc(emptyMsg) + '</p>'; return; }
+    el.innerHTML =
+      '<div class="dash-table-head"><span>' + esc(colLabel) + '</span><span>Este mes</span><span>Últ. mes</span></div>' +
+      rows.slice(0, 6).map(r => '<div class="dash-table-row"><span>' + esc(r.name) + '</span><span>' + r.c.thisMonth + '</span><span>' + r.c.lastMonth + '</span></div>').join('');
+  }
+  function renderMejoresServicios() {
+    renderDashTable('mejores-servicios-table', rankedCounts(b => b.serviceName), 'Sin datos todavía. Cuando tengas reservas verás aquí tus servicios más pedidos.', 'Servicio');
+  }
+  function renderMejorEquipo() {
+    renderDashTable('mejor-equipo-table', rankedCounts(b => b.collaboratorName || (state.bizProfile ? state.bizProfile.name : 'Titular')), 'Sin datos todavía. Cuando tengas reservas verás aquí quién atiende más citas.', 'Miembro del equipo');
+  }
+
+  /* ---------- Mi perfil ---------- */
+  let pfSelectedCat = null;
+  window.openMiPerfil = function () {
+    const p = state.bizProfile;
+    if (!p) return;
+    document.getElementById('pf-name').value = p.name || '';
+    document.getElementById('pf-business').value = p.businessName || '';
+    document.getElementById('pf-neighborhood').value = p.neighborhood || '';
+    pfSelectedCat = p.category;
+    document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
+    document.getElementById('pf-error').style.display = 'none';
+    go('mi-perfil');
+  };
+  window.pickPfCat = function (btn) {
+    pfSelectedCat = btn.dataset.cat;
+    document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  };
+  window.saveProfile = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    const errEl = document.getElementById('pf-error');
+    errEl.style.display = 'none';
+    const name = document.getElementById('pf-name').value.trim();
+    const businessName = document.getElementById('pf-business').value.trim();
+    const neighborhood = document.getElementById('pf-neighborhood').value.trim();
+    if (!name || !businessName || !neighborhood) {
+      errEl.textContent = 'Completa tu nombre, el del negocio y el sector.';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('pf-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…'; btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/profile', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ name, businessName, neighborhood, category: pfSelectedCat }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar tu perfil');
+      btn.textContent = '¡Guardado!';
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); loadPanel(); }, 900);
+      return;
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+    }
+    btn.disabled = false;
+  };
+
+  /* ---------- Calendario mensual ---------- */
+  const CAL_DAY_HEADS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const CAL_MONTH_FMT = new Intl.DateTimeFormat('es-DO', { month: 'long', year: 'numeric' });
+  const CAL_DATE_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long' });
+  let calSelectedDay = null;
+  window.openCalendario = function () {
+    if (!state.calMonth) state.calMonth = startOfMonth();
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+    go('calendario');
+  };
+  window.calShiftMonth = function (delta) {
+    const d = new Date(state.calMonth); d.setDate(1); d.setMonth(d.getMonth() + delta);
+    state.calMonth = d;
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+  };
+  window.calGoToday = function () {
+    state.calMonth = startOfMonth();
+    calSelectedDay = null;
+    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
+    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+  };
+  function renderCalendar() {
+    document.getElementById('cal-date-label').textContent = capitalize(CAL_MONTH_FMT.format(state.calMonth));
+    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    const startOffset = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+    const today = startOfToday();
+
+    const byDay = {};
+    state.bizBookings.forEach(b => {
+      if (!b.appointmentAt) return;
+      const d = new Date(b.appointmentAt);
+      if (d.getFullYear() !== year || d.getMonth() !== month) return;
+      (byDay[d.getDate()] = byDay[d.getDate()] || []).push(b);
+    });
+
+    const headsHtml = CAL_DAY_HEADS.map(n => '<div class="cal-month-head">' + n + '</div>').join('');
+    let cellsHtml = '';
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - startOffset + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) { cellsHtml += '<div class="cal-month-cell pad"></div>'; continue; }
+      const isToday = sameDay(new Date(year, month, dayNum), today);
+      const isSelected = calSelectedDay === dayNum;
+      const evs = byDay[dayNum] || [];
+      const dotsHtml = evs.slice(0, 5).map(b => '<span class="cal-dot' + (b.status === 'cancelled' ? ' cancelled' : '') + '"></span>').join('');
+      const label = capitalize(CAL_DATE_FMT.format(new Date(year, month, dayNum))) + (evs.length ? ', ' + evs.length + (evs.length === 1 ? ' cita' : ' citas') : ', sin citas');
+      cellsHtml +=
+        '<button type="button" class="cal-month-cell' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '" aria-label="' + esc(label) + '" onclick="showCalDay(' + dayNum + ')">' +
+          '<span class="cal-daynum">' + dayNum + '</span><span class="cal-dots">' + dotsHtml + '</span>' +
+        '</button>';
+    }
+    document.getElementById('cal-grid').innerHTML = '<div class="cal-month-grid">' + headsHtml + cellsHtml + '</div>';
+  }
+  window.showCalDay = function (dayNum) {
+    calSelectedDay = dayNum;
+    renderCalendar();
+    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    const date = new Date(year, month, dayNum);
+    const evs = state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), date))
+      .sort((a, b) => new Date(a.appointmentAt) - new Date(b.appointmentAt));
+    document.getElementById('cal-day-title').textContent = capitalize(CAL_DATE_FMT.format(date));
+    const list = document.getElementById('cal-day-list');
+    list.classList.remove('dash-fade-in'); void list.offsetWidth; list.classList.add('dash-fade-in');
+    if (!evs.length) { list.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No hay citas este día.</p>'; return; }
+    list.innerHTML = evs.map(b => {
+      const cancelled = b.status === 'cancelled';
+      return '<div class="cita-card"' + (cancelled ? ' style="opacity:0.55"' : '') + '>' +
+        '<div class="c-top"><span>' + esc(b.clientName) + '</span><span>' + formatPrice(b.priceCents) + '</span></div>' +
+        '<div class="c-bottom"><span>' + esc(b.timeLabel) + '</span><span>' + esc(b.serviceName) + (b.collaboratorName ? ' · ' + esc(b.collaboratorName) : '') + '</span></div>' +
+        (cancelled ? '<span style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600">Cancelada</span>' : '') +
+        '</div>';
+    }).join('');
+  };
+
+  async function cancelBookingFromPanel(id) {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
+        method: 'POST', headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cancelar');
+      loadPanel();
+    } catch (err) {
+      alert('No se pudo cancelar la cita. Intenta de nuevo.');
+      console.error(err);
+    }
+  }
+
+  function renderCuadre(key, period) {
+    if (!period) return;
+    document.getElementById('cuadre-' + key).textContent = formatPrice(period.totalCents);
+    document.getElementById('cuadre-' + key + '-n').textContent =
+      period.count + (period.count === 1 ? ' cita' : ' citas');
+  }
+
+  /* ===== Mi horario (2026-08-22) — un rango por día; huecos de almuerzo
+     todavía requieren editarse directo en la base de datos. ===== */
+  const DAY_NAMES = { dom: 'Dom', lun: 'Lun', mar: 'Mar', mie: 'Mié', jue: 'Jue', vie: 'Vie', sab: 'Sáb' };
+
+  async function loadHours(slug) {
+    const el = document.getElementById('panel-horario');
+    el.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando horario…</p>';
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/hours', {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cargar el horario');
+      const days = await res.json();
+      el.innerHTML = '';
+      days.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'hour-row' + (d.open ? '' : ' closed');
+        row.dataset.weekday = d.weekday;
+        row.innerHTML =
+          '<input type="checkbox" class="hour-open">' +
+          '<span class="hour-day">' + DAY_NAMES[d.key] + '</span>' +
+          '<input type="time" class="hour-start" value="' + d.startTime + '">' +
+          '<span class="hour-sep">a</span>' +
+          '<input type="time" class="hour-end" value="' + d.endTime + '">';
+        const checkbox = row.querySelector('.hour-open');
+        const startInput = row.querySelector('.hour-start');
+        const endInput = row.querySelector('.hour-end');
+        checkbox.checked = d.open;
+        startInput.disabled = endInput.disabled = !d.open;
+        checkbox.addEventListener('change', () => {
+          startInput.disabled = endInput.disabled = !checkbox.checked;
+          row.classList.toggle('closed', !checkbox.checked);
+        });
+        el.appendChild(row);
+      });
+    } catch (err) {
+      el.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar el horario.</p>';
+      console.error(err);
+    }
+  }
+
+  async function saveHours() {
+    const slug = proSlug();
+    if (!slug) return;
+    document.getElementById('horario-error').style.display = 'none';
+    const days = [...document.querySelectorAll('#panel-horario .hour-row')].map(row => ({
+      weekday: Number(row.dataset.weekday),
+      open: row.querySelector('.hour-open').checked,
+      startTime: row.querySelector('.hour-start').value,
+      endTime: row.querySelector('.hour-end').value,
+    }));
+
+    const btn = document.getElementById('horario-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/hours', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ days }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar el horario');
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err) {
+      const errEl = document.getElementById('horario-error');
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Cuentas bancarias (2026-08-22/23) — para que el cliente que paga
+     por transferencia copie el número sin llamar. Banco y tipo de cuenta
+     son listas (evita "Popular" vs "banco popular" vs "BP" regados en la
+     base de datos); cédula/RNC porque así se verifica al destinatario en
+     una transferencia dominicana real. ===== */
+  const BANK_NAMES = [
+    'Banco Popular Dominicano', 'Banreservas', 'Banco BHD', 'Scotiabank',
+    'Banco Santa Cruz', 'Banco Caribe', 'Banco Vimenca', 'Banco Promerica',
+    'Banco Ademi', 'Banco López de Haro', 'Banco Múltiple Activo',
+    'APAP', 'Asociación Cibao', 'Asociación La Nacional', 'Otro',
+  ];
+  const ACCOUNT_TYPES = ['Ahorros', 'Corriente'];
+
+  function bankOptionsHtml(selected) {
+    const known = BANK_NAMES.slice(0, -1).includes(selected);
+    return BANK_NAMES.map(name => {
+      const isOtro = name === 'Otro';
+      const sel = (isOtro && !known && selected) || (!isOtro && name === selected);
+      return '<option value="' + name + '"' + (sel ? ' selected' : '') + '>' + name + '</option>';
+    }).join('');
+  }
+
+  function typeOptionsHtml(selected) {
+    return ACCOUNT_TYPES.map(t =>
+      '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>'
+    ).join('');
+  }
+
+  function bankRowHtml(a) {
+    a = a || {};
+    const bankKnown = BANK_NAMES.slice(0, -1).includes(a.bankName);
+    const otroValue = (a.bankName && !bankKnown) ? a.bankName : '';
+    return (
+      '<select class="bank-name-select" style="grid-column:1 / -1">' + bankOptionsHtml(a.bankName) + '</select>' +
+      '<input class="bank-name-other" type="text" placeholder="Escribe el nombre del banco" value="' + otroValue.replace(/"/g, '&quot;') + '" style="grid-column:1 / -1; display:' + (otroValue ? 'block' : 'none') + '">' +
+      '<select class="bank-type">' + typeOptionsHtml(a.accountType) + '</select>' +
+      '<input class="bank-number" type="text" inputmode="numeric" placeholder="Número de cuenta" value="' + (a.accountNumber || '').replace(/"/g, '&quot;') + '">' +
+      '<input class="bank-holder" type="text" placeholder="Titular de la cuenta" value="' + (a.accountHolder || '').replace(/"/g, '&quot;') + '" style="grid-column:1 / -1">' +
+      '<input class="bank-cedula" type="text" placeholder="Cédula o RNC del titular" value="' + (a.cedulaRnc || '').replace(/"/g, '&quot;') + '" style="grid-column:1 / -1">' +
+      '<button type="button" class="bank-del">Quitar</button>'
+    );
+  }
+
+  function addBankRow(account) {
+    const row = document.createElement('div');
+    row.className = 'bank-row';
+    row.innerHTML = bankRowHtml(account);
+    row.querySelector('.bank-del').addEventListener('click', () => row.remove());
+    const select = row.querySelector('.bank-name-select');
+    const otherInput = row.querySelector('.bank-name-other');
+    select.addEventListener('change', () => {
+      otherInput.style.display = select.value === 'Otro' ? 'block' : 'none';
+    });
+    document.getElementById('bank-rows').appendChild(row);
+  }
+
+  function bankRowValue(row) {
+    const select = row.querySelector('.bank-name-select');
+    const bankName = select.value === 'Otro'
+      ? row.querySelector('.bank-name-other').value.trim()
+      : select.value;
+    return {
+      bankName,
+      accountType: row.querySelector('.bank-type').value,
+      accountNumber: row.querySelector('.bank-number').value.trim(),
+      accountHolder: row.querySelector('.bank-holder').value.trim(),
+      cedulaRnc: row.querySelector('.bank-cedula').value.trim(),
+    };
+  }
+
+  async function loadBankAccounts(slug) {
+    const el = document.getElementById('bank-rows');
+    el.innerHTML = '';
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bank-accounts', {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cargar las cuentas');
+      const accounts = await res.json();
+      accounts.forEach(a => addBankRow(a));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function saveBankAccounts() {
+    const slug = proSlug();
+    if (!slug) return;
+    document.getElementById('bank-error').style.display = 'none';
+    const accounts = [...document.querySelectorAll('#bank-rows .bank-row')]
+      .map(bankRowValue)
+      .filter(a => a.bankName || a.accountNumber);
+
+    const incomplete = accounts.some(a => !a.bankName || !a.accountType || !a.accountNumber || !a.accountHolder || !a.cedulaRnc);
+    if (incomplete) {
+      const errEl = document.getElementById('bank-error');
+      errEl.textContent = 'Completa banco, tipo, número, titular y cédula/RNC en cada cuenta (o quítala si no la vas a usar).';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('bank-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bank-accounts', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ accounts }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err) {
+      const errEl = document.getElementById('bank-error');
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Mi equipo (2026-08-23) — colaboradores adicionales al titular,
+     mismo patrón que Cuentas para transferencia. El titular NO vive aquí
+     (ya es professionals.name); solo se agregan/editan los demás. ===== */
+  function collabRowHtml(c) {
+    c = c || {};
+    return (
+      '<input class="collab-name" type="text" placeholder="Nombre" value="' + (c.name || '').replace(/"/g, '&quot;') + '">' +
+      '<input class="collab-role" type="text" placeholder="Rol (ej. Estilista)" value="' + (c.role || '').replace(/"/g, '&quot;') + '">' +
+      '<button type="button" class="collab-del">Quitar</button>'
+    );
+  }
+
+  function addCollabRow(collaborator) {
+    const row = document.createElement('div');
+    row.className = 'collab-row';
+    row.innerHTML = collabRowHtml(collaborator);
+    row.querySelector('.collab-del').addEventListener('click', () => row.remove());
+    document.getElementById('collab-rows').appendChild(row);
+  }
+
+  function collabRowValue(row) {
+    return {
+      name: row.querySelector('.collab-name').value.trim(),
+      role: row.querySelector('.collab-role').value.trim(),
+    };
+  }
+
+  async function loadCollaborators(slug) {
+    const el = document.getElementById('collab-rows');
+    el.innerHTML = '';
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/collaborators', {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cargar el equipo');
+      const collaborators = await res.json();
+      collaborators.forEach(c => addCollabRow(c));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function saveCollaborators() {
+    const slug = proSlug();
+    if (!slug) return;
+    document.getElementById('collab-error').style.display = 'none';
+    const collaborators = [...document.querySelectorAll('#collab-rows .collab-row')]
+      .map(collabRowValue)
+      .filter(c => c.name);
+
+    const btn = document.getElementById('collab-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/collaborators', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ collaborators }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err) {
+      const errEl = document.getElementById('collab-error');
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function logoutPro() {
+    localStorage.removeItem('bukea_pro_slug');
+    go('inicio');
+  }
+
+  /* ===== Mis citas (leídas del servidor por sesión — antes vivían solo en
+     localStorage y se perdían al cambiar de teléfono) ===== */
+  const PAY_LABELS = { cash: 'Efectivo', bank: 'Transferencia', tpago: 'tPago', card: 'Tarjeta' };
+
+  async function renderMisCitas() {
+    const container = document.getElementById('miscitas-list');
+    if (!getSession()) {
+      container.innerHTML =
+        '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
+      return;
+    }
+    container.innerHTML = '';
+    skeletonRows(container, 2);
+    let citas;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/me', { headers: authHeaders() });
+      if (res.status === 401) { container.innerHTML = ''; return; }
+      if (!res.ok) throw new Error('No se pudo cargar tus citas');
+      citas = await res.json();
+    } catch (err) {
+      container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
+      console.error(err);
+      return;
+    }
+
+    container.innerHTML = '';
+    if (citas.length === 0) {
+      container.innerHTML =
+        '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Todavía no has bukeado ninguna cita. Elige una categoría en el inicio y reserva con tu profesional de confianza.</p>';
+      const btn = document.createElement('button');
+      btn.className = 'cta';
+      btn.style.position = 'static';
+      btn.innerHTML = '<svg class="icon"><use href="#i-home"/></svg>Buscar un profesional';
+      btn.addEventListener('click', () => go('inicio'));
+      container.appendChild(btn);
+      return;
+    }
+    citas.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'cita-card';
+      card.innerHTML =
+        '<div class="c-top"><span class="c-pro"></span><span class="c-price"></span></div>' +
+        '<div class="c-bottom"><span class="c-when"></span><span class="c-svc"></span></div>' +
+        '<div class="c-bottom"><span class="c-place"></span><span class="c-pay"></span></div>';
+      card.querySelector('.c-pro').textContent = c.professionalName;
+      card.querySelector('.c-price').textContent = formatPrice(c.priceCents);
+      card.querySelector('.c-when').textContent = c.dayLabel + ' · ' + c.timeLabel;
+      card.querySelector('.c-svc').textContent = c.serviceName + (c.collaboratorName ? ' · Atiende: ' + c.collaboratorName : '');
+      card.querySelector('.c-place').textContent = c.businessName;
+      card.querySelector('.c-pay').textContent = PAY_LABELS[c.paymentMethod] || c.paymentMethod;
+
+      if (c.status !== 'cancelled') {
+        const dirBtn = document.createElement('button');
+        dirBtn.textContent = 'Cómo llegar';
+        dirBtn.style.cssText = 'display:block;margin-top:0.4rem;background:none;border:none;color:var(--teal-700);font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+        dirBtn.addEventListener('click', () => openDirections(c.businessName, c.neighborhood, c.lat, c.lng));
+        card.appendChild(dirBtn);
+      }
+
+      if (c.paymentMethod === 'bank' && c.status !== 'cancelled') {
+        if (c.receiptUrl) {
+          const link = document.createElement('a');
+          link.href = c.receiptUrl;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = 'Ver comprobante';
+          link.style.cssText = 'display:block;margin-top:0.4rem;font-size:0.8rem;font-weight:600;color:var(--teal-700)';
+          card.appendChild(link);
+        } else {
+          const attachBtn = document.createElement('button');
+          attachBtn.textContent = 'Adjuntar comprobante';
+          attachBtn.style.cssText = 'display:block;margin-top:0.4rem;background:none;border:none;color:var(--teal-700);font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+          attachBtn.addEventListener('click', () => attachReceiptToMiscita(c.id));
+          card.appendChild(attachBtn);
+        }
+      }
+
+      if (c.status === 'cancelled') {
+        card.style.opacity = '0.55';
+        const badge = document.createElement('span');
+        badge.textContent = 'Cancelada';
+        badge.style.cssText = 'display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600';
+        card.appendChild(badge);
+      } else if (!c.isPast) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancelar cita';
+        cancelBtn.style.cssText = 'margin-top:0.5rem;background:none;border:none;color:#b3261e;font-size:0.8rem;font-weight:600;cursor:pointer;padding:0';
+        cancelBtn.addEventListener('click', () => cancelBooking(c.id));
+        card.appendChild(cancelBtn);
+      }
+      container.appendChild(card);
+    });
+  }
+
+  function attachReceiptToMiscita(bookingId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf';
+    input.addEventListener('change', async () => {
+      if (!input.files[0]) return;
+      await uploadReceipt(bookingId, input.files[0]);
+      renderMisCitas();
+    });
+    input.click();
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
+        method: 'POST', headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo cancelar');
+      renderMisCitas();
+    } catch (err) {
+      alert('No se pudo cancelar la cita. Intenta de nuevo.');
+      console.error(err);
+    }
+  }
+
+  /* ===== Sesión del cliente (teléfono + PIN) ===== */
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
+  }
+
+  function firstName(name) {
+    return (name || '').trim().split(/\s+/)[0] || '';
+  }
+
+  function applySessionUI() {
+    const s = getSession();
+    const h1 = document.getElementById('home-greeting');
+    if (h1) h1.textContent = s ? '¿Qué buscas hoy, ' + firstName(s.name) + '?' : '¿Qué buscas hoy?';
+  }
+
+  // Login just-in-time: pide la cuenta solo cuando hace falta y luego continúa lo que ibas a hacer.
+  let pendingAfterLogin = null;
+  function requireAccount(onDone, leadText) {
+    if (getSession()) { onDone(); return; }
+    pendingAfterLogin = onDone || null;
+    welcomePhone = '';
+    document.getElementById('w-title').textContent = leadText ? 'Casi listo' : '¡Te damos la bienvenida!';
+    document.getElementById('w-lead').textContent = leadText || 'Ingresa tu número para continuar';
+    document.getElementById('w-phone').value = '';
+    // Si la cuenta es obligatoria para continuar (hay callback pendiente), no ofrecer "invitado".
+    document.getElementById('w-guest').style.display = pendingAfterLogin ? 'none' : 'block';
+    welcomeStep('phone');
+    go('welcome');
+  }
+
+  let welcomePhone = '';
+
+  /* ===== Login con Google y Apple =====
+     Un solo botón "activo" sirve para el cliente y, gracias a
+     requireAccount()/openPro(), también para entrar como negocio. */
+  function initSocialLogin() {
+    const gBtn = document.getElementById('btn-google');
+    const aBtn = document.getElementById('btn-apple');
+
+    if (GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+      });
+    } else if (gBtn) {
+      gBtn.disabled = true;
+      gBtn.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
+    }
+
+    if (APPLE_CLIENT_ID && window.AppleID) {
+      AppleID.auth.init({
+        clientId: APPLE_CLIENT_ID,
+        scope: 'name email',
+        redirectURI: window.location.origin + API_BASE + '/',
+        usePopup: true,
+      });
+    } else if (aBtn) {
+      aBtn.disabled = true;
+      aBtn.querySelector('.social-label').innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
+    }
+  }
+  window.addEventListener('load', initSocialLogin);
+
+  function loginWithGoogle() {
+    if (!GOOGLE_CLIENT_ID || !window.google) return;
+    google.accounts.id.prompt();
+  }
+
+  function handleGoogleCredential(response) {
+    socialLogin('/api/auth/google', { idToken: response.credential });
+  }
+
+  async function loginWithApple() {
+    if (!APPLE_CLIENT_ID || !window.AppleID) return;
+    wError('w-error-social');
+    try {
+      const result = await AppleID.auth.signIn();
+      const fullName = result.user && result.user.name
+        ? [result.user.name.firstName, result.user.name.lastName].filter(Boolean).join(' ')
+        : null;
+      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName });
+    } catch (err) {
+      if (err && err.error === 'popup_closed_by_user') return;
+      console.error(err);
+      wError('w-error-social', 'No se pudo iniciar sesión con Apple');
+    }
+  }
+
+  async function socialLogin(path, body) {
+    wError('w-error-social');
+    try {
+      const res = await fetch(API_BASE + path, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-social', data.error || 'No se pudo iniciar sesión');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-social', 'No se pudo conectar. Revisa tu internet.');
+    }
+  }
+
+  // Token de la sesión del cliente, para las llamadas del panel de negocio
+  // que ahora requieren estar autenticado (antes bastaba con el slug).
+  function authHeaders() {
+    const s = getSession();
+    return s && s.token ? { 'Authorization': 'Bearer ' + s.token } : {};
+  }
+
+  function welcomeStep(step) {
+    document.getElementById('w-step-phone').style.display = step === 'phone' ? 'block' : 'none';
+    document.getElementById('w-step-pin').style.display = step === 'pin' ? 'block' : 'none';
+    document.getElementById('w-step-new').style.display = step === 'new' ? 'block' : 'none';
+    document.getElementById('w-step-forgot').style.display = step === 'forgot' ? 'block' : 'none';
+    document.getElementById('w-step-otp').style.display = step === 'otp' ? 'block' : 'none';
+    if (step === 'forgot') {
+      document.getElementById('forgot-request').style.display = 'block';
+      document.getElementById('forgot-reset').style.display = 'none';
+      wError('w-error-forgot'); wError('w-error-reset');
+      document.getElementById('w-forgot-email').value = '';
+      document.getElementById('w-forgot-code').value = '';
+      document.getElementById('w-forgot-newpin').value = '';
+    }
+    if (step === 'otp') {
+      document.getElementById('otp-request').style.display = 'block';
+      document.getElementById('otp-verify').style.display = 'none';
+      wError('w-error-otpsend'); wError('w-error-otpverify');
+      document.getElementById('w-otp-code').value = '';
+    }
+  }
+
+  function wError(id, msg) {
+    const el = document.getElementById(id);
+    if (!msg) { el.style.display = 'none'; return; }
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function welcomeContinue() {
+    wError('w-error-phone');
+    welcomePhone = document.getElementById('w-phone').value;
+    const btn = document.getElementById('w-continue');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-phone', data.error || 'Intenta de nuevo');
+      if (data.exists) {
+        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋, ingresa tu PIN';
+        welcomeStep('pin');
+        document.getElementById('w-pin').focus();
+      } else {
+        welcomeStep('new');
+        document.getElementById('w-name').focus();
+      }
+    } catch (err) {
+      wError('w-error-phone', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function enterApp(session) {
+    if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
+    localStorage.removeItem('bukea_guest');
+    applySessionUI();
+    if (pendingAfterLogin) {
+      const cb = pendingAfterLogin;
+      pendingAfterLogin = null;
+      go('inicio');       // volver al flujo; el callback decide a dónde ir
+      cb();
+    } else {
+      go('inicio');
+    }
+  }
+
+  async function welcomeLogin() {
+    wError('w-error-pin');
+    const btn = document.getElementById('w-login');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone, pin: document.getElementById('w-pin').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-pin', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-pin', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function welcomeRegister() {
+    wError('w-error-new');
+    const btn = document.getElementById('w-register');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: welcomePhone,
+          name: document.getElementById('w-name').value,
+          email: document.getElementById('w-email').value,
+          pin: document.getElementById('w-newpin').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-new', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Olvidé mi PIN (2026-08-23) — recuperación por correo, ver
+     backend/lib/mailer.js. Si el correo no está activo en el servidor,
+     el backend responde 503 y aquí se lo decimos al usuario. ===== */
+  async function sendForgotCode() {
+    wError('w-error-forgot');
+    const email = document.getElementById('w-forgot-email').value.trim();
+    const btn = document.getElementById('w-forgot-send');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/forgot-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-forgot', data.error || 'Intenta de nuevo');
+      forgotEmail = email;
+      document.getElementById('forgot-request').style.display = 'none';
+      document.getElementById('forgot-reset').style.display = 'block';
+      document.getElementById('w-forgot-code').focus();
+    } catch (err) {
+      wError('w-error-forgot', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  let forgotEmail = '';
+
+  async function confirmForgotReset() {
+    wError('w-error-reset');
+    const btn = document.getElementById('w-forgot-confirm');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/reset-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail,
+          code: document.getElementById('w-forgot-code').value,
+          newPin: document.getElementById('w-forgot-newpin').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-reset', data.error || 'Intenta de nuevo');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ===== Código por WhatsApp (2026-08-24) — alterna al PIN para una cuenta
+     ya existente (welcomePhone ya viene confirmado desde welcomeContinue()).
+     Ver docs/WHATSAPP-SETUP.md: dormido hasta que Meta apruebe las
+     credenciales, GET /otp/status dice si ya está activo. ===== */
+  async function checkOtpStatus() {
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/status');
+      const data = await res.json();
+      const link = document.getElementById('w-otp-link');
+      if (link) link.style.display = data.enabled ? 'block' : 'none';
+    } catch (err) { /* si falla, el enlace se queda oculto */ }
+  }
+  window.addEventListener('load', checkOtpStatus);
+
+  async function sendOtpCode() {
+    wError('w-error-otpsend');
+    const btn = document.getElementById('w-otp-send');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-otpsend', data.error || 'Intenta de nuevo');
+      document.getElementById('otp-request').style.display = 'none';
+      document.getElementById('otp-verify').style.display = 'block';
+      document.getElementById('w-otp-code').focus();
+    } catch (err) {
+      wError('w-error-otpsend', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function confirmOtpCode() {
+    wError('w-error-otpverify');
+    const btn = document.getElementById('w-otp-confirm');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/otp/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: welcomePhone, code: document.getElementById('w-otp-code').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) return wError('w-error-otpverify', data.error || 'Intenta de nuevo');
+      if (!data.exists) return wError('w-error-otpverify', 'Esa cuenta no existe todavía. Usa "Usar otro número" para crearla');
+      enterApp(data);
+    } catch (err) {
+      wError('w-error-otpverify', 'No se pudo conectar. Revisa tu internet.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function continueAsGuest() {
+    pendingAfterLogin = null;
+    go('inicio');
+  }
+
+  /* ===== Onboarding: "¿Qué servicio buscas?" (solo la primera vez) ===== */
+  function maybeShowOnboarding() {
+    if (localStorage.getItem('bukea_onboarded')) return;
+    document.getElementById('onboarding').classList.add('show');
+  }
+  function closeOnboarding() {
+    localStorage.setItem('bukea_onboarded', '1');
+    document.getElementById('onboarding').classList.remove('show');
+  }
+  function onboardPick(key, label) {
+    localStorage.setItem('bukea_pref_cat', key);
+    closeOnboarding();
+    openCategory(key, label);
+  }
+
+  /* Arranque: splash con el logo → inicio (explora sin cuenta), y la primera
+     vez sube la hoja de onboarding. El login se pide just-in-time al reservar
+     o al abrir "Mis citas" / "Mi negocio". */
+  const SPLASH_MS = 1400;
+  function boot() {
+    applySessionUI();
+
+    // Enlaces directos desde el marketplace público (bukeard.com):
+    // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —
+    // sin esto los botones de las páginas públicas no tendrían a dónde ir.
+    const params = new URLSearchParams(window.location.search);
+    const proSlugParam = params.get('pro');
+    const joinParam = params.get('join');
+    if (proSlugParam) {
+      loadProfessional(proSlugParam);
+      go('perfil');
+      return;
+    }
+    if (joinParam) {
+      go('inicio');
+      openPro();
+      return;
+    }
+
+    go('splash');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => {
+      if (document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'splash') {
+        go('inicio');
+      }
+      maybeShowOnboarding();
+    }, reduce ? 300 : SPLASH_MS);
+  }
+  boot();
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) go('inicio');
+  });
+</script>
+
+</body>
+</html>

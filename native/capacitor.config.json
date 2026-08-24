@@ -2,10 +2,6 @@
   "appId": "com.bukea.app",
   "appName": "Bukea",
   "webDir": "www",
-  "server": {
-    "url": "https://www.bukeard.com/app/",
-    "cleartext": false
-  },
   "ios": {
     "backgroundColor": "#0f6f6b",
     "contentInset": "always"

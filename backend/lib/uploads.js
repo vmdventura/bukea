@@ -23,8 +23,12 @@ const receiptUpload = multer({
   },
 });
 
+// Absoluta (no solo el path) — la app empaquetada de iOS no comparte
+// origen con bukeard.com, así que un link relativo abriría en el sitio
+// equivocado (o en ninguno).
 function receiptUrl(req, storedPath) {
-  return storedPath ? req.baseUrlPrefix + '/uploads/receipts/' + storedPath.split('/').pop() : null;
+  if (!storedPath) return null;
+  return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/uploads/receipts/${storedPath.split('/').pop()}`;
 }
 
 module.exports = { receiptUpload, receiptUrl };

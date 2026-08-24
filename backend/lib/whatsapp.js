@@ -23,7 +23,7 @@ async function sendAuthCode(phone, code) {
     type: 'template',
     template: {
       name: process.env.WHATSAPP_AUTH_TEMPLATE,
-      language: { code: 'es' },
+      language: { code: 'es_DO' },
       components: [
         { type: 'body', parameters: [{ type: 'text', text: code }] },
         { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] },
