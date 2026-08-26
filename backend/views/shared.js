@@ -37,29 +37,7 @@ const CITY_LABELS = {
 
 const CONTACT_EMAIL = 'hola@bukeard.com';
 
-// QR decorativo para "Descargar la app" — las apps de Play Store/App
-// Store todavía no están publicadas (ver ROADMAP 5.5), así que esto es
-// a propósito un patrón que solo PARECE un QR (no codifica ninguna URL
-// real) en vez de un código escaneable que llevaría a un 404.
-function fakeQr(seed) {
-  const size = 11;
-  const cell = 4;
-  const px = size * cell;
-  let s = seed;
-  const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
-  let cells = '';
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const inTL = x < 3 && y < 3;
-      const inTR = x > size - 4 && y < 3;
-      const inBL = x < 3 && y > size - 4;
-      if (inTL || inTR || inBL) continue;
-      if (rand() > 0.55) cells += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}"/>`;
-    }
-  }
-  const finder = (fx, fy) => `<rect x="${fx}" y="${fy}" width="${3 * cell}" height="${3 * cell}" fill="none" stroke="currentColor" stroke-width="${cell * 0.9}"/><rect x="${fx + cell}" y="${fy + cell}" width="${cell}" height="${cell}"/>`;
-  return `<svg viewBox="0 0 ${px} ${px}" width="52" height="52" fill="currentColor" aria-hidden="true">${cells}${finder(0, 0)}${finder((size - 3) * cell, 0)}${finder(0, (size - 3) * cell)}</svg>`;
-}
+const { getSettings } = require('../lib/settings');
 
 const AVATAR_GRADIENTS = [
   'linear-gradient(150deg,#12938f,#0a4f4d)',
@@ -96,32 +74,42 @@ function esc(value) {
 // <head> + estilos compartidos por las 4 páginas del marketplace. BASE es
 // el prefijo donde vive la app (p.ej. /app) — todo lo que enlaza HACIA la
 // app (Bukear cita, Únete, login) pasa por ahí.
-// Sprite de íconos — mismo lenguaje visual que la app (trazo 1.75px,
-// esquinas redondeadas, sin relleno salvo el check). Ver DESIGN.md.
+// Sprite de íconos — ecosistema Lucide (lucide-static, grid 24x24, trazo 2px),
+// la misma fuente que lucide-react/lucide-react-native. Excepciones a
+// propósito, sin equivalente en Lucide: i-whatsapp (marca) y los pictogramas
+// de categoría c-* (ilustrativos, propios de Bukea). Ver DESIGN.md.
 const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
-<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><line x1="14.7" y1="14.7" x2="20" y2="20"/></symbol>
-<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
 <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 19.5 5.3 15.6A8 8 0 1 1 8.7 19L4 19.5Z"/><path d="M9 12.3l1.8 1.8 4-4.3"/></symbol>
-<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.7"/><line x1="4.5" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="19.5" y2="12"/></symbol>
-<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v5.3l3.6 2.1"/></symbol>
-<symbol id="i-chart" viewBox="0 0 24 24"><line x1="3.5" y1="20" x2="20.5" y2="20"/><rect x="5.5" y="13.5" width="3.4" height="6.5" rx="0.6"/><rect x="10.3" y="8.5" width="3.4" height="11.5" rx="0.6"/><rect x="15.1" y="4.5" width="3.4" height="15.5" rx="0.6"/></symbol>
-<symbol id="i-percent" viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.3"/><circle cx="17" cy="17" r="2.3"/><line x1="18.2" y1="5.8" x2="5.8" y2="18.2"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
-<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
-<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
-<symbol id="i-mail" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></symbol>
-<symbol id="i-menu" viewBox="0 0 24 24"><line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/></symbol>
-<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c0-3.4 2.8-5.8 6.2-5.8s6.2 2.4 6.2 5.8"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M15.5 14.7c2.5.4 4.2 2.4 4.2 5.3"/></symbol>
-<symbol id="i-link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5l1.4-1.4a4 4 0 0 1 5.7 5.7L16.7 12"/><path d="M13 17.5l-1.4 1.4a4 4 0 0 1-5.7-5.7L7.3 12"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+<symbol id="i-percent" viewBox="0 0 24 24"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
 <symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
 <symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
-<symbol id="c-salon" viewBox="0 0 24 24"><path d="M5 5.5h14v3H5z"/><path d="M6.5 8.5v11M9.7 8.5v11M12.9 8.5v11M16.1 8.5v11M19 8.5v6.5"/></symbol>
+<symbol id="c-salon" viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="4.5"/><circle cx="15.5" cy="8.5" r="1.8"/><path d="M11.2 5.3C8 5.8 5 7 5 8.5"/><path d="M11.2 11.7C8 11.2 5 10 5 8.5"/><path d="M14 12.8 12.3 19.5a1.8 1.8 0 0 1-1.8 1.5H8.5"/><path d="M1 5.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/><path d="M.5 8.5c.9-.9 1.8-.9 2.7 0s1.8.9 2.7 0"/><path d="M1 11.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/></symbol>
 <symbol id="c-maquillaje" viewBox="0 0 24 24"><path d="M9.3 10.6 11 5.4h2l1.7 5.2"/><rect x="9.4" y="10.6" width="5.2" height="5.4" rx="0.6"/><rect x="9" y="16" width="6" height="5.4" rx="1.2"/></symbol>
 <symbol id="c-cejas" viewBox="0 0 24 24"><path d="M18.4 2.9 14 7.3l-1.6-1.6a1.6 1.6 0 0 0-2.3 0L8.3 7.5l8.2 8.2 1.8-1.8a1.6 1.6 0 0 0 0-2.3L16.7 10l4.4-4.4a1.8 1.8 0 1 0-2.7-2.7Z"/><path d="M9.2 8.6c-1.8 2.7-3.6 3.2-6.2 3.6l7.2 9c1.8-.9 5.4-4.4 5.4-6.2"/><path d="M13.6 16.4 4.8 14.2"/></symbol>
-<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.3" r="1.9"/><path d="M12 6.6v5.6"/><path d="M12 8.4 7.4 5.6"/><path d="M12 8.4l4.6-2.8"/><path d="M12 12.2 8.3 20"/><path d="M12 12.2l3.7 7.8"/></symbol>
+<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
 </defs></svg>`;
 
-function pageShell({ base, title, description, canonicalPath, bodyHtml, ogImage }) {
+// Banner de anuncio (2026-08-24, Configuración del panel de administración)
+// — texto corto activable/desactivable sin deploy, para avisos de
+// mantenimiento o promociones del piloto. Solo en el marketplace público
+// por ahora (no en el panel de negocio ni en la app empacada).
+async function pageShell({ base, title, description, canonicalPath, bodyHtml, ogImage }) {
+  const settings = await getSettings();
+  const bannerHtml = settings.bannerEnabled && settings.bannerText
+    ? `<div class="site-banner">${esc(settings.bannerText)}</div>`
+    : '';
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -129,7 +117,7 @@ function pageShell({ base, title, description, canonicalPath, bodyHtml, ogImage 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
-<meta name="theme-color" content="#0f6f6b">
+<meta name="theme-color" content="#002626">
 <link rel="canonical" href="${esc(canonicalPath)}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
@@ -173,7 +161,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   p { text-wrap: pretty; }
   a { color: inherit; }
   img { max-width: 100%; }
-  .icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
   /* Foco de teclado visible en todo el sitio — nunca lo suprimimos sin
@@ -182,6 +170,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     outline: 2.5px solid var(--teal-600); outline-offset: 2px; border-radius: 4px;
   }
 
+  .site-banner { background: var(--gold-100); color: var(--gold-700); text-align: center; font-size: 0.85rem; font-weight: 700; padding: 0.55rem 20px; }
   .site-header-wrap { position: sticky; top: 0; z-index: 40; background: rgba(247,251,250,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; transition: box-shadow 260ms var(--ease-out-quart), border-color 260ms var(--ease-out-quart); }
   .site-header-wrap.scrolled { box-shadow: 0 6px 24px rgba(15,40,38,0.08); border-bottom-color: var(--line); }
   .site-header { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
@@ -196,12 +185,13 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     text-transform: uppercase; letter-spacing: 0.03em;
   }
   .nav-short { display: none; }
-  .site-nav a:not(.btn)::after, .nav-dropdown-toggle::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 8px; height: 2px; background: var(--teal-600); border-radius: 2px; transition: right 220ms var(--ease-out-quart); }
-  .site-nav a:not(.btn):hover, .nav-dropdown-toggle:hover { color: var(--teal-700); }
-  .site-nav a:not(.btn):hover::after, .nav-dropdown-toggle:hover::after { right: 0; }
-  .icon-chevron { width: 14px; height: 14px; transition: transform 200ms var(--ease-out-quart); }
+  .site-nav a:not(.btn):not(.nav-cta-negocio)::after, .nav-dropdown-toggle::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 8px; height: 2px; background: var(--teal-600); border-radius: 2px; transition: right 220ms var(--ease-out-quart); }
+  .site-nav a:not(.btn):not(.nav-cta-negocio):hover, .nav-dropdown-toggle:hover { color: var(--teal-700); }
+  .site-nav a:not(.btn):not(.nav-cta-negocio):hover::after, .nav-dropdown-toggle:hover::after { right: 0; }
   .nav-dropdown { position: relative; }
-  .nav-dropdown.open .icon-chevron { transform: rotate(180deg); }
+  .nav-dropdown-toggle .icon { width: 20px; height: 20px; }
+  .nav-cta-negocio { display: inline-flex; align-items: center; background: oklch(94% 0.04 150); color: oklch(38% 0.1 150); padding: 0.4rem 0.9rem; border-radius: 999px; transition: background 200ms var(--ease-out-quart); }
+  .nav-cta-negocio:hover { background: oklch(90% 0.06 150); color: var(--teal-900); }
   .nav-dropdown-menu {
     position: absolute; top: 100%; right: 0; transform: translateY(6px);
     background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sh-3);
@@ -211,15 +201,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   }
   .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
   .nav-dropdown-menu a { padding: 0.7rem 0.9rem; min-height: auto; border-radius: 9px; color: var(--ink); }
-  .nav-dropdown-menu a.nav-dropdown-primary { color: var(--teal-700); font-weight: 800; }
-  .nav-dropdown-menu a.nav-dropdown-primary:hover { background: var(--teal-50); }
   .nav-dropdown-divider { height: 1px; background: var(--line); margin: 0.35rem 0.4rem; flex: none; }
-  .nav-dropdown-download { padding: 0.5rem 0.9rem 0.6rem; }
-  .nav-dropdown-label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.55rem; }
-  .qr-row { display: flex; gap: 0.7rem; }
-  .qr-item { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; flex: 1; }
-  .qr-item svg { color: var(--ink); background: var(--teal-50); border-radius: 8px; padding: 5px; }
-  .qr-item span { font-size: 0.72rem; font-weight: 700; color: var(--soft); }
   .nav-dropdown-menu a::after { content: none; }
   .nav-dropdown-menu a:hover { background: var(--teal-50); color: var(--teal-700); }
 
@@ -283,30 +265,23 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
 </head>
 <body>
 ${ICON_SPRITE}
+${bannerHtml}
 <header class="site-header-wrap">
   <div class="wrap site-header">
     <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
     <nav class="site-nav">
       <a href="/" class="nav-home">Inicio</a>
-      <a href="/negocio"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
+      <a href="/negocio" class="nav-cta-negocio"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
       <div class="nav-dropdown">
-        <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-          Menú <svg class="icon icon-chevron"><use href="#i-chevron-down"/></svg>
+        <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Menú">
+          <svg class="icon"><use href="#i-menu"/></svg>
         </button>
         <div class="nav-dropdown-menu">
-          <a href="${base}/" class="nav-dropdown-primary">Entrar</a>
-          <div class="nav-dropdown-divider"></div>
           <a href="/negocios">Para negocios</a>
           <a href="/precios">Precios</a>
           <a href="/mapa">Ver en mapa</a>
           <div class="nav-dropdown-divider"></div>
-          <div class="nav-dropdown-download">
-            <span class="nav-dropdown-label">Descargar la app</span>
-            <div class="qr-row">
-              <div class="qr-item">${fakeQr(7)}<span>Google Play</span></div>
-              <div class="qr-item">${fakeQr(23)}<span>App Store</span></div>
-            </div>
-          </div>
+          <a href="/descargar">Descargar la app</a>
           <div class="nav-dropdown-divider"></div>
           <a href="/blog">Blog</a>
           <a href="/contacto">Ayuda y servicio al cliente</a>

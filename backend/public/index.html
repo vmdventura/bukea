@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bukea, tu cita en 60 segundos</title>
 <meta name="description" content="Bukea tu cita de barbería, uñas, salón, maquillaje y cejas en República Dominicana. Paga en efectivo o transferencia, con recordatorio por WhatsApp.">
-<meta name="theme-color" content="#0f6f6b">
+<meta name="theme-color" content="#002626">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Bukea">
@@ -108,7 +108,7 @@
 
   .icon {
     width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none;
-    fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
   }
 
   /* ===== Pase de pulido premium (Soft UI Evolution) ===== */
@@ -209,10 +209,10 @@
   }
   .cat-ic {
     width: 24px; height: 24px; fill: none; stroke: var(--teal-900);
-    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
   }
 
-  /* Onboarding — hoja "¿Qué servicio buscas?" (bottom sheet, primera vez) */
+  /* Sistema de hojas (bottom sheet) reutilizado por "Cómo llegar" y otros flujos */
   .sheet-backdrop {
     position: fixed; inset: 0; z-index: 60; display: none;
     background: rgba(10, 30, 28, 0.45); backdrop-filter: blur(2px);
@@ -229,10 +229,8 @@
   @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .sheet-backdrop.show { animation: none; } }
   .sheet-handle { width: 42px; height: 5px; border-radius: 999px; background: var(--line); margin: 0.2rem auto 1rem; }
-  .sheet .s-brand { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 1.7rem; color: var(--brand-teal); line-height: 1; text-align: center; }
   .sheet h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.35rem; color: var(--ink); margin: 0.5rem 0 0.25rem; text-align: center; }
   .sheet .s-sub { font-size: 0.85rem; color: var(--soft); margin: 0 0 1.1rem; line-height: 1.45; text-align: center; }
-  .sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
   .sheet-item {
     display: flex; align-items: center; gap: 0.6rem; text-align: left;
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
@@ -243,8 +241,6 @@
   .sheet-item:hover { border-color: var(--teal-500); }
   a.sheet-item { text-decoration: none; }
   .sheet-item:active { transform: scale(0.98); }
-  .sheet-item .cat-badge { width: 40px; height: 40px; }
-  .sheet-item .cat-ic { width: 21px; height: 21px; }
   .sheet-skip {
     display: block; margin: 1.1rem auto 0.2rem; background: none; border: none;
     font-family: inherit; font-size: 0.9rem; font-weight: 700; color: var(--soft);
@@ -788,37 +784,38 @@
 
 </style>
 
-<!-- Sprite de iconos — trazo consistente, ver DESIGN.md -->
+<!-- Sprite de iconos — ecosistema Lucide (lucide-static, grid 24x24, trazo
+     2px), la misma fuente que lucide-react/lucide-react-native. Excepciones
+     a propósito, sin equivalente en Lucide: i-whatsapp (marca) y los
+     pictogramas de categoría c-* (ilustrativos, propios de Bukea). Ver
+     DESIGN.md -->
 <svg style="position:absolute; width:0; height:0" aria-hidden="true">
 <defs>
-<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><line x1="14.7" y1="14.7" x2="20" y2="20"/></symbol>
-<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V19a1 1 0 0 0 1 1h3v-5.5h4V20h3a1 1 0 0 0 1-1v-8.5"/></symbol>
-<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></symbol>
-<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M4.8 20c0-4 3.2-6.8 7.2-6.8s7.2 2.8 7.2 6.8"/></symbol>
-<symbol id="i-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.3l2.55 5.4 5.85.7-4.35 4.1 1.15 5.8L12 16.3l-5.2 2.8 1.15-5.8-4.35-4.1 5.85-.7L12 3.3Z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
 <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 19.5 5.3 15.6A8 8 0 1 1 8.7 19L4 19.5Z"/><path d="M9 12.3l1.8 1.8 4-4.3"/></symbol>
-<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.7"/><line x1="4.5" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="19.5" y2="12"/></symbol>
-<symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="4.5" y1="10" x2="4.5" y2="18"/><line x1="9.5" y1="10" x2="9.5" y2="18"/><line x1="14.5" y1="10" x2="14.5" y2="18"/><line x1="19.5" y1="10" x2="19.5" y2="18"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="2" y1="20.5" x2="22" y2="20.5"/></symbol>
-<symbol id="i-tpago" viewBox="0 0 24 24"><rect x="7.3" y="2.5" width="9" height="19" rx="2"/><line x1="10.3" y1="19" x2="13.3" y2="19"/><path d="M18.3 8.7a4.8 4.8 0 0 1 0 6.6" opacity=".65"/><path d="M20.2 6.8a7.6 7.6 0 0 1 0 10.4" opacity=".35"/></symbol>
-<symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><line x1="2.5" y1="10" x2="21.5" y2="10"/><line x1="5" y1="14.5" x2="9" y2="14.5"/></symbol>
-<symbol id="i-camera" viewBox="0 0 24 24"><path d="M8.2 7 9.6 4.7h4.8L15.8 7H19a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="3.6"/></symbol>
-<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M14.5 5 8 12l6.5 7"/></symbol>
-<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9.5 5 16 12l-6.5 7"/></symbol>
-<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11A6.5 6.5 0 1 0 5.5 10c0 4.9 6.5 11 6.5 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
-<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v5.3l3.6 2.1"/></symbol>
-<symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6.3" cy="6.3" r="2.3"/><circle cx="6.3" cy="17.7" r="2.3"/><line x1="8.2" y1="7.7" x2="20" y2="19"/><line x1="8.2" y1="16.3" x2="20" y2="5"/></symbol>
-<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.5c.5 3 2 4.5 5 5-3 .5-4.5 2-5 5-.5-3-2-4.5-5-5 3-.5 4.5-2 5-5Z"/><path d="M19 14.5c.3 1.6 1 2.3 2.6 2.6-1.6.3-2.3 1-2.6 2.6-.3-1.6-1-2.3-2.6-2.6 1.6-.3 2.3-1 2.6-2.6Z" opacity=".7"/></symbol>
-<symbol id="i-hair" viewBox="0 0 24 24"><path d="M4 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/><path d="M4 13c3 0 3 3 6 3s3-3 6-3 3 3 6 3" opacity=".65"/><path d="M4 19c3 0 3 2.4 6 2.4s3-2.4 6-2.4 3 2.4 6 2.4" opacity=".4"/></symbol>
-<symbol id="i-brush" viewBox="0 0 24 24"><line x1="6" y1="18.5" x2="14.5" y2="10"/><path d="M15 9.3c.3 1.5 1 2.2 2.5 2.5-1.5.3-2.2 1-2.5 2.5-.3-1.5-1-2.2-2.5-2.5 1.5-.3 2.2-1 2.5-2.5Z" fill="currentColor" stroke="none"/></symbol>
-<symbol id="i-brow" viewBox="0 0 24 24"><path d="M3 14.5c2.5-6 7-8.5 9-8.5s6.5 2.5 9 8.5"/><line x1="7" y1="9" x2="6" y2="6.5"/><line x1="12" y1="7.3" x2="12" y2="4.8"/><line x1="17" y1="9" x2="18" y2="6.5"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24"><path d="M10 18v-7"/><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M3 22h18"/><path d="M6 18v-7"/></symbol>
+<symbol id="i-tpago" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/></symbol>
 <!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
 <symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
 <symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
-<symbol id="c-salon" viewBox="0 0 24 24"><path d="M5 5.5h14v3H5z"/><path d="M6.5 8.5v11M9.7 8.5v11M12.9 8.5v11M16.1 8.5v11M19 8.5v6.5"/></symbol>
+<symbol id="c-salon" viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="4.5"/><circle cx="15.5" cy="8.5" r="1.8"/><path d="M11.2 5.3C8 5.8 5 7 5 8.5"/><path d="M11.2 11.7C8 11.2 5 10 5 8.5"/><path d="M14 12.8 12.3 19.5a1.8 1.8 0 0 1-1.8 1.5H8.5"/><path d="M1 5.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/><path d="M.5 8.5c.9-.9 1.8-.9 2.7 0s1.8.9 2.7 0"/><path d="M1 11.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/></symbol>
 <symbol id="c-maquillaje" viewBox="0 0 24 24"><path d="M9.3 10.6 11 5.4h2l1.7 5.2"/><rect x="9.4" y="10.6" width="5.2" height="5.4" rx="0.6"/><rect x="9" y="16" width="6" height="5.4" rx="1.2"/></symbol>
 <symbol id="c-cejas" viewBox="0 0 24 24"><path d="M18.4 2.9 14 7.3l-1.6-1.6a1.6 1.6 0 0 0-2.3 0L8.3 7.5l8.2 8.2 1.8-1.8a1.6 1.6 0 0 0 0-2.3L16.7 10l4.4-4.4a1.8 1.8 0 1 0-2.7-2.7Z"/><path d="M9.2 8.6c-1.8 2.7-3.6 3.2-6.2 3.6l7.2 9c1.8-.9 5.4-4.4 5.4-6.2"/><path d="M13.6 16.4 4.8 14.2"/></symbol>
-<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.3" r="1.9"/><path d="M12 6.6v5.6"/><path d="M12 8.4 7.4 5.6"/><path d="M12 8.4l4.6-2.8"/><path d="M12 12.2 8.3 20"/><path d="M12 12.2l3.7 7.8"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+<symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 </defs>
 </svg>
 
@@ -1280,6 +1277,15 @@
     <h1 class="app-h1">Mis citas</h1>
     <p class="app-sub">Tus reservas en Bukea</p>
     <div id="miscitas-list"></div>
+
+    <!-- Mi cuenta: visible solo con sesión. "Eliminar mi cuenta" es
+         requisito del App Store (regla 5.1.1) para toda app con registro. -->
+    <div id="account-box" style="display:none;margin-top:2rem;padding-top:1.2rem;border-top:1px solid var(--line, rgba(0,0,0,0.08))">
+      <p class="sec-title">Mi cuenta</p>
+      <p id="account-who" style="color:var(--soft);font-size:0.85rem;margin:0 0 0.8rem"></p>
+      <button class="add-svc" style="width:100%" onclick="clientLogout()">Cerrar sesión</button>
+      <button id="btn-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
+    </div>
   </div>
 
   <!-- ============ FILA VIRTUAL ============ -->
@@ -1314,25 +1320,6 @@
     <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-txt">Fila</span></button>
     <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
     <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
-  </div>
-
-  <!-- ============ ONBOARDING (hoja: ¿qué servicio buscas?) ============ -->
-  <div class="sheet-backdrop" id="onboarding">
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="s-brand">b</div>
-      <h2>¿Qué servicio buscas?</h2>
-      <p class="s-sub">Lo ponemos primero para que reserves más rápido. Puedes cambiarlo cuando quieras.</p>
-      <div class="sheet-grid">
-        <button class="sheet-item" onclick="onboardPick('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span>Barbería</button>
-        <button class="sheet-item" onclick="onboardPick('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span>Uñas</button>
-        <button class="sheet-item" onclick="onboardPick('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span>Salón</button>
-        <button class="sheet-item" onclick="onboardPick('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span>Maquillaje</button>
-        <button class="sheet-item" onclick="onboardPick('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span>Cejas &amp; MUA</button>
-        <button class="sheet-item" onclick="onboardPick('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span>Pilates</button>
-      </div>
-      <button class="sheet-skip" onclick="closeOnboarding()">Ahora no</button>
-    </div>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -2627,6 +2614,7 @@
 
   async function renderMisCitas() {
     const container = document.getElementById('miscitas-list');
+    renderAccountBox();
     if (!getSession()) {
       container.innerHTML =
         '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
@@ -2746,6 +2734,46 @@
     try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
   }
 
+  /* ===== Mi cuenta (cerrar sesión y eliminar cuenta) ===== */
+  function renderAccountBox() {
+    const box = document.getElementById('account-box');
+    if (!box) return;
+    const s = getSession();
+    box.style.display = s ? 'block' : 'none';
+    if (s) {
+      const who = document.getElementById('account-who');
+      who.textContent = s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+    }
+  }
+
+  window.clientLogout = function () {
+    localStorage.removeItem('bukea_session');
+    localStorage.removeItem('bukea_pro_slug');
+    applySessionUI();
+    renderMisCitas();
+    go('inicio');
+  };
+
+  window.deleteMyAccount = async function () {
+    const ok = confirm('¿Seguro que quieres eliminar tu cuenta de Bukea?\n\nSe borran tus datos de acceso y tu cuenta queda desactivada. Esta acción no se puede deshacer.');
+    if (!ok) return;
+    const ok2 = confirm('Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?');
+    if (!ok2) return;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/delete-account', { method: 'POST', headers: authHeaders() });
+      if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
+      localStorage.removeItem('bukea_session');
+      localStorage.removeItem('bukea_pro_slug');
+      applySessionUI();
+      alert('Tu cuenta fue eliminada. Gracias por probar Bukea.');
+      go('inicio');
+      renderMisCitas();
+    } catch (err) {
+      alert('No se pudo eliminar la cuenta. Revisa tu conexión e intenta de nuevo.');
+      console.error(err);
+    }
+  };
+
   function firstName(name) {
     return (name || '').trim().split(/\s+/)[0] || '';
   }
@@ -2788,6 +2816,19 @@
      tiene esa restricción — su SDK web funciona igual en ambos casos. */
   const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
+  /* El plugin nativo (GoogleAuth) necesita un iosClientId real (creado en
+     Google Cloud Console para el bundle ID com.bukea.app) en
+     capacitor.config.json — mientras Víctor no lo entregue, ese campo
+     queda como placeholder "__IOS_GOOGLE_CLIENT_ID__". Inicializar el SDK
+     nativo de Google con ese valor no falla con un error manejable: hace
+     crashear la app entera. Por eso se verifica ANTES de tocar el plugin,
+     usando Capacitor.getConfig() (expone en runtime el mismo
+     capacitor.config.json que ya está empacado en el binario nativo). */
+  const iosGoogleClientId = isNativeApp && window.Capacitor.getConfig
+    ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth && window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId)
+    : null;
+  const nativeGoogleReady = !isNativeApp || (!!iosGoogleClientId && iosGoogleClientId.indexOf('__') !== 0);
+
   // Reintenta unos segundos antes de rendirse: en la app empaquetada
   // (iOS/Capacitor) el HTML local carga instantáneo, así que el evento
   // "load" puede disparar antes de que accounts.google.com/gsi/client
@@ -2797,13 +2838,18 @@
     if (attemptsLeft === undefined) attemptsLeft = 20; // ~5s a 250ms por intento
     const gBtn = document.getElementById('btn-google');
     const aBtn = document.getElementById('btn-apple');
-    const googleReady = isNativeApp ? !!(window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) : (window.google && google.accounts && google.accounts.id);
-    const appleReady = window.AppleID;
+    const googleReady = isNativeApp
+      ? (nativeGoogleReady && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth))
+      : (window.google && google.accounts && google.accounts.id);
+    // En la app empaquetada el login de Apple es el nativo del sistema
+    // (plugin SignInWithApple) — no depende del SDK web ni de APPLE_CLIENT_ID.
+    const nativeAppleReady = isNativeApp && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple);
+    const appleReady = nativeAppleReady || window.AppleID;
 
-    if (attemptsLeft > 0 && GOOGLE_CLIENT_ID && !googleReady) {
+    if (attemptsLeft > 0 && GOOGLE_CLIENT_ID && nativeGoogleReady && !googleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
-    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !appleReady) {
+    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !isNativeApp && !appleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
 
@@ -2822,7 +2868,10 @@
       gBtn.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
     }
 
-    if (APPLE_CLIENT_ID && appleReady) {
+    if (nativeAppleReady) {
+      // Nada que inicializar: el plugin nativo presenta la hoja del sistema
+      // directamente en loginWithApple(). El botón queda activo.
+    } else if (APPLE_CLIENT_ID && appleReady) {
       AppleID.auth.init({
         clientId: APPLE_CLIENT_ID,
         scope: 'name email',
@@ -2842,7 +2891,7 @@
   async function loginWithGoogle() {
     if (!GOOGLE_CLIENT_ID) return;
     if (isNativeApp) {
-      if (!window.Capacitor.Plugins.GoogleAuth) return;
+      if (!nativeGoogleReady || !window.Capacitor.Plugins.GoogleAuth) return;
       wError('w-error-social');
       try {
         const googleUser = await window.Capacitor.Plugins.GoogleAuth.signIn();
@@ -2863,6 +2912,27 @@
   }
 
   async function loginWithApple() {
+    // En la app empaquetada (iOS) el popup web de Apple no funciona dentro
+    // del WKWebView — se usa el Sign in with Apple nativo del sistema
+    // (plugin SignInWithApple); el backend acepta el token con audience
+    // com.bukea.app además del Service ID web.
+    if (isNativeApp && window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple) {
+      wError('w-error-social');
+      try {
+        const result = await window.Capacitor.Plugins.SignInWithApple.authorize({
+          scopes: 'name email',
+        });
+        const r = result.response || {};
+        const fullName = [r.givenName, r.familyName].filter(Boolean).join(' ') || null;
+        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName });
+      } catch (err) {
+        // El usuario cerró la hoja del sistema: no es un error que mostrar.
+        if (err && /cancel/i.test(String(err.message || err.error || ''))) return;
+        console.error(err);
+        wError('w-error-social', 'No se pudo iniciar sesión con Apple');
+      }
+      return;
+    }
     if (!APPLE_CLIENT_ID || !window.AppleID) return;
     wError('w-error-social');
     try {
@@ -3124,24 +3194,9 @@
     go('inicio');
   }
 
-  /* ===== Onboarding: "¿Qué servicio buscas?" (solo la primera vez) ===== */
-  function maybeShowOnboarding() {
-    if (localStorage.getItem('bukea_onboarded')) return;
-    document.getElementById('onboarding').classList.add('show');
-  }
-  function closeOnboarding() {
-    localStorage.setItem('bukea_onboarded', '1');
-    document.getElementById('onboarding').classList.remove('show');
-  }
-  function onboardPick(key, label) {
-    localStorage.setItem('bukea_pref_cat', key);
-    closeOnboarding();
-    openCategory(key, label);
-  }
-
-  /* Arranque: splash con el logo → inicio (explora sin cuenta), y la primera
-     vez sube la hoja de onboarding. El login se pide just-in-time al reservar
-     o al abrir "Mis citas" / "Mi negocio". */
+  /* Arranque: splash con el logo → inicio, navegable sin cuenta (como
+     Fresha). El login se pide just-in-time al reservar o al abrir
+     "Mis citas" / "Mi negocio", nunca antes. */
   const SPLASH_MS = 1400;
   function boot() {
     applySessionUI();
@@ -3169,7 +3224,6 @@
       if (document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'splash') {
         go('inicio');
       }
-      maybeShowOnboarding();
     }, reduce ? 300 : SPLASH_MS);
   }
   boot();

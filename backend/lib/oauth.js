@@ -41,7 +41,14 @@ function verifyAppleIdToken(idToken) {
     jwt.verify(
       idToken,
       getAppleSigningKey,
-      { algorithms: ['RS256'], issuer: 'https://appleid.apple.com', audience: process.env.APPLE_CLIENT_ID },
+      // La app nativa (Sign in with Apple del sistema) emite el token con
+      // audience = bundle id (com.bukea.app); la web usa el Service ID de
+      // APPLE_CLIENT_ID. Se aceptan los dos.
+      {
+        algorithms: ['RS256'],
+        issuer: 'https://appleid.apple.com',
+        audience: [process.env.APPLE_CLIENT_ID, process.env.APPLE_NATIVE_CLIENT_ID || 'com.bukea.app'],
+      },
       (err, payload) => {
         if (err) return reject(err);
         resolve({ sub: payload.sub, email: payload.email || null, name: null });

@@ -10,7 +10,7 @@
     {
       "name": "scratchpad-preview",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8842", "--directory", "/private/tmp/claude-501/-Users-vmdventura-Documents-Claude-Projects-Bukea-App/12ad1a96-b888-4c79-a24e-e0f995f66d30/scratchpad"],
+      "runtimeArgs": ["-m", "http.server", "8842", "--directory", "/private/tmp/claude-501/-Users-vmdventura-Documents-Claude-Projects-Bukea-App/a34b1dde-ebb1-48bf-995f-9213894b313a/scratchpad"],
       "port": 8842
     }
   ]

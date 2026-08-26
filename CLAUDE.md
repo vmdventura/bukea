@@ -21,6 +21,7 @@ Plataforma de reservas ("bukear" = to book, dominicanizado) para barbería, uña
 | `docs/ANALISIS-SITIO-FRESHA.md` | Mapa del ecosistema Fresha (marketplace, app, sitio para negocios, precios RD) y plano para recrear website + app de Bukea, con orden de construcción |
 | `docs/TEST-FRESHA.md` | Protocolo y resultados del test comparativo Bukea vs Fresha (primer recorrido 2026-08-22) — repetir al cerrar cada etapa del roadmap |
 | `docs/PLAN.md` | Plan del proyecto: estado actual, Fase 0 (fundación), roadmap MVP en 3 fases, reglas estratégicas — **mantener actualizado al completar tareas** |
+| `docs/PANEL-ADMIN-PENDIENTES-2026-08-25.md` | Pendientes del panel de administración (Fase 1 y 2 ya construidas y en producción): login del panel sin Google/Apple, categorías/bancos fijos en código, Fase 3 sin empezar |
 | `prototype/demo.html` | Demo interactivo v0.1 (HTML autocontenido, sin backend): primera pasada, mantenido como referencia histórica |
 | `prototype/demo-v2.html` | Demo premium v2: misma navegación, pulido de tipografía (Fraunces + Plus Jakarta Sans), iconografía SVG real, color OKLCH y micro-interacciones — ver `DESIGN.md` |
 | `PRODUCT.md` / `DESIGN.md` | Contexto de producto y sistema de diseño para trabajo con la skill `impeccable` |
@@ -133,6 +134,57 @@ A pedido de Víctor: el teléfono sigue siendo la base del login y de las confir
 - `auth_codes` ahora sirve para dos cosas — código de WhatsApp (por `phone`) o código de recuperación (por `email`) — nunca los dos en la misma fila; `phone` pasó a ser opcional en esa tabla.
 - Pantalla nueva "¿Olvidaste tu PIN?" en el login (enlace debajo de "Iniciar sesión"): pide el correo, muestra el campo de código + PIN nuevo, y entra a la sesión automáticamente al cambiarlo.
 - **Falta activarlo en producción:** como con Google/Apple, alguien tiene que crear las credenciales SMTP (ej. una cuenta de Gmail con contraseña de aplicación, o un servicio como Amazon SES/Postmark) y ponerlas en cPanel → *Setup Node.js App* → Environment variables. Mientras no estén, el botón funciona pero el backend responde "La recuperación por correo aún no está activa".
+
+## Panel de administración general (2026-08-24)
+
+Fase 1 del concepto (dashboard, usuarios, negocios, reservas) construida y probada en local. Vive fuera de `BASE`, como el marketplace público: `GET /admin` (`views/admin.js`, un solo HTML con fetch al API, sin framework) y `/api/admin/*` (`routes/admin.js`), ambos montados en la raíz del mismo Express (`app.js`).
+
+- **`users.role`** (`client` por defecto, `admin`) es lo único que da acceso. Se asigna a mano por SQL, nunca desde la app: `node db/make-admin.js <telefono>` promueve una cuenta ya registrada. **Falta ejecutarlo en producción** para que Víctor tenga acceso real — es el único paso pendiente para usar el panel en vivo.
+- Login del panel: mismo teléfono+PIN de la cuenta normal, en `POST /api/admin/login`, pero solo emite sesión si `role = 'admin'`. `requireAdmin` (`lib/auth-middleware.js`) protege todo `/api/admin/*` y responde 404 (no 401/403) para no delatar la ruta a quien no tiene acceso, mismo patrón que ya proponía el documento de concepto.
+- **`users.disabled_at`** y **`professionals.hidden_at`** (2026-08-24, nuevas): soft delete/ocultar sin borrar filas. Una cuenta desactivada no puede iniciar sesión por ningún método (teléfono+PIN, Google, Apple, OTP — ver los checks nuevos en `routes/auth.js` y `lib/auth-middleware.js`); un negocio oculto desaparece del marketplace público (`/`, `/mapa`, `GET /app/api/professionals`) pero sigue existiendo en la base y su perfil directo (`/p/:slug`) sigue accesible.
+- Acciones que ya funcionan de punta a punta (probadas por API y en el navegador): ver/editar usuario, resetear PIN, activar/desactivar cuenta; ver/editar negocio, transferir propiedad a otro teléfono (la vía para reclamar Joel/Yesenia/Carmen, sembrados sin dueño real), ocultar/republicar, crear negocio en nombre de alguien; cancelar una reserva desde el panel.
+- `lib/credentials.js` (nuevo) saca `normalizePhone`/`hashPin`/`PHONE_RE` de `routes/auth.js` para que `routes/admin.js` los reuse sin duplicar el login por PIN.
+## Fase 2 del panel de administración (2026-08-24 noche)
+
+Los cuatro módulos que faltaban del concepto, construidos y probados igual que la Fase 1 (por API y en el navegador).
+
+- **Moderación**: `professional_bank_accounts.verified_at` (nueva columna) — cola de cuentas bancarias con botón verificar/quitar verificación; el perfil público (`/p/:slug`) muestra un badge "✓ Verificada" cuando aplica. Galería de comprobantes de pago (últimos 100) con botón para eliminar el archivo y desvincularlo de la reserva (`DELETE /api/admin/bookings/:id/receipt`).
+- **Métricas**: crecimiento semanal (usuarios y negocios nuevos, últimas 12 semanas), embudo de activación (registrados → con servicios → alguna vez reservados → con reserva este mes), % de clientes que repiten, reservas por categoría y por sector, top 10 negocios por volumen del mes con su tasa de cancelación. "Exportar CSV" en Usuarios, Negocios y Reservas (botón en cada topbar, descarga con los filtros activos aplicados).
+- **Comunicación**: estado real de WhatsApp Cloud API y SMTP (`isConfigured()` de `lib/whatsapp.js`/`lib/mailer.js`), botón de mensaje de prueba por canal, y **`message_log`** (nueva tabla) con el registro de cada envío. Mensaje manual a un usuario desde su propia ficha en Usuarios (nueva sección "Enviar mensaje" en el modal). El mensaje de WhatsApp usa `sendTextMessage` (texto libre, `type: text`) en vez de la plantilla de `sendAuthCode` — **solo entrega si el número le escribió a Bukea en las últimas 24 horas** (ventana de sesión de WhatsApp Business), suficiente para responder soporte, no para escribir en frío.
+- **Configuración**: tabla `platform_settings` (nueva, una sola fila). Banner de anuncio activable/con texto, ya conectado al marketplace público (`pageShell()` en `views/shared.js`, ahora async, lo inyecta debajo del header). Colchón de antelación y tamaño de slot de la disponibilidad, ya conectados a `lib/availability.js` y a los dos endpoints de disponibilidad en `routes/professionals.js` (antes eran constantes fijas en el código). **Decisión consciente**: categorías de negocio y listas de bancos se quedan fijas en el código, no en esta pantalla — cada categoría nueva necesita también un ícono propio en `views/shared.js`, así que una UI que solo editara la lista sin resolver el ícono sería una función a medias.
+
+Documento de concepto completo: https://claude.ai/code/artifact/09e53fa4-fa5b-4298-a340-e88babcef974
+
+## "Ver panel del negocio" desde el admin + acceso desde cualquier dispositivo (2026-08-25)
+
+- **`GET /api/professionals/me`** (nuevo, `requireAuth`) devuelve el slug del negocio del usuario logueado o `null`. Arregla un bug real: `views/negocio.js` solo sabía a qué negocio pertenecía el dueño por un valor guardado en ese navegador (`localStorage`), así que entrar desde otro dispositivo mostraba el asistente "Crea tu negocio" aunque ya existiera uno. `afterLogin()` ahora consulta este endpoint antes de mostrar el asistente.
+- **"Ver panel del negocio"** en la ficha de cada negocio (Módulo Negocios del admin, solo si tiene dueño real): `POST /api/admin/businesses/:id/impersonate` emite un token de sesión nuevo para el dueño (cierra cualquier sesión suya abierta en otro lado, mismo costo que "Resetear PIN") y abre `/negocio?admin_view=<token>&slug=<slug>` en pestaña nueva — `boot()` en `negocio.js` arma la sesión con esos parámetros y limpia la URL de inmediato.
+
+## WhatsApp OTP activo en producción (2026-08-26)
+
+La verificación por WhatsApp dejó de estar dormida. Configuración en Meta hecha el 24-ago (número real **+1 809-466-5692 "Bukea"**, plantilla `codigo_bukea` de Autenticación en Spanish (DOM) aprobada, token/phone ID en cPanel); el 26-ago Víctor agregó el **método de pago** en Meta Business, que era el único bloqueo: sin tarjeta, la Cloud API responde 200 `sent:true` pero Meta descarta el mensaje en silencio (síntoma engañoso, no hay error). Verificado con un código real entregado. Pospago: Meta cobra a la tarjeta por consumo (~RD$0.80/código), no hay que recargar crédito. El frontend ya muestra solo el enlace "código por WhatsApp" en el login cuando `otp/status` responde `enabled:true`. Ver `docs/WHATSAPP-SETUP.md`.
+
+## Atribución en el registro de negocio (2026-08-26)
+
+Cierra la brecha 4 de la comparativa vs Fresha: pregunta opcional **"¿Cómo conociste Bukea?"** en el paso de servicios del asistente de `/negocio` (select, nunca bloquea). `professionals.referral_source` (VARCHAR 40, migración en `db/init.js`), valores válidos `instagram|tiktok|amigo|google|visita|otro` (whitelist en `routes/professionals.js`, cualquier otro valor se guarda NULL). El panel de admin la muestra en la ficha del negocio ("Conoció Bukea por: …"). Probado de punta a punta en local. El wizard corto de la PWA (`index.html`, 4 pasos) NO la pregunta todavía — extensión natural si se quiere el dato también ahí.
+
+## Seguridad del login (2026-08-25)
+
+Motivado por la comparativa de registro vs Fresha (`docs/` no tiene doc propio; ver memoria de proyecto): el PIN de 4 dígitos no tenía ninguna protección contra fuerza bruta.
+
+- **`lib/rate-limit.js`** (nuevo): contadores en memoria del proceso. `check()` responde si una clave está bloqueada, `hit()` registra un intento y bloquea al exceder el máximo, `clear()` limpia al entrar bien.
+- Aplicado en: login normal (5 fallos por teléfono → 15 min; 20 por IP → 30 min), login del admin (5/30 min y 10 por IP/60 min), `/auth/check` (30 solicitudes por IP/10 min, contra enumeración de números), `/auth/register` (10 por IP/hora, contra cuentas masivas). Un login correcto limpia el contador del teléfono, no el de la IP.
+- `app.js`: `trust proxy` (sin esto `req.ip` sería siempre 127.0.0.1 detrás de Passenger) + cabeceras `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
+- **Eliminar cuenta** (`POST /api/auth/delete-account`, requisito App Store 5.1.1): anonimiza la fila de `users` (nombre "Cuenta eliminada", credenciales y subs en NULL, `disabled_at`) y oculta su negocio si tiene. Botón "Eliminar mi cuenta" con doble confirmación en la sección "Mi cuenta" de Mis citas (`index.html`), junto a "Cerrar sesión" del cliente (antes no existía).
+
+## Preparación App Store (2026-08-25)
+
+Ver **`docs/APP-STORE-CHECKLIST.md`** — checklist completo con lo hecho y los pasos que solo Víctor puede dar (cuenta de Apple Developer, App Store Connect, credencial iOS de Google). Resumen de lo que cambió en código:
+
+- **Sign in with Apple nativo**: plugin `@capacitor-community/apple-sign-in@6` (la v7 pide Capacitor 7 y el proyecto usa 6), entitlement `native/ios/App/App/App.entitlements` cableado en el pbxproj (Debug y Release). `loginWithApple()` en `index.html` usa la hoja nativa cuando corre empaquetada (el SDK web de Apple no funciona en WKWebView); `lib/oauth.js` acepta el token nativo con audience `com.bukea.app` además del Service ID web (`APPLE_NATIVE_CLIENT_ID` para cambiarlo).
+- Info.plist: `NSCameraUsageDescription`/`NSPhotoLibraryUsageDescription` en español, `ITSAppUsesNonExemptEncryption=false`, solo orientación vertical en iPhone, `CFBundleDevelopmentRegion=es`.
+- Verificado: `xcodebuild` compila limpio y la app arranca en el simulador contra producción.
+- **Ojo:** el botón de Google en la app nativa sigue "Próximamente" hasta que exista el OAuth client de tipo iOS (`iosClientId` en `capacitor.config.json` sigue siendo placeholder). Y **hay que desplegar el backend antes de enviar a revisión** (delete-account y el audience de Apple solo existen en el repo).
 
 ## Próximos pasos probables
 

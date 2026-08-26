@@ -4,6 +4,7 @@
   "private": true,
   "description": "Envoltorio nativo iOS de Bukea (Capacitor) — carga www.bukeard.com/app en vivo.",
   "dependencies": {
+    "@capacitor-community/apple-sign-in": "^6.0.0",
     "@capacitor/core": "^6.2.0",
     "@capacitor/ios": "^6.2.0",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4"

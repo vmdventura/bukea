@@ -47,4 +47,39 @@ async function sendAuthCode(phone, code) {
   return res.json();
 }
 
-module.exports = { isConfigured, sendAuthCode };
+// Mensaje de texto libre (panel de administración, Comunicación, Fase 2).
+// A diferencia de sendAuthCode (plantilla aprobada, se puede mandar en
+// frío), un mensaje type:"text" de la Cloud API solo entrega si el número
+// le escribió a Bukea en las últimas 24 horas (ventana de sesión de
+// WhatsApp Business) — suficiente para que un admin responda soporte, no
+// para mandar en frío a cualquier cliente.
+async function sendTextMessage(phone, text) {
+  if (!isConfigured()) {
+    throw new Error('WhatsApp Cloud API no está configurado (faltan variables de entorno)');
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${process.env.WHATSAPP_PHONE_ID}/messages`;
+  const body = {
+    messaging_product: 'whatsapp',
+    to: '1' + phone,
+    type: 'text',
+    text: { body: text },
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + process.env.WHATSAPP_TOKEN,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`WhatsApp API respondió ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+module.exports = { isConfigured, sendAuthCode, sendTextMessage };

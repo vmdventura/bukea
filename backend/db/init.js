@@ -90,6 +90,87 @@ async function migrate() {
   await pool.query('ALTER TABLE auth_codes MODIFY phone VARCHAR(15) NULL');
   await safeAlter('ALTER TABLE auth_codes ADD COLUMN email VARCHAR(190)');
   await safeAlter('ALTER TABLE auth_codes ADD INDEX idx_auth_codes_email (email)');
+
+  // Panel de administración general (2026-08-24). role distingue una cuenta
+  // normal (client, default) de la del superadmin — se asigna a mano por
+  // SQL, nunca desde la app (ver db/make-admin.js). disabled_at/hidden_at
+  // son "ocultar sin borrar": una cuenta desactivada no puede iniciar
+  // sesión (ver lib/auth-middleware.js y routes/auth.js), un negocio oculto
+  // desaparece del marketplace público pero sigue existiendo en la base.
+  await safeAlter("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'client'");
+  await safeAlter('ALTER TABLE users ADD COLUMN disabled_at DATETIME');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN hidden_at DATETIME');
+
+  // Atribución: cómo conoció Bukea el negocio (pregunta opcional del
+  // asistente de registro, 2026-08-26 — dato para la validación de calle).
+  await safeAlter('ALTER TABLE professionals ADD COLUMN referral_source VARCHAR(40)');
+
+  // Fase 2 del panel de administración (2026-08-24): moderación, métricas,
+  // comunicación y configuración.
+  //
+  // Moderación: verified_at en cada cuenta bancaria — un admin la revisa
+  // (nombre y cédula/RNC coherentes con el negocio) y le da el badge de
+  // verificada. No bloquea que se publique (el flujo del dueño no cambia),
+  // solo cambia si el cliente la ve marcada como revisada.
+  await safeAlter('ALTER TABLE professional_bank_accounts ADD COLUMN verified_at DATETIME');
+
+  // Comunicación: registro de cada mensaje manual que un admin le manda a
+  // un usuario desde su ficha (WhatsApp o correo), para saber qué se envió
+  // y si falló.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS message_log (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
+      channel VARCHAR(20) NOT NULL,
+      subject VARCHAR(190),
+      body TEXT NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      error_message VARCHAR(255),
+      sent_by_admin_id INT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (sent_by_admin_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  // Configuración: una sola fila (id=1) con los parámetros que hoy estaban
+  // fijos en el código — banner del marketplace, colchón mínimo de
+  // antelación y tamaño de slot de la disponibilidad. Categorías y listas
+  // de bancos se quedan fijas en el código a propósito por ahora: cada
+  // categoría nueva necesita también un ícono y una entrada en el
+  // marketplace, así que editarlas de verdad es un cambio de código, no de
+  // datos — no vale la pena una UI de configuración que solo edita la mitad
+  // del trabajo real.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS platform_settings (
+      id TINYINT PRIMARY KEY,
+      banner_enabled TINYINT(1) NOT NULL DEFAULT 0,
+      banner_text VARCHAR(280) NOT NULL DEFAULT '',
+      booking_buffer_min INT NOT NULL DEFAULT 30,
+      booking_slot_min INT NOT NULL DEFAULT 15,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await pool.query('INSERT IGNORE INTO platform_settings (id) VALUES (1)');
+
+  // Logo, redes sociales y galería de fotos del negocio (2026-08-25) —
+  // completar el perfil más allá de nombre/sector/categoría, a pedido de
+  // Víctor. logo_path sigue el mismo patrón que receipt_path (nombre de
+  // archivo en disco, se arma la URL absoluta con receiptUrl-like helper).
+  await safeAlter('ALTER TABLE professionals ADD COLUMN logo_path VARCHAR(255)');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN social_instagram VARCHAR(190)');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN social_facebook VARCHAR(190)');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN social_tiktok VARCHAR(190)');
+  await safeAlter('ALTER TABLE professionals ADD COLUMN social_website VARCHAR(190)');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_photos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      professional_id INT NOT NULL,
+      path VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

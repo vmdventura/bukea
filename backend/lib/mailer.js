@@ -39,4 +39,36 @@ async function sendPinResetCode(email, code) {
   });
 }
 
-module.exports = { isConfigured, sendPinResetCode };
+// Correo libre (panel de administración, Comunicación, Fase 2) — para
+// soporte manual desde la ficha de un usuario, o un mensaje de prueba.
+async function sendCustomMessage(email, subject, text) {
+  if (!isConfigured()) {
+    throw new Error('El envío de correo no está configurado (faltan variables de entorno)');
+  }
+  await getTransporter().sendMail({
+    from: process.env.MAIL_FROM,
+    to: email,
+    subject,
+    text,
+    html: `<p>${text.replace(/\n/g, '<br>')}</p>`,
+  });
+}
+
+// Ticket de soporte desde el panel de negocio (2026-08-25) — "Abrir ticket"
+// en la pestaña Negocio. Sin tabla ni estado propio por ahora: es un correo
+// directo a Bukea con el contexto del negocio que escribe.
+async function sendTicket({ businessName, slug, fromName, fromEmail, message }) {
+  if (!isConfigured()) {
+    throw new Error('El envío de correo no está configurado (faltan variables de entorno)');
+  }
+  await getTransporter().sendMail({
+    from: process.env.MAIL_FROM,
+    to: 'hola@bukeard.com',
+    replyTo: fromEmail || undefined,
+    subject: `Ticket de soporte — ${businessName}`,
+    text: `Negocio: ${businessName} (${slug})\nContacto: ${fromName || 'Sin nombre'} ${fromEmail ? '<' + fromEmail + '>' : ''}\n\n${message}`,
+    html: `<p><strong>Negocio:</strong> ${businessName} (${slug})</p><p><strong>Contacto:</strong> ${fromName || 'Sin nombre'} ${fromEmail ? '&lt;' + fromEmail + '&gt;' : ''}</p><p>${String(message).replace(/\n/g, '<br>')}</p>`,
+  });
+}
+
+module.exports = { isConfigured, sendPinResetCode, sendCustomMessage, sendTicket };

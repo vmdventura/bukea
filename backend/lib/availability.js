@@ -3,6 +3,9 @@
 // "Mañana", 4 horas fijas) que tenía el flujo de reserva.
 
 const RD_TZ = 'America/Santo_Domingo';
+// Valores por defecto — el panel de administración (Configuración, Fase 2)
+// puede ajustarlos por plataforma sin deploy; ver lib/settings.js y los
+// parámetros slotMin/bufferMin de computeFreeSlots más abajo.
 const SLOT_GRANULARITY_MIN = 15; // separación entre horas ofrecidas
 const BOOK_AHEAD_BUFFER_MIN = 30; // no se puede reservar "para ya mismo"
 
@@ -64,13 +67,16 @@ function addDays(dateStr, n) {
 // busyRanges: [{startMin, endMin}] de citas confirmadas ese día
 // Devuelve horas de inicio (en minutos desde medianoche) donde cabe un
 // servicio de duractionMin sin chocar con el horario ni con otra cita.
-function computeFreeSlots({ hoursRows, durationMin, busyRanges, isToday, nowMinutes }) {
+function computeFreeSlots({
+  hoursRows, durationMin, busyRanges, isToday, nowMinutes,
+  slotMin = SLOT_GRANULARITY_MIN, bufferMin = BOOK_AHEAD_BUFFER_MIN,
+}) {
   const slots = [];
   for (const range of hoursRows) {
     const start = timeToMinutes(range.start_time);
     const end = timeToMinutes(range.end_time);
-    for (let t = start; t + durationMin <= end; t += SLOT_GRANULARITY_MIN) {
-      if (isToday && t < nowMinutes + BOOK_AHEAD_BUFFER_MIN) continue;
+    for (let t = start; t + durationMin <= end; t += slotMin) {
+      if (isToday && t < nowMinutes + bufferMin) continue;
       const overlaps = busyRanges.some(b => t < b.endMin && t + durationMin > b.startMin);
       if (!overlaps) slots.push(t);
     }

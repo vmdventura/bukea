@@ -59,6 +59,10 @@ Cada pregunta es una pantalla propia, una decisión a la vez:
 
 ---
 
+## Implementado en Bukea (2026-08-25)
+
+El registro de negocio (`backend/views/negocio.js`, `#auth-step-newbiz`) se convirtió en el wizard de "una pregunta por pantalla" que recomienda este doc: 5 pasos (nombre → nombre del negocio → sector → categoría → servicios) con barra de progreso y validación por paso antes de avanzar. No se agregaron las preguntas de Fresha que Bukea no captura hoy (tamaño de equipo, modelo operativo, atribución) — decisión consciente de Víctor para no tocar la base de datos por ahora.
+
 ## 3. Recomendaciones para el registro de Bukea
 
 | Principio de Fresha | Aplicación en Bukea |

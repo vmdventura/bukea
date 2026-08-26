@@ -4,8 +4,19 @@ const pool = require('../db/pool');
 const whatsapp = require('../lib/whatsapp');
 const mailer = require('../lib/mailer');
 const oauth = require('../lib/oauth');
+const { PHONE_RE, normalizePhone, hashPin } = require('../lib/credentials');
+const rateLimit = require('../lib/rate-limit');
 
 const router = express.Router();
+
+// Claves de bloqueo del login: por teléfono (frena la fuerza bruta sobre
+// una cuenta concreta) y por IP (frena un barrido sobre muchas cuentas).
+function loginLimitKeys(req, phone) {
+  return [
+    { key: 'pin:' + phone, max: 5, blockMs: 15 * 60 * 1000 },
+    { key: 'pin-ip:' + req.ip, max: 20, blockMs: 30 * 60 * 1000 },
+  ];
+}
 
 async function issueToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
@@ -25,6 +36,10 @@ async function upsertSocialUser({ column, sub, email, name }) {
     user = rows[0];
   }
 
+  if (user && user.disabled_at) {
+    throw new Error('disabled');
+  }
+
   if (user) {
     await pool.query(
       `UPDATE users SET ${column} = COALESCE(${column}, ?), email = COALESCE(email, ?) WHERE id = ?`,
@@ -42,18 +57,12 @@ async function upsertSocialUser({ column, sub, email, name }) {
   return { token, name: user.name, phone: user.phone, email: user.email || email || null };
 }
 
-const PHONE_RE = /^(809|829|849)\d{7}$/;
-
-function normalizePhone(raw) {
-  const digits = String(raw || '').replace(/\D/g, '');
-  return digits.startsWith('1') && digits.length === 11 ? digits.slice(1) : digits;
-}
-
-function hashPin(pin, salt) {
-  return crypto.scryptSync(String(pin), salt, 32).toString('hex');
-}
-
 router.post('/check', async (req, res) => {
+  // Límite por IP: frena a quien use este endpoint para averiguar qué
+  // números tienen cuenta en Bukea (enumeración masiva).
+  const wait = rateLimit.hit([{ key: 'check-ip:' + req.ip, max: 30, windowMs: 10 * 60 * 1000, blockMs: 10 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
   const phone = normalizePhone(req.body.phone);
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Ingresa un número dominicano válido (809, 829 u 849)' });
@@ -65,6 +74,10 @@ router.post('/check', async (req, res) => {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 router.post('/register', async (req, res) => {
+  // Límite por IP: frena la creación masiva de cuentas falsas.
+  const wait = rateLimit.hit([{ key: 'reg-ip:' + req.ip, max: 10, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
   const phone = normalizePhone(req.body.phone);
   const name = (req.body.name || '').trim();
   const pin = String(req.body.pin || '');
@@ -99,11 +112,25 @@ router.post('/login', async (req, res) => {
   const phone = normalizePhone(req.body.phone);
   const pin = String(req.body.pin || '');
 
+  const limits = loginLimitKeys(req, phone);
+  const blocked = rateLimit.check(limits);
+  if (blocked) return res.status(429).json({ error: rateLimit.waitMessage(blocked) });
+
   const [rows] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
   const user = rows[0];
-  if (!user) return res.status(404).json({ error: 'Ese número no tiene cuenta todavía' });
+  if (!user) {
+    const wait = rateLimit.hit(limits);
+    if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+    return res.status(404).json({ error: 'Ese número no tiene cuenta todavía' });
+  }
   if (hashPin(pin, user.pin_salt) !== user.pin_hash) {
+    const wait = rateLimit.hit(limits);
+    if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
     return res.status(401).json({ error: 'PIN incorrecto' });
+  }
+  rateLimit.clear(['pin:' + phone]);
+  if (user.disabled_at) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
   }
 
   const token = crypto.randomBytes(24).toString('hex');
@@ -177,6 +204,9 @@ router.post('/otp/verify', async (req, res) => {
 
   // Si el usuario existe, inicia sesión; si no, el frontend pedirá el nombre y registrará.
   const [users] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
+  if (users.length > 0 && users[0].disabled_at) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
+  }
   if (users.length > 0) {
     const token = crypto.randomBytes(24).toString('hex');
     await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, users[0].id]);
@@ -287,6 +317,9 @@ router.post('/google', async (req, res) => {
     const session = await upsertSocialUser({ column: 'google_sub', ...payload });
     res.json(session);
   } catch (err) {
+    if (err.message === 'disabled') {
+      return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
+    }
     console.error('Error verificando Google:', err.message);
     res.status(401).json({ error: 'No se pudo verificar tu cuenta de Google' });
   }
@@ -300,9 +333,37 @@ router.post('/apple', async (req, res) => {
     const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name });
     res.json(session);
   } catch (err) {
+    if (err.message === 'disabled') {
+      return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
+    }
     console.error('Error verificando Apple:', err.message);
     res.status(401).json({ error: 'No se pudo verificar tu cuenta de Apple' });
   }
+});
+
+/* ===== Eliminar mi cuenta (2026-08-25) =====
+   Requisito del App Store (regla 5.1.1): toda app con registro debe
+   permitir eliminar la cuenta desde adentro. Se anonimiza la fila en vez
+   de borrarla — las reservas históricas de los negocios no pierden su
+   referencia, pero la cuenta queda irreconocible e inaccesible. */
+
+const { requireAuth } = require('../lib/auth-middleware');
+
+router.post('/delete-account', requireAuth, async (req, res) => {
+  // Si la cuenta es dueña de un negocio, el negocio se oculta del
+  // marketplace en el mismo acto (queda recuperable solo vía admin).
+  await pool.query(
+    'UPDATE professionals SET hidden_at = NOW() WHERE owner_user_id = ? AND hidden_at IS NULL',
+    [req.user.id]
+  );
+  await pool.query(
+    `UPDATE users SET name = 'Cuenta eliminada', phone = NULL, email = NULL,
+       google_sub = NULL, apple_sub = NULL, pin_hash = NULL, pin_salt = NULL,
+       token = NULL, disabled_at = NOW()
+     WHERE id = ?`,
+    [req.user.id]
+  );
+  res.json({ deleted: true });
 });
 
 module.exports = router;

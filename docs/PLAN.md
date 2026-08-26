@@ -1,16 +1,17 @@
 # Bukea — Plan del Proyecto
 
-> Última actualización: 22 de agosto de 2026 · Documento hermano: [Visión de Producto](VISION.md)
+> Última actualización: 25 de agosto de 2026 · Documento hermano: [Visión de Producto](VISION.md)
 > **¿Qué hacer ahora y en qué orden?** → ver [ROADMAP.md](ROADMAP.md), el checklist secuencial de ejecución (6 etapas).
+> **Tablero en vivo:** https://github.com/users/vmdventura/projects/1 — desactualizado desde el 2026-08-23, no refleja el panel de admin ni la ampliación del panel de negocio de esta pasada; sincronizar a mano.
 
 ## Dónde estamos hoy
 
 | Área | Estado |
 |---|---|
 | Definición | ✅ Visión de producto, nombre y análisis de competencia (BarberTime) completos |
-| Infraestructura | ✅ Repositorio propio `vmdventura/bukea` (privado) |
+| Infraestructura | ✅ Repositorio propio `vmdventura/bukea` (privado) — **3 commits locales sin subir a GitHub** además de varios archivos sin commitear todavía (panel de admin, ampliación del panel de negocio) |
 | Marca | 🟡 `bukeard.com` registrado y logo listo — faltan `bukea.do`, ONAPI y handles |
-| Producto | 🟡 MVP de prueba funcional en producción (ver "Lo construido") — falta validar y endurecer |
+| Producto | 🟡 MVP de prueba funcional en producción, con panel de negocio ampliado (logo, redes, fotos, ubicación exacta, servicios editables) y panel de administración general (`bukeard.com/admin`) — ver "Lo construido". **La validación en la calle (Etapa 3 del ROADMAP) sigue en cero** |
 
 ## Fase 0 — Fundación (antes de escribir código)
 
@@ -23,6 +24,7 @@
 - [x] Verificar disponibilidad del nombre en App Store y Google Play — ✅ verificado 2026-07-04: no existe ninguna app "Bukea" en ninguna de las dos tiendas
 - [ ] Reservar el nombre "Bukea" en App Store Connect al crear la cuenta de Apple Developer (US$99/año; la reserva expira en ~180 días sin publicar)
 - [ ] Validar con 10–15 barberos/manicuristas reales: ¿pagarían RD$500–1,500/mes por silla?
+- [ ] **Al publicar Bukea en App Store/Google Play:** activar los badges y el copy reales en `/descargar` (`backend/routes/pages.js`, buscar `TODO(publicación app stores)`) — hoy son solo decorativos porque la app no está publicada
 
 **Criterio de salida:** dominios y marca asegurados, y al menos 10 profesionales que digan "yo pago eso".
 
@@ -33,7 +35,7 @@
 App en producción en [www.bukeard.com/app](https://www.bukeard.com/app/) — Node.js + Express + MySQL, servida como PWA a pantalla completa (instalable, safe-areas de iOS). Código en `backend/`.
 
 - **Login del cliente** — bienvenida "drenched" en teal con logo, número dominicano (809/829/849) + PIN de 4 dígitos (hash scrypt). Opción "continuar como invitado".
-- **Verificación por WhatsApp (OTP)** — código completo y desplegado, dormido hasta configurar las credenciales de Meta (ver [WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)). Costo por código: ~US$0.013 (~RD$0.80).
+- **Verificación por WhatsApp (OTP)** — ✅ **activa en producción desde el 26-ago-2026** (número +1 809-466-5692 "Bukea", plantilla `codigo_bukea`, método de pago en Meta agregado ese día — ver [WHATSAPP-SETUP.md](WHATSAPP-SETUP.md)). Costo por código: ~US$0.013 (~RD$0.80), pospago a la tarjeta de Meta Business.
 - **Flujo del cliente** — inicio por categorías → listado filtrado por categoría → perfil con servicios → reserva (día/hora/pago) → confirmación con recordatorio de WhatsApp simulado. Reservas guardadas en MySQL. Pantalla "Mis citas".
 - **Lado B2B** — "Únete a Bukea": registro del negocio con sus servicios; panel "Mi negocio" con contador de citas, agenda en vivo y lista de servicios.
 - **"Mi Cuadre" básico** — dentro de "Mi negocio", tres tarjetas con lo vendido: hoy, últimos 7 días y mes en curso (monto RD$ + número de citas). Endpoint `GET /bukea/api/professionals/:slug/stats`; desde el 22-ago-2026 los períodos se calculan sobre `appointment_at` (fecha real de la cita, con `created_at` como respaldo para reservas viejas), no sobre cuándo se creó la reserva.

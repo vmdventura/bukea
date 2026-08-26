@@ -2,8 +2,10 @@ const express = require('express');
 const pool = require('../db/pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { requireAuth } = require('../lib/auth-middleware');
-const { receiptUrl } = require('../lib/uploads');
+const { receiptUrl, logoUpload, logoUrl, photoUpload, photoUrl } = require('../lib/uploads');
 const { geocodeNeighborhood } = require('../lib/geocode');
+const { getSettings } = require('../lib/settings');
+const mailer = require('../lib/mailer');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
   timeToMinutes, minutesToHHMM, formatTime12h, computeFreeSlots,
@@ -14,9 +16,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   const { category } = req.query;
   const params = [];
-  let sql = 'SELECT * FROM professionals';
+  let sql = 'SELECT * FROM professionals WHERE hidden_at IS NULL';
   if (category) {
-    sql += ' WHERE category = ?';
+    sql += ' AND category = ?';
     params.push(category);
   }
   sql += ' ORDER BY rating DESC';
@@ -52,6 +54,16 @@ router.get('/', async (req, res) => {
   );
 });
 
+// El negocio propio de la sesión (2026-08-25) — antes el panel de negocio
+// solo sabía a qué negocio pertenece el dueño por un valor guardado en el
+// navegador (localStorage), nunca preguntándole al servidor. Un dueño que
+// entraba desde otro dispositivo o navegador veía "Crea tu negocio" aunque
+// ya tuviera uno. Va antes de /:slug para no chocar con esa ruta.
+router.get('/me', requireAuth, async (req, res) => {
+  const [rows] = await pool.query('SELECT slug FROM professionals WHERE owner_user_id = ?', [req.user.id]);
+  res.json({ slug: rows[0] ? rows[0].slug : null });
+});
+
 const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates'];
 
 function slugify(text) {
@@ -64,8 +76,12 @@ function slugify(text) {
     .slice(0, 50);
 }
 
+// Opciones válidas de "¿Cómo conociste Bukea?" — pregunta opcional del
+// asistente de registro; alimenta la validación de calle, nunca bloquea.
+const REFERRAL_SOURCES = ['instagram', 'tiktok', 'amigo', 'google', 'visita', 'otro'];
+
 router.post('/', requireAuth, async (req, res) => {
-  const { name, businessName, neighborhood, category, services } = req.body;
+  const { name, businessName, neighborhood, category, services, referralSource } = req.body;
 
   if (!name || !businessName || !neighborhood || !category) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -90,10 +106,12 @@ router.post('/', requireAuth, async (req, res) => {
     slug = slug + '-' + n;
   }
 
+  const referral = REFERRAL_SOURCES.includes(referralSource) ? referralSource : null;
+
   const [result] = await pool.query(
-    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id)
-     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?)`,
-    [slug, category, name, businessName, neighborhood, req.user.id]
+    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source)
+     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?)`,
+    [slug, category, name, businessName, neighborhood, req.user.id, referral]
   );
   const professionalId = result.insertId;
 
@@ -154,6 +172,11 @@ router.get('/:slug', async (req, res) => {
     ...collaboratorRows.map(c => ({ id: c.id, name: c.name, role: c.role || '' })),
   ];
 
+  const [photoRows] = await pool.query(
+    'SELECT id, path FROM business_photos WHERE professional_id = ? ORDER BY id',
+    [professional.id]
+  );
+
   res.json({
     id: professional.id,
     slug: professional.slug,
@@ -167,6 +190,14 @@ router.get('/:slug', async (req, res) => {
     reviewsCount: professional.reviews_count,
     acceptsWhatsapp: Boolean(professional.accepts_whatsapp),
     acceptsCash: Boolean(professional.accepts_cash),
+    logoUrl: logoUrl(req, professional.logo_path),
+    social: {
+      instagram: professional.social_instagram || '',
+      facebook: professional.social_facebook || '',
+      tiktok: professional.social_tiktok || '',
+      website: professional.social_website || '',
+    },
+    photos: photoRows.map(p => ({ id: p.id, url: photoUrl(req, p.path) })),
     services: services.map(s => ({
       id: s.id,
       name: s.name,
@@ -205,6 +236,7 @@ router.get('/:slug/availability/days', async (req, res) => {
 
   const days = Math.min(Number(req.query.days) || 10, 21);
   const { date: today, minutes: nowMinutes } = nowInSantoDomingo();
+  const { bookingSlotMin, bookingBufferMin } = await getSettings();
 
   const [hours] = await pool.query(
     'SELECT weekday, start_time, end_time FROM professional_hours WHERE professional_id = ?',
@@ -239,7 +271,7 @@ router.get('/:slug/availability/days', async (req, res) => {
       }));
 
     const slots = hoursRows.length
-      ? computeFreeSlots({ hoursRows, durationMin, busyRanges, isToday, nowMinutes })
+      ? computeFreeSlots({ hoursRows, durationMin, busyRanges, isToday, nowMinutes, slotMin: bookingSlotMin, bufferMin: bookingBufferMin })
       : [];
 
     result.push({ date, label: dayLabel(date), isOpen: hoursRows.length > 0, hasSlots: slots.length > 0 });
@@ -283,7 +315,8 @@ router.get('/:slug/availability/times', async (req, res) => {
     endMin: timeToMinutes(b.appointment_at.slice(11, 16)) + (b.duration_min || 30),
   }));
 
-  const slots = computeFreeSlots({ hoursRows, durationMin, busyRanges, isToday, nowMinutes });
+  const { bookingSlotMin, bookingBufferMin } = await getSettings();
+  const slots = computeFreeSlots({ hoursRows, durationMin, busyRanges, isToday, nowMinutes, slotMin: bookingSlotMin, bufferMin: bookingBufferMin });
 
   res.json({
     date,
@@ -578,6 +611,146 @@ router.put('/:slug/collaborators', requireAuth, async (req, res) => {
   }
 
   res.json({ saved: true, count: clean.length });
+});
+
+// Logo del negocio (2026-08-25) — un solo archivo, se reemplaza el anterior.
+// No se borra el archivo viejo del disco (mismo criterio que receipts: el
+// espacio en disco no es crítico y complicar esto con limpieza no vale la
+// pena todavía).
+router.post('/:slug/logo', requireAuth, (req, res) => {
+  logoUpload.single('logo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+    if (error) return res.status(error[0]).json({ error: error[1] });
+    if (!req.file) return res.status(400).json({ error: 'Falta la imagen' });
+
+    await pool.query('UPDATE professionals SET logo_path = ? WHERE id = ?', [req.file.filename, professional.id]);
+    res.json({ logoUrl: logoUrl(req, req.file.filename) });
+  });
+});
+
+// Redes sociales (2026-08-25) — los 4 campos son opcionales, se guardan tal
+// cual los escribe el negocio (usuario/handle o URL completa, sin validar
+// formato: distintas redes usan convenciones distintas y no vale la pena
+// bloquear el guardado por eso).
+router.put('/:slug/social', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const instagram = String(req.body.instagram || '').trim().slice(0, 190);
+  const facebook = String(req.body.facebook || '').trim().slice(0, 190);
+  const tiktok = String(req.body.tiktok || '').trim().slice(0, 190);
+  const website = String(req.body.website || '').trim().slice(0, 190);
+
+  await pool.query(
+    'UPDATE professionals SET social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_website = ? WHERE id = ?',
+    [instagram || null, facebook || null, tiktok || null, website || null, professional.id]
+  );
+  res.json({ saved: true });
+});
+
+// Ubicación exacta en el mapa (2026-08-25) — el registro solo geocodifica el
+// sector (ver lib/geocode.js), así que el pin puede quedar impreciso. Aquí
+// el dueño lo arrastra en el mapa de "Mi negocio" y guarda coordenadas
+// exactas, que a partir de ahí ya no se pisan al cambiar el sector en texto.
+router.put('/:slug/location', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const lat = Number(req.body.lat);
+  const lng = Number(req.body.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ error: 'Coordenadas inválidas' });
+  }
+
+  await pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [lat, lng, professional.id]);
+  res.json({ saved: true, lat, lng });
+});
+
+// Galería de fotos del negocio (2026-08-25) — 0..N fotos, cada una se sube y
+// se borra individualmente (a diferencia del logo, que es un solo slot).
+router.post('/:slug/photos', requireAuth, (req, res) => {
+  photoUpload.single('photo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+    if (error) return res.status(error[0]).json({ error: error[1] });
+    if (!req.file) return res.status(400).json({ error: 'Falta la imagen' });
+
+    const [result] = await pool.query(
+      'INSERT INTO business_photos (professional_id, path) VALUES (?, ?)',
+      [professional.id, req.file.filename]
+    );
+    res.status(201).json({ id: result.insertId, url: photoUrl(req, req.file.filename) });
+  });
+});
+
+router.delete('/:slug/photos/:photoId', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  await pool.query(
+    'DELETE FROM business_photos WHERE id = ? AND professional_id = ?',
+    [req.params.photoId, professional.id]
+  );
+  res.json({ deleted: true });
+});
+
+// Servicios editables (2026-08-25) — hasta ahora solo se creaban en el
+// wizard de registro; mismo patrón "reemplazar todo" que bank-accounts y
+// collaborators. Los IDs de citas ya reservadas contra un servicio borrado
+// se quedan con service_id apuntando a una fila que ya no existe — no rompe
+// nada porque bookings solo lee service_id al reservar, no con FK con
+// ON DELETE CASCADE hacia bookings (ver schema.sql).
+router.put('/:slug/services', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const services = Array.isArray(req.body.services) ? req.body.services : [];
+  const clean = [];
+  for (const s of services) {
+    const name = String(s.name || '').trim();
+    const durationMin = Math.round(Number(s.durationMin));
+    const priceCents = Math.round(Number(s.priceCents));
+    if (!name || !Number.isFinite(durationMin) || durationMin <= 0 || !Number.isFinite(priceCents) || priceCents < 0) continue;
+    clean.push({ name, durationMin, priceCents });
+  }
+  if (clean.length === 0) {
+    return res.status(400).json({ error: 'Agrega al menos un servicio válido' });
+  }
+
+  await pool.query('DELETE FROM services WHERE professional_id = ?', [professional.id]);
+  for (const s of clean) {
+    await pool.query(
+      'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
+      [professional.id, s.name, s.durationMin, s.priceCents]
+    );
+  }
+
+  res.json({ saved: true, count: clean.length });
+});
+
+// Ticket de soporte (2026-08-25) — "Abrir ticket" en la pestaña Negocio.
+// Correo directo a hola@bukeard.com, sin tabla propia (ver lib/mailer.js).
+router.post('/:slug/ticket', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const message = String(req.body.message || '').trim();
+  if (!message) return res.status(400).json({ error: 'Escribe tu mensaje' });
+
+  const [[full]] = await pool.query('SELECT business_name FROM professionals WHERE id = ?', [professional.id]);
+  try {
+    await mailer.sendTicket({
+      businessName: full.business_name,
+      slug: req.params.slug,
+      fromName: req.user.name,
+      fromEmail: req.user.email,
+      message,
+    });
+  } catch (err) {
+    return res.status(503).json({ error: err.message });
+  }
+  res.json({ sent: true });
 });
 
 module.exports = router;

@@ -14,12 +14,14 @@ function negocioShell({ base, googleClientId, appleClientId }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi cuenta. Bukea</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#0f6f6b">
+<meta name="theme-color" content="#002626">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --teal-900: oklch(24% 0.045 195);
@@ -50,7 +52,7 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   h1, h2, h3 { font-family: "Fraunces", Georgia, serif; margin: 0; }
   a { color: inherit; }
   button, input, select { font-family: inherit; }
-  .icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
     outline: 2.5px solid var(--teal-600); outline-offset: 2px; border-radius: 4px;
@@ -69,16 +71,35 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .btn-icon:hover { border-color: var(--teal-500); color: var(--teal-700); }
 
   /* ===== Login ===== */
-  .auth-wrap { min-height: 100vh; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 2rem 1rem; gap: 1rem; }
-  .auth-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sh-3); padding: 2.2rem 2rem; }
+  .auth-wrap { min-height: 100vh; display: flex; }
+  .auth-side {
+    display: none; flex: 1 1 42%; position: relative; overflow: hidden; isolation: isolate;
+    background: linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
+    color: #fff; padding: 3.5rem 3rem; flex-direction: column; justify-content: space-between;
+  }
+  .auth-side::before {
+    content: ""; position: absolute; z-index: -1; width: 26rem; height: 26rem; top: -9rem; right: -8rem;
+    border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.35;
+  }
+  .auth-side-brand { display: flex; align-items: center; gap: 0.55rem; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.2rem; }
+  .auth-side-brand .mark { width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-style: italic; font-weight: 700; }
+  .auth-side h2 { font-size: 2rem; line-height: 1.15; margin: 2.5rem 0 0.8rem; max-width: 15ch; }
+  .auth-side-sub { color: rgba(255,255,255,0.78); font-size: 0.95rem; max-width: 34ch; margin: 0 0 2.2rem; }
+  .auth-side-perks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .auth-side-perks li { display: flex; align-items: center; gap: 0.8rem; font-size: 0.92rem; }
+  .auth-side-perks .icon-badge { width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,0.12); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .auth-side-foot { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+  @media (min-width: 900px) { .auth-side { display: flex; } }
+  .auth-main { flex: 1 1 58%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 2rem 1rem; gap: 1rem; }
+  .auth-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sh-3); padding: 2.2rem 2rem; text-align: center; }
   .auth-card.wide { max-width: 640px; }
-  .auth-brand { display: flex; align-items: center; gap: 0.5rem; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.3rem; color: var(--teal-900); margin-bottom: 1.6rem; }
+  .auth-brand { display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.3rem; color: var(--teal-900); margin-bottom: 1.6rem; }
   .auth-brand .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--teal-600); color: #fff; display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-style: italic; font-weight: 700; }
   .auth-card h1 { font-size: 1.4rem; font-weight: 600; color: var(--teal-900); margin-bottom: 0.3rem; }
   .auth-sub { color: var(--soft); font-size: 0.88rem; margin: 0 0 1.4rem; }
-  .field { margin-bottom: 1rem; }
+  .field { margin-bottom: 1rem; text-align: center; }
   .field label { display: block; font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--soft); margin-bottom: 0.4rem; }
-  .field input, .field select { width: 100%; padding: 0.72rem 0.9rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.92rem; color: var(--ink); }
+  .field input, .field select { width: 100%; padding: 0.72rem 0.9rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.92rem; color: var(--ink); text-align: center; }
   .field input:focus, .field select:focus { outline: none; border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.14); }
   .auth-error { color: var(--danger); font-size: 0.82rem; margin: 0 0 0.9rem; display: none; }
   .auth-switch { text-align: center; margin-top: 1.2rem; font-size: 0.85rem; color: var(--soft); }
@@ -101,8 +122,14 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .nb-cat-card.sel { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-800, var(--teal-700)); }
   .nb-svc-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
   .nb-svc-row input { padding: 0.6rem 0.75rem; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.85rem; color: var(--ink); min-width: 0; }
+  .nb-logo-pick { display: flex; justify-content: center; margin-bottom: 1.2rem; }
+  .nb-logo-pick img, .nb-logo-placeholder { width: 108px; height: 108px; border-radius: 24px; object-fit: cover; }
+  .nb-logo-placeholder { display: flex; align-items: center; justify-content: center; background: var(--teal-50); border: 1.5px dashed var(--line); color: var(--soft); }
+  .nb-logo-placeholder .icon { width: 30px; height: 30px; }
   .nb-section-lbl { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--soft); margin: 1.3rem 0 0.6rem; }
   .nb-section-lbl:first-of-type { margin-top: 0; }
+  .nb-progress { height: 4px; border-radius: 999px; background: var(--line); margin: 1.6rem 0 1.6rem; overflow: hidden; }
+  .nb-progress-fill { height: 100%; width: 20%; background: var(--teal-600); border-radius: 999px; transition: width 260ms var(--ease); }
 
   /* ===== Dashboard shell ===== */
   #dash { display: none; min-height: 100vh; }
@@ -194,6 +221,16 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .add-row { background: none; border: 1.5px dashed var(--line); border-radius: 10px; padding: 0.6rem; width: 100%; font-size: 0.82rem; font-weight: 700; color: var(--teal-700); cursor: pointer; margin: 0.4rem 0 0.9rem; }
   .add-row:hover { border-color: var(--teal-500); }
 
+  /* ===== Negocio (logo, fotos, mapa, ticket) ===== */
+  .biz-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.7rem; margin: 0.9rem 0; }
+  .biz-photo-grid:empty { display: none; }
+  .biz-photo-item { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; background: var(--bg); }
+  .biz-photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .biz-photo-item .row-del { position: absolute; top: 0.3rem; right: 0.3rem; background: rgba(10,20,20,0.55); color: #fff; border-radius: 999px; padding: 0.3rem; }
+  .biz-photo-item .row-del:hover { background: var(--danger); }
+  .biz-map { height: 280px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  .biz-ticket-textarea { width: 100%; min-height: 100px; padding: 0.72rem 0.9rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.9rem; color: var(--ink); font-family: inherit; resize: vertical; }
+
   .hour-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); }
   .hour-row:last-child { border-bottom: none; }
   .hour-row .day { width: 90px; font-weight: 700; font-size: 0.85rem; text-transform: capitalize; flex: none; }
@@ -235,24 +272,47 @@ function negocioShell({ base, googleClientId, appleClientId }) {
 </head>
 <body>
 ${ICON_SPRITE}
+<!-- Ecosistema Lucide (lucide-static, grid 24x24, trazo 2px) — ver DESIGN.md -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
-<symbol id="n-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5a1 1 0 0 0 1 1h3.5v-6h3v6H17a1 1 0 0 0 1-1V10"/></symbol>
-<symbol id="n-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></symbol>
-<symbol id="n-tag" viewBox="0 0 24 24"><path d="M12.6 3.5H6a2.5 2.5 0 0 0-2.5 2.5v6.6a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8l-8.8-8.8a2 2 0 0 0-1.4-.6Z"/><circle cx="8.3" cy="8.3" r="1.4"/></symbol>
-<symbol id="n-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v5.3l3.6 2.1"/></symbol>
-<symbol id="n-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c0-3.4 2.8-5.8 6.2-5.8s6.2 2.4 6.2 5.8"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M15.5 14.7c2.5.4 4.2 2.4 4.2 5.3"/></symbol>
-<symbol id="n-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/></symbol>
-<symbol id="n-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/><line x1="5.5" y1="15" x2="9.5" y2="15"/></symbol>
-<symbol id="n-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
-<symbol id="n-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
-<symbol id="n-x" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
-<symbol id="n-chev-l" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
-<symbol id="n-chev-r" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
-<symbol id="n-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
-<symbol id="n-eye-off" viewBox="0 0 24 24"><path d="M3.5 3.5l17 17"/><path d="M10.6 5.6C11 5.6 11.5 5.5 12 5.5c6 0 9.5 6.5 9.5 6.5a17.5 17.5 0 0 1-3.3 4.2M6.6 6.6C4.2 8.1 2.5 12 2.5 12S6 18.5 12 18.5c1.3 0 2.5-.3 3.6-.8"/><path d="M9.9 9.9a2.8 2.8 0 0 0 3.9 3.9"/></symbol>
+<symbol id="n-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="n-calendar" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+<symbol id="n-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+<symbol id="n-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="n-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+<symbol id="n-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="n-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></symbol>
+<symbol id="n-logout" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+<symbol id="n-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="n-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="n-chev-l" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="n-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="n-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="n-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol>
+<symbol id="n-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="n-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="n-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+<symbol id="n-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+<symbol id="n-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="n-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+<symbol id="n-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
 </defs></svg>
 
 <div id="auth" class="auth-wrap">
+  <div class="auth-side">
+    <a href="/" class="auth-side-brand"><span class="mark">b</span>Bukea negocios</a>
+    <div>
+      <h2>Tu agenda y tu clientela, sin pagar comisión</h2>
+      <p class="auth-side-sub">Todo lo que necesitas para tu negocio de belleza, centralizado en un solo lugar.</p>
+      <ul class="auth-side-perks">
+        <li><span class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></span>Agenda real, con disponibilidad de verdad</li>
+        <li><span class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></span>"Mi Cuadre": cuánto vendiste, sin hoja de cálculo</li>
+        <li><span class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></span>Confirmaciones y recordatorios por WhatsApp</li>
+        <li><span class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></span>Cero comisión, cero suscripción</li>
+      </ul>
+    </div>
+    <p class="auth-side-foot">Gratis para siempre, sin tarjeta de crédito.</p>
+  </div>
+  <div class="auth-main">
   <div class="auth-card" id="auth-login-card">
     <a href="/" class="auth-brand"><span class="mark">b</span>Bukea negocios</a>
 
@@ -276,6 +336,7 @@ ${ICON_SPRITE}
         <span class="social-label">Continuar con Apple</span>
       </button>
       <p id="auth-error-social" class="auth-error"></p>
+      <div class="auth-switch">¿Buscas reservar una cita? <a href="${base}/" style="color:var(--teal-700);font-weight:700;text-decoration:underline">Ve a Bukea para clientes</a></div>
     </div>
 
     <div id="auth-step-pin" style="display:none">
@@ -309,32 +370,88 @@ ${ICON_SPRITE}
 
   <div class="auth-card wide" id="auth-step-newbiz" style="display:none">
     <a href="/" class="auth-brand"><span class="mark">b</span>Bukea negocios</a>
-    <h1>Registra tu negocio</h1>
-    <p class="auth-sub">Es gratis para siempre, cero comisión. Toma un minuto.</p>
-    <p id="auth-error-4" class="auth-error"></p>
+    <div class="nb-progress"><div class="nb-progress-fill" id="nb-progress-fill"></div></div>
 
-    <div class="field">
-      <label for="nb-name">Tu nombre</label>
-      <input id="nb-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
-    </div>
-    <div class="field">
-      <label for="nb-business">Nombre del negocio</label>
-      <input id="nb-business" type="text" placeholder="Ej: Barbería El Nítido">
-    </div>
-    <div class="field">
-      <label for="nb-neighborhood">Sector</label>
-      <input id="nb-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+    <div class="nb-step" id="nb-step-1">
+      <h1>¿Cómo te llamas?</h1>
+      <p class="auth-sub">Es gratis para siempre, cero comisión. Toma un minuto.</p>
+      <p id="nb-error-1" class="auth-error"></p>
+      <div class="field">
+        <label for="nb-name">Tu nombre</label>
+        <input id="nb-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="nbNext(1)">Siguiente</button>
     </div>
 
-    <p class="nb-section-lbl">¿A qué te dedicas?</p>
-    <div class="nb-cat-grid" id="nb-cats"></div>
+    <div class="nb-step" id="nb-step-2" style="display:none">
+      <a href="#" class="auth-back" onclick="nbBack(2);return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
+      <h1>¿Cómo se llama tu negocio?</h1>
+      <p class="auth-sub">Así lo verán tus clientes en Bukea.</p>
+      <p id="nb-error-2" class="auth-error"></p>
+      <div class="field">
+        <label for="nb-business">Nombre del negocio</label>
+        <input id="nb-business" type="text" placeholder="Ej: Barbería El Nítido">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="nbNext(2)">Siguiente</button>
+    </div>
 
-    <p class="nb-section-lbl">Tus servicios</p>
-    <div id="nb-svc-rows"></div>
-    <button class="add-row" onclick="nbAddServiceRow()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar otro servicio</button>
+    <div class="nb-step" id="nb-step-3" style="display:none">
+      <a href="#" class="auth-back" onclick="nbBack(3);return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
+      <h1>¿Dónde queda tu negocio?</h1>
+      <p class="auth-sub">El sector donde atiendes a tus clientes.</p>
+      <p id="nb-error-3" class="auth-error"></p>
+      <div class="field">
+        <label for="nb-neighborhood">Sector</label>
+        <input id="nb-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="nbNext(3)">Siguiente</button>
+    </div>
 
-    <button class="btn btn-primary" id="nb-submit-btn" style="width:100%;justify-content:center;margin-top:1.4rem" onclick="nbSubmit()">Crear mi negocio</button>
-    <div class="auth-switch"><button onclick="logout()">Cerrar sesión</button></div>
+    <div class="nb-step" id="nb-step-4" style="display:none">
+      <a href="#" class="auth-back" onclick="nbBack(4);return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
+      <h1>¿A qué te dedicas?</h1>
+      <p class="auth-sub">Elige la categoría que mejor te describe.</p>
+      <div class="nb-cat-grid" id="nb-cats"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:1.2rem" onclick="nbNext(4)">Siguiente</button>
+    </div>
+
+    <div class="nb-step" id="nb-step-5" style="display:none">
+      <a href="#" class="auth-back" onclick="nbBack(5);return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
+      <h1>Tus servicios</h1>
+      <p class="auth-sub">Con duración y precio, para que tus clientes reserven sin llamarte.</p>
+      <p id="auth-error-4" class="auth-error"></p>
+      <div id="nb-svc-rows"></div>
+      <button class="add-row" onclick="nbAddServiceRow()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar otro servicio</button>
+      <label class="field" style="display:block;margin-top:1.2rem">
+        <span style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.3rem">¿Cómo conociste Bukea? <span style="font-weight:400;opacity:0.6">(opcional)</span></span>
+        <select id="nb-referral" style="width:100%;padding:0.65rem 0.8rem;border:1px solid var(--line, #d5dedd);border-radius:10px;font:inherit;background:#fff">
+          <option value="">Prefiero no decir</option>
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="amigo">Un amigo o colega</option>
+          <option value="google">Buscando en Google</option>
+          <option value="visita">Me visitaron de Bukea</option>
+          <option value="otro">Otro</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" id="nb-submit-btn" style="width:100%;justify-content:center;margin-top:1.4rem" onclick="nbSubmit()">Crear mi negocio</button>
+    </div>
+
+    <div class="nb-step" id="nb-step-6" style="display:none">
+      <h1>Sube el logo de tu negocio</h1>
+      <p class="auth-sub">Así te reconocen tus clientes en Bukea. Puedes agregarlo después si prefieres.</p>
+      <p id="nb-error-6" class="auth-error"></p>
+      <div class="nb-logo-pick">
+        <img id="nb-logo-preview" alt="" style="display:none">
+        <div class="nb-logo-placeholder" id="nb-logo-placeholder"><svg class="icon"><use href="#n-camera"/></svg></div>
+      </div>
+      <input type="file" id="nb-logo-file" accept="image/*" style="display:none" onchange="nbLogoPicked(this)">
+      <button type="button" class="btn btn-ghost" style="width:100%;justify-content:center" onclick="document.getElementById('nb-logo-file').click()">Elegir foto</button>
+      <button class="btn btn-primary" id="nb-logo-btn" style="width:100%;justify-content:center;margin-top:0.8rem" onclick="nbUploadLogo()" disabled>Guardar y continuar</button>
+      <div class="auth-switch"><button type="button" onclick="nbSkipLogo()">Omitir por ahora</button></div>
+    </div>
+
+    <div class="auth-switch"><button type="button" onclick="nbSkip()">Omitir por ahora</button> · <button onclick="logout()">Cerrar sesión</button></div>
   </div>
   </div>
 </div>
@@ -352,6 +469,8 @@ ${ICON_SPRITE}
     <button class="nav-item" data-panel="horario" onclick="showPanel('horario')"><svg class="icon"><use href="#n-clock"/></svg>Horario</button>
     <button class="nav-item" data-panel="equipo" onclick="showPanel('equipo')"><svg class="icon"><use href="#n-users"/></svg>Equipo</button>
     <button class="nav-item" data-panel="cuentas" onclick="showPanel('cuentas')"><svg class="icon"><use href="#n-card"/></svg>Cuentas bancarias</button>
+    <button class="nav-item" data-panel="social" onclick="showPanel('social')"><svg class="icon"><use href="#n-share"/></svg>Redes sociales</button>
+    <button class="nav-item" data-panel="negocio" onclick="showPanel('negocio')"><svg class="icon"><use href="#n-building"/></svg>Negocio</button>
     <button class="nav-item" data-panel="perfil" onclick="showPanel('perfil')"><svg class="icon"><use href="#n-user"/></svg>Mi perfil</button>
     <div class="sidebar-foot">
       <button class="nav-item" onclick="logout()"><svg class="icon"><use href="#n-logout"/></svg>Cerrar sesión</button>
@@ -437,9 +556,11 @@ ${ICON_SPRITE}
           <h1>Servicios</h1>
           <p>Lo que ofreces y sus precios. Se muestran así en tu perfil público.</p>
         </div>
+        <button class="btn btn-primary" onclick="saveServicios()">Guardar cambios</button>
       </div>
       <div class="card">
         <div id="servicios-list"><p class="empty-hint">Cargando…</p></div>
+        <button class="add-row" onclick="addServicioRow()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar servicio</button>
       </div>
     </div>
 
@@ -485,6 +606,80 @@ ${ICON_SPRITE}
       <div class="card">
         <div id="banks-list"></div>
         <button class="add-row" onclick="addBankRow()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar cuenta</button>
+      </div>
+    </div>
+
+    <!-- ===== Redes sociales ===== -->
+    <div class="panel" id="panel-social">
+      <div class="content-head">
+        <div>
+          <h1>Redes sociales</h1>
+          <p>Tus redes, visibles en tu perfil público para que te sigan.</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveSocial()">Guardar cambios</button>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label for="sc-instagram">Instagram</label>
+          <input id="sc-instagram" type="text" placeholder="@tunegocio o link completo">
+        </div>
+        <div class="field">
+          <label for="sc-facebook">Facebook</label>
+          <input id="sc-facebook" type="text" placeholder="@tunegocio o link completo">
+        </div>
+        <div class="field">
+          <label for="sc-tiktok">TikTok</label>
+          <input id="sc-tiktok" type="text" placeholder="@tunegocio o link completo">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="sc-website">Sitio web</label>
+          <input id="sc-website" type="text" placeholder="www.tunegocio.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Negocio (fotos, mapa, soporte) ===== -->
+    <div class="panel" id="panel-negocio">
+      <div class="content-head">
+        <div>
+          <h1>Negocio</h1>
+          <p>Fotos, ubicación exacta y soporte directo con el equipo de Bukea.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Logo del negocio</h3></div>
+        <div class="nb-logo-pick" style="justify-content:flex-start;gap:1rem;align-items:center">
+          <img id="biz-logo-preview" alt="" style="display:none">
+          <div class="nb-logo-placeholder" id="biz-logo-placeholder"><svg class="icon"><use href="#n-camera"/></svg></div>
+          <div>
+            <input type="file" id="biz-logo-file" accept="image/*" style="display:none" onchange="bizLogoPicked(this)">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('biz-logo-file').click()">Cambiar logo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Fotos del negocio</h3></div>
+        <p class="dash-sub">Muéstrale a tus clientes cómo es tu local.</p>
+        <div class="biz-photo-grid" id="biz-photo-grid"></div>
+        <input type="file" id="biz-photo-file" accept="image/*" style="display:none" onchange="bizPhotoPicked(this)">
+        <button class="add-row" onclick="document.getElementById('biz-photo-file').click()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar foto</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Ubicación en el mapa</h3></div>
+        <p class="dash-sub">Arrastra el pin a la ubicación exacta de tu negocio.</p>
+        <div id="biz-map" class="biz-map"></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:0.8rem" onclick="saveBizLocation()">Guardar ubicación</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>¿Necesitas ayuda?</h3></div>
+        <p class="dash-sub">Escríbenos directo y te respondemos por correo.</p>
+        <p id="ticket-error" class="auth-error" style="display:none"></p>
+        <textarea id="ticket-message" class="biz-ticket-textarea" placeholder="Cuéntanos qué necesitas…"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:0.8rem" onclick="sendTicket()"><svg class="icon" style="width:16px;height:16px"><use href="#n-message"/></svg> Abrir ticket</button>
       </div>
     </div>
 
@@ -753,6 +948,19 @@ ${ICON_SPRITE}
 
   async function afterLogin() {
     var slug = proSlug();
+
+    // proSlug() solo vive en este navegador (se guarda al crear el
+    // negocio) — un dueño que entra desde otro dispositivo no lo tendría
+    // todavía, así que antes de mandarlo al asistente "Crea tu negocio" se
+    // le pregunta al servidor si ya es dueño de algo (2026-08-25).
+    if (!slug) {
+      try {
+        var meRes = await fetch(BASE + '/api/professionals/me', { headers: authHeaders() });
+        var me = await meRes.json().catch(function () { return {}; });
+        if (me.slug) { slug = me.slug; setProSlug(slug); }
+      } catch (e) { /* sin conexión: seguimos al asistente, no se pierde nada */ }
+    }
+
     if (!slug) {
       showNewBizStep();
       return;
@@ -783,9 +991,49 @@ ${ICON_SPRITE}
     });
   };
 
+  var NB_STEPS = 6;
+  var nbCurrentStep = 1;
+
+  function nbGoStep(n) {
+    nbCurrentStep = n;
+    for (var i = 1; i <= NB_STEPS; i++) {
+      document.getElementById('nb-step-' + i).style.display = i === n ? 'block' : 'none';
+    }
+    document.getElementById('nb-progress-fill').style.width = Math.round((n / NB_STEPS) * 100) + '%';
+  }
+
+  window.nbBack = function (fromStep) {
+    nbGoStep(fromStep - 1);
+  };
+
+  // Omitir el asistente de "Crea tu negocio" (2026-08-25) — una cuenta que
+  // inicia sesión aquí sin negocio propio (ej. la del admin) no tiene otra
+  // salida que cerrar sesión. Este link deja la sesión intacta y manda a
+  // la persona al marketplace público, donde sí puede navegar como
+  // cualquier visitante logueado.
+  window.nbSkip = function () {
+    location.href = '/';
+  };
+
+  window.nbNext = function (fromStep) {
+    var errEl = document.getElementById('nb-error-' + fromStep);
+    if (errEl) errEl.style.display = 'none';
+    if (fromStep === 1 && !document.getElementById('nb-name').value.trim()) {
+      errEl.textContent = 'Dinos tu nombre.'; errEl.style.display = 'block'; return;
+    }
+    if (fromStep === 2 && !document.getElementById('nb-business').value.trim()) {
+      errEl.textContent = 'Dinos el nombre de tu negocio.'; errEl.style.display = 'block'; return;
+    }
+    if (fromStep === 3 && !document.getElementById('nb-neighborhood').value.trim()) {
+      errEl.textContent = 'Dinos en qué sector estás.'; errEl.style.display = 'block'; return;
+    }
+    nbGoStep(fromStep + 1);
+  };
+
   function showNewBizStep() {
     document.getElementById('auth-login-card').style.display = 'none';
     document.getElementById('auth-step-newbiz').style.display = 'block';
+    nbGoStep(1);
 
     var catsEl = document.getElementById('nb-cats');
     catsEl.innerHTML = NB_CATS.map(function (cat) {
@@ -826,20 +1074,65 @@ ${ICON_SPRITE}
       var res = await fetch(BASE + '/api/professionals', {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-        body: JSON.stringify({ name: name, businessName: businessName, neighborhood: neighborhood, category: nbSelectedCat, services: services }),
+        body: JSON.stringify({ name: name, businessName: businessName, neighborhood: neighborhood, category: nbSelectedCat, services: services, referralSource: document.getElementById('nb-referral').value || null }),
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) return showAuthError('auth-error-4', data.error || 'No se pudo crear el negocio.');
       setProSlug(data.slug);
-      document.getElementById('auth-step-newbiz').style.display = 'none';
       toast('¡Tu negocio ya está en Bukea!');
-      await afterLogin();
+      nbGoStep(6);
     } catch (err) {
       showAuthError('auth-error-4', 'No se pudo conectar con el servidor.');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Crear mi negocio';
     }
+  };
+
+  /* ---------- Logo al final del wizard (opcional) ---------- */
+  var nbLogoFile = null;
+  window.nbLogoPicked = function (input) {
+    nbLogoFile = input.files && input.files[0];
+    if (!nbLogoFile) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = document.getElementById('nb-logo-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('nb-logo-placeholder').style.display = 'none';
+    };
+    reader.readAsDataURL(nbLogoFile);
+    document.getElementById('nb-logo-btn').disabled = false;
+  };
+  window.nbUploadLogo = async function () {
+    if (!nbLogoFile) return;
+    var errEl = document.getElementById('nb-error-6');
+    errEl.style.display = 'none';
+    var btn = document.getElementById('nb-logo-btn');
+    btn.disabled = true;
+    btn.textContent = 'Subiendo…';
+    try {
+      var form = new FormData();
+      form.append('logo', nbLogoFile);
+      var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/logo', {
+        method: 'POST', headers: authHeaders(), body: form,
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        errEl.textContent = data.error || 'No se pudo subir el logo.';
+        errEl.style.display = 'block';
+        return;
+      }
+      document.getElementById('auth-step-newbiz').style.display = 'none';
+      await afterLogin();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar y continuar';
+    }
+  };
+  window.nbSkipLogo = async function () {
+    document.getElementById('auth-step-newbiz').style.display = 'none';
+    await afterLogin();
   };
 
   async function loadAll() {
@@ -869,6 +1162,9 @@ ${ICON_SPRITE}
     renderHours();
     renderTeam();
     renderBanks();
+    renderSocial();
+    renderBizLogo();
+    renderBizPhotos();
     renderPerfil();
   }
 
@@ -1194,16 +1490,171 @@ ${ICON_SPRITE}
     }
   };
 
-  /* ---------- Servicios (solo lectura por ahora) ---------- */
+  /* ---------- Servicios ---------- */
+  function svcRowHtml(s) {
+    s = s || {};
+    return '<div class="svc-row">' +
+      '<input type="text" class="sv-name" placeholder="Servicio (ej: Corte clásico)" value="' + esc(s.name || '') + '">' +
+      '<input type="number" class="sv-min" min="5" step="5" placeholder="Min" value="' + (s.durationMin || '') + '">' +
+      '<input type="number" class="sv-price" min="0" step="50" placeholder="RD$" value="' + (s.priceCents ? Math.round(s.priceCents / 100) : '') + '">' +
+      '<button class="row-del" onclick="this.closest(\\'.svc-row\\').remove()"><svg class="icon"><use href="#n-x"/></svg></button></div>';
+  }
   function renderServicios() {
     var svcs = (state.profile && state.profile.services) || [];
     var el = document.getElementById('servicios-list');
-    if (!svcs.length) { el.innerHTML = '<p class="empty-hint">Todavía no tienes servicios cargados.</p>'; return; }
-    el.innerHTML = svcs.map(function (s) {
-      return '<div class="list-row"><div class="info"><div class="t1">' + esc(s.name) + '</div>' +
-        '<div class="t2">' + s.durationMin + ' min</div></div><span class="badge">' + money(s.priceCents) + '</span></div>';
-    }).join('') + '<p class="empty-hint" style="text-align:left;padding-top:0.9rem">Para agregar o cambiar servicios, por ahora hazlo desde la app móvil (próximamente aquí también).</p>';
+    el.innerHTML = svcs.length ? svcs.map(svcRowHtml).join('') : svcRowHtml();
   }
+  window.addServicioRow = function () {
+    document.getElementById('servicios-list').insertAdjacentHTML('beforeend', svcRowHtml());
+  };
+  window.saveServicios = async function () {
+    var rows = document.querySelectorAll('#servicios-list .svc-row');
+    var services = Array.prototype.map.call(rows, function (row) {
+      return {
+        name: row.querySelector('.sv-name').value.trim(),
+        durationMin: Number(row.querySelector('.sv-min').value),
+        priceCents: Math.round(Number(row.querySelector('.sv-price').value) * 100),
+      };
+    }).filter(function (s) { return s.name && s.durationMin > 0 && s.priceCents >= 0; });
+    if (!services.length) { toast('Agrega al menos un servicio con nombre, duración y precio.'); return; }
+
+    var slug = proSlug();
+    var res = await fetch(BASE + '/api/professionals/' + slug + '/services', {
+      method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ services: services }),
+    });
+    if (!res.ok) { var d = await res.json().catch(function () { return {}; }); toast(d.error || 'No se pudo guardar.'); return; }
+    var profRes = await fetch(BASE + '/api/professionals/' + slug, { headers: authHeaders() });
+    state.profile = await profRes.json();
+    renderServicios();
+    toast('Servicios guardados.');
+  };
+
+  /* ---------- Redes sociales ---------- */
+  function renderSocial() {
+    var s = (state.profile && state.profile.social) || {};
+    document.getElementById('sc-instagram').value = s.instagram || '';
+    document.getElementById('sc-facebook').value = s.facebook || '';
+    document.getElementById('sc-tiktok').value = s.tiktok || '';
+    document.getElementById('sc-website').value = s.website || '';
+  }
+  window.saveSocial = async function () {
+    var slug = proSlug();
+    var res = await fetch(BASE + '/api/professionals/' + slug + '/social', {
+      method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        instagram: document.getElementById('sc-instagram').value.trim(),
+        facebook: document.getElementById('sc-facebook').value.trim(),
+        tiktok: document.getElementById('sc-tiktok').value.trim(),
+        website: document.getElementById('sc-website').value.trim(),
+      }),
+    });
+    if (!res.ok) { toast('No se pudo guardar.'); return; }
+    toast('Redes sociales guardadas.');
+  };
+
+  /* ---------- Negocio: logo, fotos, mapa, ticket ---------- */
+  var bizMap = null, bizMarker = null;
+
+  function renderBizLogo() {
+    var url = state.profile && state.profile.logoUrl;
+    var img = document.getElementById('biz-logo-preview');
+    var placeholder = document.getElementById('biz-logo-placeholder');
+    if (url) {
+      img.src = url; img.style.display = 'block'; placeholder.style.display = 'none';
+    } else {
+      img.style.display = 'none'; placeholder.style.display = 'flex';
+    }
+  }
+  window.bizLogoPicked = async function (input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var form = new FormData();
+    form.append('logo', file);
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/logo', {
+      method: 'POST', headers: authHeaders(), body: form,
+    });
+    if (!res.ok) { toast('No se pudo subir el logo.'); return; }
+    var data = await res.json();
+    state.profile.logoUrl = data.logoUrl;
+    renderBizLogo();
+    toast('Logo actualizado.');
+  };
+
+  function photoItemHtml(p) {
+    return '<div class="biz-photo-item" data-id="' + p.id + '"><img src="' + p.url + '" alt="">' +
+      '<button class="row-del" onclick="deleteBizPhoto(' + p.id + ', this)"><svg class="icon" style="width:16px;height:16px"><use href="#n-x"/></svg></button></div>';
+  }
+  function renderBizPhotos() {
+    var photos = (state.profile && state.profile.photos) || [];
+    document.getElementById('biz-photo-grid').innerHTML = photos.map(photoItemHtml).join('');
+  }
+  window.bizPhotoPicked = async function (input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var form = new FormData();
+    form.append('photo', file);
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/photos', {
+      method: 'POST', headers: authHeaders(), body: form,
+    });
+    input.value = '';
+    if (!res.ok) { toast('No se pudo subir la foto.'); return; }
+    var data = await res.json();
+    (state.profile.photos = state.profile.photos || []).push({ id: data.id, url: data.url });
+    renderBizPhotos();
+    toast('Foto agregada.');
+  };
+  window.deleteBizPhoto = async function (id, btn) {
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/photos/' + id, {
+      method: 'DELETE', headers: authHeaders(),
+    });
+    if (!res.ok) { toast('No se pudo borrar la foto.'); return; }
+    btn.closest('.biz-photo-item').remove();
+    state.profile.photos = (state.profile.photos || []).filter(function (p) { return p.id !== id; });
+  };
+
+  function initBizMap() {
+    var lat = (state.profile && state.profile.lat) || 18.4861;
+    var lng = (state.profile && state.profile.lng) || -69.9312;
+    if (!bizMap) {
+      bizMap = L.map('biz-map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(bizMap);
+      bizMarker = L.marker([lat, lng], { draggable: true }).addTo(bizMap);
+    } else {
+      bizMap.invalidateSize();
+      bizMap.setView([lat, lng], 15);
+      bizMarker.setLatLng([lat, lng]);
+    }
+  }
+  window.saveBizLocation = async function () {
+    if (!bizMarker) return;
+    var pos = bizMarker.getLatLng();
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/location', {
+      method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ lat: pos.lat, lng: pos.lng }),
+    });
+    if (!res.ok) { toast('No se pudo guardar la ubicación.'); return; }
+    state.profile.lat = pos.lat;
+    state.profile.lng = pos.lng;
+    toast('Ubicación guardada.');
+  };
+
+  window.sendTicket = async function () {
+    var errEl = document.getElementById('ticket-error');
+    errEl.style.display = 'none';
+    var message = document.getElementById('ticket-message').value.trim();
+    if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/ticket', {
+      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ message: message }),
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok) { errEl.textContent = data.error || 'No se pudo enviar. Intenta de nuevo.'; errEl.style.display = 'block'; return; }
+    document.getElementById('ticket-message').value = '';
+    toast('Ticket enviado. Te responderemos por correo.');
+  };
 
   /* ---------- Horario ---------- */
   var DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -1363,6 +1814,10 @@ ${ICON_SPRITE}
   window.showPanel = function (name) {
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('show', p.id === 'panel-' + name); });
     document.querySelectorAll('.nav-item[data-panel]').forEach(function (b) { b.classList.toggle('active', b.dataset.panel === name); });
+    // El mapa de Leaflet necesita medir un contenedor visible — si se crea
+    // con el panel oculto (display:none) queda con tamaño 0. Se inicializa
+    // recién cuando el usuario entra a "Negocio" por primera vez.
+    if (name === 'negocio') setTimeout(initBizMap, 0);
   };
 
   document.addEventListener('keydown', function (e) {
@@ -1371,6 +1826,18 @@ ${ICON_SPRITE}
 
   /* ---------- Arranque ---------- */
   (async function boot() {
+    // "Ver panel del negocio" desde el panel de administración (2026-08-25)
+    // — llega con un token de sesión ya emitido para el dueño real y el
+    // slug de su negocio, en vez de pasar por el login. Se limpia de la
+    // URL de inmediato para no dejarlo en el historial del navegador.
+    var params = new URLSearchParams(location.search);
+    var adminToken = params.get('admin_view');
+    if (adminToken) {
+      setSession({ token: adminToken });
+      setProSlug(params.get('slug') || '');
+      history.replaceState(null, '', location.pathname);
+    }
+
     if (getSession()) {
       await afterLogin();
     }

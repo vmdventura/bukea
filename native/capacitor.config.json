@@ -7,7 +7,7 @@
     "iosScheme": "https"
   },
   "ios": {
-    "backgroundColor": "#0f6f6b",
+    "backgroundColor": "#002626",
     "contentInset": "always"
   },
   "plugins": {

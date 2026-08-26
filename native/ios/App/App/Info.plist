@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>es</string>
 	<key>CFBundleDisplayName</key>
         <string>Bukea</string>
 	<key>CFBundleExecutable</key>
@@ -33,9 +33,13 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Bukea usa la cámara solo si eliges tomar una foto para tu comprobante de pago o las fotos de tu negocio.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bukea accede a tus fotos solo cuando eliges una para tu comprobante de pago, tu logo o la galería de tu negocio.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

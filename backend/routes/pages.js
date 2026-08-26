@@ -27,25 +27,28 @@ const HOME_STYLE = `
   .hero {
     position: relative; padding: 4.5rem 0 3rem; text-align: center; contain: layout paint; overflow: hidden;
     background:
-      radial-gradient(60% 80% at 12% 8%, oklch(70% 0.1 195 / 0.5), transparent 60%),
-      radial-gradient(55% 70% at 92% 0%, oklch(84% 0.09 78 / 0.6), transparent 62%),
-      radial-gradient(90% 90% at 50% 120%, oklch(93% 0.03 195 / 0.9), transparent 70%),
-      linear-gradient(160deg, oklch(96% 0.014 195), oklch(97% 0.014 90) 70%);
+      radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
+      radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
+      linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
     border-radius: 26px;
   }
   .hero-grain {
-    position: absolute; inset: 0; z-index: 0; opacity: 0.5; mix-blend-mode: multiply; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    position: absolute; inset: 0; z-index: 0; opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .hero-inner { position: relative; z-index: 1; }
-  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--teal-900); }
-  .hero h1 b { color: var(--teal-600); font-weight: inherit; }
-  .hero p { color: var(--soft); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 1.4rem; }
+  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: #fff; }
+  .hero h1 b {
+    font-weight: inherit;
+    background: linear-gradient(100deg, oklch(80% 0.1 78), oklch(88% 0.09 85) 45%, oklch(74% 0.11 70));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: rgba(255,255,255,0.78); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 1.4rem; }
   .badge-row { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
-  .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 0.82rem; font-weight: 700; color: var(--ink); box-shadow: var(--sh-2); }
-  .badge-pill.wa { color: #128c50; }
-  .badge-pill.wa .icon { color: var(--whatsapp); }
-  .badge-pill.cash .icon { color: var(--cash); }
+  .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.82rem; font-weight: 700; color: #fff; }
+  .badge-pill.wa { color: #6fe3ab; }
+  .badge-pill.wa .icon { color: #6fe3ab; }
+  .badge-pill.cash .icon { color: oklch(80% 0.1 78); }
   .search-bar { display: flex; align-items: center; gap: 0.4rem; background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 0.4rem 0.5rem 0.4rem 1.2rem; max-width: 620px; margin: 0 auto; box-shadow: var(--sh-2); transition: box-shadow 200ms var(--ease-out-quart), border-color 200ms var(--ease-out-quart); }
   .search-bar:focus-within { border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.22), var(--sh-2); }
   .search-bar .search-field { display: flex; align-items: center; gap: 0.55rem; flex: 1; min-width: 0; color: var(--soft); }
@@ -66,14 +69,14 @@ const HOME_STYLE = `
     .search-bar .btn { width: 100%; justify-content: center; margin-top: 0.4rem; }
   }
   .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
-  .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--soft); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
+  .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
   @media (max-width: 560px) {
     .badge-row, .chips { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding: 0 20px 0.3rem; margin-left: -20px; margin-right: -20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .badge-row::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
     .badge-row .badge-pill, .chips .chip { flex: none; }
   }
-  .chip.active, .chip:hover { background: var(--teal-600); border-color: var(--teal-600); color: #fff; transform: translateY(-1px); }
+  .chip.active, .chip:hover { background: #fff; border-color: #fff; color: var(--teal-900); transform: translateY(-1px); }
   .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
   .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2.2rem 0; }
   .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart), border-color 220ms var(--ease-out-quart); }
@@ -99,7 +102,7 @@ router.get('/', async (req, res) => {
   const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
   const ciudad = CITIES.includes(req.query.ciudad) ? req.query.ciudad : 'santo-domingo';
 
-  let sql = 'SELECT * FROM professionals WHERE 1=1';
+  let sql = 'SELECT * FROM professionals WHERE hidden_at IS NULL';
   const params = [];
   if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
   // Todavía no hay columna de ciudad — los negocios reales de hoy son
@@ -190,7 +193,7 @@ ${HOME_STYLE}
   </div>
 </div>`;
 
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Bukea, tu cita en 60 segundos',
     description: 'Bukea tu cita de barbería, uñas, salón, cejas y maquillaje en República Dominicana. Paga en efectivo o transferencia, sin comisión.',
@@ -216,13 +219,13 @@ router.get('/mapa', async (req, res) => {
   const base = req.baseUrlPrefix;
   const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
 
-  let sql = 'SELECT slug, name, business_name, neighborhood, category, rating, reviews_count, lat, lng FROM professionals WHERE lat IS NOT NULL AND lng IS NOT NULL';
+  let sql = 'SELECT slug, name, business_name, neighborhood, category, rating, reviews_count, lat, lng FROM professionals WHERE hidden_at IS NULL AND lat IS NOT NULL AND lng IS NOT NULL';
   const params = [];
   if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
 
   const [professionals] = await pool.query(sql, params);
   const [[{ withoutPin }]] = await pool.query(
-    'SELECT COUNT(*) AS withoutPin FROM professionals WHERE lat IS NULL OR lng IS NULL' + (categoria ? ' AND category = ?' : ''),
+    'SELECT COUNT(*) AS withoutPin FROM professionals WHERE hidden_at IS NULL AND (lat IS NULL OR lng IS NULL)' + (categoria ? ' AND category = ?' : ''),
     categoria ? [categoria] : []
   );
 
@@ -284,7 +287,7 @@ ${MAP_STYLE}
 })();
 </script>`;
 
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Bukea en el mapa. Profesionales de belleza cerca de ti',
     description: 'Encuentra en el mapa barberías, salones de uñas y más cerca de ti en Santo Domingo.',
@@ -336,7 +339,7 @@ router.get('/p/:slug', async (req, res) => {
     [p.id]
   );
   const [bankAccounts] = await pool.query(
-    'SELECT bank_name, account_type, account_number, account_holder, cedula_rnc FROM professional_bank_accounts WHERE professional_id = ?',
+    'SELECT bank_name, account_type, account_number, account_holder, cedula_rnc, verified_at FROM professional_bank_accounts WHERE professional_id = ?',
     [p.id]
   );
   const [collaboratorRows] = await pool.query(
@@ -385,7 +388,7 @@ ${PROFILE_STYLE}
     ${bankAccounts.map(b => `
     <div class="svc-row">
       <div>
-        <div class="svc-name">${esc(b.bank_name)} · ${esc(b.account_type)}</div>
+        <div class="svc-name">${esc(b.bank_name)} · ${esc(b.account_type)}${b.verified_at ? ' <span class="badge" style="vertical-align:middle">✓ Verificada</span>' : ''}</div>
         <div class="svc-dur">${esc(b.account_holder)} · Cédula/RNC ${esc(b.cedula_rnc)}</div>
       </div>
       <div class="svc-price">${esc(b.account_number)}</div>
@@ -420,7 +423,7 @@ ${PROFILE_STYLE}
   </div>
 </div>`;
 
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: `${p.name}, ${p.business_name} | Bukea`,
     description: `Reserva con ${p.name} en ${p.business_name}, ${p.neighborhood}. ${services.map(s => s.name).join(', ')}.`,
@@ -498,7 +501,7 @@ router.get('/negocio', (req, res) => {
   }));
 });
 
-router.get('/negocios', (req, res) => {
+router.get('/negocios', async (req, res) => {
   const base = req.baseUrlPrefix;
 
   const steps = [
@@ -590,7 +593,7 @@ ${MARKETING_STYLE}
     <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Bukea para negocios. Agenda, WhatsApp y cero comisión',
     description: 'Bukea es gratis para negocios de belleza en República Dominicana: agenda real, Mi Cuadre, WhatsApp nativo y pagos a la dominicana.',
@@ -599,7 +602,7 @@ ${MARKETING_STYLE}
   }));
 });
 
-router.get('/precios', (req, res) => {
+router.get('/precios', async (req, res) => {
   const base = req.baseUrlPrefix;
   const perks = [
     'Perfil público con tus servicios y horario',
@@ -635,7 +638,7 @@ ${MARKETING_STYLE}
     <p>Explora, reserva y gestiona tus citas sin costo, hoy y siempre.</p>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Precios de Bukea. Gratis para negocios y clientes',
     description: 'Bukea es 100% gratis: sin suscripción, sin comisión, sin tarjeta para empezar.',
@@ -643,6 +646,88 @@ ${MARKETING_STYLE}
     bodyHtml: body,
   }));
 });
+
+// TODO(publicación app stores): Bukea todavía no está publicada en App Store
+// ni Google Play (ver docs/PLAN.md, Fase 0) — por eso los badges de abajo no
+// llevan a ningún lado (decorativos, "Próximamente") y el hero explica que
+// hoy Bukea es una app web. Cuando se publique en ambas tiendas:
+//   1. Envolver cada <img> de dl-badges en un <a href="{link real de la ficha}">.
+//   2. Cambiar el alt de "Próximamente en ..." a "Descárgala en ...".
+//   3. Quitar el <p class="dl-soon"> de cada tarjeta.
+//   4. Cambiar el <h1>/<p> del hero por:
+//      <h1>Descarga la app de Bukea</h1>
+//      <p>Reserva tu próxima cita o gestiona tu negocio de belleza desde el
+//      celular. Disponible para iOS y Android.</p>
+router.get('/descargar', async (req, res) => {
+  const base = req.baseUrlPrefix;
+  const clientUrl = `https://www.bukeard.com${base}/`;
+  const businessUrl = `https://www.bukeard.com${base}/?join=1`;
+  const qr = (url) => `https://api.qrserver.com/v1/create-qr-code/?size=296x296&margin=0&data=${encodeURIComponent(url)}`;
+  const appleBadge = `
+      <div class="dl-badges">
+        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/es-mx?size=250x83" alt="Próximamente en App Store" height="42">
+      </div>
+      <p class="dl-soon">Muy pronto en la App Store. Por ahora, escanea el código o usa el botón:</p>`;
+  const googleBadge = `
+      <div class="dl-badges">
+        <img src="https://play.google.com/intl/es/badges/static/images/badges/es_badge_web_generic.png" alt="Próximamente en Google Play" height="42">
+      </div>
+      <p class="dl-soon">Muy pronto en Google Play. Por ahora, escanea el código o usa el botón:</p>`;
+
+  const body = `
+${MARKETING_STYLE}
+${DOWNLOAD_STYLE}
+<div class="wrap">
+  <div class="m-hero">
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Descarga Bukea</h1>
+    <p class="reveal" style="--i:1">Bukea es una app web. Escanea el código con tu celular o toca el botón, ábrela en tu navegador y agrégala a tu pantalla de inicio como una app de verdad.</p>
+  </div>
+
+  <div class="dl-grid">
+    <div class="card dl-card reveal" style="--i:2">
+      ${appleBadge}
+      <img class="dl-qr" src="${qr(clientUrl)}" alt="Código QR para abrir Bukea" width="148" height="148" loading="lazy">
+      <h3>Para reservar tu cita</h3>
+      <p>Explora negocios, reserva y gestiona tus citas desde tu celular.</p>
+      <a class="btn btn-primary" href="${base}/">Abrir Bukea</a>
+    </div>
+    <div class="card dl-card reveal" style="--i:3">
+      ${googleBadge}
+      <img class="dl-qr" src="${qr(businessUrl)}" alt="Código QR para unirte a Bukea como negocio" width="148" height="148" loading="lazy">
+      <h3>Para tu negocio</h3>
+      <p>Crea tu perfil, arma tu agenda y recibe reservas, gratis.</p>
+      <a class="btn btn-primary" href="${base}/?join=1">Unirme a Bukea</a>
+    </div>
+  </div>
+
+  <p class="reveal" style="--i:4;text-align:center;color:var(--soft);font-size:0.85rem;max-width:52ch;margin:0 auto 2.5rem">
+    ¿Primera vez? Escanea, abre Bukea en tu navegador y guárdala en tu pantalla de inicio: un toque y la tienes como una app más, sin ocupar espacio de tienda.
+  </p>
+</div>`;
+
+  res.type('html').send(await pageShell({
+    base,
+    title: 'Descarga Bukea. Reserva o gestiona tu negocio',
+    description: 'Descarga Bukea escaneando el código QR o abriéndola desde tu navegador. Reserva tu cita o gestiona tu negocio de belleza, gratis.',
+    canonicalPath: 'https://www.bukeard.com/descargar',
+    bodyHtml: body,
+  }));
+});
+
+const DOWNLOAD_STYLE = `
+<style>
+  .dl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem; margin: 2.6rem 0 3.5rem; }
+  .dl-card { padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .dl-card h3 { margin: 0.3rem 0 0; font-size: 1.15rem; color: var(--teal-900); }
+  .dl-card p { margin: 0 0 0.8rem; color: var(--soft); font-size: 0.88rem; line-height: 1.5; }
+  .dl-qr { width: 148px; height: 148px; border-radius: 14px; border: 1px solid var(--line); padding: 8px; background: #fff; }
+  .dl-card .btn { margin-top: 0.4rem; }
+  .dl-badges { display: flex; gap: 0.6rem; justify-content: center; align-items: center; opacity: 0.55; filter: grayscale(0.3); }
+  .dl-badges img { height: 42px; width: auto; }
+  .dl-soon { margin: 0.5rem 0 1rem; color: var(--soft); font-size: 0.78rem; }
+  @media (max-width: 720px) { .dl-grid { grid-template-columns: 1fr; } }
+</style>`;
 
 const LEGAL_STYLE = `
 <style>
@@ -654,7 +739,7 @@ const LEGAL_STYLE = `
   .legal-prose .updated { margin-top: 2.2rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.82rem; }
 </style>`;
 
-router.get('/blog', (req, res) => {
+router.get('/blog', async (req, res) => {
   const base = req.baseUrlPrefix;
   const body = `
 ${MARKETING_STYLE}
@@ -666,7 +751,7 @@ ${MARKETING_STYLE}
     <a class="btn btn-primary reveal" style="--i:2" href="/">Volver al inicio</a>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Blog. Bukea',
     description: 'Historias, consejos y novedades de Bukea. Muy pronto.',
@@ -675,7 +760,7 @@ ${MARKETING_STYLE}
   }));
 });
 
-router.get('/contacto', (req, res) => {
+router.get('/contacto', async (req, res) => {
   const base = req.baseUrlPrefix;
   const body = `
 ${MARKETING_STYLE}
@@ -696,7 +781,7 @@ ${MARKETING_STYLE}
     </div>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Contacto. Bukea',
     description: 'Escríbenos a Bukea para preguntas, soporte o alianzas.',
@@ -705,7 +790,7 @@ ${MARKETING_STYLE}
   }));
 });
 
-router.get('/privacidad', (req, res) => {
+router.get('/privacidad', async (req, res) => {
   const base = req.baseUrlPrefix;
   const body = `
 ${MARKETING_STYLE}
@@ -738,7 +823,7 @@ ${LEGAL_STYLE}
     <p class="updated">Última actualización: agosto 2026. Esta política se irá ampliando a medida que crece Bukea.</p>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Política de privacidad. Bukea',
     description: 'Cómo Bukea recoge, usa y protege tus datos.',
@@ -747,7 +832,7 @@ ${LEGAL_STYLE}
   }));
 });
 
-router.get('/terminos', (req, res) => {
+router.get('/terminos', async (req, res) => {
   const base = req.baseUrlPrefix;
   const body = `
 ${MARKETING_STYLE}
@@ -775,7 +860,7 @@ ${LEGAL_STYLE}
     <p class="updated">Última actualización: agosto 2026.</p>
   </div>
 </div>`;
-  res.type('html').send(pageShell({
+  res.type('html').send(await pageShell({
     base,
     title: 'Términos de servicio. Bukea',
     description: 'Condiciones de uso de Bukea para clientes y negocios.',

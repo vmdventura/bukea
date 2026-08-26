@@ -1,9 +1,15 @@
 # Verificación por WhatsApp — Guía de activación
 
+> ✅ **ACTIVO EN PRODUCCIÓN desde el 2026-08-26.** La configuración de Meta se hizo el 24-ago
+> (número real +1 809-466-5692 "Bukea", plantilla `codigo_bukea` aprobada, variables en cPanel)
+> y el 26-ago se agregó el método de pago en Meta Business — era lo único que faltaba: sin
+> tarjeta, la API acepta el mensaje (responde 200) pero Meta lo descarta en silencio.
+> Verificado con un código real entregado al teléfono de Víctor. El resto de esta guía queda
+> como referencia de cómo se montó.
+
 El backend ya tiene todo el código para enviar códigos de verificación (OTP) por WhatsApp.
-Está **dormido** hasta que se configuren 3 variables de entorno en cPanel. Esta guía cubre
-lo que hay que hacer en Meta (lo hace Víctor, requiere cuentas y documentos del negocio)
-y cómo activar al final.
+Esta guía cubre lo que hay que hacer en Meta (lo hace Víctor, requiere cuentas y documentos
+del negocio) y cómo activar al final.
 
 ## Costo
 

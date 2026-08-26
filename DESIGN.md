@@ -59,7 +59,15 @@ Escala de espaciado en rem: `0.25 · 0.5 · 0.75 · 1 · 1.25 · 1.5 · 2 · 2.5
 
 ## Iconography
 
-SVG en línea (trazo 1.75px, esquinas redondeadas) en vez de emoji — mismo lenguaje visual que Lucide/Phosphor pero embebido para no depender de red. Emoji se reserva para momentos de voz/personalidad puntuales (el mensaje de WhatsApp, el título "¿Qué vas a bukear hoy? 👋"), no para iconografía funcional repetida (categorías, navegación, pagos).
+**Ecosistema exclusivo: [Lucide](https://lucide.dev)** (decisión 2026-08-24). Web: `lucide-react`. Nativo: `lucide-react-native`. Siempre íconos individuales (import nombrado, nunca el paquete completo), grid 24x24, `strokeWidth={2}` — así todo el trazo se ve uniforme entre pantallas.
+
+Hoy el backend web es HTML/CSS/JS servido por Express, sin React todavía, así que no hay un `import` real de `lucide-react`: en su lugar, `backend/views/shared.js` (`ICON_SPRITE`), `backend/views/negocio.js` (`n-*`) y `backend/public/index.html` incrustan como `<symbol>` los mismos `path`/`viewBox` oficiales de `lucide-static` (trazo 2px, grid 24x24) y se usan vía `<svg class="icon"><use href="#i-nombre"/></svg>`. El día que haya código React real en este proyecto (ej. si se migra el panel de negocio o la app nativa), ese código importa de `lucide-react`/`lucide-react-native` de verdad, no del sprite.
+
+**Excepciones a propósito, sin equivalente en Lucide** (Lucide no incluye logos de marca ni pictogramas ilustrativos):
+- `i-whatsapp` — logo de WhatsApp, se mantiene el trazo propio.
+- `c-barberia`, `c-unas`, `c-salon`, `c-maquillaje`, `c-cejas`, `c-pilates` — pictogramas de categoría, ilustrativos y propios de Bukea (ver el círculo teal en `cat-badge`). `c-pilates` pasó brevemente por `person-standing` de Lucide (2026-08-24) pero volvió a ser un pictograma propio el mismo día (figura estirándose sobre una colchoneta) porque Lucide no tiene nada específico de pilates y la figura genérica no comunicaba la categoría. `c-salon` se rediseñó como un secador de pelo (antes eran unas barras abstractas).
+
+Emoji se reserva para momentos de voz/personalidad puntuales (el mensaje de WhatsApp, el título "¿Qué vas a bukear hoy? 👋"), no para iconografía funcional repetida (categorías, navegación, pagos).
 
 ## Components (estados)
 

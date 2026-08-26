@@ -40,6 +40,11 @@ CREATE TABLE IF NOT EXISTS professionals (
   owner_user_id INT,
   lat DECIMAL(10,7),
   lng DECIMAL(10,7),
+  logo_path VARCHAR(255),
+  social_instagram VARCHAR(190),
+  social_facebook VARCHAR(190),
+  social_tiktok VARCHAR(190),
+  social_website VARCHAR(190),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -115,6 +120,16 @@ CREATE TABLE IF NOT EXISTS professional_bank_accounts (
   account_number VARCHAR(60) NOT NULL,
   account_holder VARCHAR(120) NOT NULL,
   cedula_rnc VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Galería de fotos del negocio (2026-08-25), visible en el perfil público.
+-- Independiente de logo_path (el logo es uno solo, la galería es 0..N).
+CREATE TABLE IF NOT EXISTS business_photos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  professional_id INT NOT NULL,
+  path VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
