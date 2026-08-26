@@ -36,7 +36,7 @@ function sendCsv(res, filename, csv) {
   res.type('text/csv').attachment(filename).send(csv);
 }
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
 
 function slugify(text) {
   return String(text)

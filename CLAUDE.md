@@ -133,7 +133,7 @@ A pedido de Víctor: el teléfono sigue siendo la base del login y de las confir
 - `POST /api/auth/forgot-pin` (body `{email}`) manda un código de 6 dígitos por correo (vence en 15 min, máx. 3 intentos cada 10 min, mismo patrón anti-abuso que el OTP de WhatsApp). `POST /api/auth/reset-pin` (body `{email, code, newPin}`) verifica el código y cambia el PIN, con sesión automática.
 - `auth_codes` ahora sirve para dos cosas — código de WhatsApp (por `phone`) o código de recuperación (por `email`) — nunca los dos en la misma fila; `phone` pasó a ser opcional en esa tabla.
 - Pantalla nueva "¿Olvidaste tu PIN?" en el login (enlace debajo de "Iniciar sesión"): pide el correo, muestra el campo de código + PIN nuevo, y entra a la sesión automáticamente al cambiarlo.
-- **Falta activarlo en producción:** como con Google/Apple, alguien tiene que crear las credenciales SMTP (ej. una cuenta de Gmail con contraseña de aplicación, o un servicio como Amazon SES/Postmark) y ponerlas en cPanel → *Setup Node.js App* → Environment variables. Mientras no estén, el botón funciona pero el backend responde "La recuperación por correo aún no está activa".
+- ~~Falta activarlo en producción~~ — **✅ Activo desde el 2026-08-26**: buzón `no-reply@bukeard.com` creado en el hosting (cPanel → Email Accounts) y variables `SMTP_HOST=mail.bukeard.com`, `SMTP_PORT=465`, `SMTP_USER`/`MAIL_FROM=no-reply@bukeard.com` + `SMTP_PASSWORD` en Setup Node.js App. El certificado de `mail.bukeard.com` cubre `*.bukeard.com` (sin problemas de TLS). Verificado con un código real entregado al correo de Víctor.
 
 ## Panel de administración general (2026-08-24)
 

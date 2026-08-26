@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Bukea, tu cita en 60 segundos</title>
 <meta name="description" content="Bukea tu cita de barbería, uñas, salón, maquillaje y cejas en República Dominicana. Paga en efectivo o transferencia, con recordatorio por WhatsApp.">
 <meta name="theme-color" content="#002626">
@@ -35,7 +35,12 @@
     font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
     background: var(--bg, #f2f5f4);
     overscroll-behavior: none;
+    /* La app es una columna fija: cada .screen desplaza por dentro
+       (overflow-y). El scroll de página quedó deshabilitado en el WebView
+       (scrollEnabled:false) para que la app no se arrastre completa. */
+    display: flex; flex-direction: column; overflow: hidden;
   }
+  .screen { min-height: 0; }
 
   /* ===== App a pantalla completa (estilo nativo) ===== */
   .phone {
@@ -74,8 +79,10 @@
 
     --ink:  oklch(21% 0.02 200);
     --soft: oklch(44% 0.028 200);
-    --bg:   oklch(96% 0.012 195);
-    --card: oklch(99% 0.004 195);
+    /* Crema cálido (2026-08-26): el fondo menta leía "app de salud"; el
+       crema editorial es la base del look luxury (ref. DESIGN.md + mock). */
+    --bg:   oklch(96% 0.015 85);
+    --card: oklch(99% 0.006 90);
     --line: oklch(89% 0.014 195);
 
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -193,14 +200,40 @@
   .cats-circle .cat .txt { font-size: 0.82rem; }
 
   /* Categorías del inicio — grid vertical (ícono arriba, nombre debajo) */
-  .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+  /* Categorías "joyería" (2026-08-26): círculos verde profundo con trazo
+     dorado fino, ícono dorado, etiqueta en versalitas — ref. mock luxury. */
+  .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem 0.5rem; }
   .cats-grid .cat {
-    flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.6rem;
-    padding: 1.05rem 0.4rem 0.9rem; border-radius: 20px; min-height: 116px;
+    flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.55rem;
+    padding: 0; min-height: 0; background: none; border: none; box-shadow: none;
   }
-  .cats-grid .cat .txt { font-size: 0.72rem; text-align: center; line-height: 1.2; }
-  .cats-grid .cat-badge { width: 56px; height: 56px; }
-  .cats-grid .cat-ic { width: 29px; height: 29px; }
+  .cats-grid .cat .txt {
+    font-size: 0.6rem; text-align: center; line-height: 1.25; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink);
+  }
+  .cats-grid .cat.with-photo { align-items: stretch; }
+  .cats-grid .cat.with-photo .cat-badge {
+    width: 100%; height: auto; aspect-ratio: 0.94 / 1; border-radius: 20px;
+    background-size: cover; background-position: center;
+    position: relative; overflow: visible;
+    box-shadow: 0 6px 16px rgba(15, 40, 38, 0.16);
+  }
+  .cats-grid .cat.with-photo .cat-ic {
+    display: block; position: absolute; left: 6px; bottom: 6px;
+    width: 26px; height: 26px; padding: 6.5px; box-sizing: border-box;
+    background: radial-gradient(120% 120% at 30% 20%, #14504d 0%, #0a3533 65%, #062523 100%);
+    border: 0.5px solid rgba(201, 164, 92, 0.5); border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(6, 26, 24, 0.25);
+    stroke-width: 1.25;
+  }
+  .cats-grid .cat-badge {
+    width: 66px; height: 66px; border-radius: 50%;
+    background: radial-gradient(120% 120% at 30% 20%, #14504d 0%, #0a3533 60%, #062523 100%);
+    border: 1px solid rgba(201, 164, 92, 0.65);
+    box-shadow: 0 4px 14px rgba(9, 40, 38, 0.22), inset 0 0 0 3px rgba(6, 30, 28, 0.9);
+  }
+  .cats-grid .cat-ic { width: 27px; height: 27px; stroke: #d9b878; stroke-width: 1.5; }
+
 
   .cat-badge {
     width: 46px; height: 46px; flex: none; border-radius: 16px;
@@ -314,7 +347,41 @@
     color: var(--brand-cream); text-align: center;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
     justify-content: center;
+    position: relative;
   }
+  /* En pantallas altas (la app empaquetada va a pantalla completa) el
+     contenido centrado se estiraba de borde a borde: se acota el ancho
+     de cada paso para que el diseño se mantenga compacto. */
+  .screen.welcome div[id^="w-step"] { width: 100%; max-width: 380px; margin-left: auto; margin-right: auto; }
+  .w-card { position: relative; width: 100%; }
+  .w-close {
+    position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 16px;
+    width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.14); color: var(--brand-cream);
+    display: none; align-items: center; justify-content: center; font-size: 1.05rem;
+    z-index: 2;
+  }
+  .w-close .icon { width: 18px; height: 18px; }
+  /* Login obligatorio (requireAccount con acción pendiente): en vez de
+     tomar toda la pantalla en verde, se presenta como hoja inferior sobre
+     la pantalla donde estaba el usuario, al estilo de las demás hojas. */
+  .screen.welcome.as-sheet {
+    background: rgba(10, 30, 28, 0.55);
+    justify-content: flex-end;
+    padding: 0;
+    position: fixed; inset: 0; z-index: 80;
+  }
+  .screen.welcome.as-sheet .w-card {
+    background: var(--brand-teal);
+    border-radius: 26px 26px 0 0;
+    padding: 1.5rem 20px calc(env(safe-area-inset-bottom, 0px) + 22px);
+    max-height: 86%;
+    overflow-y: auto;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.35);
+  }
+  .screen.welcome.as-sheet .welcome-logo { font-size: 2.1rem; margin-bottom: 0.5rem; }
+  .screen.welcome.as-sheet h1 { font-size: 1.35rem; }
+  .screen.welcome.as-sheet .w-close { top: 14px; }
   .welcome-logo {
     margin: 0 auto 0.9rem;
     font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 3.6rem;
@@ -814,6 +881,9 @@
 <symbol id="c-salon" viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="4.5"/><circle cx="15.5" cy="8.5" r="1.8"/><path d="M11.2 5.3C8 5.8 5 7 5 8.5"/><path d="M11.2 11.7C8 11.2 5 10 5 8.5"/><path d="M14 12.8 12.3 19.5a1.8 1.8 0 0 1-1.8 1.5H8.5"/><path d="M1 5.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/><path d="M.5 8.5c.9-.9 1.8-.9 2.7 0s1.8.9 2.7 0"/><path d="M1 11.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/></symbol>
 <symbol id="c-maquillaje" viewBox="0 0 24 24"><path d="M9.3 10.6 11 5.4h2l1.7 5.2"/><rect x="9.4" y="10.6" width="5.2" height="5.4" rx="0.6"/><rect x="9" y="16" width="6" height="5.4" rx="1.2"/></symbol>
 <symbol id="c-cejas" viewBox="0 0 24 24"><path d="M18.4 2.9 14 7.3l-1.6-1.6a1.6 1.6 0 0 0-2.3 0L8.3 7.5l8.2 8.2 1.8-1.8a1.6 1.6 0 0 0 0-2.3L16.7 10l4.4-4.4a1.8 1.8 0 1 0-2.7-2.7Z"/><path d="M9.2 8.6c-1.8 2.7-3.6 3.2-6.2 3.6l7.2 9c1.8-.9 5.4-4.4 5.4-6.2"/><path d="M13.6 16.4 4.8 14.2"/></symbol>
+<symbol id="c-entrenador" viewBox="0 0 24 24"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></symbol>
+<symbol id="c-canina" viewBox="0 0 24 24"><path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 4.75c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/></symbol>
+<symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 </defs>
@@ -829,7 +899,9 @@
   </div>
 
   <!-- ============ BIENVENIDA / LOGIN (solo just-in-time) ============ -->
-  <div class="screen welcome" id="welcome">
+  <div class="screen welcome" id="welcome" onclick="if(event.target===this&&this.classList.contains('as-sheet'))welcomeCancel()">
+    <div class="w-card" id="w-card">
+    <button class="w-close" id="w-close" onclick="welcomeCancel()" aria-label="Volver sin iniciar sesión"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
     <div class="welcome-logo">b</div>
     <h1 id="w-title">¡Te damos la bienvenida!</h1>
 
@@ -913,6 +985,7 @@
       <button class="guest-link" onclick="welcomeStep('pin')">Prefiero usar mi PIN</button>
       <button class="w-back" onclick="welcomeStep('phone')">Usar otro número</button>
     </div>
+    </div><!-- /w-card -->
   </div>
 
   <!-- ============ INICIO ============ -->
@@ -925,7 +998,7 @@
 
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
-    <p class="option-label" style="margin-bottom:0.7rem">Servicios disponibles</p>
+    <p class="option-label" style="margin-bottom:0.7rem">Explora servicios</p>
     <div class="cats cats-grid">
       <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
       <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
@@ -933,7 +1006,11 @@
       <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
       <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
       <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
+      <div class="cat" onclick="openCategory('entrenador','Entrenador Personal')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-entrenador"/></svg></span><span class="txt">Entrenador Personal</span></div>
+      <div class="cat" onclick="openCategory('peluqueria-canina','Peluquería Canina')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-canina"/></svg></span><span class="txt">Peluquería Canina</span></div>
+      <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
     </div>
+
 
     <button class="pro-link" onclick="openPro()">
       <svg class="icon"><use href="#i-scissors"/></svg>
@@ -1030,6 +1107,8 @@
   <div class="screen" id="pro-panel">
     <h1 class="app-h1" id="panel-business">Mi negocio</h1>
     <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="openMiPerfil(); return false;">Editar</a></p>
+
+    <button class="cta" style="margin-bottom:1.1rem" onclick="openPanelWeb()"><svg class="icon"><use href="#i-calendar"/></svg>Calendario y panel completo</button>
 
     <div class="panel-stat">
       <span class="k">Citas recibidas</span>
@@ -1288,7 +1367,24 @@
     </div>
   </div>
 
-  <!-- ============ FILA VIRTUAL ============ -->
+  <!-- ============ BUSCAR (mapa + filtros, estilo marketplace) ============ -->
+  <div class="screen buscar-screen" id="buscar">
+    <div id="buscar-map"></div>
+    <div class="buscar-search-float">
+      <svg class="icon" style="flex:none;opacity:0.5"><use href="#i-search"/></svg>
+      <input id="buscar-input" type="search" placeholder="Barbero, salón, uñas…" oninput="buscarFilter()">
+    </div>
+    <div class="buscar-panel">
+      <div class="buscar-handle"></div>
+      <div class="buscar-chips" id="buscar-chips"></div>
+      <p class="buscar-count" id="buscar-count"></p>
+      <div id="buscar-list">
+        <p style="color:var(--soft);font-size:0.85rem;padding:0 20px">Cargando…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FILA VIRTUAL (demo, sin pestaña propia por ahora) ============ -->
   <div class="screen" id="fila">
     <button class="back-btn" onclick="go('inicio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1" style="display:flex; align-items:center;">Fila virtual <span class="live-badge"><span class="live-dot"></span>En vivo</span></h1>
@@ -1317,7 +1413,7 @@
   <!-- ============ NAV ============ -->
   <div class="navbar">
     <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
-    <button class="nav-btn" data-s="fila" onclick="go('fila')"><svg class="icon"><use href="#i-clock"/></svg><span class="n-txt">Fila</span></button>
+    <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
     <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
     <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
@@ -1456,6 +1552,182 @@
       card.addEventListener('click', () => selectProfessional(prof.slug));
       container.appendChild(card);
     });
+  }
+
+  /* ===== Buscar (2026-08-26): pestaña que reemplaza a "Fila" en el nav.
+     Estilo marketplace: mapa (Leaflet/OSM, el mismo del sitio web /mapa)
+     con buscador flotante encima, y abajo chips de categoría + lista
+     ordenada por cercanía si el usuario da permiso de ubicación. ===== */
+  let buscarAll = null;
+  let buscarCoords = null;
+  let buscarCat = '';
+  let buscarMap = null;
+  let buscarMarkers = [];
+  let leafletLoading = null;
+
+  const BUSCAR_CATS = [
+    ['', 'Todos'], ['barberia', 'Barbería'], ['unas', 'Uñas'], ['salon', 'Salón'],
+    ['maquillaje', 'Maquillaje'], ['cejas-mua', 'Cejas & MUA'], ['pilates', 'Pilates'],
+    ['entrenador', 'Entrenador'], ['peluqueria-canina', 'Peluquería Canina'], ['spa', 'Spa y Masajes'],
+  ];
+
+  function distanceKm(lat1, lng1, lat2, lng2) {
+    const R = 6371, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  // Leaflet se carga solo cuando se abre Buscar por primera vez (CDN, igual
+  // que la página /mapa del sitio; los tiles son de OpenStreetMap).
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    if (leafletLoading) return leafletLoading;
+    leafletLoading = new Promise(function (resolve, reject) {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.onload = resolve;
+      js.onerror = reject;
+      document.head.appendChild(js);
+    });
+    return leafletLoading;
+  }
+
+  function renderBuscarChips() {
+    const wrap = document.getElementById('buscar-chips');
+    if (wrap.children.length) return;
+    BUSCAR_CATS.forEach(function (c) {
+      const btn = document.createElement('button');
+      btn.className = 'buscar-chip' + (c[0] === buscarCat ? ' sel' : '');
+      btn.textContent = c[1];
+      btn.addEventListener('click', function () {
+        buscarCat = c[0];
+        wrap.querySelectorAll('.buscar-chip').forEach(function (b, i) {
+          b.classList.toggle('sel', BUSCAR_CATS[i][0] === buscarCat);
+        });
+        renderBuscar();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  window.openBuscar = async function () {
+    go('buscar');
+    renderBuscarChips();
+    const container = document.getElementById('buscar-list');
+    if (!buscarAll) {
+      skeletonCards(container, 4);
+      try {
+        const res = await fetch(API_BASE + '/api/professionals');
+        if (!res.ok) throw new Error('No se pudo cargar');
+        buscarAll = await res.json();
+      } catch (err) {
+        container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
+        return;
+      }
+    }
+    renderBuscar();
+    try {
+      await loadLeaflet();
+      if (!buscarMap) {
+        buscarMap = L.map('buscar-map', { zoomControl: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(buscarMap);
+        buscarMap.setView([18.4861, -69.9312], 12);
+      }
+      // El mapa se inicializa con la pestaña ya visible: recalcular tamaño.
+      setTimeout(function () { buscarMap.invalidateSize(); }, 120);
+      renderBuscarPins();
+    } catch (e) { /* sin internet para tiles: la lista sigue funcionando */ }
+    // La ubicación se pide al entrar aquí (no antes): si el usuario acepta,
+    // se reordena por cercanía y cada tarjeta muestra su distancia.
+    if (!buscarCoords && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        buscarCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (buscarMap) {
+          L.circleMarker([buscarCoords.lat, buscarCoords.lng], {
+            radius: 8, color: '#fff', weight: 2.5, fillColor: '#0f8583', fillOpacity: 1,
+          }).addTo(buscarMap).bindPopup('Tú estás aquí');
+          buscarMap.setView([buscarCoords.lat, buscarCoords.lng], 13);
+        }
+        renderBuscar();
+      }, function () { /* sin permiso: se queda el orden por rating */ }, { maximumAge: 300000, timeout: 8000 });
+    }
+  };
+
+  window.buscarFilter = function () { renderBuscar(); };
+
+
+  function buscarFiltered() {
+    const q = (document.getElementById('buscar-input').value || '').trim().toLowerCase();
+    let list = (buscarAll || []).filter(function (p) {
+      if (buscarCat && p.category !== buscarCat) return false;
+      if (!q) return true;
+      return (p.name + ' ' + p.businessName + ' ' + p.neighborhood + ' ' + (p.tags || []).join(' ')).toLowerCase().indexOf(q) !== -1;
+    }).slice();
+    if (buscarCoords) {
+      list.forEach(function (p) {
+        p._km = (p.lat !== null && p.lng !== null) ? distanceKm(buscarCoords.lat, buscarCoords.lng, p.lat, p.lng) : null;
+      });
+      list.sort(function (a, b) {
+        if (a._km === null) return 1;
+        if (b._km === null) return -1;
+        return a._km - b._km;
+      });
+    } else {
+      list.sort(function (a, b) { return b.rating - a.rating; });
+    }
+    return list;
+  }
+
+  function renderBuscarPins() {
+    if (!buscarMap || !window.L) return;
+    buscarMarkers.forEach(function (m) { buscarMap.removeLayer(m); });
+    buscarMarkers = [];
+    const list = buscarFiltered().filter(function (p) { return p.lat !== null && p.lng !== null; });
+    list.forEach(function (p) {
+      const rating = p.reviewsCount > 0 ? ('★ ' + p.rating.toFixed(1) + ' (' + p.reviewsCount + ')') : 'Nuevo en Bukea';
+      const m = L.marker([p.lat, p.lng]).addTo(buscarMap);
+      m.bindPopup('<b>' + p.name.replace(/</g, '&lt;') + '</b>' + p.businessName.replace(/</g, '&lt;') +
+        '<br>' + rating + '<br><a href="#" onclick="selectProfessional(\'' + p.slug + '\');return false">Ver y bukear</a>');
+      buscarMarkers.push(m);
+    });
+    if (list.length && !buscarCoords) {
+      buscarMap.fitBounds(L.latLngBounds(list.map(function (p) { return [p.lat, p.lng]; })), { padding: [30, 30], maxZoom: 14 });
+    }
+  }
+
+  function renderBuscar() {
+    const container = document.getElementById('buscar-list');
+    if (!buscarAll) return;
+    const list = buscarFiltered();
+    document.getElementById('buscar-count').textContent =
+      list.length + (list.length === 1 ? ' profesional' : ' profesionales') +
+      (buscarCoords ? ', ordenados por cercanía' : '');
+    if (!list.length) {
+      container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Nada por aquí con esos filtros. Prueba con otra palabra o categoría.</p>';
+      renderBuscarPins();
+      return;
+    }
+    renderProCardList(container, list);
+    // Distancia en la línea de meta de cada tarjeta, si la tenemos.
+    if (buscarCoords) {
+      container.querySelectorAll('.pro-card').forEach(function (card, i) {
+        const p = list[i];
+        if (p && p._km !== null) {
+          const meta = card.querySelector('.meta-text');
+          const kmTxt = p._km < 1 ? Math.round(p._km * 1000) + ' m' : p._km.toFixed(1) + ' km';
+          meta.textContent = kmTxt + ' · ' + meta.textContent;
+        }
+      });
+    }
+    renderBuscarPins();
   }
 
   async function openCategory(key, label) {
@@ -2786,18 +3058,49 @@
 
   // Login just-in-time: pide la cuenta solo cuando hace falta y luego continúa lo que ibas a hacer.
   let pendingAfterLogin = null;
+  let welcomeReturnTo = 'inicio';
   function requireAccount(onDone, leadText) {
     if (getSession()) { onDone(); return; }
     pendingAfterLogin = onDone || null;
     welcomePhone = '';
+    const active = document.querySelector('.screen.active');
+    if (active && active.id !== 'welcome' && active.id !== 'splash') welcomeReturnTo = active.id;
     document.getElementById('w-title').textContent = leadText ? 'Casi listo' : '¡Te damos la bienvenida!';
     document.getElementById('w-lead').textContent = leadText || 'Ingresa tu número para continuar';
     document.getElementById('w-phone').value = '';
-    // Si la cuenta es obligatoria para continuar (hay callback pendiente), no ofrecer "invitado".
+    // Errores de un intento anterior no deben reaparecer al reabrir el login.
+    wError('w-error-phone'); wError('w-error-social'); wError('w-error-pin'); wError('w-error-new');
+    // Si la cuenta es obligatoria para continuar (hay callback pendiente), no
+    // ofrecer "invitado", pero sí una salida: la flecha de volver.
     document.getElementById('w-guest').style.display = pendingAfterLogin ? 'none' : 'block';
+    document.getElementById('w-close').style.display = pendingAfterLogin ? 'flex' : 'none';
+    // Con acción pendiente el login se presenta como hoja inferior SOBRE la
+    // pantalla actual (sin navegar, para que se vea detrás); el onboarding
+    // inicial (sin callback) sigue siendo pantalla completa.
+    const w = document.getElementById('welcome');
     welcomeStep('phone');
-    go('welcome');
+    if (pendingAfterLogin) {
+      w.classList.add('as-sheet');
+      w.classList.add('active');
+      w.scrollTop = 0;
+    } else {
+      w.classList.remove('as-sheet');
+      go('welcome');
+    }
   }
+
+  // Salida del login sin iniciar sesión: cierra la hoja (la pantalla de
+  // atrás sigue activa) o, en modo pantalla completa, vuelve a la anterior.
+  window.welcomeCancel = function () {
+    pendingAfterLogin = null;
+    const w = document.getElementById('welcome');
+    if (w.classList.contains('as-sheet')) {
+      w.classList.remove('active');
+      w.classList.remove('as-sheet');
+    } else {
+      go(welcomeReturnTo || 'inicio');
+    }
+  };
 
   let welcomePhone = '';
 
@@ -2816,6 +3119,14 @@
      tiene esa restricción — su SDK web funciona igual en ambos casos. */
   const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
+  // Muestra los logos cuando las webfonts terminan de cargar (evita la "b"
+  // cortada del primer render); a los 2s se muestran igual, pase lo que pase.
+  (function () {
+    function fontsOk() { document.documentElement.classList.add('fonts-ok'); }
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fontsOk); }
+    setTimeout(fontsOk, 2000);
+  })();
+
   /* El plugin nativo (GoogleAuth) necesita un iosClientId real (creado en
      Google Cloud Console para el bundle ID com.bukea.app) en
      capacitor.config.json — mientras Víctor no lo entregue, ese campo
@@ -2824,10 +3135,14 @@
      crashear la app entera. Por eso se verifica ANTES de tocar el plugin,
      usando Capacitor.getConfig() (expone en runtime el mismo
      capacitor.config.json que ya está empacado en el binario nativo). */
-  const iosGoogleClientId = isNativeApp && window.Capacitor.getConfig
+  // Capacitor no siempre expone getConfig() en el WebView (según versión):
+  // si no se puede leer, se asume listo — el capacitor.config.json del
+  // paquete ya trae el iosClientId real (creado el 2026-08-26). El guard
+  // solo sigue bloqueando si se LEE la config y el valor es el placeholder.
+  const iosGoogleClientId = isNativeApp && typeof window.Capacitor.getConfig === 'function'
     ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth && window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId)
     : null;
-  const nativeGoogleReady = !isNativeApp || (!!iosGoogleClientId && iosGoogleClientId.indexOf('__') !== 0);
+  const nativeGoogleReady = !isNativeApp || (iosGoogleClientId ? iosGoogleClientId.indexOf('__') !== 0 : true);
 
   // Reintenta unos segundos antes de rendirse: en la app empaquetada
   // (iOS/Capacitor) el HTML local carga instantáneo, así que el evento
@@ -2887,6 +3202,32 @@
     }
   }
   window.addEventListener('load', function () { initSocialLogin(); });
+
+  /* Fotos de categoría (2026-08-26): cada tile intenta cargar su microfoto
+     (img/cats/<categoria>.jpg). Si existe, la lámina reemplaza al círculo
+     con ícono; si no, el círculo dorado se queda como respaldo. */
+  (function () {
+    var cats = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+    var tiles = document.querySelectorAll('.cats-grid .cat');
+    cats.forEach(function (key, i) {
+      var tile = tiles[i];
+      if (!tile) return;
+      var candidates = ['img/cats/' + key + '.jpg'];
+      if (typeof API_BASE !== 'undefined' && /^https?:/.test(API_BASE)) {
+        candidates.push(API_BASE + '/img/cats/' + key + '.jpg');
+      }
+      (function tryNext(i) {
+        if (i >= candidates.length) return;
+        var probe = new Image();
+        probe.onload = function () {
+          tile.classList.add('with-photo');
+          tile.querySelector('.cat-badge').style.backgroundImage = 'url("' + candidates[i] + '")';
+        };
+        probe.onerror = function () { tryNext(i + 1); };
+        probe.src = candidates[i];
+      })(0);
+    });
+  })();
 
   async function loginWithGoogle() {
     if (!GOOGLE_CLIENT_ID) return;
@@ -3230,7 +3571,34 @@
   window.addEventListener('pageshow', (e) => {
     if (e.persisted) go('inicio');
   });
+
+  /* ===== Panel de negocio completo (bukeard.com/negocio embebido) =====
+     El panel grande de la web se abre dentro de la app en un iframe a
+     pantalla completa, pasándole la sesión ya iniciada por el hash
+     (#app-session=...) para no pedir teléfono y PIN otra vez. */
+  window.openPanelWeb = function () {
+    const s = getSession();
+    const wrap = document.getElementById('panel-web');
+    const frame = document.getElementById('panel-web-frame');
+    // El panel vive en la raíz del dominio (bukeard.com/negocio), no bajo
+    // /app, que es donde está montado el bundle de la app y su API.
+    const url = API_BASE.replace(/\/app\/?$/, '') + '/negocio' + (s ? '#app-session=' + encodeURIComponent(JSON.stringify(s)) : '');
+    if (frame.getAttribute('src') !== url) frame.setAttribute('src', url);
+    wrap.style.display = 'flex';
+  };
+  window.closePanelWeb = function () {
+    document.getElementById('panel-web').style.display = 'none';
+  };
 </script>
 
+<!-- Panel de negocio completo, embebido a pantalla completa -->
+<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:90; background:var(--bg); flex-direction:column;">
+  <div style="flex:none; display:flex; align-items:center; gap:0.6rem; padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px; background:var(--brand-teal); color:var(--brand-cream);">
+    <button onclick="closePanelWeb()" aria-label="Volver a la app" style="background:none; border:none; color:inherit; display:flex; align-items:center; gap:0.35rem; font-family:inherit; font-size:0.9rem; font-weight:700; padding:6px 4px; cursor:pointer;">
+      <svg class="icon"><use href="#i-chevron-left"/></svg>Volver a la app
+    </button>
+  </div>
+  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; border:none; background:var(--bg);"></iframe>
+</div>
 </body>
 </html>

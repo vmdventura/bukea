@@ -751,6 +751,20 @@ ${ICON_SPRITE}
   function getSession() {
     try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
   }
+
+  // La app nativa embebe este panel en un iframe y le pasa su sesión ya
+  // iniciada por el hash (#app-session=...), para que el dueño no tenga que
+  // volver a poner teléfono y PIN dentro del panel. El hash nunca viaja al
+  // servidor y se borra de la URL apenas se consume.
+  (function adoptAppSession() {
+    var m = /[#&]app-session=([^&]+)/.exec(location.hash || '');
+    if (!m) return;
+    try {
+      var s = JSON.parse(decodeURIComponent(m[1]));
+      if (s && s.token) localStorage.setItem('bukea_session', JSON.stringify(s));
+    } catch (e) { /* hash corrupto: se ignora y el panel pide login normal */ }
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  })();
   function setSession(s) { localStorage.setItem('bukea_session', JSON.stringify(s)); }
   function proSlug() { return localStorage.getItem('bukea_pro_slug'); }
   function setProSlug(slug) { localStorage.setItem('bukea_pro_slug', slug); }

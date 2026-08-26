@@ -12,6 +12,9 @@ const CAT_LABELS = {
   maquillaje: 'Maquillaje',
   'cejas-mua': 'Cejas & MUA',
   pilates: 'Pilates',
+  entrenador: 'Entrenador Personal',
+  'peluqueria-canina': 'Peluquería Canina',
+  spa: 'Spa y Masajes',
 };
 
 const CAT_ICONS = {
@@ -21,6 +24,9 @@ const CAT_ICONS = {
   maquillaje: 'c-maquillaje',
   'cejas-mua': 'c-cejas',
   pilates: 'c-pilates',
+  entrenador: 'c-entrenador',
+  'peluqueria-canina': 'c-canina',
+  spa: 'c-spa',
 };
 
 // Ciudades destacadas en el buscador del home — hoy todos los negocios
@@ -98,6 +104,9 @@ const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hid
 <symbol id="c-salon" viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="4.5"/><circle cx="15.5" cy="8.5" r="1.8"/><path d="M11.2 5.3C8 5.8 5 7 5 8.5"/><path d="M11.2 11.7C8 11.2 5 10 5 8.5"/><path d="M14 12.8 12.3 19.5a1.8 1.8 0 0 1-1.8 1.5H8.5"/><path d="M1 5.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/><path d="M.5 8.5c.9-.9 1.8-.9 2.7 0s1.8.9 2.7 0"/><path d="M1 11.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/></symbol>
 <symbol id="c-maquillaje" viewBox="0 0 24 24"><path d="M9.3 10.6 11 5.4h2l1.7 5.2"/><rect x="9.4" y="10.6" width="5.2" height="5.4" rx="0.6"/><rect x="9" y="16" width="6" height="5.4" rx="1.2"/></symbol>
 <symbol id="c-cejas" viewBox="0 0 24 24"><path d="M18.4 2.9 14 7.3l-1.6-1.6a1.6 1.6 0 0 0-2.3 0L8.3 7.5l8.2 8.2 1.8-1.8a1.6 1.6 0 0 0 0-2.3L16.7 10l4.4-4.4a1.8 1.8 0 1 0-2.7-2.7Z"/><path d="M9.2 8.6c-1.8 2.7-3.6 3.2-6.2 3.6l7.2 9c1.8-.9 5.4-4.4 5.4-6.2"/><path d="M13.6 16.4 4.8 14.2"/></symbol>
+<symbol id="c-entrenador" viewBox="0 0 24 24"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></symbol>
+<symbol id="c-canina" viewBox="0 0 24 24"><path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 4.75c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/></symbol>
+<symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
 </defs></svg>`;
 

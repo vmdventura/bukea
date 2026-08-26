@@ -27,6 +27,7 @@ router.get('/', async (req, res) => {
   const ids = professionals.map(p => p.id);
 
   let servicesByProfessional = {};
+  let photoByProfessional = {};
   if (ids.length > 0) {
     const [services] = await pool.query(
       `SELECT professional_id, name FROM services WHERE professional_id IN (?) ORDER BY id`,
@@ -36,6 +37,13 @@ router.get('/', async (req, res) => {
       (acc[s.professional_id] ||= []).push(s.name);
       return acc;
     }, {});
+    // Primera foto de la galería de cada negocio, para las tarjetas con foto
+    // del inicio de la app ("Cerca de ti", 2026-08-26).
+    const [photos] = await pool.query(
+      `SELECT professional_id, path FROM business_photos WHERE professional_id IN (?) ORDER BY id`,
+      [ids]
+    );
+    photos.forEach(ph => { if (!photoByProfessional[ph.professional_id]) photoByProfessional[ph.professional_id] = ph.path; });
   }
 
   res.json(
@@ -50,6 +58,8 @@ router.get('/', async (req, res) => {
       tags: (servicesByProfessional[p.id] || []).slice(0, 3),
       lat: p.lat !== null ? Number(p.lat) : null,
       lng: p.lng !== null ? Number(p.lng) : null,
+      logoUrl: logoUrl(req, p.logo_path),
+      photoUrl: photoByProfessional[p.id] ? photoUrl(req, photoByProfessional[p.id]) : null,
     }))
   );
 });
@@ -64,7 +74,7 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json({ slug: rows[0] ? rows[0].slug : null });
 });
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
 
 function slugify(text) {
   return text

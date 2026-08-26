@@ -43,4 +43,18 @@ for (const name of STATIC_FILES) {
   console.log(`✓ ${name}`);
 }
 
+// Microfotos de categoría (img/cats/*.jpg): van también dentro del paquete
+// para que carguen al instante y sin red; el loader del frontend usa la
+// copia local primero y el servidor como respaldo.
+const CATS_DIR = path.join(PUBLIC_DIR, 'img', 'cats');
+if (fs.existsSync(CATS_DIR)) {
+  const outDir = path.join(WWW_DIR, 'img', 'cats');
+  fs.mkdirSync(outDir, { recursive: true });
+  for (const name of fs.readdirSync(CATS_DIR)) {
+    if (!/\.(jpe?g|png|webp)$/i.test(name)) continue;
+    fs.copyFileSync(path.join(CATS_DIR, name), path.join(outDir, name));
+    console.log(`✓ img/cats/${name}`);
+  }
+}
+
 console.log(`\nnative/www/ regenerado desde backend/public/. Base: ${BASE_PATH}`);

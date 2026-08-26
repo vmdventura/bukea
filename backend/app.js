@@ -22,8 +22,15 @@ app.use(express.json());
 // Cabeceras de seguridad básicas en todas las respuestas.
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');   // no adivinar tipos MIME
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');       // nadie puede meter Bukea en un iframe ajeno (clickjacking)
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Clickjacking: nadie puede meter Bukea en un iframe ajeno. La única
+  // excepción es /negocio, que la app nativa (Capacitor) embebe a pantalla
+  // completa; frame-ancestors sustituye a X-Frame-Options en ese caso.
+  if (req.path === '/negocio' || req.path.endsWith('/negocio')) {
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' capacitor://localhost https://localhost ionic://localhost");
+  } else {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
   next();
 });
 

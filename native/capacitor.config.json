@@ -8,13 +8,14 @@
   },
   "ios": {
     "backgroundColor": "#002626",
-    "contentInset": "always"
+    "contentInset": "never",
+    "scrollEnabled": false
   },
   "plugins": {
     "GoogleAuth": {
       "scopes": ["profile", "email"],
       "serverClientId": "419876529270-l1mtt80qir3sqj6qeo224i441s86c7h6.apps.googleusercontent.com",
-      "iosClientId": "__IOS_GOOGLE_CLIENT_ID__"
+      "iosClientId": "419876529270-reufso0m7njgbgeqc64sv5ea40khvstn.apps.googleusercontent.com"
     }
   }
 }
