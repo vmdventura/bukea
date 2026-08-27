@@ -809,15 +809,48 @@ ${MARKETING_STYLE}
 // (info de contacto + formulario), como una página de contacto real.
 const CONTACT_STYLE = `
 <style>
+  /* Encabezado (2026-08-27, segunda pasada): mismo tratamiento verde
+     oscuro con grano y pastilla que el hero del home, para que /contacto
+     no se sienta como una página aparte del resto del sitio. */
+  .contact-hero {
+    position: relative; padding: 3.4rem 2.6rem; text-align: left; overflow: hidden; contain: layout paint;
+    background:
+      radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
+      radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
+      linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
+    border-radius: 26px; margin: 2rem 0 0;
+  }
+  .contact-hero .hero-grain {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .contact-hero-inner { position: relative; z-index: 1; max-width: 640px; }
+  .contact-hero .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: oklch(80% 0.1 78); margin: 0 0 1.1rem; }
+  .contact-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: #fff; }
+  .contact-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0; }
+  @media (max-width: 560px) { .contact-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
+
   .contact-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; align-items: start; margin: 3rem 0 3.5rem; }
+  /* Panel izquierdo (ref. mockup de Víctor 2026-08-27): divisores finos
+     entre canales, marca de agua "b" fantasma de fondo y frase de cierre,
+     separado del formulario por un filete dorado en vez de solo el gap. */
+  .contact-info { position: relative; padding: 0.2rem 2.4rem 0.2rem 0; border-right: 1px solid rgba(201, 164, 92, 0.35); overflow: hidden; }
+  .contact-info::before {
+    content: "b"; position: absolute; left: -0.6rem; bottom: -2.2rem; z-index: 0; pointer-events: none;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 13rem; line-height: 1;
+    color: var(--teal-900); opacity: 0.05;
+  }
+  .contact-info > * { position: relative; z-index: 1; }
   .contact-info h2 { font-size: 1.3rem; color: var(--teal-900); margin: 0 0 0.6rem; }
   .contact-info > p { color: var(--soft); font-size: 0.92rem; line-height: 1.6; margin: 0 0 2rem; max-width: 38ch; }
-  .contact-channel { display: flex; gap: 0.9rem; align-items: flex-start; margin-bottom: 1.6rem; }
+  .contact-channel { display: flex; gap: 0.9rem; align-items: flex-start; padding-bottom: 1.3rem; margin-bottom: 1.3rem; border-bottom: 1px solid var(--line); }
+  .contact-channel:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
   .contact-channel h3 { margin: 0 0 0.2rem; font-size: 0.96rem; color: var(--teal-900); }
   .contact-channel p { margin: 0; font-size: 0.85rem; color: var(--soft); line-height: 1.5; }
   .contact-channel a.email-link { color: var(--teal-700); font-weight: 700; text-decoration: none; }
   .contact-channel a.email-link:hover { text-decoration: underline; }
   .contact-social { display: flex; gap: 0.6rem; margin-top: 1.8rem; }
+  .contact-tagline { margin: 2.2rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold-700); line-height: 2; }
   .contact-card { padding: 2rem; }
   .contact-card h2 { margin: 0 0 1.4rem; font-size: 1.1rem; color: var(--teal-900); }
   .contact-success { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
@@ -831,14 +864,17 @@ const CONTACT_STYLE = `
   .field select:invalid { color: var(--soft); }
   .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--teal-600); }
   .field-count { margin: 0.35rem 0 0; text-align: right; font-size: 0.74rem; color: var(--soft); }
-  @media (max-width: 820px) { .contact-grid { grid-template-columns: 1fr; gap: 2.2rem; margin: 2.2rem 0 2.5rem; } }
+  @media (max-width: 820px) {
+    .contact-grid { grid-template-columns: 1fr; gap: 2.2rem; margin: 2.2rem 0 2.5rem; }
+    .contact-info { padding-right: 0; border-right: none; }
+  }
 </style>`;
 
 function contactInfoHtml() {
   return `
   <div class="contact-info reveal" style="--i:2">
-    <h2>Estamos para ayudarte</h2>
-    <p>Escríbenos por el canal que prefieras. Un negocio de verdad detrás de Bukea te responde, no un buzón automático.</p>
+    <h2>Elige tu canal</h2>
+    <p>Escríbenos por el que prefieras. Un negocio de verdad detrás de Bukea te responde, no un buzón automático.</p>
     <div class="contact-channel">
       <div class="icon-badge"><svg class="icon"><use href="#i-mail"/></svg></div>
       <div>
@@ -864,6 +900,19 @@ function contactInfoHtml() {
       <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="#i-facebook"/></svg></a>
       <a href="https://www.instagram.com/bukeard" target="_blank" rel="noopener" aria-label="Instagram"><svg class="icon"><use href="#i-instagram"/></svg></a>
       <a href="https://www.tiktok.com/@bukeard" target="_blank" rel="noopener" aria-label="TikTok"><svg class="icon"><use href="#i-tiktok"/></svg></a>
+    </div>
+    <p class="contact-tagline">Tu belleza.<br>Tu tiempo.<br>Tu elección.</p>
+  </div>`;
+}
+
+function contactHeroHtml() {
+  return `
+  <div class="contact-hero">
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="contact-hero-inner">
+      <span class="badge-pill reveal" style="--i:0">Estamos para ayudarte</span>
+      <h1 class="reveal" style="--i:1">Hablemos.</h1>
+      <p class="reveal" style="--i:2">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
     </div>
   </div>`;
 }
@@ -938,11 +987,7 @@ router.get('/contacto', async (req, res) => {
 ${MARKETING_STYLE}
 ${CONTACT_STYLE}
 <div class="wrap">
-  <div class="m-hero">
-    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Hablemos</h1>
-    <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
-  </div>
+  ${contactHeroHtml()}
   <div class="contact-grid">
     ${contactInfoHtml()}
     ${sent ? contactSuccessHtml() : contactFormHtml({})}
@@ -974,11 +1019,7 @@ router.post('/contacto', express.urlencoded({ extended: false }), async (req, re
 ${MARKETING_STYLE}
 ${CONTACT_STYLE}
 <div class="wrap">
-  <div class="m-hero">
-    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Hablemos</h1>
-    <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
-  </div>
+  ${contactHeroHtml()}
   <div class="contact-grid">
     ${contactInfoHtml()}
     ${contactFormHtml({ error, values: { name, email, message, subject } })}
