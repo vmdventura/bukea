@@ -2272,13 +2272,27 @@
     return localStorage.getItem('bukea_pro_slug');
   }
 
-  function openPro() {
+  async function openPro() {
     // El panel de negocio ahora exige sesión real (Google, Apple o
     // teléfono+PIN) — antes bastaba con conocer el slug guardado en
     // localStorage, y cualquiera podía ver la agenda de otro negocio.
     if (!getSession()) {
       requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
       return;
+    }
+    if (!proSlug()) {
+      // El slug guardado en este dispositivo puede faltar aunque el dueño ya
+      // tenga negocio (login nuevo en este teléfono, reinstalación, etc.) —
+      // antes de mandarlo al asistente de "Crea tu negocio", preguntamos al
+      // servidor (mismo endpoint que ya usa el panel de escritorio desde el
+      // 2026-08-25, ver GET /api/professionals/me).
+      try {
+        const res = await fetch(API_BASE + '/api/professionals/me', { headers: authHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.slug) localStorage.setItem('bukea_pro_slug', data.slug);
+        }
+      } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
     }
     if (proSlug()) {
       loadPanel();
