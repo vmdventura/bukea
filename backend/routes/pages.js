@@ -3,6 +3,8 @@ const pool = require('../db/pool');
 const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
 const { negocioShell } = require('../views/negocio');
 const { directionLinks } = require('../lib/geocode');
+const mailer = require('../lib/mailer');
+const rateLimit = require('../lib/rate-limit');
 
 const router = express.Router();
 
@@ -790,26 +792,66 @@ ${MARKETING_STYLE}
   }));
 });
 
+// Formulario de contacto (2026-08-27) — antes esta página solo tenía un
+// enlace mailto:. Protección antispam sin dependencias externas (sin
+// captcha, sin API key de terceros):
+//   1. Honeypot: campo "sitio-web" oculto por CSS, invisible y sin tabIndex
+//      para una persona real, pero que los bots de formularios sí rellenan.
+//      Si llega con contenido, se finge éxito sin enviar nada.
+//   2. Trampa de tiempo: se manda un timestamp oculto al cargar la página;
+//      si el POST llega en menos de 3 segundos, nadie leyó el formulario
+//      de verdad — mismo tratamiento que el honeypot.
+//   3. Límite por IP (lib/rate-limit.js, igual patrón que el login):
+//      8 envíos por hora, bloqueo de 30 min al pasarse.
+function contactFormHtml({ error, values }) {
+  const v = values || {};
+  return `
+  <div class="card price-card reveal" style="--i:2; text-align:left; max-width:480px; margin:0 auto;">
+    ${error ? `<p style="background:oklch(94% 0.04 25);color:oklch(45% 0.15 25);border-radius:12px;padding:0.7rem 0.9rem;font-size:0.85rem;font-weight:600;margin:0 0 1rem">${esc(error)}</p>` : ''}
+    <form method="post" action="/contacto" novalidate>
+      <div class="field">
+        <label for="ct-name">Tu nombre</label>
+        <input id="ct-name" name="name" type="text" required maxlength="100" value="${esc(v.name || '')}">
+      </div>
+      <div class="field">
+        <label for="ct-email">Tu correo</label>
+        <input id="ct-email" name="email" type="email" required maxlength="190" value="${esc(v.email || '')}">
+      </div>
+      <div class="field">
+        <label for="ct-message">Mensaje</label>
+        <textarea id="ct-message" name="message" required minlength="10" maxlength="3000" rows="5">${esc(v.message || '')}</textarea>
+      </div>
+      <div aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">
+        <label for="ct-website">Sitio web (dejar en blanco)</label>
+        <input id="ct-website" name="sitio-web" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" name="ts" value="${Date.now()}">
+      <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center; margin-top:0.4rem;">Enviar mensaje</button>
+    </form>
+  </div>`;
+}
+
 router.get('/contacto', async (req, res) => {
   const base = req.baseUrlPrefix;
+  const sent = req.query.enviado === '1';
   const body = `
 ${MARKETING_STYLE}
+<style>.field { margin-bottom: 0.9rem; } .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; } .field input, .field textarea { width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; } .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }</style>
 <div class="wrap">
   <div class="m-hero">
     <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
     <h1 class="reveal" style="--i:0">Hablemos</h1>
     <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
   </div>
-  <div class="card price-card reveal" style="--i:2">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:0.9rem;text-align:center">
-      <div class="icon-badge"><svg class="icon"><use href="#i-mail"/></svg></div>
-      <div>
-        <div style="font-weight:700;font-size:1.1rem;color:var(--teal-900)">${CONTACT_EMAIL}</div>
-        <div style="color:var(--soft);font-size:0.85rem;margin-top:0.25rem">Te respondemos en menos de 48 horas</div>
-      </div>
-      <a class="btn btn-primary" href="mailto:${CONTACT_EMAIL}">Escribir un correo</a>
-    </div>
-  </div>
+  ${sent ? `
+  <div class="card price-card reveal" style="--i:2; text-align:center; max-width:480px; margin:0 auto;">
+    <div class="icon-badge"><svg class="icon"><use href="#i-check"/></svg></div>
+    <p style="font-weight:700; font-size:1.1rem; color:var(--teal-900); margin:0.8rem 0 0.3rem">¡Mensaje enviado!</p>
+    <p style="color:var(--soft); font-size:0.88rem; margin:0">Te respondemos a tu correo en menos de 48 horas.</p>
+  </div>` : contactFormHtml({})}
+  <p class="reveal" style="--i:3; text-align:center; color:var(--soft); font-size:0.82rem; margin-top:1.4rem;">
+    O escríbenos directo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700); font-weight:700">${CONTACT_EMAIL}</a>
+  </p>
 </div>`;
   res.type('html').send(await pageShell({
     base,
@@ -818,6 +860,63 @@ ${MARKETING_STYLE}
     canonicalPath: 'https://www.bukeard.com/contacto',
     bodyHtml: body,
   }));
+});
+
+router.post('/contacto', express.urlencoded({ extended: false }), async (req, res) => {
+  const base = req.baseUrlPrefix;
+  const ip = req.ip || 'sin-ip';
+  const name = String(req.body.name || '').trim().slice(0, 100);
+  const email = String(req.body.email || '').trim().slice(0, 190);
+  const message = String(req.body.message || '').trim().slice(0, 3000);
+  const honeypot = String(req.body['sitio-web'] || '').trim();
+  const ts = Number(req.body.ts) || 0;
+
+  const renderError = async (error) => {
+    const body = `
+${MARKETING_STYLE}
+<style>.field { margin-bottom: 0.9rem; } .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; } .field input, .field textarea { width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; } .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }</style>
+<div class="wrap">
+  <div class="m-hero">
+    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
+    <h1 class="reveal" style="--i:0">Hablemos</h1>
+    <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
+  </div>
+  ${contactFormHtml({ error, values: { name, email, message } })}
+  <p class="reveal" style="--i:3; text-align:center; color:var(--soft); font-size:0.82rem; margin-top:1.4rem;">
+    O escríbenos directo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700); font-weight:700">${CONTACT_EMAIL}</a>
+  </p>
+</div>`;
+    res.type('html').send(await pageShell({
+      base, title: 'Contacto. Bukea',
+      description: 'Escríbenos a Bukea para preguntas, soporte o alianzas.',
+      canonicalPath: 'https://www.bukeard.com/contacto',
+      bodyHtml: body,
+    }));
+  };
+
+  // Bots: fingir éxito para no revelar la trampa, sin enviar nada.
+  if (honeypot || !ts || Date.now() - ts < 3000) {
+    return res.redirect('/contacto?enviado=1');
+  }
+
+  const wait = rateLimit.check([{ key: `contact:ip:${ip}` }]);
+  if (wait > 0) return renderError(rateLimit.waitMessage(wait));
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!name || !emailOk || message.length < 10) {
+    return renderError('Completa tu nombre, un correo válido y un mensaje de al menos 10 caracteres.');
+  }
+
+  rateLimit.hit([{ key: `contact:ip:${ip}`, max: 8, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
+
+  try {
+    await mailer.sendContactMessage({ name, email, message });
+  } catch (err) {
+    console.error('contacto: fallo al enviar', err);
+    return renderError('No se pudo enviar el mensaje ahora mismo. Escríbenos directo a ' + CONTACT_EMAIL + '.');
+  }
+
+  res.redirect('/contacto?enviado=1');
 });
 
 router.get('/privacidad', async (req, res) => {

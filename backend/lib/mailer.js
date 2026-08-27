@@ -71,4 +71,21 @@ async function sendTicket({ businessName, slug, fromName, fromEmail, message }) 
   });
 }
 
-module.exports = { isConfigured, sendPinResetCode, sendCustomMessage, sendTicket };
+// Formulario de contacto público (bukeard.com/contacto, 2026-08-27) — igual
+// patrón que sendTicket: un correo directo a Bukea con replyTo apuntando a
+// quien escribió, así se puede responder tal cual desde el cliente de correo.
+async function sendContactMessage({ name, email, message }) {
+  if (!isConfigured()) {
+    throw new Error('El envío de correo no está configurado (faltan variables de entorno)');
+  }
+  await getTransporter().sendMail({
+    from: process.env.MAIL_FROM,
+    to: 'hola@bukeard.com',
+    replyTo: email,
+    subject: `Contacto desde bukeard.com — ${name}`,
+    text: `De: ${name} <${email}>\n\n${message}`,
+    html: `<p><strong>De:</strong> ${name} &lt;${email}&gt;</p><p>${String(message).replace(/\n/g, '<br>')}</p>`,
+  });
+}
+
+module.exports = { isConfigured, sendPinResetCode, sendCustomMessage, sendTicket, sendContactMessage };
