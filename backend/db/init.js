@@ -254,6 +254,59 @@ async function seedProfessional({ slug, category, name, businessName, neighborho
   await insertDefaultHours(professionalId);
 }
 
+// Migración de un solo uso (2026-08-27): el negocio de ejemplo de barbería
+// nació como "Ricardo El Duro / Barbería Style Cut" (ficticio). Víctor
+// confirmó que Olivercut es un negocio real suyo/con permiso, así que este
+// helper transforma esa fila en el negocio real en vez de dejarla como
+// placeholder — slug, nombre, sector, servicios, horario y fotos reales.
+// Idempotente: si 'ricardo-el-duro' ya no existe (porque ya corrió antes,
+// o porque esta base nunca lo sembró) no hace nada.
+async function migrateRicardoToOlivercut() {
+  const [rows] = await pool.query('SELECT id FROM professionals WHERE slug = ?', ['ricardo-el-duro']);
+  if (rows.length === 0) return;
+  const id = rows[0].id;
+
+  await pool.query(
+    'UPDATE professionals SET slug=?, name=?, business_name=?, neighborhood=?, logo_path=?, rating=0, reviews_count=0, lat=NULL, lng=NULL WHERE id=?',
+    ['olivercut', 'Oliver', 'Olivercut', 'Buena Vista', 'olivercut-1787852727-0001.avif', id]
+  );
+
+  await pool.query('DELETE FROM business_photos WHERE professional_id = ?', [id]);
+  const photos = [
+    'olivercut-1787852727-0001.avif',
+    'olivercut-1787852727-0002.avif',
+    'olivercut-1787852727-0003.avif',
+    'olivercut-1787852727-0004.avif',
+  ];
+  for (const path of photos) {
+    await pool.query('INSERT INTO business_photos (professional_id, path) VALUES (?, ?)', [id, path]);
+  }
+
+  await pool.query('DELETE FROM services WHERE professional_id = ?', [id]);
+  const services = [
+    ['Corte de pelo más facial exprés', 70, 130000],
+    ['Corte de pelo más barba', 45, 100000],
+    ['Cerquillo + blowout', 30, 80000],
+    ['Corte de pelo más afeitado a vapor', 55, 120000],
+  ];
+  for (const [name, dur, price] of services) {
+    await pool.query('INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)', [id, name, dur, price]);
+  }
+
+  await pool.query('DELETE FROM professional_hours WHERE professional_id = ?', [id]);
+  // weekday: 0=domingo…6=sábado. Horario real de Olivercut: miércoles
+  // 10-21, jueves a sábado 9-21, domingo/lunes/martes cerrado.
+  const hours = [
+    [3, '10:00:00', '21:00:00'],
+    [4, '09:00:00', '21:00:00'],
+    [5, '09:00:00', '21:00:00'],
+    [6, '09:00:00', '21:00:00'],
+  ];
+  for (const [weekday, start, end] of hours) {
+    await pool.query('INSERT INTO professional_hours (professional_id, weekday, start_time, end_time) VALUES (?, ?, ?, ?)', [id, weekday, start, end]);
+  }
+}
+
 // Profesionales creados antes de que existiera professional_hours (o
 // sembrados por seedProfessional en una corrida anterior) se quedarían sin
 // disponibilidad — les asigna el horario por defecto si no tienen ninguno.
@@ -344,25 +397,15 @@ async function ensureReady() {
   });
 
   // Negocios de ejemplo (2026-08-27, a pedido de Víctor): perfiles
-  // ficticios pero realistas para que el marketplace no se vea vacío al
-  // enseñarlo a prospectos — no son negocios reales de nadie, ver
-  // decisión en la conversación del 27-ago-2026. Uno por cada categoría
-  // principal (barbería, uñas, salón, spa) en sectores reales de Santo
-  // Domingo, para que se vean geográficamente repartidos en /mapa.
-  await seedProfessional({
-    slug: 'ricardo-el-duro',
-    category: 'barberia',
-    name: 'Ricardo "El Duro" Peña',
-    businessName: 'Barbería Style Cut',
-    neighborhood: 'Piantini',
-    rating: 4.7,
-    reviewsCount: 156,
-    services: [
-      ['Corte + barba', 45, 100000],
-      ['Corte + facial exprés', 70, 130000],
-      ['Corte + afeitado a vapor', 55, 120000],
-    ],
-  });
+  // realistas para que el marketplace no se vea vacío al enseñarlo a
+  // prospectos, ver decisión en la conversación del 27-ago-2026. Uno por
+  // cada categoría principal (barbería, uñas, salón, spa) en sectores
+  // reales de Santo Domingo, para que se vean geográficamente repartidos
+  // en /mapa. El de barbería (Olivercut) dejó de ser ficticio la misma
+  // noche: Víctor confirmó que es un negocio real con permiso para usar
+  // sus fotos y datos — migrateRicardoToOlivercut() convierte el
+  // placeholder original en el negocio real, una sola vez.
+  await migrateRicardoToOlivercut();
 
   await seedProfessional({
     slug: 'massiel-nails',

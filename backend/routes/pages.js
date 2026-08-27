@@ -3,6 +3,8 @@ const pool = require('../db/pool');
 const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, FOUNDING_FREE_LIMIT, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
 const { negocioShell } = require('../views/negocio');
 const { directionLinks } = require('../lib/geocode');
+const { nowInSantoDomingo, weekdayOf, formatTime12h } = require('../lib/availability');
+const { logoUrl, photoUrl } = require('../lib/uploads');
 const mailer = require('../lib/mailer');
 const rateLimit = require('../lib/rate-limit');
 
@@ -379,7 +381,8 @@ ${MAP_STYLE}
 const PROFILE_STYLE = `
 <style>
   .profile-hero { display: flex; gap: 1.4rem; align-items: center; padding: 2rem 0 1.4rem; flex-wrap: wrap; }
-  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); }
+  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); overflow: hidden; }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .profile-hero h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
   .profile-meta { color: var(--soft); font-size: 0.95rem; }
   .profile-badges { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
@@ -398,6 +401,36 @@ const PROFILE_STYLE = `
   .team-member:hover .team-avatar { transform: scale(1.08) rotate(-3deg); }
   .team-name { font-weight: 700; font-size: 0.8rem; line-height: 1.2; }
   .team-role { color: var(--soft); font-size: 0.72rem; }
+
+  /* Perfil "tipo Fresha" (2026-08-27): cubierta con foto, estado
+     abierto/cerrado en vivo, botón por servicio, horario semanal y
+     negocios cercanos — mismo contenido que se espera de un perfil real,
+     con la identidad visual de Bukea (teal/dorado), no la de Fresha. */
+  .profile-cover { margin: 1.4rem 0 0; border-radius: 20px; overflow: hidden; }
+  .profile-cover img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+
+  .status-pill { display: inline-flex; align-items: center; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+  .status-pill.-open { background: var(--teal-100); color: var(--teal-700); }
+  .status-pill.-closed { background: var(--line); color: var(--soft); }
+
+  .photo-strip { display: flex; gap: 0.7rem; overflow-x: auto; margin: 1rem 0 1.6rem; padding-bottom: 0.3rem; }
+  .photo-strip img { width: 160px; height: 120px; object-fit: cover; border-radius: 14px; flex: none; }
+
+  .btn-sm { padding: 0.5rem 0.9rem; font-size: 0.82rem; }
+
+  .hours-list { margin: 1.2rem 0; }
+  .hours-row { display: flex; justify-content: space-between; padding: 0.55rem 0.6rem; font-size: 0.88rem; color: var(--soft); border-bottom: 1px solid var(--line); }
+  .hours-row:last-child { border-bottom: none; }
+  .hours-row span:first-child { font-weight: 700; color: var(--ink); }
+  .hours-row.-today { color: var(--teal-700); }
+  .hours-row.-today span:first-child { color: var(--teal-700); }
+
+  .nearby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin: 1.4rem 0 2rem; }
+  .nearby-card { display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; color: var(--ink); padding: 1.2rem 0.8rem; border: 1px solid var(--line); border-radius: 16px; background: var(--card); transition: transform 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart); }
+  .nearby-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); }
+  .nearby-avatar { width: 48px; height: 48px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.6rem; }
+  .nearby-name { font-weight: 700; font-size: 0.85rem; }
+  .nearby-meta { color: var(--soft); font-size: 0.75rem; margin-top: 0.2rem; }
 </style>`;
 
 router.get('/p/:slug', async (req, res) => {
@@ -426,20 +459,88 @@ router.get('/p/:slug', async (req, res) => {
     'SELECT name, role FROM collaborators WHERE professional_id = ? ORDER BY id',
     [p.id]
   );
+  const [photoRows] = await pool.query(
+    'SELECT path FROM business_photos WHERE professional_id = ? ORDER BY id',
+    [p.id]
+  );
+  const [hourRows] = await pool.query(
+    'SELECT weekday, start_time, end_time FROM professional_hours WHERE professional_id = ? ORDER BY weekday, start_time',
+    [p.id]
+  );
+  const [nearby] = await pool.query(
+    `SELECT slug, name, business_name, neighborhood, rating, reviews_count FROM professionals
+     WHERE category = ? AND slug != ? AND hidden_at IS NULL ORDER BY reviews_count DESC LIMIT 4`,
+    [p.category, p.slug]
+  );
+
+  const bookHref = `${base}/?pro=${encodeURIComponent(p.slug)}`;
 
   const svcHtml = services.map(s => `
     <div class="svc-row">
       <div>
         <div class="svc-name">${esc(s.name)}</div>
-        <div class="svc-dur">${s.duration_min} min</div>
+        <div class="svc-dur">${s.duration_min} min · ${formatPrice(s.price_cents)}</div>
       </div>
-      <div class="svc-price">${formatPrice(s.price_cents)}</div>
+      <a class="btn btn-ghost btn-sm" href="${bookHref}">Reservar</a>
     </div>`).join('') || '<p class="empty">Todavía no hay servicios cargados.</p>';
 
   const badges = [
     p.accepts_whatsapp ? '<span class="badge">Responde por WhatsApp</span>' : '',
     p.accepts_cash ? '<span class="badge">Acepta efectivo</span>' : '',
   ].join('');
+
+  // Estado "abierto/cerrado" en vivo (2026-08-27, para que el perfil se
+  // sienta tan informativo como uno de Fresha) — mismo huso horario y
+  // tablas que usa el flujo de reserva real, no una etiqueta fija.
+  const { date: today, minutes: nowMin } = nowInSantoDomingo();
+  const todayWeekday = weekdayOf(today);
+  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const todayHours = hourRows.filter(h => h.weekday === todayWeekday);
+  const openRow = todayHours.find(h => toMin(h.start_time) <= nowMin && nowMin < toMin(h.end_time));
+  const nextRow = todayHours.filter(h => toMin(h.start_time) > nowMin).sort((a, b) => toMin(a.start_time) - toMin(b.start_time))[0];
+  let statusHtml;
+  if (openRow) {
+    statusHtml = `<span class="status-pill -open">Abierto hasta las ${formatTime12h(openRow.end_time.slice(0, 5))}</span>`;
+  } else if (nextRow) {
+    statusHtml = `<span class="status-pill -closed">Cerrado ahora · abre a las ${formatTime12h(nextRow.start_time.slice(0, 5))}</span>`;
+  } else if (hourRows.length) {
+    statusHtml = `<span class="status-pill -closed">Cerrado hoy</span>`;
+  } else {
+    statusHtml = '';
+  }
+
+  const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const hoursByDay = {};
+  hourRows.forEach(h => { (hoursByDay[h.weekday] ||= []).push(h); });
+  const hoursHtml = [1, 2, 3, 4, 5, 6, 0].map(wd => {
+    const rows = hoursByDay[wd];
+    const isToday = wd === todayWeekday;
+    const rangeText = rows
+      ? rows.map(h => `${formatTime12h(h.start_time.slice(0, 5))} - ${formatTime12h(h.end_time.slice(0, 5))}`).join(', ')
+      : 'Cerrado';
+    return `<div class="hours-row${isToday ? ' -today' : ''}"><span>${DAY_LABELS[wd]}</span><span>${rangeText}</span></div>`;
+  }).join('');
+
+  const coverPath = photoRows[0]?.path || p.logo_path;
+  const coverUrl = coverPath ? (photoRows[0] ? photoUrl(req, coverPath) : logoUrl(req, coverPath)) : null;
+  const avatarUrl = p.logo_path ? logoUrl(req, p.logo_path) : null;
+
+  const galleryHtml = photoRows.length > 1 ? `
+  <h2 class="reveal" style="--i:1.5">Fotos</h2>
+  <div class="photo-strip reveal" style="--i:1.5">
+    ${photoRows.map(ph => `<img src="${photoUrl(req, ph.path)}" alt="${esc(p.business_name)}" loading="lazy">`).join('')}
+  </div>` : '';
+
+  const nearbyHtml = nearby.length ? `
+  <h2 class="reveal" style="--i:6">Establecimientos cerca</h2>
+  <div class="nearby-grid reveal" style="--i:6">
+    ${nearby.map(n => `
+    <a class="nearby-card" href="/p/${esc(n.slug)}">
+      <div class="nearby-avatar" style="background:${avatarGradient(n.slug)}">${esc(initials(n.name))}</div>
+      <div class="nearby-name">${esc(n.business_name)}</div>
+      <div class="nearby-meta">${esc(n.neighborhood)}${n.reviews_count > 0 ? ` · ★ ${Number(n.rating).toFixed(1)}` : ' · Nuevo'}</div>
+    </a>`).join('')}
+  </div>` : '';
 
   const lat = p.lat !== null ? Number(p.lat) : null;
   const lng = p.lng !== null ? Number(p.lng) : null;
@@ -448,16 +549,19 @@ router.get('/p/:slug', async (req, res) => {
   const body = `
 ${PROFILE_STYLE}
 <div class="wrap">
+  ${coverUrl ? `<div class="profile-cover reveal in" style="--i:0"><img src="${coverUrl}" alt="${esc(p.business_name)}"></div>` : ''}
   <div class="profile-hero reveal in" style="--i:0">
-    <div class="profile-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
+    <div class="profile-avatar" style="background:${avatarGradient(p.slug)}">${avatarUrl ? `<img src="${avatarUrl}" alt="${esc(p.business_name)}">` : esc(initials(p.name))}</div>
     <div>
       <h1>${esc(p.name)}</h1>
       <div class="profile-meta">${esc(p.business_name)} · ${esc(p.neighborhood)} · ${CAT_LABELS[p.category] || esc(p.category)}
         ${p.reviews_count > 0 ? ` · ★ ${Number(p.rating).toFixed(1)} (${p.reviews_count} reseñas)` : ' · Nuevo en Bukea'}
       </div>
-      <div class="profile-badges">${badges}</div>
+      <div class="profile-badges">${statusHtml}${badges}</div>
     </div>
   </div>
+
+  ${galleryHtml}
 
   <h2 class="reveal" style="--i:1">Servicios</h2>
   <div class="svc-list card reveal" style="--i:1;padding:0.4rem 1.2rem">${svcHtml}</div>
@@ -491,15 +595,21 @@ ${PROFILE_STYLE}
     </div>`).join('')}
   </div>` : ''}
 
-  <h2 class="reveal" style="--i:4">Cómo llegar</h2>
-  <div class="svc-list card reveal" style="--i:4;padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
+  ${hourRows.length ? `
+  <h2 class="reveal" style="--i:4">Horario</h2>
+  <div class="svc-list card hours-list reveal" style="--i:4;padding:0.4rem 1.2rem">${hoursHtml}</div>` : ''}
+
+  <h2 class="reveal" style="--i:4.5">Cómo llegar</h2>
+  <div class="svc-list card reveal" style="--i:4.5;padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
     <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
     <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
     <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
   </div>
 
+  ${nearbyHtml}
+
   <div class="cta-row">
-    <a class="btn btn-primary" href="${base}/?pro=${encodeURIComponent(p.slug)}">Bukear cita con ${esc(p.name.split(' ')[0])}</a>
+    <a class="btn btn-primary" href="${bookHref}">Bukear cita con ${esc(p.name.split(' ')[0])}</a>
   </div>
 </div>`;
 

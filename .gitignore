@@ -6,3 +6,9 @@ backend/.env
 # Comprobantes de pago subidos por clientes — datos de usuarios, no código
 backend/public/uploads/receipts/*
 !backend/public/uploads/receipts/.gitkeep
+
+# Logos y fotos de negocio subidos desde el panel — mismo criterio que receipts
+backend/public/uploads/logos/*
+!backend/public/uploads/logos/.gitkeep
+backend/public/uploads/business-photos/*
+!backend/public/uploads/business-photos/.gitkeep
