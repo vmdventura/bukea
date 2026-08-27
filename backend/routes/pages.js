@@ -386,8 +386,9 @@ const PROFILE_STYLE = `
   .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); overflow: hidden; }
   .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .profile-hero h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
-  .profile-meta { color: var(--soft); font-size: 0.95rem; }
+  .profile-meta { color: var(--soft); font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.2rem; }
   .profile-badges { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  #profile-map { width: 100%; height: 260px; border-radius: 16px; border: 1px solid var(--line); margin-bottom: 1rem; }
   .svc-list { margin: 1.6rem 0; }
   .svc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0.6rem; margin: 0 -0.6rem; border-bottom: 1px solid var(--line); border-radius: 10px; transition: background 180ms var(--ease-out-quart); }
   .svc-row:hover { background: var(--teal-50); }
@@ -550,14 +551,18 @@ router.get('/p/:slug', async (req, res) => {
 
   const body = `
 ${PROFILE_STYLE}
+${lat !== null && lng !== null ? '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">' : ''}
 <div class="wrap">
   ${coverUrl ? `<div class="profile-cover reveal in" style="--i:0"><img src="${coverUrl}" alt="${esc(p.business_name)}"></div>` : ''}
   <div class="profile-hero reveal in" style="--i:0">
     <div class="profile-avatar" style="background:${avatarGradient(p.slug)}">${avatarUrl ? `<img src="${avatarUrl}" alt="${esc(p.business_name)}">` : esc(initials(p.name))}</div>
     <div>
       <h1>${esc(p.name)}</h1>
-      <div class="profile-meta">${esc(p.business_name)} · ${esc(p.neighborhood)} · ${CAT_LABELS[p.category] || esc(p.category)}
-        ${p.reviews_count > 0 ? ` · ★ ${Number(p.rating).toFixed(1)} (${p.reviews_count} reseñas)` : ' · Nuevo en Bukea'}
+      <div class="profile-meta">
+        <div>${esc(p.business_name)}</div>
+        <div>${esc(p.neighborhood)}</div>
+        <div>${CAT_LABELS[p.category] || esc(p.category)}</div>
+        <div>${p.reviews_count > 0 ? `★ ${Number(p.rating).toFixed(1)} (${p.reviews_count} reseñas)` : 'Nuevo en Bukea'}</div>
       </div>
       <div class="profile-badges">${statusHtml}${badges}</div>
     </div>
@@ -602,10 +607,13 @@ ${PROFILE_STYLE}
   <div class="svc-list card hours-list reveal" style="--i:4;padding:0.4rem 1.2rem">${hoursHtml}</div>` : ''}
 
   <h2 class="reveal" style="--i:4.5">Cómo llegar</h2>
-  <div class="svc-list card reveal" style="--i:4.5;padding:0.9rem 1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap">
-    <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
-    <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
-    <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
+  <div class="svc-list card reveal" style="--i:4.5;padding:0.9rem 1.2rem">
+    ${lat !== null && lng !== null ? '<div id="profile-map"></div>' : ''}
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+      <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
+      <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
+      <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
+    </div>
   </div>
 
   ${nearbyHtml}
@@ -613,7 +621,19 @@ ${PROFILE_STYLE}
   <div class="cta-row">
     <a class="btn btn-primary" href="${bookHref}">Bukear cita con ${esc(p.name.split(' ')[0])}</a>
   </div>
-</div>`;
+</div>
+${lat !== null && lng !== null ? `
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  var map = L.map('profile-map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false }).setView([${lat}, ${lng}], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+  L.marker([${lat}, ${lng}]).addTo(map);
+})();
+</script>` : ''}`;
 
   res.type('html').send(await pageShell({
     base,

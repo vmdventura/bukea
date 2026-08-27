@@ -272,15 +272,15 @@ async function migrateRicardoToOlivercut() {
 
   await pool.query(
     'UPDATE professionals SET slug=?, name=?, business_name=?, neighborhood=?, logo_path=?, rating=0, reviews_count=0, lat=NULL, lng=NULL WHERE id=?',
-    ['olivercut', 'Oliver', 'Olivercut', 'Buena Vista', 'olivercut-1787852727-0001.avif', id]
+    ['olivercut', 'Oliver', 'Olivercut', 'Buena Vista', 'olivercut-1787852727-0001.jpg', id]
   );
 
   await pool.query('DELETE FROM business_photos WHERE professional_id = ?', [id]);
   const photos = [
-    'olivercut-1787852727-0001.avif',
-    'olivercut-1787852727-0002.avif',
-    'olivercut-1787852727-0003.avif',
-    'olivercut-1787852727-0004.avif',
+    'olivercut-1787852727-0001.jpg',
+    'olivercut-1787852727-0002.jpg',
+    'olivercut-1787852727-0003.jpg',
+    'olivercut-1787852727-0004.jpg',
   ];
   for (const path of photos) {
     await pool.query('INSERT INTO business_photos (professional_id, path) VALUES (?, ?)', [id, path]);
