@@ -257,6 +257,20 @@
     align-items: flex-end; justify-content: center;
   }
   .sheet-backdrop.show { display: flex; animation: fade-in 220ms var(--ease); }
+  .sheet-backdrop.center { align-items: center; padding: 0 20px; }
+  /* Verificación de correo obligatoria (2026-08-27) — modal centrado, no
+     descartable con un toque afuera ni con "atrás": la única salida es
+     verificar o cerrar sesión, a propósito. */
+  .verify-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 22px; padding: 1.9rem 1.7rem; box-shadow: 0 20px 50px rgba(10,40,38,0.28); animation: splash-pop 280ms var(--ease); text-align: left; }
+  .verify-card h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.3rem; color: var(--ink); margin: 0 0 0.8rem; }
+  .verify-card p { font-size: 0.88rem; color: var(--soft); line-height: 1.55; margin: 0 0 0.9rem; }
+  .verify-card .v-email { font-weight: 700; color: var(--ink); }
+  .verify-card .v-actions { display: flex; align-items: center; justify-content: flex-end; gap: 1.1rem; margin-top: 1.2rem; }
+  .verify-card .v-logout { background: none; border: none; color: var(--teal-700); font-weight: 700; font-size: 0.86rem; cursor: pointer; padding: 0.4rem; }
+  .verify-card .v-resend { background: var(--brand-teal); color: #fff; border: none; border-radius: 999px; padding: 0.75rem 1.4rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; box-shadow: var(--sh-teal); transition: transform 120ms var(--ease); }
+  .verify-card .v-resend:active { transform: scale(0.96); }
+  .verify-card .v-resend:disabled { opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) { .verify-card { animation: none; } }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   .sheet {
     width: 100%; max-width: 480px; background: var(--card);
@@ -1022,7 +1036,7 @@
     <div id="w-step-new" style="display:none">
       <p class="w-sub">Ese número es nuevo, crea tu cuenta en segundos</p>
       <input class="welcome-field" id="w-name" type="text" autocomplete="name" placeholder="Tu nombre">
-      <input class="welcome-field" id="w-email" type="email" autocomplete="email" placeholder="Tu correo (opcional)">
+      <input class="welcome-field" id="w-email" type="email" autocomplete="email" placeholder="Tu correo">
       <input class="welcome-field" id="w-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="Crea un PIN de 4 dígitos" style="text-align:center; letter-spacing:0.5em">
       <p class="w-error" id="w-error-new"></p>
       <button class="cta" id="w-register" onclick="welcomeRegister()">Crear mi cuenta</button>
@@ -1516,6 +1530,21 @@
       <p class="s-sub" id="directions-sub">—</p>
       <div id="directions-links" style="display:flex;flex-direction:column;gap:0.55rem"></div>
       <button class="sheet-skip" onclick="closeDirectionsSheet()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ============ VERIFICACIÓN DE CORREO OBLIGATORIA ============ -->
+  <div class="sheet-backdrop center" id="verify-backdrop">
+    <div class="verify-card">
+      <h2>Verifica tu correo</h2>
+      <p>Hemos enviado un correo de verificación a:</p>
+      <p class="v-email" id="verify-email-addr"></p>
+      <p>Haz clic en el enlace del correo para continuar. Puede tardar unos minutos; revisa también tu carpeta de spam.</p>
+      <p class="w-error" id="verify-error"></p>
+      <div class="v-actions">
+        <button class="v-logout" onclick="verifyGateLogout()">Cerrar sesión</button>
+        <button class="v-resend" id="verify-resend-btn" onclick="verifyGateResend()">Reenviar correo</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3146,6 +3175,12 @@
     const s = getSession();
     const h1 = document.getElementById('home-greeting');
     if (h1) h1.textContent = s ? '¿Qué buscas hoy, ' + firstName(s.name) + '?' : '¿Qué buscas hoy?';
+    if (s && s.emailVerified === false) {
+      verifyGateShow(s.email);
+      verifyGateRecheck(); // por si ya lo verificó desde otro lado mientras la app estaba cerrada
+    } else {
+      verifyGateHide();
+    }
   }
 
   // Login just-in-time: pide la cuenta solo cuando hace falta y luego continúa lo que ibas a hacer.
@@ -3465,6 +3500,11 @@
     if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
     localStorage.removeItem('bukea_guest');
     applySessionUI();
+    if (session && session.emailVerified === false) {
+      verifyGateShow(session.email);
+    } else {
+      verifyGateHide();
+    }
     if (pendingAfterLogin) {
       const cb = pendingAfterLogin;
       pendingAfterLogin = null;
@@ -3474,6 +3514,58 @@
       go('inicio');
     }
   }
+
+  /* ===== Verificación de correo obligatoria (2026-08-27) =====
+     Se muestra sí o sí después de crear la cuenta (y en cualquier login
+     posterior mientras siga sin verificar). No se puede descartar tocando
+     afuera — solo verificando el correo o cerrando sesión. Al volver a la
+     app (p.ej. después de tocar el enlace en Mail) se revisa sola si ya
+     quedó verificado, sin que el usuario tenga que hacer nada más. */
+  function verifyGateShow(email) {
+    document.getElementById('verify-email-addr').textContent = email || '';
+    document.getElementById('verify-backdrop').classList.add('show');
+  }
+  function verifyGateHide() {
+    document.getElementById('verify-backdrop').classList.remove('show');
+  }
+  window.verifyGateLogout = function () {
+    verifyGateHide();
+    clientLogout();
+  };
+  window.verifyGateResend = async function () {
+    const btn = document.getElementById('verify-resend-btn');
+    const errEl = document.getElementById('verify-error');
+    errEl.textContent = '';
+    btn.disabled = true;
+    const original = btn.textContent;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/resend-verification', { method: 'POST', headers: authHeaders() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { errEl.textContent = data.error || 'No se pudo reenviar, intenta de nuevo.'; return; }
+      btn.textContent = 'Enviado ✓';
+      setTimeout(() => { btn.textContent = original; }, 2500);
+    } catch (err) {
+      errEl.textContent = 'No se pudo conectar. Revisa tu internet.';
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  async function verifyGateRecheck() {
+    const backdrop = document.getElementById('verify-backdrop');
+    if (!backdrop.classList.contains('show')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/session', { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.emailVerified) {
+        const s = getSession();
+        if (s) { s.emailVerified = true; localStorage.setItem('bukea_session', JSON.stringify(s)); }
+        verifyGateHide();
+      }
+    } catch (err) { /* sin internet, se reintenta en el próximo focus */ }
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) verifyGateRecheck(); });
+  window.addEventListener('focus', verifyGateRecheck);
 
   async function welcomeLogin() {
     wError('w-error-pin');

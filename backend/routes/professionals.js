@@ -739,15 +739,42 @@ router.put('/:slug/services', requireAuth, async (req, res) => {
   res.json({ saved: true, count: clean.length });
 });
 
-// Ticket de soporte (2026-08-25) — "Abrir ticket" en la pestaña Negocio.
-// Correo directo a hola@bukeard.com, sin tabla propia (ver lib/mailer.js).
-router.post('/:slug/ticket', requireAuth, async (req, res) => {
+// Chat de soporte (2026-08-27) — reemplaza el "Abrir ticket" de una sola
+// vía por un hilo real: el dueño escribe desde "Mi negocio", ve la
+// respuesta del admin en la misma pantalla, y puede seguir escribiendo.
+// Un solo hilo por cuenta (no por negocio) — support_messages.user_id.
+router.get('/:slug/messages', requireAuth, async (req, res) => {
+  const { error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const [messages] = await pool.query(
+    'SELECT id, sender, body, created_at FROM support_messages WHERE user_id = ? ORDER BY id',
+    [req.user.id]
+  );
+  // Al abrir el chat, se dan por leídos los mensajes del admin — así el
+  // punto de "sin leer" del panel de negocio desaparece.
+  await pool.query(
+    "UPDATE support_messages SET read_at = NOW() WHERE user_id = ? AND sender = 'admin' AND read_at IS NULL",
+    [req.user.id]
+  );
+  res.json(messages.map(m => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.created_at })));
+});
+
+router.post('/:slug/messages', requireAuth, async (req, res) => {
   const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
 
-  const message = String(req.body.message || '').trim();
+  const message = String(req.body.message || '').trim().slice(0, 3000);
   if (!message) return res.status(400).json({ error: 'Escribe tu mensaje' });
 
+  await pool.query(
+    "INSERT INTO support_messages (user_id, sender, body) VALUES (?, 'user', ?)",
+    [req.user.id, message]
+  );
+
+  // Aviso por correo a Bukea, igual que el ticket anterior — así Víctor no
+  // depende de estar viendo el panel de admin para enterarse de un mensaje
+  // nuevo. Si el correo falla, el mensaje ya quedó guardado en el hilo.
   const [[full]] = await pool.query('SELECT business_name FROM professionals WHERE id = ?', [professional.id]);
   try {
     await mailer.sendTicket({
@@ -758,7 +785,7 @@ router.post('/:slug/ticket', requireAuth, async (req, res) => {
       message,
     });
   } catch (err) {
-    return res.status(503).json({ error: err.message });
+    console.error('No se pudo avisar por correo del mensaje de soporte:', err.message);
   }
   res.json({ sent: true });
 });

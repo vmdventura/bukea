@@ -6,6 +6,7 @@ const mailer = require('../lib/mailer');
 const oauth = require('../lib/oauth');
 const { PHONE_RE, normalizePhone, hashPin } = require('../lib/credentials');
 const rateLimit = require('../lib/rate-limit');
+const { requireAuth } = require('../lib/auth-middleware');
 
 const router = express.Router();
 
@@ -41,20 +42,24 @@ async function upsertSocialUser({ column, sub, email, name }) {
   }
 
   if (user) {
+    // El correo que da Google/Apple ya viene verificado por ellos — si la
+    // cuenta no tenía email_verified_at (p.ej. nació por teléfono+PIN y
+    // ahora vincula Google), se marca verificada en el mismo paso.
     await pool.query(
-      `UPDATE users SET ${column} = COALESCE(${column}, ?), email = COALESCE(email, ?) WHERE id = ?`,
+      `UPDATE users SET ${column} = COALESCE(${column}, ?), email = COALESCE(email, ?),
+         email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ?`,
       [sub, email, user.id]
     );
   } else {
     const [result] = await pool.query(
-      `INSERT INTO users (phone, name, email, ${column}) VALUES (NULL, ?, ?, ?)`,
+      `INSERT INTO users (phone, name, email, email_verified_at, ${column}) VALUES (NULL, ?, ?, NOW(), ?)`,
       [name || 'Cliente Bukea', email, sub]
     );
     user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email };
   }
 
   const token = await issueToken(user.id);
-  return { token, name: user.name, phone: user.phone, email: user.email || email || null };
+  return { token, name: user.name, phone: user.phone, email: user.email || email || null, emailVerified: true };
 }
 
 router.post('/check', async (req, res) => {
@@ -88,10 +93,12 @@ router.post('/register', async (req, res) => {
   }
   if (!name) return res.status(400).json({ error: 'Dinos tu nombre' });
   if (!/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'El PIN debe ser de 4 dígitos' });
-  // El email es opcional al registrarse — solo sirve hoy para poder
-  // recuperar el PIN si lo olvidas, así que si lo dan debe ser válido.
-  if (email && !EMAIL_RE.test(email)) {
-    return res.status(400).json({ error: 'Ese correo no parece válido' });
+  // El correo pasó a ser obligatorio (2026-08-27, a pedido de Víctor): toda
+  // cuenta nueva debe verificarlo antes de poder usar la app de verdad —
+  // ver GET /verify-email más abajo. Las cuentas ya existentes (creadas
+  // antes de este cambio) no se ven afectadas, ver el backfill en db/init.js.
+  if (!EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: 'Ingresa un correo válido, lo necesitamos para verificar tu cuenta' });
   }
 
   const [existing] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
@@ -101,11 +108,75 @@ router.post('/register', async (req, res) => {
 
   const salt = crypto.randomBytes(16).toString('hex');
   const token = crypto.randomBytes(24).toString('hex');
-  await pool.query(
+  const [result] = await pool.query(
     'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token) VALUES (?, ?, ?, ?, ?, ?)',
-    [phone, name, email || null, salt, hashPin(pin, salt), token]
+    [phone, name, email, salt, hashPin(pin, salt), token]
   );
-  res.status(201).json({ token, name, phone, email: email || null });
+  await sendVerificationEmail(req, result.insertId, email, name);
+  res.status(201).json({ token, name, phone, email, emailVerified: false });
+});
+
+// Enlace de verificación (2026-08-27): token de un solo uso, vence en 24h.
+// Falla en silencio si el correo no se pudo enviar (SMTP caído, etc.) — no
+// tiene sentido tumbar el registro completo por eso; el usuario siempre
+// puede pedir que se lo reenvíen desde POST /resend-verification.
+async function sendVerificationEmail(req, userId, email, name) {
+  await pool.query('DELETE FROM email_verifications WHERE user_id = ?', [userId]);
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await pool.query(
+    'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, ?)',
+    [userId, token, expiresAt]
+  );
+  const verifyUrl = `${req.protocol}://${req.get('host')}${req.baseUrlPrefix || ''}/api/auth/verify-email?token=${token}`;
+  try {
+    await mailer.sendEmailVerification(email, name, verifyUrl);
+  } catch (err) {
+    console.error('No se pudo enviar el correo de verificación:', err.message);
+  }
+}
+
+const VERIFY_PAGE_STYLE = `<style>
+  body { font-family: -apple-system, "Segoe UI", sans-serif; background: #f2f7f6; color: #16302e; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
+  .card { background: #fff; border-radius: 20px; padding: 2.4rem 2rem; max-width: 380px; box-shadow: 0 14px 34px rgba(15,40,38,0.12); }
+  h1 { font-size: 1.3rem; margin: 0 0 0.6rem; }
+  p { color: #44647a; font-size: 0.95rem; line-height: 1.5; margin: 0; }
+  .icon { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+  .ok .icon { background: #e3f4ee; color: #0f8583; }
+  .err .icon { background: #fbe3e0; color: #b3261e; }
+</style>`;
+
+// GET porque se abre desde el enlace de un correo (Safari/Mail), no desde
+// la app — nunca requiere sesión.
+router.get('/verify-email', async (req, res) => {
+  const token = String(req.query.token || '');
+  const [rows] = await pool.query(
+    'SELECT user_id, expires_at FROM email_verifications WHERE token = ?', [token]
+  );
+  const record = rows[0];
+  if (!record || new Date(record.expires_at) < new Date()) {
+    return res.status(400).type('html').send(`${VERIFY_PAGE_STYLE}<div class="card err"><div class="icon">✕</div><h1>Enlace vencido</h1><p>Este enlace ya no es válido. Vuelve a la app y toca "Reenviar correo" para pedir uno nuevo.</p></div>`);
+  }
+  await pool.query('UPDATE users SET email_verified_at = NOW() WHERE id = ?', [record.user_id]);
+  await pool.query('DELETE FROM email_verifications WHERE user_id = ?', [record.user_id]);
+  res.type('html').send(`${VERIFY_PAGE_STYLE}<div class="card ok"><div class="icon">✓</div><h1>¡Correo verificado!</h1><p>Ya puedes volver a la app Bukea y seguir donde te quedaste.</p></div>`);
+});
+
+router.post('/resend-verification', requireAuth, async (req, res) => {
+  if (req.user.email_verified_at) return res.json({ sent: false, alreadyVerified: true });
+  if (!req.user.email) return res.status(400).json({ error: 'Tu cuenta no tiene un correo registrado' });
+  const wait = rateLimit.check([{ key: 'verify-resend:' + req.user.id }]);
+  if (wait > 0) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+  rateLimit.hit([{ key: 'verify-resend:' + req.user.id, max: 3, windowMs: 10 * 60 * 1000, blockMs: 10 * 60 * 1000 }]);
+  await sendVerificationEmail(req, req.user.id, req.user.email, req.user.name);
+  res.json({ sent: true });
+});
+
+router.get('/session', requireAuth, (req, res) => {
+  res.json({
+    id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
+    emailVerified: Boolean(req.user.email_verified_at),
+  });
 });
 
 router.post('/login', async (req, res) => {
@@ -135,7 +206,7 @@ router.post('/login', async (req, res) => {
 
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
-  res.json({ token, name: user.name, phone: user.phone });
+  res.json({ token, name: user.name, phone: user.phone, email: user.email, emailVerified: Boolean(user.email_verified_at) });
 });
 
 /* ===== Verificación por WhatsApp (OTP) =====
@@ -210,7 +281,7 @@ router.post('/otp/verify', async (req, res) => {
   if (users.length > 0) {
     const token = crypto.randomBytes(24).toString('hex');
     await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, users[0].id]);
-    return res.json({ verified: true, exists: true, token, name: users[0].name, phone });
+    return res.json({ verified: true, exists: true, token, name: users[0].name, phone, email: users[0].email, emailVerified: Boolean(users[0].email_verified_at) });
   }
   res.json({ verified: true, exists: false, phone });
 });
@@ -346,8 +417,6 @@ router.post('/apple', async (req, res) => {
    permitir eliminar la cuenta desde adentro. Se anonimiza la fila en vez
    de borrarla — las reservas históricas de los negocios no pierden su
    referencia, pero la cuenta queda irreconocible e inaccesible. */
-
-const { requireAuth } = require('../lib/auth-middleware');
 
 router.post('/delete-account', requireAuth, async (req, res) => {
   // Si la cuenta es dueña de un negocio, el negocio se oculta del

@@ -229,7 +229,17 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .biz-photo-item .row-del { position: absolute; top: 0.3rem; right: 0.3rem; background: rgba(10,20,20,0.55); color: #fff; border-radius: 999px; padding: 0.3rem; }
   .biz-photo-item .row-del:hover { background: var(--danger); }
   .biz-map { height: 280px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
-  .biz-ticket-textarea { width: 100%; min-height: 100px; padding: 0.72rem 0.9rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.9rem; color: var(--ink); font-family: inherit; resize: vertical; }
+
+  /* Chat de soporte (2026-08-27) — reemplaza el "Abrir ticket" de una sola
+     vía por un hilo real con historial, ver routes/professionals.js. */
+  .chat-msgs { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.2rem 0.1rem 0.8rem; }
+  .chat-msg { max-width: 78%; padding: 0.6rem 0.85rem; border-radius: 14px; font-size: 0.87rem; line-height: 1.45; white-space: pre-wrap; }
+  .chat-msg.user { align-self: flex-end; background: var(--teal-600); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-msg.admin { align-self: flex-start; background: var(--bg); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .chat-msg time { display: block; font-size: 0.68rem; opacity: 0.65; margin-top: 0.25rem; }
+  .chat-composer { display: flex; gap: 0.6rem; align-items: flex-end; }
+  .chat-composer textarea { flex: 1; min-height: 42px; max-height: 110px; padding: 0.65rem 0.85rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.88rem; color: var(--ink); font-family: inherit; resize: none; }
+  .chat-composer textarea:focus { outline: none; border-color: var(--teal-500); }
 
   .hour-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); }
   .hour-row:last-child { border-bottom: none; }
@@ -675,11 +685,14 @@ ${ICON_SPRITE}
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>¿Necesitas ayuda?</h3></div>
-        <p class="dash-sub">Escríbenos directo y te respondemos por correo.</p>
+        <div class="card-head"><h3>Chat con Bukea</h3></div>
+        <p class="dash-sub">Escríbenos directo. Te respondemos aquí mismo, no necesitas abrir un ticket aparte.</p>
+        <div class="chat-msgs" id="chat-msgs"><p class="dash-sub">Cargando…</p></div>
         <p id="ticket-error" class="auth-error" style="display:none"></p>
-        <textarea id="ticket-message" class="biz-ticket-textarea" placeholder="Cuéntanos qué necesitas…"></textarea>
-        <button class="btn btn-primary btn-sm" style="margin-top:0.8rem" onclick="sendTicket()"><svg class="icon" style="width:16px;height:16px"><use href="#n-message"/></svg> Abrir ticket</button>
+        <div class="chat-composer">
+          <textarea id="ticket-message" placeholder="Cuéntanos qué necesitas…"></textarea>
+          <button class="btn btn-primary btn-sm" onclick="sendChatMessage()"><svg class="icon" style="width:16px;height:16px"><use href="#n-message"/></svg></button>
+        </div>
       </div>
     </div>
 
@@ -1659,19 +1672,41 @@ ${ICON_SPRITE}
     toast('Ubicación guardada.');
   };
 
-  window.sendTicket = async function () {
+  function chatBubbleHtml(m) {
+    var when = new Date(m.createdAt || m.created_at);
+    var time = isNaN(when) ? '' : when.toLocaleString('es-DO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return '<div class="chat-msg ' + (m.sender === 'admin' ? 'admin' : 'user') + '">' + esc(m.body) + '<time>' + time + '</time></div>';
+  }
+
+  window.loadChat = async function () {
+    var box = document.getElementById('chat-msgs');
+    try {
+      var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/messages', { headers: authHeaders() });
+      if (!res.ok) throw new Error();
+      var messages = await res.json();
+      box.innerHTML = messages.length
+        ? messages.map(chatBubbleHtml).join('')
+        : '<p class="dash-sub">Todavía no has escrito nada. Cuéntanos qué necesitas.</p>';
+      box.scrollTop = box.scrollHeight;
+    } catch (err) {
+      box.innerHTML = '<p class="dash-sub">No se pudo cargar el chat.</p>';
+    }
+  };
+
+  window.sendChatMessage = async function () {
     var errEl = document.getElementById('ticket-error');
     errEl.style.display = 'none';
-    var message = document.getElementById('ticket-message').value.trim();
+    var textarea = document.getElementById('ticket-message');
+    var message = textarea.value.trim();
     if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
-    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/ticket', {
+    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/messages', {
       method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify({ message: message }),
     });
     var data = await res.json().catch(function () { return {}; });
     if (!res.ok) { errEl.textContent = data.error || 'No se pudo enviar. Intenta de nuevo.'; errEl.style.display = 'block'; return; }
-    document.getElementById('ticket-message').value = '';
-    toast('Ticket enviado. Te responderemos por correo.');
+    textarea.value = '';
+    loadChat();
   };
 
   /* ---------- Horario ---------- */
@@ -1835,7 +1870,7 @@ ${ICON_SPRITE}
     // El mapa de Leaflet necesita medir un contenedor visible — si se crea
     // con el panel oculto (display:none) queda con tamaño 0. Se inicializa
     // recién cuando el usuario entra a "Negocio" por primera vez.
-    if (name === 'negocio') setTimeout(initBizMap, 0);
+    if (name === 'negocio') { setTimeout(initBizMap, 0); loadChat(); }
   };
 
   document.addEventListener('keydown', function (e) {

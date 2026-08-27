@@ -171,6 +171,45 @@ async function migrate() {
       FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Verificación de correo obligatoria al registrarse (2026-08-27, a pedido
+  // de Víctor tras ver el flujo de otra app). email_verified_at NULL =
+  // pendiente. El backfill con corte de fecha da por verificadas a todas
+  // las cuentas que ya existían antes de este cambio (no tiene sentido
+  // bloquear a alguien que llevaba semanas usando Bukea sin este paso) —
+  // el corte es fijo a propósito, así una cuenta nueva de verdad después de
+  // esa fecha nunca se marca verificada por accidente en un reinicio.
+  await safeAlter('ALTER TABLE users ADD COLUMN email_verified_at DATETIME');
+  await pool.query(
+    "UPDATE users SET email_verified_at = created_at WHERE email_verified_at IS NULL AND created_at < '2026-08-27 12:00:00'"
+  );
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      token VARCHAR(64) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE INDEX idx_email_verifications_token (token)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  // Chat de soporte para dueños de negocio (2026-08-27) — reemplaza el
+  // "Abrir ticket" de una sola vía (correo, sin respuesta visible en la
+  // app) por un hilo real: el dueño escribe desde "Mi negocio", un admin
+  // responde desde el panel, y ambos ven el mismo historial.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS support_messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      sender VARCHAR(10) NOT NULL,
+      body TEXT NOT NULL,
+      read_at DATETIME,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {

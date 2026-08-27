@@ -89,4 +89,20 @@ async function sendContactMessage({ name, email, message, subject }) {
   });
 }
 
-module.exports = { isConfigured, sendPinResetCode, sendCustomMessage, sendTicket, sendContactMessage };
+// Verificación de correo obligatoria al registrarse (2026-08-27). El
+// enlace apunta al propio backend (GET /api/auth/verify-email), no a un
+// servicio externo — no dependemos de Firebase ni de nada por el estilo.
+async function sendEmailVerification(email, name, verifyUrl) {
+  if (!isConfigured()) {
+    throw new Error('El envío de correo no está configurado (faltan variables de entorno)');
+  }
+  await getTransporter().sendMail({
+    from: process.env.MAIL_FROM,
+    to: email,
+    subject: 'Verifica tu correo en Bukea',
+    text: `Hola, ${name}:\n\nHaz clic en este enlace para verificar tu correo y terminar de crear tu cuenta en Bukea.\n\n${verifyUrl}\n\nVence en 24 horas. Si no lo pediste tú, ignora este correo.`,
+    html: `<p>Hola, ${name}:</p><p>Haz clic en este enlace para verificar tu correo y terminar de crear tu cuenta en Bukea.</p><p><a href="${verifyUrl}" style="display:inline-block;background:#0f8583;color:#fff;padding:0.7rem 1.3rem;border-radius:999px;text-decoration:none;font-weight:700">Verificar mi correo</a></p><p style="color:#667">Vence en 24 horas. Si no lo pediste tú, ignora este correo.</p>`,
+  });
+}
+
+module.exports = { isConfigured, sendPinResetCode, sendCustomMessage, sendTicket, sendContactMessage, sendEmailVerification };

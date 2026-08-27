@@ -128,6 +128,29 @@ function adminShell() {
   .alert span { opacity: 0.82; font-size: 12px; }
   .alert.empty { background: var(--good-100); color: var(--good); }
 
+  /* ===== Soporte (chat con dueños de negocio) ===== */
+  .support-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; height: calc(100vh - 140px); }
+  .support-threadlist { padding: 8px; overflow-y: auto; height: 100%; }
+  .support-thread-item { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; padding: 10px; border-radius: 10px; cursor: pointer; text-align: left; color: inherit; }
+  .support-thread-item:hover { background: var(--teal-50); }
+  .support-thread-item.active { background: var(--teal-100); }
+  .support-thread-item .stmeta { flex: 1; min-width: 0; }
+  .support-thread-item b { display: block; font-size: 13px; }
+  .support-thread-item small { display: block; color: var(--faint); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .support-thread-item .stbadge { flex: none; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+  .support-thread { display: flex; flex-direction: column; height: 100%; padding: 0; overflow: hidden; }
+  .support-thread-head { padding: 14px 18px; border-bottom: 1px solid var(--line); flex: none; }
+  .support-thread-head b { display: block; font-size: 14px; }
+  .support-thread-head small { color: var(--faint); }
+  .support-msgs { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .support-msg { max-width: 72%; padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+  .support-msg.user { align-self: flex-start; background: var(--teal-50); border-bottom-left-radius: 4px; }
+  .support-msg.admin { align-self: flex-end; background: var(--teal-600); color: #fff; border-bottom-right-radius: 4px; }
+  .support-msg time { display: block; font-size: 10px; opacity: 0.6; margin-top: 3px; }
+  .support-reply { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); flex: none; }
+  .support-reply textarea { flex: 1; resize: none; min-height: 40px; max-height: 100px; border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 13px; }
+  .support-reply textarea:focus { outline: none; border-color: var(--teal-500); }
+
   .tablewrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -243,6 +266,10 @@ function adminShell() {
       <button class="navbtn" data-view="communication">
         <svg class="icon" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
         Comunicación
+      </button>
+      <button class="navbtn" data-view="support">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        Soporte<span class="tag" id="support-navtag" style="display:none"></span>
       </button>
       <button class="navbtn" data-view="settings">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -404,6 +431,17 @@ function adminShell() {
         <h2><svg class="icon" viewBox="0 0 24 24"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>Registro de envíos</h2>
         <p class="phint">Últimos 50 mensajes manuales enviados desde el panel. Para escribirle a un usuario, entra a su ficha en Usuarios.</p>
         <div class="tablewrap" id="comm-log"><div class="empty-state">Cargando…</div></div>
+      </div>
+    </section>
+
+    <!-- Soporte -->
+    <section class="view" id="view-support">
+      <div class="topbar"><div><h1>Soporte</h1><div class="sub">Chats con dueños de negocio que escriben desde "Mi negocio"</div></div></div>
+      <div class="support-layout">
+        <div class="panel support-threadlist" id="support-threads"><div class="empty-state">Cargando…</div></div>
+        <div class="panel support-thread" id="support-thread">
+          <div class="empty-state">Elige un chat de la lista para verlo aquí.</div>
+        </div>
       </div>
     </section>
 
@@ -1124,6 +1162,77 @@ function adminShell() {
     }).catch(function (err) { document.getElementById('comm-log').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
   }
   loaders.communication = loadCommunication;
+
+  /* ===== Soporte (chat con dueños de negocio) ===== */
+  var supportActiveUserId = null;
+  function loadSupport() {
+    api('/support/threads').then(function (threads) {
+      var unreadTotal = threads.reduce(function (n, t) { return n + t.unread; }, 0);
+      var tag = document.getElementById('support-navtag');
+      if (unreadTotal > 0) { tag.textContent = unreadTotal; tag.style.display = ''; } else { tag.style.display = 'none'; }
+
+      if (!threads.length) {
+        document.getElementById('support-threads').innerHTML = '<div class="empty-state">Todavía no hay mensajes.</div>';
+        return;
+      }
+      document.getElementById('support-threads').innerHTML = threads.map(function (t) {
+        return '<button class="support-thread-item' + (t.userId === supportActiveUserId ? ' active' : '') + '" data-uid="' + t.userId + '">' +
+          '<div class="dot">' + esc(initials(t.name)) + '</div>' +
+          '<div class="stmeta"><b>' + esc(t.name) + '</b><small>' + esc((t.lastBody || '').slice(0, 40)) + '</small></div>' +
+          (t.unread > 0 ? '<span class="stbadge">' + t.unread + '</span>' : '') +
+          '</button>';
+      }).join('');
+      document.querySelectorAll('.support-thread-item').forEach(function (btn) {
+        btn.addEventListener('click', function () { openSupportThread(Number(btn.dataset.uid), threads); });
+      });
+      // Si ya había un chat abierto, refresca sus mensajes (por si llegó uno nuevo).
+      if (supportActiveUserId && threads.some(function (t) { return t.userId === supportActiveUserId; })) {
+        openSupportThread(supportActiveUserId, threads);
+      }
+    }).catch(function (err) { document.getElementById('support-threads').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
+  }
+  function openSupportThread(userId, threads) {
+    supportActiveUserId = userId;
+    document.querySelectorAll('.support-thread-item').forEach(function (b) { b.classList.toggle('active', Number(b.dataset.uid) === userId); });
+    var t = threads.filter(function (x) { return x.userId === userId; })[0];
+    api('/support/threads/' + userId).then(function (messages) {
+      var bubbles = messages.map(function (m) {
+        return '<div class="support-msg ' + m.sender + '">' + esc(m.body) + '<time>' + fmtDateTime(m.created_at) + '</time></div>';
+      }).join('');
+      document.getElementById('support-thread').innerHTML =
+        '<div class="support-thread-head"><b>' + esc(t ? t.name : '') + '</b><small>' + esc(t ? t.phone || '' : '') + '</small></div>' +
+        '<div class="support-msgs" id="support-msgs">' + (bubbles || '<div class="empty-state">Sin mensajes.</div>') + '</div>' +
+        '<div class="support-reply"><textarea id="support-reply-text" placeholder="Escribe tu respuesta…"></textarea><button class="btn btn-primary btn-sm" id="support-reply-send">Enviar</button></div>';
+      var msgsEl = document.getElementById('support-msgs');
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+      document.getElementById('support-reply-send').addEventListener('click', function () {
+        var ta = document.getElementById('support-reply-text');
+        var text = ta.value.trim();
+        if (!text) return;
+        this.disabled = true;
+        api('/support/threads/' + userId, { method: 'POST', body: { message: text } })
+          .then(function () { ta.value = ''; loadSupport(); })
+          .catch(function (err) { alert(err.message); })
+          .finally(function () { document.getElementById('support-reply-send').disabled = false; });
+      });
+      // Ya se marcaron leídos en el servidor al abrir el hilo — refresca la
+      // lista para que el badge de "sin leer" desaparezca.
+      loadSupportBadgeOnly();
+    });
+  }
+  function loadSupportBadgeOnly() {
+    api('/support/threads').then(function (threads) {
+      var unreadTotal = threads.reduce(function (n, t) { return n + t.unread; }, 0);
+      var tag = document.getElementById('support-navtag');
+      if (unreadTotal > 0) { tag.textContent = unreadTotal; tag.style.display = ''; } else { tag.style.display = 'none'; }
+      var items = document.querySelectorAll('.support-thread-item');
+      threads.forEach(function (t, i) {
+        var badge = items[i] && items[i].querySelector('.stbadge');
+        if (badge) { if (t.unread > 0) { badge.textContent = t.unread; } else { badge.remove(); } }
+      });
+    });
+  }
+  loaders.support = loadSupport;
 
   /* ===== Configuración ===== */
   function loadSettings() {

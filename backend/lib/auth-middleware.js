@@ -8,7 +8,7 @@ async function requireAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Inicia sesión para continuar' });
 
-  const [rows] = await pool.query('SELECT id, name, phone, email, disabled_at FROM users WHERE token = ?', [token]);
+  const [rows] = await pool.query('SELECT id, name, phone, email, email_verified_at, disabled_at FROM users WHERE token = ?', [token]);
   if (!rows[0]) return res.status(401).json({ error: 'Tu sesión expiró — inicia sesión de nuevo' });
   if (rows[0].disabled_at) return res.status(403).json({ error: 'Esta cuenta está desactivada' });
 

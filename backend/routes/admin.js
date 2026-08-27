@@ -829,4 +829,53 @@ router.patch('/settings', async (req, res) => {
   res.json(await updateSettings(patch));
 });
 
+// Soporte (2026-08-27) — hilos de chat con dueños de negocio, ver
+// GET/POST /:slug/messages en professionals.js del lado del dueño. Un
+// hilo por cuenta, agrupado por support_messages.user_id.
+router.get('/support/threads', async (req, res) => {
+  const [threads] = await pool.query(`
+    SELECT u.id AS userId, u.name, u.phone,
+      (SELECT body FROM support_messages WHERE user_id = u.id ORDER BY id DESC LIMIT 1) AS lastBody,
+      (SELECT created_at FROM support_messages WHERE user_id = u.id ORDER BY id DESC LIMIT 1) AS lastAt,
+      (SELECT COUNT(*) FROM support_messages WHERE user_id = u.id AND sender = 'user' AND read_at IS NULL) AS unread
+    FROM users u
+    WHERE EXISTS (SELECT 1 FROM support_messages sm WHERE sm.user_id = u.id)
+    ORDER BY lastAt DESC
+  `);
+  res.json(threads);
+});
+
+router.get('/support/threads/:userId', async (req, res) => {
+  const userId = Number(req.params.userId);
+  const [messages] = await pool.query(
+    'SELECT id, sender, body, created_at FROM support_messages WHERE user_id = ? ORDER BY id',
+    [userId]
+  );
+  await pool.query(
+    "UPDATE support_messages SET read_at = NOW() WHERE user_id = ? AND sender = 'user' AND read_at IS NULL",
+    [userId]
+  );
+  res.json(messages);
+});
+
+router.post('/support/threads/:userId', async (req, res) => {
+  const userId = Number(req.params.userId);
+  const body = String(req.body.message || '').trim().slice(0, 3000);
+  if (!body) return res.status(400).json({ error: 'Escribe tu respuesta' });
+
+  const [[user]] = await pool.query('SELECT name, email, phone FROM users WHERE id = ?', [userId]);
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  await pool.query("INSERT INTO support_messages (user_id, sender, body, read_at) VALUES (?, 'admin', ?, NOW())", [userId, body]);
+
+  // Avisar por el canal que tenga: correo si lo dio, si no WhatsApp (mismo
+  // patrón que "Enviar mensaje" en la ficha del usuario, más abajo).
+  if (user.email && mailer.isConfigured()) {
+    try { await mailer.sendCustomMessage(user.email, 'Respuesta de Bukea', body); } catch (err) { console.error(err); }
+  } else if (user.phone && whatsapp.isConfigured && whatsapp.isConfigured()) {
+    try { await whatsapp.sendTextMessage(user.phone, body); } catch (err) { console.error(err); }
+  }
+  res.json({ sent: true });
+});
+
 module.exports = router;
