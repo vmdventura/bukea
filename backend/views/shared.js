@@ -343,6 +343,7 @@ ${bannerHtml}
           <a href="/negocios">Para negocios</a>
           <a href="/precios">Precios</a>
           <a href="/mapa">Ver en mapa</a>
+          <a href="/nosotros">Nosotros</a>
           <div class="nav-dropdown-divider"></div>
           <a href="/descargar">Descargar la app</a>
           <div class="nav-dropdown-divider"></div>
@@ -371,6 +372,7 @@ ${bodyHtml}
       <a href="/negocios">Para negocios</a>
       <a href="/precios">Precios</a>
       <a href="/mapa">Ver en mapa</a>
+      <a href="/nosotros">Nosotros</a>
     </div>
     <div class="footer-col">
       <h4>Ayuda</h4>

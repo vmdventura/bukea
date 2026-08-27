@@ -11,6 +11,19 @@ const router = express.Router();
 const CATEGORIES = Object.keys(CAT_LABELS);
 const CITIES = Object.keys(CITY_LABELS);
 
+function mktHeroHtml({ eyebrow, title, sub, ctaHtml }) {
+  return `
+  <div class="mkt-hero">
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="mkt-hero-inner">
+      ${eyebrow ? `<span class="badge-pill reveal" style="--i:0">${esc(eyebrow)}</span>` : ''}
+      <h1 class="reveal" style="--i:1">${title}</h1>
+      ${sub ? `<p class="reveal" style="--i:2">${esc(sub)}</p>` : ''}
+      ${ctaHtml ? `<div class="mkt-hero-cta reveal" style="--i:3">${ctaHtml}</div>` : ''}
+    </div>
+  </div>`;
+}
+
 function proCardHtml(p, i) {
   return `
     <a class="pro-card reveal" style="--i:${Math.min(i, 9)}" href="/p/${esc(p.slug)}">
@@ -475,6 +488,37 @@ const MARKETING_STYLE = `
   .m-hero h1 { font-size: clamp(2rem, 4.5vw, 2.9rem); letter-spacing: -0.02em; color: var(--teal-900); margin: 0 0 0.7rem; }
   .m-hero p { color: var(--soft); font-size: 1.05rem; max-width: 50ch; margin: 0 auto 1.7rem; }
 
+  /* Hero verde compartido (2026-08-27): mismo tratamiento oscuro con grano
+     y pastilla que el home, reusado en /contacto, /negocios y /nosotros
+     para que el sitio se sienta una sola cosa y no páginas sueltas con
+     estilos distintos. mktHeroHtml() en este archivo arma el markup. */
+  .mkt-hero {
+    position: relative; padding: 3.4rem 2.6rem; text-align: center; overflow: hidden; contain: layout paint;
+    background:
+      radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
+      radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
+      linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
+    border-radius: 26px; margin: 2rem 0 0;
+  }
+  .mkt-hero .hero-grain {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .mkt-hero-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+  .mkt-hero .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: oklch(80% 0.1 78); margin: 0 0 1.1rem; }
+  .mkt-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--white); }
+  .mkt-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0 auto; }
+  .mkt-hero .mkt-hero-cta { margin-top: 1.5rem; }
+  @media (max-width: 560px) { .mkt-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
+
+  /* Franja de cifras entre el hero y el bento (2026-08-27) — puente visual
+     para /negocios: el hero vende la idea, esto la vuelve concreta antes
+     de entrar al detalle de funciones. */
+  .m-highlights { display: flex; justify-content: center; gap: 2.4rem; flex-wrap: wrap; margin: 2.2rem 0 0; padding: 1.4rem 0; text-align: center; }
+  .m-highlights > div { display: flex; flex-direction: column; gap: 0.15rem; }
+  .m-highlights b { font-family: "Fraunces", serif; font-size: 1.5rem; color: var(--teal-700); }
+  .m-highlights span { font-size: 0.8rem; color: var(--soft); }
+
   /* Bento: dos tarjetas grandes (los diferenciadores) + cuatro de apoyo,
      nunca del mismo tamaño — evita la cuadrícula idéntica de "features". */
   .m-bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2.6rem 0; }
@@ -531,6 +575,14 @@ const MARKETING_STYLE = `
   .m-faq summary::after { content: "+"; font-size: 1.3rem; line-height: 1; color: var(--teal-600); transition: transform 200ms var(--ease-out-quart); flex: none; }
   .m-faq details[open] summary::after { transform: rotate(45deg); }
   .m-faq p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.88rem; line-height: 1.6; }
+
+  /* .biz-cta vivía solo en HOME_STYLE — /negocios y /nosotros la usan sin
+     ese bloque cargado y quedaba como texto plano sin tarjeta (mismo
+     motivo que .chip en .m-cats, ver arriba). */
+  .biz-cta { position: relative; overflow: hidden; isolation: isolate; background: var(--teal-900); color: var(--white); border-radius: 24px; padding: 2.4rem; text-align: center; margin: 3.5rem 0; }
+  .biz-cta::before { content: ""; position: absolute; z-index: -1; width: 20rem; height: 20rem; top: -8rem; right: -6rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.5; filter: blur(6px); }
+  .biz-cta h2 { color: var(--white); margin: 0 0 0.5rem; font-size: 1.55rem; }
+  .biz-cta p { color: rgba(255,255,255,0.82); max-width: 42ch; margin: 0 auto 1.3rem; }
 </style>`;
 
 // Panel de negocio de escritorio ("Mi cuenta") — pantalla completa, con su
@@ -573,11 +625,17 @@ router.get('/negocios', async (req, res) => {
   const body = `
 ${MARKETING_STYLE}
 <div class="wrap">
-  <div class="m-hero">
-    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Tu agenda y tu clientela, sin pagar comisión</h1>
-    <p class="reveal" style="--i:1">Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, pagos a la dominicana y agenda real, de raíz.</p>
-    <a class="btn btn-primary reveal" style="--i:2" href="/negocio">Únete a Bukea, es gratis</a>
+  ${mktHeroHtml({
+    eyebrow: 'Para negocios de belleza',
+    title: 'Tu agenda y tu clientela, sin pagar comisión',
+    sub: 'Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, pagos a la dominicana y agenda real, de raíz.',
+    ctaHtml: '<a class="btn btn-primary" href="/negocio">Únete a Bukea, es gratis</a>',
+  })}
+
+  <div class="m-highlights reveal">
+    <div><b>0%</b><span>comisión por cliente</span></div>
+    <div><b>2 min</b><span>para crear tu perfil</span></div>
+    <div><b>WhatsApp</b><span>confirmaciones nativas</span></div>
   </div>
 
   <div class="m-bento">
@@ -641,6 +699,100 @@ ${MARKETING_STYLE}
     title: 'Bukea para negocios. Agenda, WhatsApp y cero comisión',
     description: 'Bukea es gratis para negocios de belleza en República Dominicana: agenda real, Mi Cuadre, WhatsApp nativo y pagos a la dominicana.',
     canonicalPath: 'https://www.bukeard.com/negocios',
+    bodyHtml: body,
+  }));
+});
+
+router.get('/nosotros', async (req, res) => {
+  const base = req.baseUrlPrefix;
+
+  const helpCards = [
+    { icon: 'i-calendar', h: 'Reservas mientras duermes', p: 'Tu horario real está visible las 24 horas. Un cliente que te escribe a las 11 de la noche puede reservar solo, sin esperar a que le contestes.', lg: true },
+    { icon: 'i-whatsapp', h: 'Menos citas que se caen', p: 'El recordatorio llega por WhatsApp, no por una notificación que nadie abre. Menos "se me olvidó" es más sillas ocupadas cada día.' },
+    { icon: 'i-link', h: 'Más alcance, no más trabajo', p: 'Tu enlace de Bukea vive en tu bio y tu estado. Cada persona que lo abre y reserva es un cliente que te encontró solo, sin que movieras un dedo.' },
+    { icon: 'i-chart', h: 'Decide con números, no a ojo', p: '"Mi Cuadre" te dice cuánto vendiste hoy, en la semana y en el mes. Sabes si te está yendo mejor o peor sin sacar cuentas a mano.', lg: true },
+    { icon: 'i-percent', h: 'Todo lo que vendes es tuyo', p: 'Cero comisión por cliente nuevo. Lo que factura tu silla no se reparte con nadie.' },
+  ].map((f, i) => `
+    <div class="card m-feature${f.lg ? ' -lg' : ''} reveal" style="--i:${i}">
+      <div class="icon-badge"><svg class="icon"><use href="#${f.icon}"/></svg></div>
+      <h3>${f.h}</h3>
+      <p>${f.p}</p>
+    </div>`).join('');
+
+  const body = `
+${MARKETING_STYLE}
+<style>
+  .m-story { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3rem; align-items: center; margin: 3rem 0 4rem; }
+  .m-story h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); color: var(--teal-900); margin: 0 0 1rem; }
+  .m-story p { color: var(--soft); font-size: 0.96rem; line-height: 1.7; margin: 0 0 1rem; }
+  .m-story-card { background: var(--teal-900); color: var(--white); border-radius: 22px; padding: 2rem; position: relative; overflow: hidden; isolation: isolate; }
+  .m-story-card::before { content: ""; position: absolute; z-index: -1; width: 16rem; height: 16rem; top: -6rem; right: -6rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.4; }
+  .m-story-card .stat { font-family: "Fraunces", serif; font-size: 2.6rem; line-height: 1; margin: 0 0 0.3rem; }
+  .m-story-card .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.78); margin: 0 0 1.6rem; padding-bottom: 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.14); }
+  .m-story-card .stat-label:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  @media (max-width: 820px) { .m-story { grid-template-columns: 1fr; gap: 2rem; margin: 2.2rem 0 3rem; } }
+</style>
+<div class="wrap">
+  ${mktHeroHtml({
+    eyebrow: 'Sobre Bukea',
+    title: 'La belleza dominicana se merece algo mejor que un chat perdido',
+    sub: 'Bukea nació para que reservar una cita en un salón, una barbería o con tu manicurista de confianza sea tan fácil como debería haber sido siempre.',
+  })}
+
+  <div class="m-story reveal">
+    <div>
+      <h2>El problema que no se hablaba</h2>
+      <p>En República Dominicana, la mayoría de los negocios de belleza todavía agenda por WhatsApp, por Instagram o a mano en un cuaderno. Funciona, hasta que no: una cita se pierde entre mensajes, un cliente no recibe respuesta a tiempo y se va con otro, o el negocio no tiene forma de saber, sin sacar cuentas, si el mes va mejor o peor que el anterior.</p>
+      <p>Las apps de reservas que existen no fueron pensadas para acá: asumen pago con tarjeta, cobran comisión por cada cliente y llegan traducidas, no construidas para cómo trabajamos de verdad, con efectivo, transferencia y WhatsApp como canal principal.</p>
+      <p>Bukea existe para llenar exactamente ese espacio: la herramienta de reservas hecha desde República Dominicana, para el negocio de belleza dominicano.</p>
+    </div>
+    <div class="m-story-card">
+      <div class="stat">WhatsApp</div>
+      <div class="stat-label">Es donde ya vive la relación entre un negocio de belleza y su clientela, no una app aparte</div>
+      <div class="stat">Efectivo y transferencia</div>
+      <div class="stat-label">Cómo se paga de verdad en RD, de primera clase desde el día uno, no como una opción secundaria</div>
+    </div>
+  </div>
+
+  <div class="m-section-head reveal">
+    <h2>Cómo Bukea ayuda a vender más</h2>
+    <p>No es solo una agenda bonita. Cada función existe para que reserves más citas y se te caigan menos.</p>
+  </div>
+  <div class="m-bento">${helpCards}</div>
+
+  <div class="m-section-head reveal">
+    <h2>Lo que no vamos a cambiar</h2>
+    <p>Tres decisiones que tomamos desde el primer día y que no dependen de cuánto crezca Bukea.</p>
+  </div>
+  <div class="m-bento">
+    <div class="card m-feature reveal" style="--i:0">
+      <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
+      <h3>El profesional es la estrella</h3>
+      <p>Tu perfil te sigue a ti, no al local. Si te mudas de salón, tu clientela te encuentra igual.</p>
+    </div>
+    <div class="card m-feature reveal" style="--i:1">
+      <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
+      <h3>Efectivo y transferencia primero</h3>
+      <p>Nunca van a ser la opción "de segunda" frente a la tarjeta. Así paga la mayoría de tu clientela hoy.</p>
+    </div>
+    <div class="card m-feature -dark reveal" style="--i:2">
+      <div class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></div>
+      <h3>Cero comisión para empezar</h3>
+      <p>Los negocios que se unen ahora mantienen sus condiciones cuando llegue el momento de cobrar.</p>
+    </div>
+  </div>
+
+  <div class="biz-cta reveal">
+    <h2>Súmate a la próxima generación de negocios de belleza en RD</h2>
+    <p>Crea tu perfil gratis y empieza a recibir reservas hoy mismo.</p>
+    <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
+  </div>
+</div>`;
+  res.type('html').send(await pageShell({
+    base,
+    title: 'Nosotros. La historia detrás de Bukea',
+    description: 'Bukea nació para llenar un vacío real en República Dominicana: reservas de belleza pensadas para WhatsApp, efectivo y transferencia, no traducidas de afuera.',
+    canonicalPath: 'https://www.bukeard.com/nosotros',
     bodyHtml: body,
   }));
 });
@@ -820,27 +972,6 @@ ${MARKETING_STYLE}
 // (info de contacto + formulario), como una página de contacto real.
 const CONTACT_STYLE = `
 <style>
-  /* Encabezado (2026-08-27, segunda pasada): mismo tratamiento verde
-     oscuro con grano y pastilla que el hero del home, para que /contacto
-     no se sienta como una página aparte del resto del sitio. */
-  .contact-hero {
-    position: relative; padding: 3.4rem 2.6rem; text-align: center; overflow: hidden; contain: layout paint;
-    background:
-      radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
-      radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
-      linear-gradient(160deg, oklch(26% 0.05 195), var(--teal-900) 70%);
-    border-radius: 26px; margin: 2rem 0 0;
-  }
-  .contact-hero .hero-grain {
-    position: absolute; inset: 0; z-index: 0; opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  .contact-hero-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
-  .contact-hero .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: oklch(80% 0.1 78); margin: 0 0 1.1rem; }
-  .contact-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--white); }
-  .contact-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0 auto; }
-  @media (max-width: 560px) { .contact-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
-
   .contact-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; align-items: start; margin: 3rem 0 3.5rem; }
   /* Panel izquierdo (ref. mockup de Víctor 2026-08-27): divisores finos
      entre canales, marca de agua "b" fantasma de fondo y frase de cierre,
@@ -917,15 +1048,11 @@ function contactInfoHtml() {
 }
 
 function contactHeroHtml() {
-  return `
-  <div class="contact-hero">
-    <div class="hero-grain" aria-hidden="true"></div>
-    <div class="contact-hero-inner">
-      <span class="badge-pill reveal" style="--i:0">Estamos para ayudarte</span>
-      <h1 class="reveal" style="--i:1">Hablemos.</h1>
-      <p class="reveal" style="--i:2">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
-    </div>
-  </div>`;
+  return mktHeroHtml({
+    eyebrow: 'Estamos para ayudarte',
+    title: 'Hablemos.',
+    sub: '¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.',
+  });
 }
 
 // Motivos del formulario de contacto — whitelist server-side (routeo POST)
