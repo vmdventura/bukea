@@ -106,9 +106,14 @@ const HOME_STYLE = `
   /* Píldoras de categoría del hero, versión minimalista (2026-08-27): el
      borde translúcido se sentía "enmarcado" — se quita del todo y el
      relleno tenue solo se aclara al pasar el mouse, sin anillo alrededor. */
-  .hero .chip { border-color: transparent; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); }
+  .hero .chip { border-color: transparent; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); padding: 0.4rem 0.75rem; min-height: 36px; font-size: 0.78rem; }
+  .hero .chip .icon { width: 13px; height: 13px; }
   .hero .chip:hover { background: rgba(255,255,255,0.14); border-color: transparent; color: var(--white); }
   .hero .chip.active { background: var(--white); border-color: var(--white); color: var(--teal-900); }
+  /* Muchas categorías (9 + "Todos"): en vez de deslizar en una sola fila
+     que se sale del borde, se envuelven en varias líneas cortas y
+     compactas, más fáciles de escanear de un vistazo. */
+  .hero .chips { flex-wrap: wrap; }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
@@ -124,6 +129,15 @@ const HOME_STYLE = `
     .chips::-webkit-scrollbar { display: none; }
     .chips .chip { flex: none; }
     .chips .chip:last-child { margin-right: 28px; }
+    /* El hero tiene demasiadas categorías para deslizar cómodo en una
+       fila: se envuelven en varias líneas compactas en vez de eso. */
+    .hero .chips {
+      flex-wrap: wrap; overflow-x: visible; justify-content: center;
+      padding: 0; margin-left: 0; margin-right: 0; gap: 0.5rem;
+      mask-image: none; -webkit-mask-image: none;
+    }
+    .hero .chips .chip { flex: initial; }
+    .hero .chips .chip:last-child { margin-right: 0; }
     /* Solo 2 píldoras (no una lista larga como las categorías): en vez de
        deslizar, se envuelven y se achican un toque para que quepan bien
        en una pantalla angosta sin cortarse a la mitad. */
