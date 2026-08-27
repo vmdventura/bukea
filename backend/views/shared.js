@@ -234,18 +234,33 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .btn-ghost:hover { border-color: var(--teal-500); }
   .badge { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--teal-100); color: var(--teal-700); border-radius: 999px; padding: 0.3rem 0.7rem; font-size: 0.78rem; font-weight: 700; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--sh-2); }
+  .card:active { transform: scale(0.985); transition: transform 120ms var(--ease-out-quart); }
 
   .atmosphere { position: absolute; inset: -2rem -1rem auto -1rem; height: 26rem; overflow: hidden; z-index: -1; pointer-events: none; }
-  .atmosphere span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.4; }
+  .atmosphere span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.4; animation: atmosphere-drift 16s var(--ease) infinite alternate; }
   .atmosphere span:nth-child(1) { width: 22rem; height: 22rem; background: var(--teal-500); top: -9rem; left: -6rem; }
-  .atmosphere span:nth-child(2) { width: 16rem; height: 16rem; background: var(--gold-100); top: -2rem; right: -4rem; opacity: 0.7; }
+  .atmosphere span:nth-child(2) { width: 16rem; height: 16rem; background: var(--gold-100); top: -2rem; right: -4rem; opacity: 0.7; animation-duration: 20s; animation-delay: -6s; }
+  /* Deriva ambiental muy sutil (2026-08-27): los blobs de fondo del hero
+     estaban estáticos; este movimiento lento (solo transform, nunca se
+     nota "animándose" a simple vista, se siente como aire vivo detrás del
+     texto) es la clase de detalle que separa un fondo decorativo de uno
+     con presencia. Se apaga entero bajo reduced-motion más abajo. */
+  @keyframes atmosphere-drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(1.4rem, -1rem) scale(1.06); }
+  }
 
   /* Motion: entrada visible por defecto (SEO / sin JS), la mejora la
-     resta y la revela con IntersectionObserver — ver DESIGN.md/animate.md. */
-  .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 700ms var(--ease-out-expo), transform 700ms var(--ease-out-expo); transition-delay: calc(var(--i, 0) * 60ms); }
+     resta y la revela con IntersectionObserver — ver DESIGN.md/animate.md.
+     Ajustado 2026-08-27: 700ms se sentía perezoso comparado con el resto
+     de las micro-interacciones del sitio (150-300ms); se acorta a 480ms y
+     se suma una escala sutil (0.97->1) al translateY para que la entrada
+     se sienta como que el elemento "llega", no solo que aparece. */
+  .js .reveal { opacity: 0; transform: translateY(16px) scale(0.97); transition: opacity 480ms var(--ease-out-expo), transform 480ms var(--ease-out-expo); transition-delay: calc(var(--i, 0) * 45ms); }
   .js .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) {
     .js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .atmosphere span { animation: none !important; }
     html { scroll-behavior: auto; }
   }
 
@@ -278,6 +293,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     transition: background 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart);
   }
   .footer-social-row a:hover { background: var(--gold-600); color: var(--teal-900); border-color: var(--gold-600); transform: translateY(-2px); }
+  .footer-social-row a:active { transform: scale(0.9); transition-duration: 100ms; }
   .footer-social-row .icon { width: 18px; height: 18px; }
   .footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1.1rem 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.78rem; color: rgba(255,255,255,0.6); }
   @media (max-width: 820px) {

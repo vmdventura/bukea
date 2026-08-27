@@ -89,6 +89,7 @@ const HOME_STYLE = `
   .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; min-height: 44px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
   .chip.active, .chip:hover { background: var(--teal-900); border-color: var(--teal-900); color: var(--white); transform: translateY(-1px); }
+  .chip:active { transform: scale(0.96); transition-duration: 100ms; }
   .hero .chip { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
   .hero .chip.active, .hero .chip:hover { background: var(--white); border-color: var(--white); color: var(--teal-900); }
   @media (max-width: 560px) {
@@ -116,6 +117,7 @@ const HOME_STYLE = `
   .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2.2rem 0; }
   .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart), border-color 220ms var(--ease-out-quart); }
   .pro-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--teal-500); }
+  .pro-card:active { transform: scale(0.985); transition-duration: 100ms; }
   .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); }
   .pro-card:hover .pro-avatar { transform: scale(1.07); }
   .pro-info { flex: 1; min-width: 0; }
