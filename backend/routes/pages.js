@@ -917,13 +917,13 @@ router.get('/precios', async (req, res) => {
   const body = `
 ${MARKETING_STYLE}
 <style>
-  .founder-meter { max-width: 420px; margin: 2.5rem auto 0; padding: 1.6rem 1.8rem; text-align: left; }
-  .founder-meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
-  .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 1.3rem; color: var(--ink); }
-  .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; }
-  .founder-bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .founder-meter { max-width: 560px; margin: 2.5rem auto 0; padding: 2.2rem 2.4rem; text-align: center; }
+  .founder-meter-head { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; margin-bottom: 1.1rem; }
+  .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 2.2rem; color: var(--ink); }
+  .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .founder-bar { max-width: 420px; margin: 0 auto; height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .founder-bar-fill { height: 100%; border-radius: 999px; background: var(--teal-600); transition: width 400ms var(--ease-out-quart); }
-  .founder-meter p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.85rem; }
+  .founder-meter p { max-width: 46ch; margin: 1.1rem auto 0; color: var(--soft); font-size: 0.92rem; }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
@@ -958,8 +958,8 @@ ${MARKETING_STYLE}
     </div>
   </div>
 
-  <p class="reveal" style="--i:5;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0.8rem auto 2.5rem">
-    Si te unes dentro del cupo fundador, Plus se queda contigo gratis de por vida. Nunca vas a pagar más que lo que aceptaste al unirte.
+  <p class="reveal" style="--i:5;text-align:center;color:var(--soft);font-size:0.9rem;max-width:62ch;margin:0.8rem auto 2.5rem;line-height:1.6">
+    El plan Básico es gratis para siempre, te unas hoy o dentro de un año. Si te unes dentro del cupo fundador, además te llevas Plus sin costo de por vida. Nunca vas a pagar más que lo que aceptaste al unirte, sin importar cuándo cambien los precios más adelante.
   </p>
 
   <div class="m-hero reveal" style="padding-top:0">
