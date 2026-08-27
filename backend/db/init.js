@@ -338,6 +338,18 @@ async function pruneNonDemoProfessionalsOnce() {
   await pool.query('UPDATE platform_settings SET demo_cleanup_done = 1 WHERE id = 1');
 }
 
+// Las fotos de Olivercut se subieron primero en AVIF y se re-subieron en
+// JPG (2026-08-27) por compatibilidad — algunos navegadores todavía no
+// decodifican AVIF. Naturalmente idempotente: solo hay filas con
+// path/logo_path terminado en .avif mientras no se haya corrido antes.
+async function fixOlivercutPhotoFormat() {
+  await pool.query("UPDATE professionals SET logo_path = REPLACE(logo_path, '.avif', '.jpg') WHERE slug = 'olivercut' AND logo_path LIKE '%.avif'");
+  await pool.query(
+    `UPDATE business_photos bp JOIN professionals p ON bp.professional_id = p.id
+     SET bp.path = REPLACE(bp.path, '.avif', '.jpg') WHERE p.slug = 'olivercut' AND bp.path LIKE '%.avif'`
+  );
+}
+
 // Profesionales creados antes de que existiera professional_hours (o
 // sembrados por seedProfessional en una corrida anterior) se quedarían sin
 // disponibilidad — les asigna el horario por defecto si no tienen ninguno.
@@ -438,6 +450,7 @@ async function ensureReady() {
   // placeholder original en el negocio real, una sola vez.
   await migrateRicardoToOlivercut();
   await pruneNonDemoProfessionalsOnce();
+  await fixOlivercutPhotoFormat();
 
   await seedProfessional({
     slug: 'massiel-nails',
