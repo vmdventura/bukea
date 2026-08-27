@@ -90,16 +90,21 @@ const HOME_STYLE = `
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
        una píldora se lee como un error de layout, no como "desliza para
        ver más" — la máscara difumina el borde para dar esa pista visual. */
-    .badge-row, .chips {
+    .chips {
       flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
       padding: 0 20px 0.3rem; margin-left: -20px; margin-right: -20px;
       scrollbar-width: none; -webkit-overflow-scrolling: touch;
       mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 28px), transparent);
       -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 28px), transparent);
     }
-    .badge-row::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
-    .badge-row .badge-pill, .chips .chip { flex: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chips .chip { flex: none; }
     .chips .chip:last-child { margin-right: 28px; }
+    /* Solo 2 píldoras (no una lista larga como las categorías): en vez de
+       deslizar, se envuelven y se achican un toque para que quepan bien
+       en una pantalla angosta sin cortarse a la mitad. */
+    .badge-row { gap: 0.45rem; }
+    .badge-pill { font-size: 0.76rem; padding: 0.4rem 0.7rem; }
   }
   .chip.active, .chip:hover { background: #fff; border-color: #fff; color: var(--teal-900); transform: translateY(-1px); }
   .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
