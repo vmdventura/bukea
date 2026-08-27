@@ -715,14 +715,13 @@ ${MARKETING_STYLE}
 router.get('/nosotros', async (req, res) => {
   const base = req.baseUrlPrefix;
 
-  const helpCards = [
-    { icon: 'i-calendar', h: 'Reservas mientras duermes', p: 'Tu horario real está visible las 24 horas. Un cliente que te escribe a las 11 de la noche puede reservar solo, sin esperar a que le contestes.', lg: true },
+  const valueCards = [
+    { icon: 'i-calendar', h: 'Reservas mientras duermes', p: 'Tu horario real está visible las 24 horas. Un cliente que te escribe a las 11 de la noche puede reservar solo, sin esperar a que le contestes.' },
     { icon: 'i-whatsapp', h: 'Menos citas que se caen', p: 'El recordatorio llega por WhatsApp, no por una notificación que nadie abre. Menos "se me olvidó" es más sillas ocupadas cada día.' },
     { icon: 'i-link', h: 'Más alcance, no más trabajo', p: 'Tu enlace de Bukea vive en tu bio y tu estado. Cada persona que lo abre y reserva es un cliente que te encontró solo, sin que movieras un dedo.' },
-    { icon: 'i-chart', h: 'Decide con números, no a ojo', p: '"Mi Cuadre" te dice cuánto vendiste hoy, en la semana y en el mes. Sabes si te está yendo mejor o peor sin sacar cuentas a mano.', lg: true },
-    { icon: 'i-percent', h: 'Todo lo que vendes es tuyo', p: 'Cero comisión por cliente nuevo. Lo que factura tu silla no se reparte con nadie.' },
+    { icon: 'i-percent', h: 'Todo lo que vendes es tuyo', p: 'Cero comisión por cliente nuevo. Lo que factura tu negocio no se reparte con nadie.' },
   ].map((f, i) => `
-    <div class="card m-feature${f.lg ? ' -lg' : ''} reveal" style="--i:${i}">
+    <div class="card reveal" style="--i:${i}">
       <div class="icon-badge"><svg class="icon"><use href="#${f.icon}"/></svg></div>
       <h3>${f.h}</h3>
       <p>${f.p}</p>
@@ -740,24 +739,48 @@ ${MARKETING_STYLE}
   .m-story-card .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.78); margin: 0 0 1.6rem; padding-bottom: 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.14); }
   .m-story-card .stat-label:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
   @media (max-width: 820px) { .m-story { grid-template-columns: 1fr; gap: 2rem; margin: 2.2rem 0 3rem; } }
+
+  /* Vitrina de "Tus ventas al día" (2026-08-27) — se separa del resto de
+     las tarjetas porque es, a propósito, lo más importante que resaltar
+     de la sección: no una tarjeta más entre otras cinco, sino la pieza
+     que demuestra que Bukea no es solo una agenda. */
+  .m-spotlight { display: grid; grid-template-columns: 1fr 1fr; gap: 2.6rem; align-items: center; background: var(--card); border: 2px solid var(--gold-600); border-radius: 24px; padding: 2.6rem; margin: 0 0 3rem; box-shadow: var(--sh-3); }
+  .m-spotlight .icon-badge { width: 54px; height: 54px; margin-bottom: 1rem; }
+  .m-spotlight .icon-badge .icon { width: 26px; height: 26px; }
+  .m-spotlight h3 { font-size: 1.5rem; color: var(--teal-900); margin: 0 0 0.7rem; }
+  .m-spotlight > div > p { color: var(--soft); font-size: 0.95rem; line-height: 1.65; margin: 0; }
+  .m-spotlight-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .m-spotlight-list li { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.9rem; color: var(--ink); line-height: 1.55; }
+  .m-spotlight-list li .icon { color: var(--cash); flex: none; margin-top: 0.15rem; width: 18px; height: 18px; }
+  @media (max-width: 820px) { .m-spotlight { grid-template-columns: 1fr; gap: 1.6rem; padding: 1.8rem; } }
+
+  /* Bloque de valores restantes: en bloques iguales y centrados (a
+     diferencia de .m-bento, que mezcla tamaños a propósito para las
+     secciones donde eso da jerarquía) — aquí todos pesan lo mismo. */
+  .m-value-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin: 0 0 3.5rem; }
+  .m-value-grid .card { text-align: center; padding: 1.8rem 1.4rem; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+  .m-value-grid h3 { margin: 0; font-size: 0.98rem; color: var(--teal-900); }
+  .m-value-grid p { margin: 0; color: var(--soft); font-size: 0.85rem; line-height: 1.5; }
+  @media (max-width: 860px) { .m-value-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .m-value-grid { grid-template-columns: 1fr; } }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
     eyebrow: 'Sobre Bukea',
-    title: 'La belleza dominicana se merece algo mejor que un chat perdido',
-    sub: 'Bukea nació para que reservar una cita en un salón, una barbería o con tu manicurista de confianza sea tan fácil como debería haber sido siempre.',
+    title: 'Tu proyecto se merece algo mejor que un chat perdido',
+    sub: 'Bukea es para cualquier persona que necesita poder reservar citas sin perder clientes en el camino: salones, barberías, entrenadores, spas y más. Tan fácil como debería haber sido siempre.',
   })}
 
   <div class="m-story reveal">
     <div>
       <h2>El problema que no se hablaba</h2>
-      <p>En República Dominicana, la mayoría de los negocios de belleza todavía agenda por WhatsApp, por Instagram o a mano en un cuaderno. Funciona, hasta que no: una cita se pierde entre mensajes, un cliente no recibe respuesta a tiempo y se va con otro, o el negocio no tiene forma de saber, sin sacar cuentas, si el mes va mejor o peor que el anterior.</p>
+      <p>En República Dominicana, la mayoría de los negocios que trabajan con citas (salones, barberías, entrenadores, spas, talleres) todavía agenda por WhatsApp, por Instagram o a mano en un cuaderno. Funciona, hasta que no: una cita se pierde entre mensajes, un cliente no recibe respuesta a tiempo y se va con otro, o el negocio no tiene forma de saber, sin sacar cuentas, si el mes va mejor o peor que el anterior.</p>
       <p>Las apps de reservas que existen no fueron pensadas para acá: asumen pago con tarjeta, cobran comisión por cada cliente y llegan traducidas, no construidas para cómo trabajamos de verdad, con efectivo, transferencia y WhatsApp como canal principal.</p>
-      <p>Bukea existe para llenar exactamente ese espacio: la herramienta de reservas hecha desde República Dominicana, para el negocio de belleza dominicano.</p>
+      <p>Bukea existe para llenar exactamente ese espacio: la herramienta hecha desde República Dominicana para cualquier persona que necesita reservar citas sin perder clientes en el camino.</p>
     </div>
     <div class="m-story-card">
       <div class="stat">WhatsApp</div>
-      <div class="stat-label">Es donde ya vive la relación entre un negocio de belleza y su clientela, no una app aparte</div>
+      <div class="stat-label">Es donde ya vive la relación entre un negocio y su clientela, no una app aparte</div>
       <div class="stat">Efectivo y transferencia</div>
       <div class="stat-label">Cómo se paga de verdad en RD, de primera clase desde el día uno, no como una opción secundaria</div>
     </div>
@@ -767,7 +790,21 @@ ${MARKETING_STYLE}
     <h2>Cómo Bukea ayuda a vender más</h2>
     <p>No es solo una agenda bonita. Cada función existe para que reserves más citas y se te caigan menos.</p>
   </div>
-  <div class="m-bento">${helpCards}</div>
+
+  <div class="m-spotlight reveal">
+    <div>
+      <div class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></div>
+      <h3>Tus ventas al día, sin sacar cuentas a mano</h3>
+      <p>Con "Mi Cuadre" tienes tu cierre del día en tiempo real: cuánto vendiste, ya sea en efectivo o por depósito, sin hoja de cálculo ni cuaderno.</p>
+    </div>
+    <ul class="m-spotlight-list">
+      <li><svg class="icon"><use href="#i-check"/></svg>Cierre del día automático: sabes cuánto entró en efectivo y cuánto en depósito, al instante.</li>
+      <li><svg class="icon"><use href="#i-check"/></svg>Agrega los datos de todas tus cuentas bancarias, para que cada cliente transfiera a la que prefieras.</li>
+      <li><svg class="icon"><use href="#i-check"/></svg>Tu cliente deposita y te adjunta el comprobante de manera automática, sin que tengas que pedírselo.</li>
+    </ul>
+  </div>
+
+  <div class="m-value-grid">${valueCards}</div>
 
   <div class="m-section-head reveal">
     <h2>Lo que no vamos a cambiar</h2>
@@ -777,7 +814,7 @@ ${MARKETING_STYLE}
     <div class="card m-feature reveal" style="--i:0">
       <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
       <h3>El profesional es la estrella</h3>
-      <p>Tu perfil te sigue a ti, no al local. Si te mudas de salón, tu clientela te encuentra igual.</p>
+      <p>Tu perfil te sigue a ti, no al local. Si te mudas de sitio, tu clientela te encuentra igual.</p>
     </div>
     <div class="card m-feature reveal" style="--i:1">
       <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
@@ -792,7 +829,7 @@ ${MARKETING_STYLE}
   </div>
 
   <div class="biz-cta reveal">
-    <h2>Súmate a la próxima generación de negocios de belleza en RD</h2>
+    <h2>Súmate a la próxima generación de negocios dominicanos</h2>
     <p>Crea tu perfil gratis y empieza a recibir reservas hoy mismo.</p>
     <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
   </div>
@@ -800,7 +837,7 @@ ${MARKETING_STYLE}
   res.type('html').send(await pageShell({
     base,
     title: 'Nosotros. La historia detrás de Bukea',
-    description: 'Bukea nació para llenar un vacío real en República Dominicana: reservas de belleza pensadas para WhatsApp, efectivo y transferencia, no traducidas de afuera.',
+    description: 'Bukea nació para llenar un vacío real en República Dominicana: reservas pensadas para WhatsApp, efectivo y transferencia, para cualquiera que necesite reservar citas sin perder clientes.',
     canonicalPath: 'https://www.bukeard.com/nosotros',
     bodyHtml: body,
   }));
