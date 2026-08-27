@@ -218,26 +218,26 @@
     text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink);
   }
   .cats-grid .cat.with-photo .cat-badge {
-    width: 78px; height: 78px; border-radius: 50%;
+    width: 88px; height: 88px; border-radius: 50%;
     background-size: cover; background-position: center;
     position: relative; overflow: visible;
     box-shadow: 0 4px 12px rgba(15, 40, 38, 0.16);
   }
   .cats-grid .cat.with-photo .cat-ic {
     display: block; position: absolute; right: -2px; bottom: -2px;
-    width: 24px; height: 24px; padding: 6px; box-sizing: border-box;
+    width: 26px; height: 26px; padding: 6.5px; box-sizing: border-box;
     background: radial-gradient(120% 120% at 30% 20%, #14504d 0%, #0a3533 65%, #062523 100%);
     border: 1.5px solid var(--bg); border-radius: 50%;
     box-shadow: 0 2px 5px rgba(6, 26, 24, 0.3);
     stroke-width: 1.5;
   }
   .cats-grid .cat-badge {
-    width: 78px; height: 78px; border-radius: 50%;
+    width: 88px; height: 88px; border-radius: 50%;
     background: radial-gradient(120% 120% at 30% 20%, #14504d 0%, #0a3533 60%, #062523 100%);
     border: 1px solid rgba(201, 164, 92, 0.65);
     box-shadow: 0 4px 14px rgba(9, 40, 38, 0.22), inset 0 0 0 3px rgba(6, 30, 28, 0.9);
   }
-  .cats-grid .cat-ic { width: 30px; height: 30px; stroke: #d9b878; stroke-width: 1.5; }
+  .cats-grid .cat-ic { width: 34px; height: 34px; stroke: #d9b878; stroke-width: 1.5; }
 
 
   .cat-badge {
@@ -1079,11 +1079,6 @@
       <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
     </div>
 
-
-    <div id="destacados-wrap" style="display:none">
-      <p class="option-label" style="margin:1.5rem 0 0.7rem">Destacados</p>
-      <div id="destacados-list"></div>
-    </div>
 
     <button class="pro-link" onclick="openPro()">
       <svg class="icon"><use href="#i-scissors"/></svg>
@@ -3648,28 +3643,6 @@
         go('inicio');
       }
     }, reduce ? 300 : SPLASH_MS);
-
-    loadDestacados();
-  }
-
-  // "Destacados": 3 profesionales mejor calificados, debajo de la grilla de
-  // categorías — llena el espacio vacío que quedaba antes del banner
-  // "Únete a Bukea" con algo de descubrimiento real (2026-08-26, a pedido
-  // de Víctor). Con muy pocos profesionales reales sembrados, cualquiera
-  // con al menos una reseña ya "destaca"; si nadie tiene reseñas, la
-  // sección se queda oculta en vez de mostrar negocios sin calificación.
-  async function loadDestacados() {
-    try {
-      const res = await fetch(API_BASE + '/api/professionals');
-      if (!res.ok) return;
-      const list = (await res.json())
-        .filter(p => p.reviewsCount > 0)
-        .sort((a, b) => b.rating - a.rating || b.reviewsCount - a.reviewsCount)
-        .slice(0, 3);
-      if (!list.length) return;
-      renderProCardList(document.getElementById('destacados-list'), list);
-      document.getElementById('destacados-wrap').style.display = 'block';
-    } catch (e) { /* sin conexión: la sección se queda oculta, sin romper el resto del home */ }
   }
   boot();
   window.addEventListener('pageshow', (e) => {
