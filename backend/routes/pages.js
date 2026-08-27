@@ -899,7 +899,7 @@ router.get('/precios', async (req, res) => {
   const body = `
 ${MARKETING_STYLE}
 <style>
-  .founder-meter { max-width: 420px; margin: 0 auto 2.5rem; padding: 1.6rem 1.8rem; text-align: left; }
+  .founder-meter { max-width: 420px; margin: 2.5rem auto 2rem; padding: 1.6rem 1.8rem; text-align: left; }
   .founder-meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
   .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 1.3rem; color: var(--ink); }
   .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; }
@@ -908,11 +908,11 @@ ${MARKETING_STYLE}
   .founder-meter p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.85rem; }
 </style>
 <div class="wrap">
-  <div class="m-hero">
-    <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
-    <h1 class="reveal" style="--i:0">Bukea es gratis</h1>
-    <p class="reveal" style="--i:1">Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan quedan gratis de por vida, aunque más adelante activemos un plan de pago.</p>
-  </div>
+  ${mktHeroHtml({
+    eyebrow: 'Precios',
+    title: 'Bukea es gratis',
+    sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan quedan gratis de por vida, aunque más adelante activemos un plan de pago.`,
+  })}
 
   <div class="card founder-meter reveal" style="--i:2">
     <div class="founder-meter-head">
