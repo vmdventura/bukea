@@ -343,6 +343,72 @@ async function ensureReady() {
     ],
   });
 
+  // Negocios de ejemplo (2026-08-27, a pedido de Víctor): perfiles
+  // ficticios pero realistas para que el marketplace no se vea vacío al
+  // enseñarlo a prospectos — no son negocios reales de nadie, ver
+  // decisión en la conversación del 27-ago-2026. Uno por cada categoría
+  // principal (barbería, uñas, salón, spa) en sectores reales de Santo
+  // Domingo, para que se vean geográficamente repartidos en /mapa.
+  await seedProfessional({
+    slug: 'ricardo-el-duro',
+    category: 'barberia',
+    name: 'Ricardo "El Duro" Peña',
+    businessName: 'Barbería Style Cut',
+    neighborhood: 'Piantini',
+    rating: 4.7,
+    reviewsCount: 156,
+    services: [
+      ['Corte + barba', 45, 100000],
+      ['Corte + facial exprés', 70, 130000],
+      ['Corte + afeitado a vapor', 55, 120000],
+    ],
+  });
+
+  await seedProfessional({
+    slug: 'massiel-nails',
+    category: 'unas',
+    name: 'Massiel Ureña',
+    businessName: 'Massiel Nails & Spa',
+    neighborhood: 'Naco',
+    rating: 4.9,
+    reviewsCount: 267,
+    services: [
+      ['Manicure spa', 45, 60000],
+      ['Pedicure spa', 50, 70000],
+      ['Uñas acrílicas', 90, 120000],
+    ],
+  });
+
+  await seedProfessional({
+    slug: 'estilo-total-rosa',
+    category: 'salon',
+    name: 'Rosa Familia',
+    businessName: 'Estilo Total by Rosa',
+    neighborhood: 'Bella Vista',
+    rating: 4.8,
+    reviewsCount: 189,
+    services: [
+      ['Corte y peinado', 60, 90000],
+      ['Color completo', 120, 250000],
+      ['Alisado keratina', 150, 350000],
+    ],
+  });
+
+  await seedProfessional({
+    slug: 'spa-sereno',
+    category: 'spa',
+    name: 'Camila Reyes',
+    businessName: 'Spa Sereno',
+    neighborhood: 'Gazcue',
+    rating: 4.9,
+    reviewsCount: 143,
+    services: [
+      ['Masaje relajante', 60, 180000],
+      ['Facial hidratante', 45, 150000],
+      ['Masaje de piedras calientes', 75, 220000],
+    ],
+  });
+
   await backfillMissingHours();
   await backfillMissingCoordinates();
 }
