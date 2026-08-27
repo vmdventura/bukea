@@ -43,6 +43,14 @@ const CITY_LABELS = {
 
 const CONTACT_EMAIL = 'hola@bukeard.com';
 
+// Decisión de Víctor (2026-08-27): los primeros FOUNDING_FREE_LIMIT
+// negocios reales (con dueño, no los sembrados de prueba) quedan gratis
+// de por vida, sin importar cuándo se active el cobro para el resto.
+// Un solo lugar para este número — lo usan el registro (routes/professionals.js,
+// para decidir si el negocio nuevo entra en el cupo) y /precios (para el
+// contador y el copy).
+const FOUNDING_FREE_LIMIT = 50;
+
 const { getSettings } = require('../lib/settings');
 
 const AVATAR_GRADIENTS = [
@@ -464,4 +472,4 @@ ${bodyHtml}
 </html>`;
 }
 
-module.exports = { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell, ICON_SPRITE };
+module.exports = { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, FOUNDING_FREE_LIMIT, avatarGradient, initials, formatPrice, esc, pageShell, ICON_SPRITE };

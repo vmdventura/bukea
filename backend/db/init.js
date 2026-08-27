@@ -3,6 +3,7 @@ const path = require('path');
 const pool = require('./pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { geocodeNeighborhood } = require('../lib/geocode');
+const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
   'ER_DUP_FIELDNAME', // la columna ya existe
@@ -209,6 +210,26 @@ async function migrate() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  // Primeros FOUNDING_FREE_LIMIT negocios gratis de por vida (2026-08-27,
+  // decisión de Víctor): antes de activar cualquier cobro, se marcan como
+  // fundadores y nunca van a pagar, sin importar cuándo arranque el plan
+  // de pago para el resto. El backfill toma los negocios reales (con
+  // dueño, no los sembrados de prueba sin owner_user_id) más antiguos por
+  // fecha de creación — corre en cada arranque pero es idempotente
+  // (el filtro founding_free = 0 evita volver a tocar los ya marcados).
+  await safeAlter('ALTER TABLE professionals ADD COLUMN founding_free TINYINT(1) NOT NULL DEFAULT 0');
+  await pool.query(`
+    UPDATE professionals SET founding_free = 1
+    WHERE founding_free = 0 AND id IN (
+      SELECT id FROM (
+        SELECT id FROM professionals
+        WHERE owner_user_id IS NOT NULL
+        ORDER BY created_at ASC
+        LIMIT ${FOUNDING_FREE_LIMIT}
+      ) AS t
+    )
   `);
 }
 

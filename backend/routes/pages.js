@@ -1,6 +1,6 @@
 const express = require('express');
 const pool = require('../db/pool');
-const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
+const { CAT_LABELS, CAT_ICONS, CITY_LABELS, CONTACT_EMAIL, FOUNDING_FREE_LIMIT, avatarGradient, initials, formatPrice, esc, pageShell } = require('../views/shared');
 const { negocioShell } = require('../views/negocio');
 const { directionLinks } = require('../lib/geocode');
 const mailer = require('../lib/mailer');
@@ -887,23 +887,50 @@ router.get('/precios', async (req, res) => {
     'Agrega a tu equipo y deja que cada quien reciba sus propias citas',
   ].map(t => `<li><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
 
+  const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
+  const spotsLeft = Math.max(0, FOUNDING_FREE_LIMIT - foundingCount);
+  const pct = Math.min(100, Math.round((foundingCount / FOUNDING_FREE_LIMIT) * 100));
+  const soldOut = spotsLeft === 0;
+
+  const founderNote = soldOut
+    ? 'Los 50 cupos fundadores ya están completos. Bukea sigue gratis mientras preparamos el plan de pago para los negocios nuevos, y esos 50 nunca van a pagar.'
+    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Los negocios que se unan dentro de ese cupo quedan gratis de por vida, aunque más adelante activemos un plan de pago para los que lleguen después.`;
+
   const body = `
 ${MARKETING_STYLE}
+<style>
+  .founder-meter { max-width: 420px; margin: 0 auto 2.5rem; padding: 1.6rem 1.8rem; text-align: left; }
+  .founder-meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
+  .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 1.3rem; color: var(--ink); }
+  .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; }
+  .founder-bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .founder-bar-fill { height: 100%; border-radius: 999px; background: var(--teal-600); transition: width 400ms var(--ease-out-quart); }
+  .founder-meter p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.85rem; }
+</style>
 <div class="wrap">
   <div class="m-hero">
     <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
     <h1 class="reveal" style="--i:0">Bukea es gratis</h1>
-    <p class="reveal" style="--i:1">Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Así de simple, mientras construimos la mejor app de reservas de belleza del país.</p>
+    <p class="reveal" style="--i:1">Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan quedan gratis de por vida, aunque más adelante activemos un plan de pago.</p>
   </div>
 
-  <div class="card price-card reveal" style="--i:2">
+  <div class="card founder-meter reveal" style="--i:2">
+    <div class="founder-meter-head">
+      <strong>${foundingCount} de ${FOUNDING_FREE_LIMIT}</strong>
+      <span>${soldOut ? 'Cupos fundadores completos' : 'Cupos fundadores ocupados'}</span>
+    </div>
+    <div class="founder-bar"><div class="founder-bar-fill" style="width:${pct}%"></div></div>
+    <p>${founderNote}</p>
+  </div>
+
+  <div class="card price-card reveal" style="--i:3">
     <div>Para tu negocio</div>
     <div class="amount">RD$0<small>/mes</small></div>
     <ul class="price-list">${perks}</ul>
     <a class="btn btn-primary" href="/negocio">Únete gratis</a>
   </div>
 
-  <p class="reveal" style="--i:3;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
+  <p class="reveal" style="--i:4;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
     Cuando llegue el momento de cobrar, los negocios fundadores mantienen condiciones especiales. Nunca vas a pagar más que lo que aceptaste al unirte.
   </p>
 
@@ -915,7 +942,7 @@ ${MARKETING_STYLE}
   res.type('html').send(await pageShell({
     base,
     title: 'Precios de Bukea. Gratis para negocios y clientes',
-    description: 'Bukea es 100% gratis: sin suscripción, sin comisión, sin tarjeta para empezar.',
+    description: `Bukea es 100% gratis para negocios y clientes. Los primeros ${FOUNDING_FREE_LIMIT} negocios quedan gratis de por vida.`,
     canonicalPath: 'https://www.bukeard.com/precios',
     bodyHtml: body,
   }));

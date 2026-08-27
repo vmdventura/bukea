@@ -5,6 +5,7 @@ const { requireAuth } = require('../lib/auth-middleware');
 const { receiptUrl, logoUpload, logoUrl, photoUpload, photoUrl } = require('../lib/uploads');
 const { geocodeNeighborhood } = require('../lib/geocode');
 const { getSettings } = require('../lib/settings');
+const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 const mailer = require('../lib/mailer');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
@@ -118,10 +119,18 @@ router.post('/', requireAuth, async (req, res) => {
 
   const referral = REFERRAL_SOURCES.includes(referralSource) ? referralSource : null;
 
+  // Primeros FOUNDING_FREE_LIMIT negocios reales, gratis de por vida (ver
+  // FOUNDING_FREE_LIMIT en views/shared.js). Simplificación consciente: no
+  // hay lock de fila, así que dos registros exactos al mismo milisegundo
+  // podrían colar uno de más en el cupo — riesgo aceptable al ritmo de
+  // registro de hoy, no vale la pena una transacción para esto.
+  const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
+  const foundingFree = foundingCount < FOUNDING_FREE_LIMIT ? 1 : 0;
+
   const [result] = await pool.query(
-    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source)
-     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?)`,
-    [slug, category, name, businessName, neighborhood, req.user.id, referral]
+    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source, founding_free)
+     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?, ?)`,
+    [slug, category, name, businessName, neighborhood, req.user.id, referral, foundingFree]
   );
   const professionalId = result.insertId;
 
