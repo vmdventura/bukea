@@ -563,8 +563,8 @@ const MARKETING_STYLE = `
   .m-section-head p { color: var(--soft); font-size: 0.95rem; max-width: 46ch; margin: 0 auto; }
 
   .m-steps { list-style: none; padding: 0; margin: 0 0 3.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-  .m-step { padding: 1.6rem 1.4rem 1.4rem; }
-  .m-step .num { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-500); display: block; margin-bottom: 0.6rem; }
+  .m-step { padding: 1.6rem 1.4rem 1.4rem; text-align: center; }
+  .m-step .num { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-500); display: inline-block; margin-bottom: 0.6rem; }
   .m-step h3 { margin: 0 0 0.4rem; font-size: 1.02rem; color: var(--teal-900); }
   .m-step p { margin: 0; color: var(--soft); font-size: 0.87rem; line-height: 1.55; }
   @media (max-width: 720px) { .m-steps { grid-template-columns: 1fr; } }
