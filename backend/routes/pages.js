@@ -813,7 +813,7 @@ const CONTACT_STYLE = `
      oscuro con grano y pastilla que el hero del home, para que /contacto
      no se sienta como una página aparte del resto del sitio. */
   .contact-hero {
-    position: relative; padding: 3.4rem 2.6rem; text-align: left; overflow: hidden; contain: layout paint;
+    position: relative; padding: 3.4rem 2.6rem; text-align: center; overflow: hidden; contain: layout paint;
     background:
       radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
       radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
@@ -824,10 +824,10 @@ const CONTACT_STYLE = `
     position: absolute; inset: 0; z-index: 0; opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .contact-hero-inner { position: relative; z-index: 1; max-width: 640px; }
+  .contact-hero-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
   .contact-hero .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: oklch(80% 0.1 78); margin: 0 0 1.1rem; }
   .contact-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: #fff; }
-  .contact-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0; }
+  .contact-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0 auto; }
   @media (max-width: 560px) { .contact-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
 
   .contact-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; align-items: start; margin: 3rem 0 3.5rem; }
@@ -836,8 +836,8 @@ const CONTACT_STYLE = `
      separado del formulario por un filete dorado en vez de solo el gap. */
   .contact-info { position: relative; padding: 0.2rem 2.4rem 0.2rem 0; border-right: 1px solid rgba(201, 164, 92, 0.35); overflow: hidden; }
   .contact-info::before {
-    content: "b"; position: absolute; left: -0.6rem; bottom: -2.2rem; z-index: 0; pointer-events: none;
-    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 13rem; line-height: 1;
+    content: "b"; position: absolute; left: -1.4rem; bottom: -4.6rem; z-index: 0; pointer-events: none;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 20rem; line-height: 1;
     color: var(--teal-900); opacity: 0.05;
   }
   .contact-info > * { position: relative; z-index: 1; }
