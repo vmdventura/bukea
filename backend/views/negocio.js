@@ -756,6 +756,10 @@ ${ICON_SPRITE}
   // iniciada por el hash (#app-session=...), para que el dueño no tenga que
   // volver a poner teléfono y PIN dentro del panel. El hash nunca viaja al
   // servidor y se borra de la URL apenas se consume.
+  // La app nativa también puede pedir abrir directo en un panel puntual
+  // (ej. #panel=negocio para el logo/pin del mapa, #panel=servicios) en vez
+  // de caer siempre en "Resumen" — se aplica después del login en boot().
+  var requestedPanel = (/[#&]panel=([a-z]+)/.exec(location.hash || '') || [])[1] || null;
   (function adoptAppSession() {
     var m = /[#&]app-session=([^&]+)/.exec(location.hash || '');
     if (!m) return;
@@ -1854,6 +1858,7 @@ ${ICON_SPRITE}
 
     if (getSession()) {
       await afterLogin();
+      if (requestedPanel) showPanel(requestedPanel);
     }
   })();
 })();
