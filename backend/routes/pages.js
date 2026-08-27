@@ -117,6 +117,12 @@ const HOME_STYLE = `
      mide lo que su texto necesita, gap fijo y compacto) — se sigue viendo
      ordenado porque el hero ya tiene aire propio a los lados (28px). */
   .hero .chips { gap: 0.5rem; }
+  /* Solo desde tablet/desktop: en móvil el envolvido natural ya acomoda
+     bien las píldoras y este salto forzado dejaba a "Pilates" solo en su
+     propia fila. */
+  @media (min-width: 561px) {
+    .hero .chip-break { flex-basis: 100%; height: 0; }
+  }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
@@ -213,7 +219,10 @@ router.get('/', async (req, res) => {
     const active = categoria === key ? ' active' : '';
     const p = baseParams();
     p.set('categoria', key);
-    return `<a class="chip${active}" href="/?${p.toString()}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
+    // "Entrenador Personal" fuerza un salto de línea antes: sin esto queda
+    // sola al final de la primera fila en vez de bajar prolija a la segunda.
+    const rowBreak = key === 'entrenador' ? '<span class="chip-break" aria-hidden="true"></span>' : '';
+    return `${rowBreak}<a class="chip${active}" href="/?${p.toString()}"><svg class="icon"><use href="#${CAT_ICONS[key]}"/></svg>${esc(CAT_LABELS[key])}</a>`;
   }).join('');
   const allChipQs = baseParams().toString();
   const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${allChipQs ? '?' + allChipQs : ''}">Todos</a>`;
