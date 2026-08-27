@@ -834,10 +834,10 @@ const CONTACT_STYLE = `
   /* Panel izquierdo (ref. mockup de Víctor 2026-08-27): divisores finos
      entre canales, marca de agua "b" fantasma de fondo y frase de cierre,
      separado del formulario por un filete dorado en vez de solo el gap. */
-  .contact-info { position: relative; padding: 0.2rem 2.4rem 0.2rem 0; border-right: 1px solid rgba(201, 164, 92, 0.35); overflow: hidden; }
+  .contact-info { position: relative; padding: 0.2rem 2.4rem 2.4rem 0; border-right: 1px solid rgba(201, 164, 92, 0.35); }
   .contact-info::before {
-    content: "b"; position: absolute; left: -1.4rem; bottom: -4.6rem; z-index: 0; pointer-events: none;
-    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 20rem; line-height: 1;
+    content: "b"; position: absolute; left: -1.2rem; bottom: -1.4rem; z-index: 0; pointer-events: none;
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 18rem; line-height: 1;
     color: var(--teal-900); opacity: 0.05;
   }
   .contact-info > * { position: relative; z-index: 1; }
