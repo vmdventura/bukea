@@ -803,10 +803,73 @@ ${MARKETING_STYLE}
 //      de verdad — mismo tratamiento que el honeypot.
 //   3. Límite por IP (lib/rate-limit.js, igual patrón que el login):
 //      8 envíos por hora, bloqueo de 30 min al pasarse.
+// Estilos propios de /contacto (2026-08-27, segunda pasada: la primera
+// versión era una sola tarjeta chica flotando en medio de una página vacía
+// — "se ve una página a medias". Ahora es una sección de dos columnas
+// (info de contacto + formulario), como una página de contacto real.
+const CONTACT_STYLE = `
+<style>
+  .contact-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; align-items: start; margin: 3rem 0 3.5rem; }
+  .contact-info h2 { font-size: 1.3rem; color: var(--teal-900); margin: 0 0 0.6rem; }
+  .contact-info > p { color: var(--soft); font-size: 0.92rem; line-height: 1.6; margin: 0 0 2rem; max-width: 38ch; }
+  .contact-channel { display: flex; gap: 0.9rem; align-items: flex-start; margin-bottom: 1.6rem; }
+  .contact-channel h3 { margin: 0 0 0.2rem; font-size: 0.96rem; color: var(--teal-900); }
+  .contact-channel p { margin: 0; font-size: 0.85rem; color: var(--soft); line-height: 1.5; }
+  .contact-channel a.email-link { color: var(--teal-700); font-weight: 700; text-decoration: none; }
+  .contact-channel a.email-link:hover { text-decoration: underline; }
+  .contact-social { display: flex; gap: 0.6rem; margin-top: 1.8rem; }
+  .contact-card { padding: 2rem; }
+  .contact-card h2 { margin: 0 0 1.4rem; font-size: 1.1rem; color: var(--teal-900); }
+  .contact-success { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+  .contact-success .icon-badge { margin-bottom: 0.6rem; }
+  .contact-success p:first-of-type { font-weight: 700; font-size: 1.1rem; color: var(--teal-900); }
+  .contact-success p { color: var(--soft); font-size: 0.9rem; margin: 0; }
+  .field { margin-bottom: 0.9rem; }
+  .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
+  .field input, .field textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }
+  @media (max-width: 820px) { .contact-grid { grid-template-columns: 1fr; gap: 2.2rem; margin: 2.2rem 0 2.5rem; } }
+</style>`;
+
+function contactInfoHtml() {
+  return `
+  <div class="contact-info reveal" style="--i:2">
+    <h2>Estamos para ayudarte</h2>
+    <p>Escríbenos por el canal que prefieras. Un negocio de verdad detrás de Bukea te responde, no un buzón automático.</p>
+    <div class="contact-channel">
+      <div class="icon-badge"><svg class="icon"><use href="#i-mail"/></svg></div>
+      <div>
+        <h3>Correo</h3>
+        <p><a class="email-link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
+      </div>
+    </div>
+    <div class="contact-channel">
+      <div class="icon-badge"><svg class="icon"><use href="#i-clock"/></svg></div>
+      <div>
+        <h3>Tiempo de respuesta</h3>
+        <p>Menos de 48 horas, todos los días.</p>
+      </div>
+    </div>
+    <div class="contact-channel">
+      <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
+      <div>
+        <h3>¿Tienes un negocio?</h3>
+        <p><a class="email-link" href="/negocios">Conoce cómo unirte a Bukea →</a></p>
+      </div>
+    </div>
+    <div class="footer-social-row contact-social">
+      <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="#i-facebook"/></svg></a>
+      <a href="https://www.instagram.com/bukeard" target="_blank" rel="noopener" aria-label="Instagram"><svg class="icon"><use href="#i-instagram"/></svg></a>
+      <a href="https://www.tiktok.com/@bukeard" target="_blank" rel="noopener" aria-label="TikTok"><svg class="icon"><use href="#i-tiktok"/></svg></a>
+    </div>
+  </div>`;
+}
+
 function contactFormHtml({ error, values }) {
   const v = values || {};
   return `
-  <div class="card price-card reveal" style="--i:2; text-align:left; max-width:480px; margin:0 auto;">
+  <div class="card contact-card reveal" style="--i:3">
+    <h2>Envíanos un mensaje</h2>
     ${error ? `<p style="background:oklch(94% 0.04 25);color:oklch(45% 0.15 25);border-radius:12px;padding:0.7rem 0.9rem;font-size:0.85rem;font-weight:600;margin:0 0 1rem">${esc(error)}</p>` : ''}
     <form method="post" action="/contacto" novalidate>
       <div class="field">
@@ -831,27 +894,33 @@ function contactFormHtml({ error, values }) {
   </div>`;
 }
 
+function contactSuccessHtml() {
+  return `
+  <div class="card contact-card reveal" style="--i:3">
+    <div class="contact-success">
+      <div class="icon-badge"><svg class="icon"><use href="#i-check"/></svg></div>
+      <p>¡Mensaje enviado!</p>
+      <p>Te respondemos a tu correo en menos de 48 horas.</p>
+    </div>
+  </div>`;
+}
+
 router.get('/contacto', async (req, res) => {
   const base = req.baseUrlPrefix;
   const sent = req.query.enviado === '1';
   const body = `
 ${MARKETING_STYLE}
-<style>.field { margin-bottom: 0.9rem; } .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; } .field input, .field textarea { width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; } .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }</style>
+${CONTACT_STYLE}
 <div class="wrap">
   <div class="m-hero">
     <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
     <h1 class="reveal" style="--i:0">Hablemos</h1>
     <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
   </div>
-  ${sent ? `
-  <div class="card price-card reveal" style="--i:2; text-align:center; max-width:480px; margin:0 auto;">
-    <div class="icon-badge"><svg class="icon"><use href="#i-check"/></svg></div>
-    <p style="font-weight:700; font-size:1.1rem; color:var(--teal-900); margin:0.8rem 0 0.3rem">¡Mensaje enviado!</p>
-    <p style="color:var(--soft); font-size:0.88rem; margin:0">Te respondemos a tu correo en menos de 48 horas.</p>
-  </div>` : contactFormHtml({})}
-  <p class="reveal" style="--i:3; text-align:center; color:var(--soft); font-size:0.82rem; margin-top:1.4rem;">
-    O escríbenos directo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700); font-weight:700">${CONTACT_EMAIL}</a>
-  </p>
+  <div class="contact-grid">
+    ${contactInfoHtml()}
+    ${sent ? contactSuccessHtml() : contactFormHtml({})}
+  </div>
 </div>`;
   res.type('html').send(await pageShell({
     base,
@@ -874,17 +943,17 @@ router.post('/contacto', express.urlencoded({ extended: false }), async (req, re
   const renderError = async (error) => {
     const body = `
 ${MARKETING_STYLE}
-<style>.field { margin-bottom: 0.9rem; } .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; } .field input, .field textarea { width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; } .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }</style>
+${CONTACT_STYLE}
 <div class="wrap">
   <div class="m-hero">
     <div class="atmosphere" aria-hidden="true"><span></span><span></span></div>
     <h1 class="reveal" style="--i:0">Hablemos</h1>
     <p class="reveal" style="--i:1">¿Tienes una pregunta, una idea o algo que no funciona como debería? Escríbenos directamente.</p>
   </div>
-  ${contactFormHtml({ error, values: { name, email, message } })}
-  <p class="reveal" style="--i:3; text-align:center; color:var(--soft); font-size:0.82rem; margin-top:1.4rem;">
-    O escríbenos directo a <a href="mailto:${CONTACT_EMAIL}" style="color:var(--teal-700); font-weight:700">${CONTACT_EMAIL}</a>
-  </p>
+  <div class="contact-grid">
+    ${contactInfoHtml()}
+    ${contactFormHtml({ error, values: { name, email, message } })}
+  </div>
 </div>`;
     res.type('html').send(await pageShell({
       base, title: 'Contacto. Bukea',
