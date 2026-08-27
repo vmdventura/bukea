@@ -60,13 +60,27 @@ const HOME_STYLE = `
   .search-divider { width: 1px; align-self: stretch; margin: 0.5rem 0; background: var(--line); flex: none; }
   .search-bar .btn { flex: none; padding: 0.75rem 1.3rem; }
   @media (max-width: 560px) {
-    .hero { padding: 2.2rem 0 1.6rem; border-radius: 20px; }
+    /* Rediseño del hero móvil (2026-08-27, ref. Fresha): antes el degradado
+       vivía dentro de una tarjeta con bordes redondeados metida en el
+       padding de .wrap (20px), así que el texto y el buscador quedaban
+       pegados a los bordes de ESA tarjeta — se sentía "estirado". Ahora el
+       degradado se extiende de borde a borde de la pantalla (sin tarjeta
+       de por medio, como el fondo lila de Fresha) y solo el buscador
+       blanco queda inset con aire real alrededor, igual que allá. */
+    .hero {
+      padding: 2.4rem 20px 1.8rem; border-radius: 0;
+      margin: 0 -20px; width: auto;
+    }
     .hero h1 { font-size: clamp(1.65rem, 8vw, 3.2rem); }
     .hero p { font-size: 0.98rem; }
-    .search-bar { flex-direction: column; align-items: stretch; border-radius: 22px; padding: 0.6rem; gap: 0.1rem; }
+    /* Cada campo pasa a ser su propia tarjeta redondeada apilada (como
+       "Todos los tratamientos" / "Ubicación actual" / fecha en Fresha),
+       en vez de una sola píldora dividida por líneas finas. */
+    .search-bar { flex-direction: column; align-items: stretch; background: none; border: none; box-shadow: none; padding: 0; gap: 0.7rem; }
+    .search-bar .search-field { background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 0.2rem 1rem; }
     .search-bar .search-field--city { flex: none; }
-    .search-divider { width: auto; height: 1px; align-self: stretch; margin: 0.1rem 0.6rem; }
-    .search-bar .btn { width: 100%; justify-content: center; margin-top: 0.4rem; }
+    .search-divider { display: none; }
+    .search-bar .btn { width: 100%; justify-content: center; border-radius: 14px; padding: 0.9rem 1.3rem; }
   }
   .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
   .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
