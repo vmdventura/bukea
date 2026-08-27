@@ -763,6 +763,9 @@ ${MARKETING_STYLE}
   .m-value-grid p { margin: 0; color: var(--soft); font-size: 0.85rem; line-height: 1.5; }
   @media (max-width: 860px) { .m-value-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 480px) { .m-value-grid { grid-template-columns: 1fr; } }
+
+  .m-bento-center .m-feature { text-align: center; align-items: center; }
+  .m-bento-center .icon-badge { margin: 0 auto; }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
@@ -810,7 +813,7 @@ ${MARKETING_STYLE}
     <h2>Lo que no vamos a cambiar</h2>
     <p>Tres decisiones que tomamos desde el primer día y que no dependen de cuánto crezca Bukea.</p>
   </div>
-  <div class="m-bento">
+  <div class="m-bento m-bento-center">
     <div class="card m-feature reveal" style="--i:0">
       <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
       <h3>El profesional es la estrella</h3>
