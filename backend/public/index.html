@@ -24,6 +24,11 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-9P6W5CRECN');
+  // Eventos de producto (registro, reservas, negocios) además del pageview
+  // automático de arriba — ver funciones que llaman a track() en el JS de abajo.
+  window.track = function (name, params) {
+    try { gtag('event', name, params || {}); } catch (err) { /* GA bloqueado o sin conexión, no romper la app */ }
+  };
 </script>
 </head>
 <body>
@@ -1856,6 +1861,7 @@
     const container = document.getElementById('categoria-list');
     skeletonCards(container, 4);
     go('categoria');
+    track('select_category', { category: key });
     try {
       const res = await fetch(API_BASE + '/api/professionals?category=' + encodeURIComponent(key));
       if (!res.ok) throw new Error('No se pudo cargar la categoría');
@@ -1871,6 +1877,7 @@
     document.getElementById('prof-name').textContent = 'Cargando…';
     skeletonRows(document.getElementById('services-list'), 3);
     go('perfil');
+    track('view_item', { item_id: slug });
     await loadProfessional(slug);
   }
 
@@ -2186,6 +2193,14 @@
 
       if (state.receiptFile) await uploadReceipt(booking.id, state.receiptFile);
 
+      track('booking_confirmed', {
+        item_id: state.professional.slug,
+        category: state.professional.category,
+        payment_method: state.paymentMethod,
+        value: (booking.priceCents || 0) / 100,
+        currency: 'DOP',
+      });
+
       if (navigator.vibrate) navigator.vibrate(12);
       go('confirmacion');
     } catch (err) {
@@ -2367,6 +2382,7 @@
       }
       const { slug } = await res.json();
       localStorage.setItem('bukea_pro_slug', slug);
+      track('business_signup', { item_id: slug, category: category });
       regStep = REG_TOTAL_STEPS + 1;
       regShowStep();
     } catch (err) {
@@ -2703,6 +2719,7 @@
         method: 'POST', headers: authHeaders(),
       });
       if (!res.ok) throw new Error('No se pudo cancelar');
+      track('booking_cancelled', { item_id: id, source: 'panel' });
       loadPanel();
     } catch (err) {
       alert('No se pudo cancelar la cita. Intenta de nuevo.');
@@ -3115,6 +3132,7 @@
         method: 'POST', headers: authHeaders(),
       });
       if (!res.ok) throw new Error('No se pudo cancelar');
+      track('booking_cancelled', { item_id: id });
       renderMisCitas();
     } catch (err) {
       alert('No se pudo cancelar la cita. Intenta de nuevo.');
@@ -3155,6 +3173,7 @@
     try {
       const res = await fetch(API_BASE + '/api/auth/delete-account', { method: 'POST', headers: authHeaders() });
       if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
+      track('account_deleted');
       localStorage.removeItem('bukea_session');
       localStorage.removeItem('bukea_pro_slug');
       applySessionUI();
@@ -3378,7 +3397,7 @@
   }
 
   function handleGoogleCredential(response) {
-    socialLogin('/api/auth/google', { idToken: response.credential });
+    socialLogin('/api/auth/google', { idToken: response.credential }, 'google');
   }
 
   async function loginWithApple() {
@@ -3394,7 +3413,7 @@
         });
         const r = result.response || {};
         const fullName = [r.givenName, r.familyName].filter(Boolean).join(' ') || null;
-        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName });
+        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName }, 'apple');
       } catch (err) {
         // El usuario cerró la hoja del sistema: no es un error que mostrar.
         if (err && /cancel/i.test(String(err.message || err.error || ''))) return;
@@ -3410,7 +3429,7 @@
       const fullName = result.user && result.user.name
         ? [result.user.name.firstName, result.user.name.lastName].filter(Boolean).join(' ')
         : null;
-      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName });
+      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName }, 'apple');
     } catch (err) {
       if (err && err.error === 'popup_closed_by_user') return;
       console.error(err);
@@ -3418,7 +3437,7 @@
     }
   }
 
-  async function socialLogin(path, body) {
+  async function socialLogin(path, body, method) {
     wError('w-error-social');
     try {
       const res = await fetch(API_BASE + path, {
@@ -3427,7 +3446,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-social', data.error || 'No se pudo iniciar sesión');
-      enterApp(data);
+      enterApp(data, method);
     } catch (err) {
       wError('w-error-social', 'No se pudo conectar. Revisa tu internet.');
     }
@@ -3496,9 +3515,10 @@
     }
   }
 
-  function enterApp(session) {
+  function enterApp(session, method) {
     if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
     localStorage.removeItem('bukea_guest');
+    track(method === 'sign_up' ? 'sign_up' : 'login', { method: method || 'phone' });
     applySessionUI();
     if (session && session.emailVerified === false) {
       verifyGateShow(session.email);
@@ -3578,7 +3598,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-pin', data.error || 'Intenta de nuevo');
-      enterApp(data);
+      enterApp(data, 'phone');
     } catch (err) {
       wError('w-error-pin', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -3602,7 +3622,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-new', data.error || 'Intenta de nuevo');
-      enterApp(data);
+      enterApp(data, 'sign_up');
     } catch (err) {
       wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -3653,7 +3673,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-reset', data.error || 'Intenta de nuevo');
-      enterApp(data);
+      enterApp(data, 'phone_reset');
     } catch (err) {
       wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -3708,7 +3728,7 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-otpverify', data.error || 'Intenta de nuevo');
       if (!data.exists) return wError('w-error-otpverify', 'Esa cuenta no existe todavía. Usa "Usar otro número" para crearla');
-      enterApp(data);
+      enterApp(data, 'phone_otp');
     } catch (err) {
       wError('w-error-otpverify', 'No se pudo conectar. Revisa tu internet.');
     } finally {
