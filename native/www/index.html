@@ -2070,11 +2070,40 @@
     go('reserva');
   }
 
+  const PORTFOLIO_GRADIENTS = [
+    'linear-gradient(150deg,#1d3a5f,#0e1c30)',
+    'linear-gradient(150deg,#2c5f6e,#122731)',
+    'linear-gradient(150deg,#3d5aa8,#1a2650)',
+    'linear-gradient(150deg,#5c3f96,#2c1c50)',
+    'linear-gradient(150deg,#1a5c4e,#0d2e26)',
+    'linear-gradient(150deg,#2e3a4d,#c05a4f)',
+  ];
+
   function renderProfessional(prof) {
     state.professional = prof;
     const avatar = document.getElementById('prof-avatar');
-    avatar.style.background = avatarGradient(prof.slug);
-    avatar.textContent = initials(prof.name);
+    if (prof.logoUrl) {
+      avatar.style.background = 'none';
+      avatar.innerHTML = '<img src="' + prof.logoUrl + '" alt="' + esc(prof.businessName) + '" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+      avatar.style.background = avatarGradient(prof.slug);
+      avatar.textContent = initials(prof.name);
+    }
+
+    const portfolio = document.querySelector('.portfolio');
+    if (portfolio) {
+      const photos = (prof.photos || []).slice(0, 6);
+      if (photos.length) {
+        portfolio.innerHTML = photos.map(p =>
+          '<div class="work"><img src="' + p.url + '" alt="" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:0"></div>'
+        ).join('');
+      } else {
+        portfolio.innerHTML = PORTFOLIO_GRADIENTS.map((bg, i) =>
+          '<div class="work" style="background:' + bg + '"><svg class="icon"><use href="#i-' + (i % 2 === 0 ? 'scissors' : 'sparkle') + '"/></svg></div>'
+        ).join('');
+      }
+    }
+
     document.getElementById('prof-name').textContent = prof.name;
     document.getElementById('prof-business').textContent = prof.businessName;
     document.getElementById('prof-neighborhood').textContent = prof.neighborhood;
