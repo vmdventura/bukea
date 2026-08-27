@@ -103,8 +103,12 @@ const HOME_STYLE = `
   .chip .icon { width: 15px; height: 15px; }
   .chip.active, .chip:hover { background: var(--teal-900); border-color: var(--teal-900); color: var(--white); transform: translateY(-1px); }
   .chip:active { transform: scale(0.96); transition-duration: 100ms; }
-  .hero .chip { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-  .hero .chip.active, .hero .chip:hover { background: var(--white); border-color: var(--white); color: var(--teal-900); }
+  /* Píldoras de categoría del hero, versión minimalista (2026-08-27): el
+     borde translúcido se sentía "enmarcado" — se quita del todo y el
+     relleno tenue solo se aclara al pasar el mouse, sin anillo alrededor. */
+  .hero .chip { border-color: transparent; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); }
+  .hero .chip:hover { background: rgba(255,255,255,0.14); border-color: transparent; color: var(--white); }
+  .hero .chip.active { background: var(--white); border-color: var(--white); color: var(--teal-900); }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
