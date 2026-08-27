@@ -205,8 +205,8 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .site-nav a:not(.btn):not(.nav-cta-negocio):hover::after, .nav-dropdown-toggle:hover::after { right: 0; }
   .nav-dropdown { position: relative; }
   .nav-dropdown-toggle .icon { width: 20px; height: 20px; }
-  .nav-cta-negocio { display: inline-flex; align-items: center; background: oklch(94% 0.04 150); color: oklch(38% 0.1 150); padding: 0.4rem 0.9rem; border-radius: 999px; transition: background 200ms var(--ease-out-quart); }
-  .nav-cta-negocio:hover { background: oklch(90% 0.06 150); color: var(--teal-900); }
+  .site-nav a.nav-cta-negocio { display: inline-flex; align-items: center; background: var(--teal-600); color: var(--white); padding: 0.45rem 1rem; border-radius: 999px; font-weight: 800; box-shadow: var(--sh-teal); transition: background 200ms var(--ease-out-quart), transform 160ms var(--ease-out-quart); }
+  .site-nav a.nav-cta-negocio:hover { background: var(--teal-700); color: var(--white); transform: translateY(-1px); }
   .nav-dropdown-menu {
     position: absolute; top: 100%; right: 0; transform: translateY(6px);
     background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sh-3);
@@ -333,17 +333,19 @@ ${bannerHtml}
     <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
     <nav class="site-nav">
       <a href="/" class="nav-home">Inicio</a>
+      <a href="/nosotros" class="nav-home">Nosotros</a>
       <a href="/negocio" class="nav-cta-negocio"><span class="nav-long">Registro negocio</span><span class="nav-short">Regístrate</span></a>
       <div class="nav-dropdown">
         <button type="button" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Menú">
           <svg class="icon"><use href="#i-menu"/></svg>
         </button>
         <div class="nav-dropdown-menu">
+          <a href="/">Inicio</a>
+          <a href="/nosotros">Nosotros</a>
           <a href="/negocio" class="nav-cta-negocio-item"><svg class="icon"><use href="#i-users"/></svg>Registra tu negocio, es gratis</a>
           <a href="/negocios">Para negocios</a>
           <a href="/precios">Precios</a>
           <a href="/mapa">Ver en mapa</a>
-          <a href="/nosotros">Nosotros</a>
           <div class="nav-dropdown-divider"></div>
           <a href="/descargar">Descargar la app</a>
           <div class="nav-dropdown-divider"></div>

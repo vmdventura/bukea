@@ -780,7 +780,7 @@ ${MARKETING_STYLE}
     </div>
     <div class="m-story-card">
       <div class="stat">WhatsApp</div>
-      <div class="stat-label">Es donde ya vive la relación entre un negocio y su clientela, no una app aparte</div>
+      <div class="stat-label">Confirmaciones y recordatorios llegan por ahí, el mismo canal donde ya hablas con tu clientela todos los días</div>
       <div class="stat">Efectivo y transferencia</div>
       <div class="stat-label">Cómo se paga de verdad en RD, de primera clase desde el día uno, no como una opción secundaria</div>
     </div>
