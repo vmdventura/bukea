@@ -40,7 +40,7 @@ function proCardHtml(p, i) {
 const HOME_STYLE = `
 <style>
   .hero {
-    position: relative; padding: 4.5rem 0 3rem; text-align: center; contain: layout paint; overflow: hidden;
+    position: relative; padding: 4.5rem 28px 3rem; text-align: center; contain: layout paint; overflow: hidden;
     background:
       radial-gradient(60% 80% at 12% 8%, oklch(38% 0.06 195 / 0.55), transparent 60%),
       radial-gradient(55% 70% at 92% 0%, oklch(30% 0.05 78 / 0.4), transparent 62%),
@@ -110,12 +110,15 @@ const HOME_STYLE = `
   .hero .chip .icon { width: 13px; height: 13px; }
   .hero .chip:hover { background: rgba(255,255,255,0.14); border-color: transparent; color: var(--white); }
   .hero .chip.active { background: var(--white); border-color: var(--white); color: var(--teal-900); }
-  /* Muchas categorías (9 + "Todos" = 10): en pantallas anchas se organizan
-     en una cuadrícula fija de 5 columnas, así quedan siempre 2 filas
-     parejas (5 arriba, 5 abajo) en vez de líneas de largo desigual. */
-  @media (min-width: 561px) {
-    .hero .chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
-    .hero .chip { justify-content: center; text-align: center; }
+  /* Muchas categorías (9 + "Todos" = 10): en pantallas anchas hay espacio
+     de sobra para organizarlas en una cuadrícula fija de 5 columnas, así
+     quedan siempre 2 filas parejas (5 arriba, 5 abajo) en vez de líneas de
+     largo desigual. Por debajo de este ancho las columnas quedarían
+     demasiado angostas para etiquetas largas como "Entrenador Personal",
+     así que se quedan con el envolvido natural (ver .chips arriba). */
+  @media (min-width: 900px) {
+    .hero .chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7rem; justify-items: center; }
+    .hero .chip { justify-content: center; text-align: center; width: 100%; max-width: fit-content; }
   }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
