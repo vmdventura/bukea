@@ -99,6 +99,9 @@ const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hid
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
 <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-facebook" viewBox="0 0 24 24"><path d="M14 8.5h2.5V5h-2.5c-2.2 0-4 1.8-4 4v2H8v3.5h2v6.5h3.5v-6.5h2.6l.4-3.5h-3v-2c0-.55.45-1 1-1Z"/></symbol>
+<symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.2 6.8h.01"/></symbol>
+<symbol id="i-tiktok" viewBox="0 0 24 24"><path d="M15 3v10.8a3.2 3.2 0 1 1-2.6-3.15"/><path d="M15 3c.4 2.4 2.1 4.2 4.5 4.5"/></symbol>
 <symbol id="c-barberia" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M19.5 4.5 8.3 15.7"/><path d="M14.6 14.4 19.5 19.5"/><path d="M8.3 8.3 11.8 11.8"/></symbol>
 <symbol id="c-unas" viewBox="0 0 24 24"><rect x="9.6" y="2.6" width="4.8" height="2.6" rx="0.8"/><path d="M10.6 5.2v2.1h2.8V5.2"/><path d="M8.5 7.3h7a1 1 0 0 1 1 1.1l-.85 9.3a2 2 0 0 1-2 1.8h-3.3a2 2 0 0 1-2-1.8l-.85-9.3a1 1 0 0 1 1-1.1Z"/></symbol>
 <symbol id="c-salon" viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="4.5"/><circle cx="15.5" cy="8.5" r="1.8"/><path d="M11.2 5.3C8 5.8 5 7 5 8.5"/><path d="M11.2 11.7C8 11.2 5 10 5 8.5"/><path d="M14 12.8 12.3 19.5a1.8 1.8 0 0 1-1.8 1.5H8.5"/><path d="M1 5.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/><path d="M.5 8.5c.9-.9 1.8-.9 2.7 0s1.8.9 2.7 0"/><path d="M1 11.5c.8-.8 1.6-.8 2.4 0s1.6.8 2.4 0"/></symbol>
@@ -213,6 +216,11 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .nav-dropdown-divider { height: 1px; background: var(--line); margin: 0.35rem 0.4rem; flex: none; }
   .nav-dropdown-menu a::after { content: none; }
   .nav-dropdown-menu a:hover { background: var(--teal-50); color: var(--teal-700); }
+  .nav-dropdown-menu a.nav-cta-negocio-item {
+    display: none; align-items: center; gap: 0.5rem; background: var(--teal-600); color: #fff;
+    font-weight: 800; margin-bottom: 0.35rem;
+  }
+  .nav-dropdown-menu a.nav-cta-negocio-item:hover { background: var(--teal-700); color: #fff; }
 
   .btn { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 0.7rem 1.3rem; font-weight: 700; font-size: 0.92rem; text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: transform 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart), background 200ms var(--ease-out-quart); }
   .btn:hover { transform: translateY(-2px); }
@@ -241,27 +249,45 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .site-footer { background: var(--teal-50); border-top: 1px solid var(--line); margin-top: 4rem; font-size: 0.85rem; }
   .site-footer a { color: var(--soft); text-decoration: none; }
   .site-footer a:hover { color: var(--teal-700); }
-  .footer-grid { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 2rem; padding: 3rem 20px 2rem; }
+  .footer-grid { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 2rem; padding: 3rem 20px 2rem; }
   .footer-brand p { margin: 0.9rem 0 0; max-width: 30ch; line-height: 1.55; color: var(--soft); }
   .footer-col h4 { margin: 0 0 0.9rem; font-size: 0.85rem; color: var(--ink); font-weight: 800; }
   .footer-col a, .footer-col .footer-soon { display: block; padding: 0.32rem 0; font-size: 0.87rem; }
   .footer-col .footer-soon { color: var(--soft); }
   .footer-col a { display: flex; align-items: center; gap: 0.4rem; }
-  .footer-social-arrow { color: var(--teal-600); font-size: 0.9rem; }
+  /* Redes sociales del footer (2026-08-27): antes era una lista vertical
+     de texto ("↗ Facebook", "↗ TikTok"...) que ocupaba toda una columna
+     por sí sola — se reemplaza por una fila compacta de íconos redondos,
+     patrón más elegante y estándar de footer. */
+  .footer-social-row { display: flex; gap: 0.6rem; margin-top: 0.2rem; }
+  .footer-social-row a {
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 50%; flex: none;
+    background: var(--card); border: 1px solid var(--line); color: var(--soft);
+    transition: background 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart);
+  }
+  .footer-social-row a:hover { background: var(--teal-50); color: var(--teal-700); border-color: var(--teal-500); transform: translateY(-2px); }
+  .footer-social-row .icon { width: 18px; height: 18px; }
   .footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1.1rem 20px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--soft); }
   @media (max-width: 820px) {
     .footer-grid { grid-template-columns: repeat(2, 1fr); }
     .footer-brand { grid-column: 1 / -1; }
   }
   @media (max-width: 640px) {
-    .site-header { flex-wrap: wrap; gap: 0.3rem 0.6rem; padding-top: 12px; padding-bottom: 12px; }
+    /* Header móvil (2026-08-27, a pedido de Víctor): antes quedaba el pill
+       "Regístrate" a la izquierda y el ícono de menú a la derecha, con un
+       vacío grande entre los dos porque .site-nav envolvía en una segunda
+       fila. Ahora la fila del header tiene solo dos elementos balanceados
+       (logo + menú) y "Regístrate" pasa a ser el primer ítem, destacado,
+       dentro del menú desplegable — un solo punto de entrada, no dos. */
+    .site-header { padding-top: 12px; padding-bottom: 12px; }
     .brand { font-size: 1.15rem; }
-    .site-nav { width: 100%; justify-content: space-between; gap: 0.2rem; font-size: 0.8rem; }
-    .site-nav .btn { padding: 0.55rem 1rem; }
+    .site-nav { gap: 0.2rem; }
     .site-nav a.nav-home { display: none; }
-    .site-nav .nav-long { display: none; }
-    .site-nav .nav-short { display: inline; }
-    .footer-grid { grid-template-columns: 1fr; gap: 1.6rem; padding: 2.4rem 20px 1.6rem; }
+    .site-nav > a.nav-cta-negocio { display: none; }
+    .nav-dropdown-menu a.nav-cta-negocio-item { display: flex; }
+    .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 1.6rem; padding: 2.4rem 20px 1.6rem; }
+    .footer-brand { grid-column: 1 / -1; }
   }
 </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9P6W5CRECN"></script>
@@ -286,6 +312,7 @@ ${bannerHtml}
           <svg class="icon"><use href="#i-menu"/></svg>
         </button>
         <div class="nav-dropdown-menu">
+          <a href="/negocio" class="nav-cta-negocio-item"><svg class="icon"><use href="#i-users"/></svg>Registra tu negocio, es gratis</a>
           <a href="/negocios">Para negocios</a>
           <a href="/precios">Precios</a>
           <a href="/mapa">Ver en mapa</a>
@@ -305,6 +332,11 @@ ${bodyHtml}
     <div class="footer-brand">
       <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
       <p>Reserva tu próxima cita en República Dominicana. Cero comisión, gratis para siempre para el cliente.</p>
+      <div class="footer-social-row">
+        <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="#i-facebook"/></svg></a>
+        <a href="https://www.instagram.com/bukeard" target="_blank" rel="noopener" aria-label="Instagram"><svg class="icon"><use href="#i-instagram"/></svg></a>
+        <a href="https://www.tiktok.com/@bukeard" target="_blank" rel="noopener" aria-label="TikTok"><svg class="icon"><use href="#i-tiktok"/></svg></a>
+      </div>
     </div>
     <div class="footer-col">
       <h4>Bukea</h4>
@@ -323,12 +355,6 @@ ${bodyHtml}
       <h4>Legal</h4>
       <a href="/privacidad">Política de privacidad</a>
       <a href="/terminos">Términos de servicio</a>
-    </div>
-    <div class="footer-col">
-      <h4>Síguenos en nuestras redes sociales</h4>
-      <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>Facebook</a>
-      <a href="https://www.tiktok.com/@bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>TikTok</a>
-      <a href="https://www.instagram.com/bukeard" target="_blank" rel="noopener"><span class="footer-social-arrow">↗</span>Instagram</a>
     </div>
   </div>
   <div class="wrap footer-bottom">
