@@ -151,6 +151,7 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     --teal-100: oklch(93% 0.035 195);
     --teal-50:  oklch(97% 0.018 195);
     --gold-700: oklch(48% 0.11 68);
+    --gold-600: oklch(70% 0.13 75);
     --gold-100: oklch(94% 0.05 78);
     --whatsapp: #25d366;
     --cash: oklch(48% 0.1 150);
@@ -246,14 +247,22 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
     html { scroll-behavior: auto; }
   }
 
-  .site-footer { background: var(--teal-50); border-top: 1px solid var(--line); margin-top: 4rem; font-size: 0.85rem; }
-  .site-footer a { color: var(--soft); text-decoration: none; }
-  .site-footer a:hover { color: var(--teal-700); }
+  /* Footer verde profundo con acentos dorados (2026-08-27, a pedido de
+     Víctor — referencia visual que compartió: "ayuda y refuerza al site
+     con más identidad"). Antes era un footer claro genérico; el verde
+     oscuro + dorado es la misma paleta "joyería" que ya usa el resto de
+     Bukea (categorías del home, badges), llevada al footer para cerrar
+     la página con una nota de marca en vez de deshacerse en gris neutro. */
+  .site-footer { background: var(--teal-900); margin-top: 4rem; font-size: 0.85rem; color: rgba(255,255,255,0.68); }
+  .site-footer a { color: rgba(255,255,255,0.68); text-decoration: none; }
+  .site-footer a:hover { color: var(--gold-600); }
+  .site-footer .footer-brand .brand { color: #fff; }
+  .site-footer .footer-brand .brand .mark { border: 1px solid rgba(201, 164, 92, 0.5); }
   .footer-grid { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 2rem; padding: 3rem 20px 2rem; }
-  .footer-brand p { margin: 0.9rem 0 0; max-width: 30ch; line-height: 1.55; color: var(--soft); }
-  .footer-col h4 { margin: 0 0 0.9rem; font-size: 0.85rem; color: var(--ink); font-weight: 800; }
+  .footer-brand p { margin: 0.9rem 0 0; max-width: 30ch; line-height: 1.55; color: rgba(255,255,255,0.6); }
+  .footer-col h4 { margin: 0 0 0.9rem; font-size: 0.78rem; color: var(--gold-600); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
   .footer-col a, .footer-col .footer-soon { display: block; padding: 0.32rem 0; font-size: 0.87rem; }
-  .footer-col .footer-soon { color: var(--soft); }
+  .footer-col .footer-soon { color: rgba(255,255,255,0.45); }
   .footer-col a { display: flex; align-items: center; gap: 0.4rem; }
   /* Redes sociales del footer (2026-08-27): antes era una lista vertical
      de texto ("↗ Facebook", "↗ TikTok"...) que ocupaba toda una columna
@@ -263,12 +272,12 @@ ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
   .footer-social-row a {
     display: flex; align-items: center; justify-content: center;
     width: 38px; height: 38px; border-radius: 50%; flex: none;
-    background: var(--card); border: 1px solid var(--line); color: var(--soft);
+    background: none; border: 1px solid rgba(201, 164, 92, 0.5); color: var(--gold-600);
     transition: background 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart);
   }
-  .footer-social-row a:hover { background: var(--teal-50); color: var(--teal-700); border-color: var(--teal-500); transform: translateY(-2px); }
+  .footer-social-row a:hover { background: var(--gold-600); color: var(--teal-900); border-color: var(--gold-600); transform: translateY(-2px); }
   .footer-social-row .icon { width: 18px; height: 18px; }
-  .footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1.1rem 20px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--soft); }
+  .footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1.1rem 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.78rem; color: rgba(255,255,255,0.45); }
   @media (max-width: 820px) {
     .footer-grid { grid-template-columns: repeat(2, 1fr); }
     .footer-brand { grid-column: 1 / -1; }
