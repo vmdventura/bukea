@@ -154,6 +154,10 @@ async function migrate() {
   `);
   await pool.query('INSERT IGNORE INTO platform_settings (id) VALUES (1)');
 
+  // Bandera de la limpieza de un solo uso de negocios que no son los 4 de
+  // ejemplo (2026-08-27) — ver pruneNonDemoProfessionalsOnce() más abajo.
+  await safeAlter('ALTER TABLE platform_settings ADD COLUMN demo_cleanup_done TINYINT(1) NOT NULL DEFAULT 0');
+
   // Logo, redes sociales y galería de fotos del negocio (2026-08-25) —
   // completar el perfil más allá de nombre/sector/categoría, a pedido de
   // Víctor. logo_path sigue el mismo patrón que receipt_path (nombre de
@@ -307,6 +311,33 @@ async function migrateRicardoToOlivercut() {
   }
 }
 
+// Limpieza de un solo uso (2026-08-27, a pedido de Víctor): antes de este
+// punto el marketplace de producción acumuló varias cuentas de prueba
+// (registradas a mano durante meses de desarrollo) mezcladas con los 4
+// negocios de ejemplo oficiales. Víctor confirmó explícitamente que
+// ninguna de esas cuentas es de un usuario real y pidió borrarlas todas
+// menos las 4 de ejemplo. Corre una sola vez (bandera en
+// platform_settings) para que un registro real futuro NUNCA se borre en
+// un reinicio posterior — sin esa bandera, este mismo código volvería a
+// correr en cada boot y borraría negocios reales que se registren después.
+const DEMO_SLUGS = ['olivercut', 'massiel-nails', 'estilo-total-rosa', 'spa-sereno'];
+async function pruneNonDemoProfessionalsOnce() {
+  const [[settings]] = await pool.query('SELECT demo_cleanup_done FROM platform_settings WHERE id = 1');
+  if (settings.demo_cleanup_done) return;
+
+  const placeholders = DEMO_SLUGS.map(() => '?').join(',');
+  // bookings.professional_id no tiene ON DELETE CASCADE a propósito (no se
+  // quiere perder historial de citas por accidente) — hay que borrarlas
+  // primero o el DELETE de professionals de abajo falla por la FK.
+  await pool.query(
+    `DELETE b FROM bookings b JOIN professionals p ON b.professional_id = p.id WHERE p.slug NOT IN (${placeholders})`,
+    DEMO_SLUGS
+  );
+  await pool.query(`DELETE FROM professionals WHERE slug NOT IN (${placeholders})`, DEMO_SLUGS);
+
+  await pool.query('UPDATE platform_settings SET demo_cleanup_done = 1 WHERE id = 1');
+}
+
 // Profesionales creados antes de que existiera professional_hours (o
 // sembrados por seedProfessional en una corrida anterior) se quedarían sin
 // disponibilidad — les asigna el horario por defecto si no tienen ninguno.
@@ -406,6 +437,7 @@ async function ensureReady() {
   // sus fotos y datos — migrateRicardoToOlivercut() convierte el
   // placeholder original en el negocio real, una sola vez.
   await migrateRicardoToOlivercut();
+  await pruneNonDemoProfessionalsOnce();
 
   await seedProfessional({
     slug: 'massiel-nails',
