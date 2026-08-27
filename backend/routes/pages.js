@@ -591,6 +591,7 @@ const MARKETING_STYLE = `
   .price-list li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
   .price-list li .icon { color: var(--cash); margin-top: 0.15rem; }
   .price-list .price-list-lead { color: var(--ink); font-weight: 700; padding-bottom: 0.6rem; }
+  .price-card .btn { align-self: center; }
 
   .m-section-head { text-align: center; margin: 0 0 1.6rem; }
   .m-section-head h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); color: var(--teal-900); margin: 0 0 0.4rem; }
