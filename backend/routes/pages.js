@@ -892,9 +892,14 @@ router.get('/precios', async (req, res) => {
   const pct = Math.min(100, Math.round((foundingCount / FOUNDING_FREE_LIMIT) * 100));
   const soldOut = spotsLeft === 0;
 
+  // Precio de lanzamiento para los negocios que lleguen después del cupo
+  // fundador (decisión de Víctor, 2026-08-27). Los primeros
+  // FOUNDING_FREE_LIMIT quedan en RD$0 de por vida sin importar esto.
+  const POST_FOUNDER_PRICE = 500;
+
   const founderNote = soldOut
-    ? 'Los 50 cupos fundadores ya están completos. Bukea sigue gratis mientras preparamos el plan de pago para los negocios nuevos, y esos 50 nunca van a pagar.'
-    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Los negocios que se unan dentro de ese cupo quedan gratis de por vida, aunque más adelante activemos un plan de pago para los que lleguen después.`;
+    ? `Los ${FOUNDING_FREE_LIMIT} cupos fundadores ya están completos. Los negocios nuevos pagan RD$${POST_FOUNDER_PRICE}/mes; esos ${FOUNDING_FREE_LIMIT} nunca van a pagar.`
+    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Después de que se llenen, los negocios nuevos pagan RD$${POST_FOUNDER_PRICE}/mes; los que entraron dentro del cupo quedan gratis de por vida.`;
 
   const body = `
 ${MARKETING_STYLE}
@@ -906,6 +911,8 @@ ${MARKETING_STYLE}
   .founder-bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .founder-bar-fill { height: 100%; border-radius: 999px; background: var(--teal-600); transition: width 400ms var(--ease-out-quart); }
   .founder-meter p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.85rem; }
+  .amount-then { font-size: 0.82rem; color: var(--soft); margin: -0.8rem 0 1.4rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); }
+  .amount-then strong { color: var(--ink); font-weight: 800; }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
@@ -926,12 +933,15 @@ ${MARKETING_STYLE}
   <div class="card price-card reveal" style="--i:3">
     <div>Para tu negocio</div>
     <div class="amount">RD$0<small>/mes</small></div>
+    <div class="amount-then">
+      Después de los ${FOUNDING_FREE_LIMIT} cupos fundadores: <strong>RD$${POST_FOUNDER_PRICE}/mes</strong>
+    </div>
     <ul class="price-list">${perks}</ul>
     <a class="btn btn-primary" href="/negocio">Únete gratis</a>
   </div>
 
   <p class="reveal" style="--i:4;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
-    Cuando llegue el momento de cobrar, los negocios fundadores mantienen condiciones especiales. Nunca vas a pagar más que lo que aceptaste al unirte.
+    Si te unes dentro del cupo fundador, ese RD$0 se queda contigo de por vida. Nunca vas a pagar más que lo que aceptaste al unirte.
   </p>
 
   <div class="m-hero reveal" style="padding-top:0">
