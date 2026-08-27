@@ -894,10 +894,11 @@ router.get('/precios', async (req, res) => {
 
   const plusPerks = [
     'Todo lo del plan Básico',
-    'WhatsApp ilimitado, sin tope de mensajes',
+    'Notificaciones vía WhatsApp ilimitadas',
     'Reportes e insights avanzados de "Mi Cuadre"',
     'Soporte prioritario',
     'Equipo sin límite de personas',
+    'Acceso anticipado a funciones nuevas',
   ].map((t, i) => `<li class="${i === 0 ? 'price-list-lead' : ''}"><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
 
   const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
@@ -919,13 +920,39 @@ router.get('/precios', async (req, res) => {
   const body = `
 ${MARKETING_STYLE}
 <style>
-  .founder-meter { max-width: 700px; margin: 2.5rem auto 0; padding: 2.4rem 3rem; text-align: center; }
-  .founder-meter-head { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; margin-bottom: 1.1rem; }
-  .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 2.2rem; color: var(--ink); }
-  .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
-  .founder-bar { max-width: 420px; margin: 0 auto; height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
-  .founder-bar-fill { height: 100%; border-radius: 999px; background: var(--teal-600); transition: width 400ms var(--ease-out-quart); }
-  .founder-meter p { max-width: 46ch; margin: 1.1rem auto 0; color: var(--soft); font-size: 0.92rem; }
+  /* Tratamiento "fundador" (2026-08-27): una sola línea dorada arriba de
+     ambas tarjetas las amarra como un mismo momento en vez de competir
+     como dos bloques sueltos — el contador se queda refinado y claro, la
+     tarjeta de abajo concentra el peso visual y el llamado a la acción. */
+  .founder-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; max-width: 980px; margin: 2.5rem auto 2.5rem; align-items: stretch; }
+  .founder-meter {
+    padding: 2.4rem 2.2rem; text-align: center; display: flex; flex-direction: column; justify-content: center;
+    position: relative; overflow: hidden; background: linear-gradient(180deg, var(--card), var(--teal-50));
+    border-color: var(--gold-100);
+  }
+  .founder-meter::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--teal-600), var(--gold-600));
+  }
+  .founder-meter-head { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; margin-bottom: 1.2rem; }
+  .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 2.2rem; color: var(--teal-900); letter-spacing: -0.01em; }
+  .founder-meter-head strong .of { color: var(--gold-700); font-size: 0.62em; font-weight: 600; }
+  .founder-meter-head span { font-size: 0.8rem; color: var(--gold-700); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+  .founder-bar { width: 100%; max-width: 320px; margin: 0 auto; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .founder-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--teal-600), var(--gold-600)); transition: width 400ms var(--ease-out-quart); }
+  .founder-meter p { margin: 1.2rem auto 0; color: var(--soft); font-size: 0.9rem; line-height: 1.6; }
+
+  .founders-cta {
+    margin: 0; border: 1px solid rgba(201,164,92,0.3);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .founders-cta::before { width: 24rem; height: 24rem; top: -10rem; right: -8rem; opacity: 0.65; }
+  .founders-cta h2 { font-size: 1.6rem; }
+  .founders-cta p { max-width: 40ch; }
+  .founders-cta .btn-primary {
+    background: var(--gold-600); color: var(--teal-900); box-shadow: 0 12px 26px rgba(201,164,92,0.35);
+  }
+  .founders-cta .btn-primary:hover { background: var(--gold-700); color: var(--white); }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
@@ -934,19 +961,21 @@ ${MARKETING_STYLE}
     sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan aseguran el plan Básico gratis de por vida.`,
   })}
 
-  <div class="card founder-meter reveal" style="--i:2">
-    <div class="founder-meter-head">
-      <strong>${foundingCount} de ${FOUNDING_FREE_LIMIT}</strong>
-      <span>${soldOut ? 'Cupos fundadores completos' : 'Cupos fundadores ocupados'}</span>
+  <div class="founder-row">
+    <div class="card founder-meter reveal" style="--i:2">
+      <div class="founder-meter-head">
+        <strong>${foundingCount} <span class="of">de ${FOUNDING_FREE_LIMIT}</span></strong>
+        <span>${soldOut ? 'Cupos fundadores completos' : 'Cupos fundadores ocupados'}</span>
+      </div>
+      <div class="founder-bar"><div class="founder-bar-fill" style="width:${pct}%"></div></div>
+      <p>${founderNote}</p>
     </div>
-    <div class="founder-bar"><div class="founder-bar-fill" style="width:${pct}%"></div></div>
-    <p>${founderNote}</p>
-  </div>
 
-  <div class="biz-cta reveal" style="--i:2.5;max-width:700px;margin:1.6rem auto 2.5rem">
-    <h2>Únete ahora mismo</h2>
-    <p>Cada día que pasa, un cupo fundador se acerca más a llenarse. Crea tu perfil gratis y asegura tu lugar.</p>
-    <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
+    <div class="biz-cta founders-cta reveal" style="--i:2.5">
+      <h2>Únete ahora mismo</h2>
+      <p>Cada día que pasa, un cupo fundador se acerca más a llenarse. Crea tu perfil gratis y asegura tu lugar.</p>
+      <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
+    </div>
   </div>
 
   <div class="price-cards">
@@ -959,6 +988,7 @@ ${MARKETING_STYLE}
     </div>
 
     <div class="card price-card -plus reveal" style="--i:4">
+      <span class="plan-badge" style="visibility:hidden">Gratis para los primeros 50</span>
       <div>Plus</div>
       <div class="amount">RD$${PLUS_PRICE}<small>/mes</small></div>
       <ul class="price-list">${plusPerks}</ul>
