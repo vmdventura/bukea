@@ -646,6 +646,16 @@
     transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
   }
   .pro-card:hover { transform: translateY(-2px); box-shadow: var(--sh-3); }
+  /* Entrada escalonada de listas (2026-08-27): las tarjetas de profesionales
+     y las categorías aparecían todas de golpe al cargar la pantalla — el
+     resto de la app ya tiene mucho cuidado puesto en el motion (screen-in,
+     draw-check, dash-fade-in) pero las listas dinámicas se quedaron atrás.
+     .list-in se aplica por JS con un --i por elemento (ver
+     staggerListIn() más abajo). backwards mantiene el elemento oculto
+     durante su propio delay, así no hay parpadeo antes de animar. */
+  @keyframes list-item-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .list-in { animation: list-item-in 320ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+  @media (prefers-reduced-motion: reduce) { .list-in { animation: none; } }
   .avatar {
     width: 54px; height: 54px; border-radius: 50%; flex: none; position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
@@ -1614,9 +1624,10 @@
       container.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Todavía no tenemos profesionales en esta categoría.</p>';
       return;
     }
-    professionals.forEach(prof => {
+    professionals.forEach((prof, i) => {
       const card = document.createElement('div');
-      card.className = 'pro-card';
+      card.className = 'pro-card list-in';
+      card.style.setProperty('--i', Math.min(i, 10));
       card.innerHTML =
         '<div class="avatar"></div>' +
         '<div class="pro-info"><b></b><span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg><span class="meta-text"></span></span><span class="tags"></span></div>' +
@@ -2998,9 +3009,10 @@
       container.appendChild(btn);
       return;
     }
-    citas.forEach(c => {
+    citas.forEach((c, i) => {
       const card = document.createElement('div');
-      card.className = 'cita-card';
+      card.className = 'cita-card list-in';
+      card.style.setProperty('--i', Math.min(i, 8));
       card.innerHTML =
         '<div class="c-top"><span class="c-pro"></span><span class="c-price"></span></div>' +
         '<div class="c-bottom"><span class="c-when"></span><span class="c-svc"></span></div>' +
@@ -3292,6 +3304,8 @@
     cats.forEach(function (key, i) {
       var tile = tiles[i];
       if (!tile) return;
+      tile.classList.add('list-in');
+      tile.style.setProperty('--i', i);
       var candidates = ['img/cats/' + key + '.jpg'];
       if (typeof API_BASE !== 'undefined' && /^https?:/.test(API_BASE)) {
         candidates.push(API_BASE + '/img/cats/' + key + '.jpg');
