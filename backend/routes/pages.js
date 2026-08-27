@@ -110,16 +110,13 @@ const HOME_STYLE = `
   .hero .chip .icon { width: 13px; height: 13px; }
   .hero .chip:hover { background: rgba(255,255,255,0.14); border-color: transparent; color: var(--white); }
   .hero .chip.active { background: var(--white); border-color: var(--white); color: var(--teal-900); }
-  /* Muchas categorías (9 + "Todos" = 10): en pantallas anchas hay espacio
-     de sobra para organizarlas en una cuadrícula fija de 5 columnas, así
-     quedan siempre 2 filas parejas (5 arriba, 5 abajo) en vez de líneas de
-     largo desigual. Por debajo de este ancho las columnas quedarían
-     demasiado angostas para etiquetas largas como "Entrenador Personal",
-     así que se quedan con el envolvido natural (ver .chips arriba). */
-  @media (min-width: 900px) {
-    .hero .chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7rem; justify-items: center; }
-    .hero .chip { justify-content: center; text-align: center; width: 100%; max-width: fit-content; }
-  }
+  /* Muchas categorías (9 + "Todos" = 10): la cuadrícula de 5 columnas
+     iguales dejaba mucho aire suelto alrededor de las etiquetas cortas
+     ("Todos", "Uñas") porque cada columna medía lo mismo que la más larga
+     ("Entrenador Personal"). Vuelve al envolvido natural (cada píldora
+     mide lo que su texto necesita, gap fijo y compacto) — se sigue viendo
+     ordenado porque el hero ya tiene aire propio a los lados (28px). */
+  .hero .chips { gap: 0.5rem; }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
