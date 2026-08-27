@@ -26,10 +26,11 @@ function mktHeroHtml({ eyebrow, title, sub, ctaHtml }) {
   </div>`;
 }
 
-function proCardHtml(p, i) {
+function proCardHtml(p, i, base) {
+  const avatarUrl = p.logo_path ? `${base}/uploads/logos/${p.logo_path}` : null;
   return `
     <a class="pro-card reveal" style="--i:${Math.min(i, 9)}" href="/p/${esc(p.slug)}">
-      <div class="pro-avatar" style="background:${avatarGradient(p.slug)}">${esc(initials(p.name))}</div>
+      <div class="pro-avatar" style="background:${avatarGradient(p.slug)}">${avatarUrl ? `<img src="${avatarUrl}" alt="${esc(p.business_name)}">` : esc(initials(p.name))}</div>
       <div class="pro-info">
         <div class="pro-name">${esc(p.name)}</div>
         <div class="pro-meta">${esc(p.business_name)} · ${esc(p.neighborhood)}</div>
@@ -160,7 +161,8 @@ const HOME_STYLE = `
   .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart), border-color 220ms var(--ease-out-quart); }
   .pro-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--teal-500); }
   .pro-card:active { transform: scale(0.985); transition-duration: 100ms; }
-  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); }
+  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); overflow: hidden; }
+  .pro-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .pro-card:hover .pro-avatar { transform: scale(1.07); }
   .pro-info { flex: 1; min-width: 0; }
   .pro-name { font-weight: 700; font-size: 0.95rem; }
@@ -230,7 +232,7 @@ router.get('/', async (req, res) => {
   const allChip = `<a class="chip${!categoria ? ' active' : ''}" href="/${allChipQs ? '?' + allChipQs : ''}">Todos</a>`;
 
   const grid = professionals.length
-    ? professionals.map(proCardHtml).join('')
+    ? professionals.map((p, i) => proCardHtml(p, i, base)).join('')
     : ciudad !== 'santo-domingo'
       ? `<p class="empty">Todavía no tenemos profesionales en ${esc(CITY_LABELS[ciudad])}, <a href="/negocios" style="color:var(--teal-700);font-weight:700">sé el primero en unirte</a>.</p>`
       : '<p class="empty">No encontramos profesionales con esa búsqueda todavía. Vuelve pronto, seguimos sumando negocios.</p>';
