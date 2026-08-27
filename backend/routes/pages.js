@@ -919,7 +919,7 @@ router.get('/precios', async (req, res) => {
   const body = `
 ${MARKETING_STYLE}
 <style>
-  .founder-meter { max-width: 560px; margin: 2.5rem auto 0; padding: 2.2rem 2.4rem; text-align: center; }
+  .founder-meter { max-width: 700px; margin: 2.5rem auto 0; padding: 2.4rem 3rem; text-align: center; }
   .founder-meter-head { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; margin-bottom: 1.1rem; }
   .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 2.2rem; color: var(--ink); }
   .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
@@ -941,6 +941,12 @@ ${MARKETING_STYLE}
     </div>
     <div class="founder-bar"><div class="founder-bar-fill" style="width:${pct}%"></div></div>
     <p>${founderNote}</p>
+  </div>
+
+  <div class="biz-cta reveal" style="--i:2.5;max-width:700px;margin:1.6rem auto 2.5rem">
+    <h2>Únete ahora mismo</h2>
+    <p>Cada día que pasa, un cupo fundador se acerca más a llenarse. Crea tu perfil gratis y asegura tu lugar.</p>
+    <a class="btn btn-primary" href="/negocio">Crear mi cuenta de negocio</a>
   </div>
 
   <div class="price-cards">
