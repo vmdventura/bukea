@@ -110,10 +110,13 @@ const HOME_STYLE = `
   .hero .chip .icon { width: 13px; height: 13px; }
   .hero .chip:hover { background: rgba(255,255,255,0.14); border-color: transparent; color: var(--white); }
   .hero .chip.active { background: var(--white); border-color: var(--white); color: var(--teal-900); }
-  /* Muchas categorías (9 + "Todos"): en vez de deslizar en una sola fila
-     que se sale del borde, se envuelven en varias líneas cortas y
-     compactas, más fáciles de escanear de un vistazo. */
-  .hero .chips { flex-wrap: wrap; }
+  /* Muchas categorías (9 + "Todos" = 10): en pantallas anchas se organizan
+     en una cuadrícula fija de 5 columnas, así quedan siempre 2 filas
+     parejas (5 arriba, 5 abajo) en vez de líneas de largo desigual. */
+  @media (min-width: 561px) {
+    .hero .chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+    .hero .chip { justify-content: center; text-align: center; }
+  }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
