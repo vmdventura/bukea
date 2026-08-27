@@ -580,13 +580,17 @@ const MARKETING_STYLE = `
     .m-feature.-lg { grid-column: span 1; }
   }
 
-  .price-card { position: relative; overflow: hidden; isolation: isolate; max-width: 420px; margin: 2.5rem auto; padding: 2.2rem; text-align: center; }
+  .price-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 880px; margin: 2.5rem auto 0.5rem; align-items: stretch; }
+  .price-card { position: relative; overflow: hidden; isolation: isolate; padding: 2.2rem; text-align: center; display: flex; flex-direction: column; }
   .price-card::before { content: ""; position: absolute; z-index: -1; width: 16rem; height: 16rem; top: -7rem; left: -5rem; border-radius: 50%; background: radial-gradient(circle, var(--teal-100), transparent 70%); }
+  .price-card.-plus::before { background: radial-gradient(circle, var(--gold-100), transparent 70%); }
   .price-card .amount { font-family: "Fraunces", serif; font-size: 3rem; color: var(--teal-700); margin: 0.4rem 0; }
   .price-card .amount small { font-size: 1rem; color: var(--soft); font-weight: 400; }
-  .price-list { text-align: left; list-style: none; padding: 0; margin: 1.4rem 0; color: var(--soft); font-size: 0.9rem; }
+  .plan-badge { align-self: center; background: var(--gold-100); color: var(--gold-700); font-size: 0.75rem; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 999px; margin: 0 0 0.9rem; }
+  .price-list { text-align: left; list-style: none; padding: 0; margin: 1.4rem 0; color: var(--soft); font-size: 0.9rem; flex: 1; }
   .price-list li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
   .price-list li .icon { color: var(--cash); margin-top: 0.15rem; }
+  .price-list .price-list-lead { color: var(--ink); font-weight: 700; padding-bottom: 0.6rem; }
 
   .m-section-head { text-align: center; margin: 0 0 1.6rem; }
   .m-section-head h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); color: var(--teal-900); margin: 0 0 0.4rem; }
@@ -878,47 +882,54 @@ ${MARKETING_STYLE}
 
 router.get('/precios', async (req, res) => {
   const base = req.baseUrlPrefix;
-  const perks = [
+  const basicPerks = [
     'Perfil público con tus servicios y horario',
     'Agenda con disponibilidad real',
     'Reservas ilimitadas, sin comisión',
     '"Mi Cuadre", cuánto vendiste hoy, en la semana y en el mes',
     'Recordatorio por WhatsApp para tus clientes',
-    'Agrega a tu equipo y deja que cada quien reciba sus propias citas',
+    'Hasta 2 personas en tu equipo',
   ].map(t => `<li><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
+
+  const plusPerks = [
+    'Todo lo del plan Básico',
+    'WhatsApp ilimitado, sin tope de mensajes',
+    'Reportes e insights avanzados de "Mi Cuadre"',
+    'Soporte prioritario',
+    'Equipo sin límite de personas',
+  ].map((t, i) => `<li class="${i === 0 ? 'price-list-lead' : ''}"><svg class="icon"><use href="#i-check"/></svg>${t}</li>`).join('');
 
   const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
   const spotsLeft = Math.max(0, FOUNDING_FREE_LIMIT - foundingCount);
   const pct = Math.min(100, Math.round((foundingCount / FOUNDING_FREE_LIMIT) * 100));
   const soldOut = spotsLeft === 0;
 
-  // Precio de lanzamiento para los negocios que lleguen después del cupo
-  // fundador (decisión de Víctor, 2026-08-27). Los primeros
-  // FOUNDING_FREE_LIMIT quedan en RD$0 de por vida sin importar esto.
-  const POST_FOUNDER_PRICE = 500;
+  // Precio de Plus (decisión de Víctor, 2026-08-27): el plan Básico es
+  // gratis para siempre para cualquier negocio, no solo los fundadores.
+  // Plus es el upgrade de pago; los primeros FOUNDING_FREE_LIMIT negocios
+  // lo reciben incluido gratis de por vida en vez de pagarlo.
+  const PLUS_PRICE = 500;
 
   const founderNote = soldOut
-    ? `Los ${FOUNDING_FREE_LIMIT} cupos fundadores ya están completos. Los negocios nuevos pagan RD$${POST_FOUNDER_PRICE}/mes; esos ${FOUNDING_FREE_LIMIT} nunca van a pagar.`
-    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Después de que se llenen, los negocios nuevos pagan RD$${POST_FOUNDER_PRICE}/mes; los que entraron dentro del cupo quedan gratis de por vida.`;
+    ? `Los ${FOUNDING_FREE_LIMIT} cupos fundadores ya están completos. Bukea sigue gratis para negocios nuevos con el plan Básico; Plus (RD$${PLUS_PRICE}/mes) sigue disponible como upgrade opcional.`
+    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Los negocios que se unan dentro de ese cupo reciben Plus gratis de por vida, sin pagar nunca los RD$${PLUS_PRICE}/mes.`;
 
   const body = `
 ${MARKETING_STYLE}
 <style>
-  .founder-meter { max-width: 420px; margin: 2.5rem auto 2rem; padding: 1.6rem 1.8rem; text-align: left; }
+  .founder-meter { max-width: 420px; margin: 2.5rem auto 0; padding: 1.6rem 1.8rem; text-align: left; }
   .founder-meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
   .founder-meter-head strong { font-family: "Fraunces", serif; font-size: 1.3rem; color: var(--ink); }
   .founder-meter-head span { font-size: 0.85rem; color: var(--soft); font-weight: 700; }
   .founder-bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .founder-bar-fill { height: 100%; border-radius: 999px; background: var(--teal-600); transition: width 400ms var(--ease-out-quart); }
   .founder-meter p { margin: 0.8rem 0 0; color: var(--soft); font-size: 0.85rem; }
-  .amount-then { font-size: 0.82rem; color: var(--soft); margin: -0.8rem 0 1.4rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); }
-  .amount-then strong { color: var(--ink); font-weight: 800; }
 </style>
 <div class="wrap">
   ${mktHeroHtml({
     eyebrow: 'Precios',
     title: 'Bukea es gratis',
-    sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan quedan gratis de por vida, aunque más adelante activemos un plan de pago.`,
+    sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan reciben Plus gratis de por vida.`,
   })}
 
   <div class="card founder-meter reveal" style="--i:2">
@@ -930,18 +941,25 @@ ${MARKETING_STYLE}
     <p>${founderNote}</p>
   </div>
 
-  <div class="card price-card reveal" style="--i:3">
-    <div>Para tu negocio</div>
-    <div class="amount">RD$0<small>/mes</small></div>
-    <div class="amount-then">
-      Después de los ${FOUNDING_FREE_LIMIT} cupos fundadores: <strong>RD$${POST_FOUNDER_PRICE}/mes</strong>
+  <div class="price-cards">
+    <div class="card price-card reveal" style="--i:3">
+      <div>Básico</div>
+      <div class="amount">RD$0<small>/mes</small></div>
+      <ul class="price-list">${basicPerks}</ul>
+      <a class="btn btn-primary" href="/negocio">Únete gratis</a>
     </div>
-    <ul class="price-list">${perks}</ul>
-    <a class="btn btn-primary" href="/negocio">Únete gratis</a>
+
+    <div class="card price-card -plus reveal" style="--i:4">
+      ${!soldOut ? '<span class="plan-badge">Gratis para los primeros 50</span>' : ''}
+      <div>Plus</div>
+      <div class="amount">RD$${PLUS_PRICE}<small>/mes</small></div>
+      <ul class="price-list">${plusPerks}</ul>
+      <a class="btn btn-primary" href="${soldOut ? '/contacto' : '/negocio'}">${soldOut ? 'Escríbenos' : 'Únete y llévate Plus gratis'}</a>
+    </div>
   </div>
 
-  <p class="reveal" style="--i:4;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0 auto 2.5rem">
-    Si te unes dentro del cupo fundador, ese RD$0 se queda contigo de por vida. Nunca vas a pagar más que lo que aceptaste al unirte.
+  <p class="reveal" style="--i:5;text-align:center;color:var(--soft);font-size:0.85rem;max-width:48ch;margin:0.8rem auto 2.5rem">
+    Si te unes dentro del cupo fundador, Plus se queda contigo gratis de por vida. Nunca vas a pagar más que lo que aceptaste al unirte.
   </p>
 
   <div class="m-hero reveal" style="padding-top:0">
