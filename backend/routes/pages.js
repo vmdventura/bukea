@@ -72,9 +72,20 @@ const HOME_STYLE = `
   .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
   @media (max-width: 560px) {
-    .badge-row, .chips { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding: 0 20px 0.3rem; margin-left: -20px; margin-right: -20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    /* En móvil estas filas se deslizan en vez de envolver (nowrap +
+       overflow-x). Sin nada que lo avise, el borde cortado a mitad de
+       una píldora se lee como un error de layout, no como "desliza para
+       ver más" — la máscara difumina el borde para dar esa pista visual. */
+    .badge-row, .chips {
+      flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+      padding: 0 20px 0.3rem; margin-left: -20px; margin-right: -20px;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 28px), transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 28px), transparent);
+    }
     .badge-row::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
     .badge-row .badge-pill, .chips .chip { flex: none; }
+    .chips .chip:last-child { margin-right: 28px; }
   }
   .chip.active, .chip:hover { background: #fff; border-color: #fff; color: var(--teal-900); transform: translateY(-1px); }
   .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
