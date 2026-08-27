@@ -905,15 +905,16 @@ router.get('/precios', async (req, res) => {
   const pct = Math.min(100, Math.round((foundingCount / FOUNDING_FREE_LIMIT) * 100));
   const soldOut = spotsLeft === 0;
 
-  // Precio de Plus (decisión de Víctor, 2026-08-27): el plan Básico es
-  // gratis para siempre para cualquier negocio, no solo los fundadores.
-  // Plus es el upgrade de pago; los primeros FOUNDING_FREE_LIMIT negocios
-  // lo reciben incluido gratis de por vida en vez de pagarlo.
+  // Precio de Plus (decisión de Víctor, 2026-08-27): Plus SIEMPRE es de
+  // pago, no hay excepción para fundadores. El plan Básico es gratis hoy
+  // para cualquier negocio; lo que ganan los primeros FOUNDING_FREE_LIMIT
+  // es que esa gratuidad queda asegurada de por vida para ellos, pase lo
+  // que pase con los precios del plan Básico más adelante.
   const PLUS_PRICE = 500;
 
   const founderNote = soldOut
-    ? `Los ${FOUNDING_FREE_LIMIT} cupos fundadores ya están completos. Bukea sigue gratis para negocios nuevos con el plan Básico; Plus (RD$${PLUS_PRICE}/mes) sigue disponible como upgrade opcional.`
-    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Los negocios que se unan dentro de ese cupo reciben Plus gratis de por vida, sin pagar nunca los RD$${PLUS_PRICE}/mes.`;
+    ? `Los ${FOUNDING_FREE_LIMIT} cupos fundadores ya están completos. El plan Básico sigue gratis por ahora para negocios nuevos, pero esos ${FOUNDING_FREE_LIMIT} son los únicos con esa gratuidad asegurada de por vida sin importar qué pase después.`
+    : `Quedan ${spotsLeft} cupo${spotsLeft === 1 ? '' : 's'} de los ${FOUNDING_FREE_LIMIT} fundadores. Los negocios que se unan dentro de ese cupo aseguran el plan Básico gratis de por vida, sin importar cómo cambien los precios más adelante.`;
 
   const body = `
 ${MARKETING_STYLE}
@@ -930,7 +931,7 @@ ${MARKETING_STYLE}
   ${mktHeroHtml({
     eyebrow: 'Precios',
     title: 'Bukea es gratis',
-    sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan reciben Plus gratis de por vida.`,
+    sub: `Sin suscripción, sin comisión por cliente nuevo, sin tarjeta para empezar. Y los primeros ${FOUNDING_FREE_LIMIT} negocios que se unan aseguran el plan Básico gratis de por vida.`,
   })}
 
   <div class="card founder-meter reveal" style="--i:2">
@@ -944,6 +945,7 @@ ${MARKETING_STYLE}
 
   <div class="price-cards">
     <div class="card price-card reveal" style="--i:3">
+      ${!soldOut ? '<span class="plan-badge">Gratis para los primeros 50</span>' : ''}
       <div>Básico</div>
       <div class="amount">RD$0<small>/mes</small></div>
       <ul class="price-list">${basicPerks}</ul>
@@ -951,16 +953,15 @@ ${MARKETING_STYLE}
     </div>
 
     <div class="card price-card -plus reveal" style="--i:4">
-      ${!soldOut ? '<span class="plan-badge">Gratis para los primeros 50</span>' : ''}
       <div>Plus</div>
       <div class="amount">RD$${PLUS_PRICE}<small>/mes</small></div>
       <ul class="price-list">${plusPerks}</ul>
-      <a class="btn btn-primary" href="${soldOut ? '/contacto' : '/negocio'}">${soldOut ? 'Escríbenos' : 'Únete y llévate Plus gratis'}</a>
+      <a class="btn btn-primary" href="/contacto">Escríbenos</a>
     </div>
   </div>
 
   <p class="reveal" style="--i:5;text-align:center;color:var(--soft);font-size:0.9rem;max-width:62ch;margin:0.8rem auto 2.5rem;line-height:1.6">
-    El plan Básico es gratis para siempre, te unas hoy o dentro de un año. Si te unes dentro del cupo fundador, además te llevas Plus sin costo de por vida. Nunca vas a pagar más que lo que aceptaste al unirte, sin importar cuándo cambien los precios más adelante.
+    El plan Básico es gratis hoy para cualquier negocio. Si te unes dentro del cupo fundador, esa gratuidad queda asegurada de por vida para ti, pase lo que pase con los precios más adelante. Plus es un upgrade de pago opcional, disponible para cualquier negocio.
   </p>
 
   <div class="m-hero reveal" style="padding-top:0">
