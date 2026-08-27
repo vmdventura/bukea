@@ -826,8 +826,11 @@ const CONTACT_STYLE = `
   .contact-success p { color: var(--soft); font-size: 0.9rem; margin: 0; }
   .field { margin-bottom: 0.9rem; }
   .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
-  .field input, .field textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; }
-  .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal-600); }
+  .field input, .field textarea, .field select { width: 100%; background: var(--bg); border: 1.5px solid var(--line); border-radius: 13px; padding: 0.72rem 0.95rem; font-size: 0.92rem; font-family: inherit; color: var(--ink); resize: vertical; appearance: none; -webkit-appearance: none; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2344647a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; background-size: 18px; padding-right: 2.4rem; cursor: pointer; }
+  .field select:invalid { color: var(--soft); }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--teal-600); }
+  .field-count { margin: 0.35rem 0 0; text-align: right; font-size: 0.74rem; color: var(--soft); }
   @media (max-width: 820px) { .contact-grid { grid-template-columns: 1fr; gap: 2.2rem; margin: 2.2rem 0 2.5rem; } }
 </style>`;
 
@@ -865,8 +868,23 @@ function contactInfoHtml() {
   </div>`;
 }
 
+// Motivos del formulario de contacto — whitelist server-side (routeo POST)
+// para que "asunto" en el correo nunca traiga texto libre inventado.
+const CONTACT_SUBJECTS = {
+  cuenta: 'Problema con mi cuenta',
+  negocio: 'Oferta de negocio / alianza',
+  soporte: 'Algo no funciona (soporte técnico)',
+  sugerencia: 'Sugerencia o idea',
+  otro: 'Otro',
+};
+const CONTACT_MESSAGE_MAX = 3000;
+
 function contactFormHtml({ error, values }) {
   const v = values || {};
+  const msgLen = String(v.message || '').length;
+  const subjectOptions = Object.entries(CONTACT_SUBJECTS)
+    .map(([key, label]) => `<option value="${key}"${v.subject === key ? ' selected' : ''}>${esc(label)}</option>`)
+    .join('');
   return `
   <div class="card contact-card reveal" style="--i:3">
     <h2>Envíanos un mensaje</h2>
@@ -881,8 +899,16 @@ function contactFormHtml({ error, values }) {
         <input id="ct-email" name="email" type="email" required maxlength="190" value="${esc(v.email || '')}">
       </div>
       <div class="field">
+        <label for="ct-subject">Asunto</label>
+        <select id="ct-subject" name="subject" required>
+          <option value="" disabled${v.subject ? '' : ' selected'}>Elige un motivo…</option>
+          ${subjectOptions}
+        </select>
+      </div>
+      <div class="field">
         <label for="ct-message">Mensaje</label>
-        <textarea id="ct-message" name="message" required minlength="10" maxlength="3000" rows="5">${esc(v.message || '')}</textarea>
+        <textarea id="ct-message" name="message" required minlength="10" maxlength="${CONTACT_MESSAGE_MAX}" rows="5" oninput="document.getElementById('ct-count').textContent = this.value.length">${esc(v.message || '')}</textarea>
+        <p class="field-count"><span id="ct-count">${msgLen}</span> / ${CONTACT_MESSAGE_MAX}</p>
       </div>
       <div aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">
         <label for="ct-website">Sitio web (dejar en blanco)</label>
@@ -936,7 +962,10 @@ router.post('/contacto', express.urlencoded({ extended: false }), async (req, re
   const ip = req.ip || 'sin-ip';
   const name = String(req.body.name || '').trim().slice(0, 100);
   const email = String(req.body.email || '').trim().slice(0, 190);
-  const message = String(req.body.message || '').trim().slice(0, 3000);
+  const message = String(req.body.message || '').trim().slice(0, CONTACT_MESSAGE_MAX);
+  // Whitelist: un asunto que no venga de las opciones reales del <select>
+  // (curl, un bot editando el HTML) cae en "Otro", nunca texto libre.
+  const subject = Object.prototype.hasOwnProperty.call(CONTACT_SUBJECTS, req.body.subject) ? req.body.subject : '';
   const honeypot = String(req.body['sitio-web'] || '').trim();
   const ts = Number(req.body.ts) || 0;
 
@@ -952,7 +981,7 @@ ${CONTACT_STYLE}
   </div>
   <div class="contact-grid">
     ${contactInfoHtml()}
-    ${contactFormHtml({ error, values: { name, email, message } })}
+    ${contactFormHtml({ error, values: { name, email, message, subject } })}
   </div>
 </div>`;
     res.type('html').send(await pageShell({
@@ -972,14 +1001,14 @@ ${CONTACT_STYLE}
   if (wait > 0) return renderError(rateLimit.waitMessage(wait));
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (!name || !emailOk || message.length < 10) {
-    return renderError('Completa tu nombre, un correo válido y un mensaje de al menos 10 caracteres.');
+  if (!name || !emailOk || !subject || message.length < 10) {
+    return renderError('Completa tu nombre, un correo válido, un asunto y un mensaje de al menos 10 caracteres.');
   }
 
   rateLimit.hit([{ key: `contact:ip:${ip}`, max: 8, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
 
   try {
-    await mailer.sendContactMessage({ name, email, message });
+    await mailer.sendContactMessage({ name, email, message, subject: CONTACT_SUBJECTS[subject] });
   } catch (err) {
     console.error('contacto: fallo al enviar', err);
     return renderError('No se pudo enviar el mensaje ahora mismo. Escríbenos directo a ' + CONTACT_EMAIL + '.');
