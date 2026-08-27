@@ -759,6 +759,20 @@ const MARKETING_STYLE = `
   .biz-cta::before { content: ""; position: absolute; z-index: -1; width: 20rem; height: 20rem; top: -8rem; right: -6rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.5; filter: blur(6px); }
   .biz-cta h2 { color: var(--white); margin: 0 0 0.5rem; font-size: 1.55rem; }
   .biz-cta p { color: rgba(255,255,255,0.82); max-width: 42ch; margin: 0 auto 1.3rem; }
+
+  /* Franja de acceso para dueños (2026-08-27): /negocios es exclusiva para
+     negocios (marketing a prospectos + entrada para quien ya tiene cuenta),
+     nunca para clientes finales — separación que Fresha resuelve con un
+     dominio propio (partners.fresha.com, ver docs/ANALISIS-SITIO-FRESHA.md
+     §"Partner account"), acá basta una franja fija arriba de todo el
+     contenido de marketing, siempre visible, para que un dueño que llega
+     de fuera de la app no tenga que leer toda la página para encontrar
+     dónde entrar. */
+  .m-access-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: center; gap: 0.9rem; flex-wrap: wrap; background: var(--teal-900); color: var(--white); padding: 0.7rem 1.2rem; text-align: center; font-size: 0.88rem; }
+  .m-access-bar span { color: rgba(255,255,255,0.82); }
+  .m-access-bar .btn { padding: 0.5rem 1.1rem; font-size: 0.85rem; }
+  .m-access-bar .btn-primary { background: var(--gold-700); }
+  .m-access-bar .btn-primary:hover { background: oklch(44% 0.11 68); }
 </style>`;
 
 // Panel de negocio de escritorio ("Mi cuenta") — pantalla completa, con su
@@ -800,6 +814,10 @@ router.get('/negocios', async (req, res) => {
 
   const body = `
 ${MARKETING_STYLE}
+<div class="m-access-bar">
+  <span>¿Ya tienes tu negocio en Bukea?</span>
+  <a class="btn btn-primary" href="/negocio">Accede ahora a tu negocio</a>
+</div>
 <div class="wrap">
   ${mktHeroHtml({
     eyebrow: 'Para negocios de belleza',

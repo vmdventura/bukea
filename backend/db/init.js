@@ -4,6 +4,7 @@ const pool = require('./pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { geocodeNeighborhood } = require('../lib/geocode');
 const { FOUNDING_FREE_LIMIT } = require('../views/shared');
+const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
   'ER_DUP_FIELDNAME', // la columna ya existe
@@ -235,6 +236,23 @@ async function migrate() {
       ) AS t
     )
   `);
+
+  // Seguridad máxima del panel /admin (2026-08-27): sesión del panel con
+  // vencimiento propio (más corto que el de la app normal, que no vence) y
+  // segundo factor por correo sobre el PIN — ver routes/admin.js.
+  await safeAlter('ALTER TABLE users ADD COLUMN admin_token_expires_at DATETIME');
+}
+
+// Correo fijo del super administrador (lib/super-admin.js): si ya existe una
+// cuenta con ese correo, se repara a role='admin' y se reactiva en cada
+// arranque, sin importar qué le haya pasado en el panel o en la base de
+// datos. Si la cuenta todavía no existe, no hace nada — se crea sola la
+// primera vez que ese correo entra a /admin con Google (routes/admin.js).
+async function ensureSuperAdmin() {
+  await pool.query(
+    "UPDATE users SET role = 'admin', disabled_at = NULL WHERE email = ? AND (role != 'admin' OR disabled_at IS NOT NULL)",
+    [SUPER_ADMIN_EMAIL]
+  );
 }
 
 async function seedProfessional({ slug, category, name, businessName, neighborhood, rating, reviewsCount, services }) {
@@ -499,6 +517,7 @@ async function ensureReady() {
 
   await backfillMissingHours();
   await backfillMissingCoordinates();
+  await ensureSuperAdmin();
 }
 
 module.exports = { ensureReady };

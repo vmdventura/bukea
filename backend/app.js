@@ -76,7 +76,7 @@ app.get(BASE + '/api/health', (req, res) => res.json({ ok: true }));
 // público), fuera de BASE, porque es una herramienta operativa separada de
 // la app de clientes/negocios, con su propio login (ver routes/admin.js).
 app.use('/api/admin', adminApiRouter);
-app.get('/admin', (req, res) => res.type('html').send(adminShell()));
+app.get('/admin', (req, res) => res.type('html').send(adminShell({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' })));
 
 // index.html y manifest.json referencian BASE_PATH en su contenido (fetch()
 // del frontend, start_url/scope del manifest), así que se sirven vía

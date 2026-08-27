@@ -1,11 +1,18 @@
 // Panel de administración general (/admin) — Fase 1 del concepto: dashboard,
 // usuarios, negocios y reservas, operables desde una sola pantalla. Vive
 // fuera de BASE (como el marketplace público) porque es una herramienta
-// operativa separada de la app de clientes/negocios, con su propio login
-// (teléfono+PIN de una cuenta con role = 'admin', ver routes/admin.js).
+// operativa separada de la app de clientes/negocios.
 // No indexable, sin JS de framework: un único archivo con fetch() al API.
+//
+// Seguridad máxima del login (2026-08-27, a pedido de Víctor: "descartar el
+// PIN para evitar futuros ataques"): el panel solo entra con Google (botón
+// visible cuando googleClientId llega configurado, mismo patrón que
+// index.html) — ver routes/admin.js para la verificación del idToken y el
+// mensaje cuando falta configurar GOOGLE_CLIENT_ID.
 
-function adminShell() {
+function adminShell(opts) {
+  opts = opts || {};
+  var googleClientId = opts.googleClientId || '';
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -17,6 +24,7 @@ function adminShell() {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async defer><\/script>' : ''}
 <style>
   :root {
     --teal-900: oklch(24% 0.045 195);
@@ -75,7 +83,8 @@ function adminShell() {
   .field input, .field select { width: 100%; padding: 0.7rem 0.85rem; border-radius: 11px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
   .field input:focus, .field select:focus { outline: none; border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.14); }
   .auth-error { color: var(--danger); font-size: 0.82rem; margin: 0 0 0.9rem; display: none; }
-  #login-form .btn { width: 100%; justify-content: center; padding: 0.75rem; }
+  .auth-hint { color: var(--faint); font-size: 0.78rem; margin: 0.9rem 0 0; }
+  #login-google-btn { width: 100%; display: flex; justify-content: center; }
 
   /* ===== App shell ===== */
   #app-screen { display: none; }
@@ -220,17 +229,11 @@ function adminShell() {
     <div class="auth-brand"><span class="mark">b</span>Bukea</div>
     <p class="auth-sub">Panel de administración general. Solo cuentas autorizadas.</p>
     <p class="auth-error" id="login-error"></p>
-    <form id="login-form">
-      <div class="field">
-        <label for="login-phone">Teléfono</label>
-        <input type="tel" id="login-phone" placeholder="809 555 0134" autocomplete="username" required>
-      </div>
-      <div class="field">
-        <label for="login-pin">PIN</label>
-        <input type="password" id="login-pin" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="current-password" required>
-      </div>
-      <button class="btn btn-primary" type="submit" id="login-submit">Entrar</button>
-    </form>
+
+    ${googleClientId
+      ? `<div id="login-google-btn"></div><p class="auth-hint">Entra con la cuenta de Google autorizada como administradora.</p>`
+      : `<p class="auth-hint">El login con Google todavía no está configurado en este servidor (falta GOOGLE_CLIENT_ID). Avisa al desarrollador.</p>`
+    }
   </div>
 </div>
 
@@ -485,6 +488,7 @@ function adminShell() {
   var API = '/api/admin';
   var TOKEN_KEY = 'bukea_admin_token';
   var NAME_KEY = 'bukea_admin_name';
+  var GOOGLE_CLIENT_ID = '${googleClientId}';
   var CATS = { barberia: 'Barbería', unas: 'Uñas', salon: 'Salón', maquillaje: 'Maquillaje', 'cejas-mua': 'Cejas & MUA', pilates: 'Pilates' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
@@ -538,7 +542,7 @@ function adminShell() {
       headers: headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     }).then(function (res) {
-      if (res.status === 404 && path !== '/login') {
+      if (res.status === 404) {
         logout();
         throw new Error('Tu sesión expiró, entra de nuevo');
       }
@@ -556,34 +560,41 @@ function adminShell() {
     document.getElementById('login-screen').style.display = 'flex';
   }
 
-  /* ===== Login ===== */
-  var loginForm = document.getElementById('login-form');
+  /* ===== Login (solo Google, ver routes/admin.js) ===== */
   var loginError = document.getElementById('login-error');
-  loginForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var phone = document.getElementById('login-phone').value;
-    var pin = document.getElementById('login-pin').value;
-    var submitBtn = document.getElementById('login-submit');
+
+  function loginSession(data) {
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(NAME_KEY, data.name);
+    startApp();
+  }
+
+  if (GOOGLE_CLIENT_ID) {
+    var googleAttempts = 20;
+    (function initGoogle() {
+      if (!(window.google && google.accounts && google.accounts.id)) {
+        if (googleAttempts-- > 0) return void setTimeout(initGoogle, 150);
+        return;
+      }
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+      google.accounts.id.renderButton(document.getElementById('login-google-btn'), { theme: 'outline', size: 'large', width: 316, text: 'signin_with' });
+    })();
+  }
+
+  function handleGoogleCredential(response) {
     loginError.style.display = 'none';
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Entrando…';
-    fetch(API + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: phone, pin: pin }) })
+    fetch(API + '/login-google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: response.credential }) })
       .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
       .then(function (r) {
-        if (!r.ok) { throw new Error(r.data.error || 'No se pudo entrar'); }
-        localStorage.setItem(TOKEN_KEY, r.data.token);
-        localStorage.setItem(NAME_KEY, r.data.name);
-        startApp();
+        if (!r.ok) throw new Error(r.data.error || 'No se pudo entrar con Google');
+        loginSession(r.data);
       })
       .catch(function (err) {
         loginError.textContent = err.message;
         loginError.style.display = 'block';
-      })
-      .finally(function () {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Entrar';
       });
-  });
+  }
+
   document.getElementById('logout-btn').addEventListener('click', logout);
 
   /* ===== Modal ===== */

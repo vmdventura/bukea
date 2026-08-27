@@ -4,15 +4,13 @@
 
 **Actualización (2026-08-25, mismo día):** se construyó "Ver panel del negocio" en la ficha de cada negocio del Módulo Negocios (impersonación real, no solo el modal de edición) — ya no es un pendiente. De paso se arregló un bug real: un dueño que entraba a `/negocio` desde otro dispositivo/navegador veía el asistente "Crea tu negocio" aunque ya tuviera uno, porque la app solo sabía a qué negocio pertenecía por un valor guardado en ese navegador. Ver `bukea_omitir_negocio.md` en memoria para el detalle técnico.
 
+**Actualización (2026-08-27, seguridad máxima del panel):** el pendiente #1 de abajo (login solo por teléfono+PIN) quedó resuelto. Se agregó login con Google en `/admin` (mismo patrón que `/negocio`, reutiliza `lib/oauth.js`) y un correo fijo de super administrador (`lib/super-admin.js`, `vmdventura@gmail.com`) que se autoprovisiona/repara solo en cada arranque del servidor (`ensureSuperAdmin()` en `db/init.js`) y no se puede desactivar desde el propio panel. Primero se agregó un código por correo como segundo factor sobre el PIN, pero Víctor pidió explícitamente descartar el PIN del todo ("para evitar futuros ataques") — así que `/api/admin/login` y `/login/verify-code` se eliminaron: Google es la única puerta. La sesión del panel también vence sola a las 8 horas (antes no vencía nunca). Apple queda pendiente, no se pidió esta vez.
+
 ---
 
-## 1. El login del panel solo acepta teléfono + PIN, no Google/Apple — 🟡 Prioridad media
+## 1. ~~El login del panel solo acepta teléfono + PIN, no Google/Apple~~ — ✅ Resuelto 2026-08-27
 
-**Dónde:** `POST /api/admin/login` (`backend/routes/admin.js`) y la pantalla de login de `backend/views/admin.js`
-
-**Qué pasa:** Una cuenta de admin que entró siempre por Google o Apple (como la de Víctor, `vmdventura@gmail.com`) no tiene teléfono ni PIN por defecto, así que no puede entrar al panel. Como parche puntual, se le agregó teléfono y PIN directo en la base de datos (ver `bukea_panel_admin.md` en memoria) — funciona, pero es un parche, no una solución real.
-
-**Fix sugerido:** Agregar login con Google/Apple al panel, reutilizando `lib/oauth.js` (ya existe y lo usa el login público). El botón ya está listo visualmente en otras pantallas de Bukea (`views/negocio.js`); falta el flujo equivalente en `views/admin.js` y un endpoint `/api/admin/google` / `/api/admin/apple` que verifique el idToken y solo emita sesión si `role = 'admin'`, mismo patrón que `/api/admin/login`.
+Ver la actualización arriba. El PIN no quedó como respaldo: se eliminó por completo, Google es el único camino de entrada. Queda un pendiente menor: Apple no se agregó (solo Google) — si algún día Google falla o cambia de cuenta, no hay puerta trasera, así que si eso preocupa habría que agregar Apple como alterna, no PIN.
 
 ---
 
@@ -40,7 +38,7 @@
 
 | # | Pendiente | Prioridad | Cuándo vale la pena hacerlo |
 |---|-----------|-----------|------------------------------|
-| 1 | Login del panel con Google/Apple | 🟡 Media | Si el parche de teléfono/PIN se siente frágil o hay que dar acceso a alguien más |
+| 1 | ~~Login del panel con Google/Apple~~ | ✅ Resuelto (Google, 2026-08-27) | Apple sigue pendiente si hace falta |
 | 2 | Categorías y bancos editables desde Configuración | 🟢 Baja | Solo si aparece una necesidad real de agregar categorías seguido |
 | 3 | Fase 3: auditoría y roles de equipo | 🟢 Baja | Cuando haya un segundo administrador de verdad |
 

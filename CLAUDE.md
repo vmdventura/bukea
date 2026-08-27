@@ -186,6 +186,21 @@ Ver **`docs/APP-STORE-CHECKLIST.md`** — checklist completo con lo hecho y los 
 - Verificado: `xcodebuild` compila limpio y la app arranca en el simulador contra producción.
 - **Ojo:** el botón de Google en la app nativa sigue "Próximamente" hasta que exista el OAuth client de tipo iOS (`iosClientId` en `capacitor.config.json` sigue siendo placeholder). Y **hay que desplegar el backend antes de enviar a revisión** (delete-account y el audience de Apple solo existen en el repo).
 
+## Seguridad máxima del panel + súper administrador fijo + /negocios exclusivo (2026-08-27)
+
+A pedido explícito de Víctor: "dejar siempre registrado" su acceso, cerrar el hueco de un panel protegido solo por un PIN de 4 dígitos, y que `/negocios` sea inequívocamente la puerta de entrada de dueños (no una landing mezclada con clientes).
+
+- **`lib/super-admin.js`** (nuevo): `SUPER_ADMIN_EMAIL = 'vmdventura@gmail.com'`, fijo en código, no en configuración editable. `ensureSuperAdmin()` en `db/init.js` corre en cada arranque del servidor y repara esa cuenta a `role='admin'` + `disabled_at=NULL` si ya existe con ese correo. `routes/admin.js` la blinda contra `toggle-disabled` desde el propio panel (403).
+- **Login del panel (`/admin`) solo con Google — el PIN se retiró por completo** (actualización el mismo día, a pedido explícito de Víctor: "descartar el PIN para evitar futuros ataques"): `POST /api/admin/login-google` (reutiliza `lib/oauth.js`) es ahora la única puerta — `POST /api/admin/login` y `/login/verify-code` (el intento intermedio de PIN + código por correo) se eliminaron del código, no solo se ocultaron. `views/admin.js` ya no tiene formulario de teléfono/PIN, solo el botón de Google (visible cuando `GOOGLE_CLIENT_ID` está configurado; si no, muestra un aviso en vez de un formulario roto). El correo del súper administrador se autoprovisiona/repara en el acto la primera vez que entra así, aunque su cuenta `admin` todavía no exista en esa base. Cualquier otro admin necesita `role='admin'` ya asignado (`db/make-admin.js`) con ese mismo correo de Google guardado.
+- **Sesión del panel con vencimiento**: nueva columna `users.admin_token_expires_at`; `issueAdminToken()` la fija a `NOW() + 8 horas` en cada login exitoso, `requireAdmin` (`lib/auth-middleware.js`) rechaza el token si venció. La sesión de la app normal sigue sin vencer, esto es solo para `/admin` por ser la puerta más sensible.
+- **`/negocios` exclusivo para dueños**: franja fija arriba de todo el contenido de marketing (`.m-access-bar` en `routes/pages.js`) con el CTA "Accede ahora a tu negocio" → `/negocio`, siempre visible sin tener que bajar por la página. Aplica la lectura de `docs/ANALISIS-SITIO-FRESHA.md` (Fresha separa cliente/negocio en dominios distintos, `fresha.com` vs `partners.fresha.com`) sin necesitar un subdominio propio: la franja hace ese mismo trabajo de "esta página es para dueños, aquí entras si ya tienes cuenta" sin dejar de servir como landing de marketing para prospectos nuevos.
+- Apple no se agregó al login del panel (no se pidió esta vez) — ver pendiente en `docs/PANEL-ADMIN-PENDIENTES-2026-08-25.md`.
+- Probado en local de punta a punta: migración corre limpia, login con PIN emite token cuando la cuenta no tiene correo (o SMTP no está configurado), `/admin/me` valida el token recién emitido, `toggle-disabled` rechaza con 403 sobre la cuenta del súper administrador, `/login-google` responde 404 (mismo patrón "no delatar la ruta") cuando `GOOGLE_CLIENT_ID` no está configurado, la franja de `/negocios` aparece en el HTML servido.
+
+### ⚠️ Falta un paso que solo Víctor puede hacer
+
+Para que el súper administrador quede activo en producción de verdad, Víctor tiene que entrar una vez a `https://www.bukeard.com/admin` con el botón "Entrar con Google" usando `vmdventura@gmail.com` — ahí se autoprovisiona la cuenta (si no existe) o se repara a `role='admin'` (si ya existía con otro estado). `GOOGLE_CLIENT_ID` ya está configurado en producción desde el login social del 23-ago (ver `bukea_login_social` en memoria), así que el botón debería aparecer sin pasos adicionales — si no aparece, revisar que esa variable siga puesta en *Setup Node.js App* de cPanel.
+
 ## Próximos pasos probables
 
 1. Búsqueda basada en mapa (Leaflet/OSM) — la pieza que falta de esta noche.

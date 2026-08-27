@@ -15,8 +15,24 @@ const { geocodeNeighborhood } = require('../lib/geocode');
 const { receiptUrl, RECEIPTS_DIR } = require('../lib/uploads');
 const whatsapp = require('../lib/whatsapp');
 const mailer = require('../lib/mailer');
+const oauth = require('../lib/oauth');
 const { getSettings, updateSettings } = require('../lib/settings');
 const rateLimit = require('../lib/rate-limit');
+const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
+
+// Cuánto dura una sesión del panel antes de tener que volver a entrar —
+// mucho más corto que el de la app normal (que no vence): es la puerta más
+// sensible, no tiene sentido dejarla abierta indefinidamente en un
+// navegador compartido u olvidado.
+const ADMIN_SESSION_HOURS = 8;
+
+function issueAdminToken(userId) {
+  const token = crypto.randomBytes(24).toString('hex');
+  return pool.query(
+    'UPDATE users SET token = ?, admin_token_expires_at = NOW() + INTERVAL ? HOUR WHERE id = ?',
+    [token, ADMIN_SESSION_HOURS, userId]
+  ).then(() => token);
+}
 
 const router = express.Router();
 
@@ -49,35 +65,76 @@ function slugify(text) {
 }
 
 // ===== Login del panel =====
-// Mismo teléfono+PIN que la cuenta normal de Bukea, pero solo emite sesión
-// si role = 'admin'. Un teléfono sin cuenta, con PIN incorrecto o sin el
-// rol da exactamente el mismo error — el panel no delata cuál fue el caso.
-router.post('/login', async (req, res) => {
-  const phone = normalizePhone(req.body.phone);
-  const pin = String(req.body.pin || '');
+// Solo Google (2026-08-27, a pedido de Víctor: "descartar el PIN para
+// evitar futuros ataques"). El panel llegó a tener teléfono+PIN y, después,
+// PIN + código por correo como segundo factor — se retiraron los dos: un
+// PIN de 4 dígitos es superficie de ataque por fuerza bruta que no hace
+// falta tener si Google ya resuelve la identidad real de quien entra. Nadie
+// entra sin tener acceso de verdad a esa cuenta de Gmail. El correo fijo
+// del super administrador (lib/super-admin.js) se autoprovisiona/repara la
+// primera vez que entra así, aunque su cuenta 'admin' todavía no exista.
+// Cualquier otro admin necesita que su cuenta ya tenga role='admin' Y ese
+// mismo correo de Google guardado (o su google_sub ya vinculado) — ver
+// db/make-admin.js para promover una cuenta.
+const ADMIN_LOGIN_DENIED = 'No encontramos acceso con esos datos';
 
-  // El panel es la puerta más sensible: límites más estrictos que el login
-  // normal, por teléfono y por IP.
-  const limits = [
-    { key: 'admin:' + phone, max: 5, blockMs: 30 * 60 * 1000 },
+function adminLoginLimits(key, req) {
+  return [
+    { key: 'admin:' + key, max: 5, blockMs: 30 * 60 * 1000 },
     { key: 'admin-ip:' + req.ip, max: 10, blockMs: 60 * 60 * 1000 },
   ];
+}
+
+// Login con Google — la cuenta debe existir con role='admin', salvo el
+// correo fijo del super administrador (lib/super-admin.js), que se
+// autoprovisiona/repara en el acto para que Víctor nunca quede fuera aunque
+// esa cuenta se pierda o todavía no exista en esta base.
+router.post('/login-google', async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Google' });
+  if (!oauth.isGoogleConfigured()) return res.status(404).json({ error: ADMIN_LOGIN_DENIED });
+
+  const limits = adminLoginLimits('google-ip:' + req.ip, req);
   const blocked = rateLimit.check(limits);
   if (blocked) return res.status(429).json({ error: rateLimit.waitMessage(blocked) });
 
-  const [rows] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
-  const user = rows[0];
-  const denied = !user || user.role !== 'admin' || !user.pin_hash || hashPin(pin, user.pin_salt) !== user.pin_hash;
-  if (denied) {
+  let payload;
+  try {
+    payload = await oauth.verifyGoogleIdToken(idToken);
+  } catch (err) {
+    rateLimit.hit(limits);
+    return res.status(401).json({ error: 'No se pudo verificar tu cuenta de Google' });
+  }
+
+  const isSuperAdmin = payload.email && payload.email.toLowerCase() === SUPER_ADMIN_EMAIL;
+  let [rows] = await pool.query('SELECT * FROM users WHERE google_sub = ? OR email = ?', [payload.sub, payload.email]);
+  let user = rows[0];
+
+  if (isSuperAdmin) {
+    if (user) {
+      await pool.query(
+        "UPDATE users SET role = 'admin', disabled_at = NULL, google_sub = ?, email = ? WHERE id = ?",
+        [payload.sub, payload.email, user.id]
+      );
+    } else {
+      const [result] = await pool.query(
+        "INSERT INTO users (name, email, google_sub, role) VALUES (?, ?, ?, 'admin')",
+        [payload.name || 'Víctor', payload.email, payload.sub]
+      );
+      user = { id: result.insertId };
+    }
+  } else if (!user || user.role !== 'admin' || user.disabled_at) {
     const wait = rateLimit.hit(limits);
     if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
-    return res.status(404).json({ error: 'No encontramos acceso con esos datos' });
+    return res.status(404).json({ error: ADMIN_LOGIN_DENIED });
+  } else if (!user.google_sub) {
+    await pool.query('UPDATE users SET google_sub = ? WHERE id = ?', [payload.sub, user.id]);
   }
-  rateLimit.clear(['admin:' + phone]);
 
-  const token = crypto.randomBytes(24).toString('hex');
-  await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
-  res.json({ token, name: user.name });
+  rateLimit.clear(['admin:google-ip:' + req.ip]);
+  const token = await issueAdminToken(user.id);
+  const [fresh] = await pool.query('SELECT name FROM users WHERE id = ?', [user.id]);
+  res.json({ token, name: fresh[0].name });
 });
 
 router.use(requireAdmin);
@@ -267,8 +324,11 @@ router.post('/users/:id/reset-pin', async (req, res) => {
 });
 
 router.post('/users/:id/toggle-disabled', async (req, res) => {
-  const [rows] = await pool.query('SELECT disabled_at FROM users WHERE id = ?', [req.params.id]);
+  const [rows] = await pool.query('SELECT disabled_at, email FROM users WHERE id = ?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (rows[0].email === SUPER_ADMIN_EMAIL) {
+    return res.status(403).json({ error: 'La cuenta del super administrador no se puede desactivar desde el panel' });
+  }
 
   const nowDisabled = !rows[0].disabled_at;
   await pool.query(
