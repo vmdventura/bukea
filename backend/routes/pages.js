@@ -39,17 +39,13 @@ const HOME_STYLE = `
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .hero-inner { position: relative; z-index: 1; }
-  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: #fff; }
-  .hero h1 b {
-    font-weight: inherit;
-    background: linear-gradient(100deg, oklch(80% 0.1 78), oklch(88% 0.09 85) 45%, oklch(74% 0.11 70));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--white); }
+  .hero h1 b { font-weight: inherit; color: var(--gold-600); }
   .hero p { color: rgba(255,255,255,0.78); font-size: 1.08rem; max-width: 46ch; margin: 0 auto 1.4rem; }
   .badge-row { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
-  .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.82rem; font-weight: 700; color: #fff; }
-  .badge-pill.wa { color: #6fe3ab; }
-  .badge-pill.wa .icon { color: #6fe3ab; }
+  .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.82rem; font-weight: 700; color: var(--white); }
+  .badge-pill.wa { color: var(--whatsapp-light); }
+  .badge-pill.wa .icon { color: var(--whatsapp-light); }
   .badge-pill.cash .icon { color: oklch(80% 0.1 78); }
   .search-bar { display: flex; align-items: center; gap: 0.4rem; background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 0.4rem 0.5rem 0.4rem 1.2rem; max-width: 620px; margin: 0 auto; box-shadow: var(--sh-2); transition: box-shadow 200ms var(--ease-out-quart), border-color 200ms var(--ease-out-quart); }
   .search-bar:focus-within { border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.22), var(--sh-2); }
@@ -85,8 +81,16 @@ const HOME_STYLE = `
     .search-bar .btn { width: 100%; justify-content: center; border-radius: 14px; padding: 0.9rem 1.3rem; }
   }
   .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin: 1.6rem 0 0; }
-  .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
+  /* Base clara (2026-08-27): .chip se reusa fuera del hero oscuro del home
+     (en /mapa, directo sobre el fondo claro de la página) — el estilo
+     original solo tenía sentido sobre el degradado oscuro y quedaba texto
+     blanco casi invisible sobre fondo casi blanco. Esta es la base clara;
+     el hero oscuro la sobrescribe más abajo con .hero .chip. */
+  .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; min-height: 44px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart), transform 180ms var(--ease-out-quart); }
   .chip .icon { width: 15px; height: 15px; }
+  .chip.active, .chip:hover { background: var(--teal-900); border-color: var(--teal-900); color: var(--white); transform: translateY(-1px); }
+  .hero .chip { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+  .hero .chip.active, .hero .chip:hover { background: var(--white); border-color: var(--white); color: var(--teal-900); }
   @media (max-width: 560px) {
     /* En móvil estas filas se deslizan en vez de envolver (nowrap +
        overflow-x). Sin nada que lo avise, el borde cortado a mitad de
@@ -108,12 +112,11 @@ const HOME_STYLE = `
     .badge-row { gap: 0.45rem; }
     .badge-pill { font-size: 0.76rem; padding: 0.4rem 0.7rem; }
   }
-  .chip.active, .chip:hover { background: #fff; border-color: #fff; color: var(--teal-900); transform: translateY(-1px); }
   .stat-line { text-align: center; color: var(--soft); font-size: 0.85rem; margin-top: 1.3rem; }
   .pro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 2.2rem 0; }
   .pro-card { display: flex; align-items: center; gap: 0.9rem; padding: 1rem; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 16px; transition: transform 220ms var(--ease-out-quart), box-shadow 220ms var(--ease-out-quart), border-color 220ms var(--ease-out-quart); }
   .pro-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--teal-500); }
-  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); }
+  .pro-avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; transition: transform 260ms var(--ease-out-quart); }
   .pro-card:hover .pro-avatar { transform: scale(1.07); }
   .pro-info { flex: 1; min-width: 0; }
   .pro-name { font-weight: 700; font-size: 0.95rem; }
@@ -122,9 +125,9 @@ const HOME_STYLE = `
   .pro-rating { flex: none; font-weight: 700; font-size: 0.85rem; color: var(--gold-700); text-align: right; }
   .pro-rating span { display: block; font-weight: 500; color: var(--soft); font-size: 0.72rem; }
   .empty { text-align: center; color: var(--soft); padding: 3rem 1rem; }
-  .biz-cta { position: relative; overflow: hidden; isolation: isolate; background: var(--teal-900); color: #fff; border-radius: 24px; padding: 2.4rem; text-align: center; margin: 3.5rem 0; }
+  .biz-cta { position: relative; overflow: hidden; isolation: isolate; background: var(--teal-900); color: var(--white); border-radius: 24px; padding: 2.4rem; text-align: center; margin: 3.5rem 0; }
   .biz-cta::before { content: ""; position: absolute; z-index: -1; width: 20rem; height: 20rem; top: -8rem; right: -6rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.5; filter: blur(6px); }
-  .biz-cta h2 { color: #fff; margin: 0 0 0.5rem; font-size: 1.55rem; }
+  .biz-cta h2 { color: var(--white); margin: 0 0 0.5rem; font-size: 1.55rem; }
   .biz-cta p { color: rgba(255,255,255,0.82); max-width: 42ch; margin: 0 auto 1.3rem; }
 </style>`;
 
@@ -331,7 +334,7 @@ ${MAP_STYLE}
 const PROFILE_STYLE = `
 <style>
   .profile-hero { display: flex; gap: 1.4rem; align-items: center; padding: 2rem 0 1.4rem; flex-wrap: wrap; }
-  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); }
+  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; font-family: "Fraunces", serif; flex: none; box-shadow: var(--sh-2); }
   .profile-hero h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
   .profile-meta { color: var(--soft); font-size: 0.95rem; }
   .profile-badges { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
@@ -346,7 +349,7 @@ const PROFILE_STYLE = `
   .cta-row .btn { width: 100%; max-width: 360px; justify-content: center; padding: 0.9rem 1.5rem; font-size: 1rem; }
   .team-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.6rem 0; }
   .team-member { display: flex; flex-direction: column; align-items: center; text-align: center; width: 84px; }
-  .team-avatar { width: 56px; height: 56px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.4rem; transition: transform 220ms var(--ease-out-quart); }
+  .team-avatar { width: 56px; height: 56px; border-radius: 50%; color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: "Fraunces", serif; margin-bottom: 0.4rem; transition: transform 220ms var(--ease-out-quart); }
   .team-member:hover .team-avatar { transform: scale(1.08) rotate(-3deg); }
   .team-name { font-weight: 700; font-size: 0.8rem; line-height: 1.2; }
   .team-role { color: var(--soft); font-size: 0.72rem; }
@@ -482,11 +485,11 @@ const MARKETING_STYLE = `
   .m-feature.-lg .icon-badge { width: 50px; height: 50px; }
   .m-feature.-lg .icon-badge .icon { width: 26px; height: 26px; }
   .m-feature.-lg h3 { font-size: 1.3rem; }
-  .m-feature.-dark { background: var(--teal-900); border-color: var(--teal-900); color: #fff; position: relative; overflow: hidden; isolation: isolate; }
+  .m-feature.-dark { background: var(--teal-900); border-color: var(--teal-900); color: var(--white); position: relative; overflow: hidden; isolation: isolate; }
   .m-feature.-dark::before { content: ""; position: absolute; z-index: -1; width: 14rem; height: 14rem; top: -6rem; right: -5rem; border-radius: 50%; background: radial-gradient(circle, var(--gold-100), transparent 70%); opacity: 0.45; }
-  .m-feature.-dark h3 { color: #fff; }
+  .m-feature.-dark h3 { color: var(--white); }
   .m-feature.-dark p { color: rgba(255,255,255,0.78); }
-  .m-feature.-dark .icon-badge { background: rgba(255,255,255,0.14); color: #fff; }
+  .m-feature.-dark .icon-badge { background: rgba(255,255,255,0.14); color: var(--white); }
   @media (max-width: 720px) {
     .m-bento { grid-template-columns: 1fr; }
     .m-feature.-lg { grid-column: span 1; }
@@ -512,6 +515,12 @@ const MARKETING_STYLE = `
   @media (max-width: 720px) { .m-steps { grid-template-columns: 1fr; } }
 
   .m-cats { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin: 0 0 3.5rem; }
+  /* .chip no vive en MARKETING_STYLE por defecto (solo en HOME_STYLE) —
+     esta página lo usa en .m-cats sin ese bloque cargado, así que se
+     replica aquí la versión clara (mismo criterio que en HOME_STYLE). */
+  .m-cats .chip { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; padding: 0.5rem 1rem; min-height: 44px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font-size: 0.85rem; font-weight: 700; transition: background 180ms var(--ease-out-quart), border-color 180ms var(--ease-out-quart), color 180ms var(--ease-out-quart); }
+  .m-cats .chip .icon { width: 15px; height: 15px; }
+  .m-cats .chip:hover { background: var(--teal-900); border-color: var(--teal-900); color: var(--white); }
 
   .m-faq { max-width: 720px; margin: 0 auto 3.5rem; display: flex; flex-direction: column; gap: 0.7rem; }
   .m-faq details { padding: 1.1rem 1.3rem; }
@@ -753,7 +762,7 @@ const DOWNLOAD_STYLE = `
   .dl-card { padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
   .dl-card h3 { margin: 0.3rem 0 0; font-size: 1.15rem; color: var(--teal-900); }
   .dl-card p { margin: 0 0 0.8rem; color: var(--soft); font-size: 0.88rem; line-height: 1.5; }
-  .dl-qr { width: 148px; height: 148px; border-radius: 14px; border: 1px solid var(--line); padding: 8px; background: #fff; }
+  .dl-qr { width: 148px; height: 148px; border-radius: 14px; border: 1px solid var(--line); padding: 8px; background: var(--white); }
   .dl-card .btn { margin-top: 0.4rem; }
   .dl-badges { display: flex; gap: 0.6rem; justify-content: center; align-items: center; opacity: 0.55; filter: grayscale(0.3); }
   .dl-badges img { height: 42px; width: auto; }
@@ -826,7 +835,7 @@ const CONTACT_STYLE = `
   }
   .contact-hero-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
   .contact-hero .badge-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: oklch(80% 0.1 78); margin: 0 0 1.1rem; }
-  .contact-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: #fff; }
+  .contact-hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 0.7rem; color: var(--white); }
   .contact-hero p { color: rgba(255,255,255,0.78); font-size: 1.05rem; max-width: 46ch; margin: 0 auto; }
   @media (max-width: 560px) { .contact-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
 
