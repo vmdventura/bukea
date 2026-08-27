@@ -511,13 +511,22 @@ const MARKETING_STYLE = `
   .mkt-hero .mkt-hero-cta { margin-top: 1.5rem; }
   @media (max-width: 560px) { .mkt-hero { padding: 2.6rem 20px; border-radius: 0; margin: 0 -20px; width: auto; } }
 
-  /* Franja de cifras entre el hero y el bento (2026-08-27) — puente visual
-     para /negocios: el hero vende la idea, esto la vuelve concreta antes
-     de entrar al detalle de funciones. */
-  .m-highlights { display: flex; justify-content: center; gap: 2.4rem; flex-wrap: wrap; margin: 2.2rem 0 0; padding: 1.4rem 0; text-align: center; }
+  /* Franja de cifras entre el hero y el bento (2026-08-27, segunda pasada:
+     la primera versión era una fila suelta con demasiado aire alrededor —
+     se veía "huérfana", sin relación visual con nada. Ahora es una
+     tarjeta que se monta sobre el borde inferior del hero (margin-top
+     negativo), centrada y con su propio fondo, así queda anclada en vez
+     de flotando sola en medio de la página. */
+  .m-highlights {
+    display: flex; justify-content: center; gap: 2.6rem; flex-wrap: wrap;
+    max-width: 640px; margin: -1.6rem auto 2.8rem; padding: 1.3rem 2.2rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--sh-3); position: relative; z-index: 2; text-align: center;
+  }
   .m-highlights > div { display: flex; flex-direction: column; gap: 0.15rem; }
-  .m-highlights b { font-family: "Fraunces", serif; font-size: 1.5rem; color: var(--teal-700); }
-  .m-highlights span { font-size: 0.8rem; color: var(--soft); }
+  .m-highlights b { font-family: "Fraunces", serif; font-size: 1.4rem; color: var(--teal-700); }
+  .m-highlights span { font-size: 0.78rem; color: var(--soft); }
+  @media (max-width: 560px) { .m-highlights { gap: 1.4rem 2rem; margin: -1.2rem 20px 2.2rem; padding: 1.1rem 1.4rem; } }
 
   /* Bento: dos tarjetas grandes (los diferenciadores) + cuatro de apoyo,
      nunca del mismo tamaño — evita la cuadrícula idéntica de "features". */
