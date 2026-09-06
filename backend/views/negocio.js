@@ -269,9 +269,20 @@ function negocioShell({ base, googleClientId, appleClientId }) {
 
   @media (max-width: 860px) {
     #dash.show { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; overflow-x: auto; padding: 0.8rem 1rem; }
+    /* En mobile (embebido dentro de la app nativa vía iframe) el sidebar
+       oscuro tipo panel de escritorio se ve como un sitio aparte, no como
+       parte de la app — aquí se aclara para que combine con el nav blanco
+       de la PWA (2026-09-06, a pedido de Víctor: "no sacar al usuario fuera
+       de la app"). El desktop conserva el sidebar oscuro sin tocar. */
+    .sidebar {
+      width: 100%; height: auto; position: static; flex-direction: row; align-items: center;
+      overflow-x: auto; padding: 0.7rem 0.6rem;
+      background: var(--card); color: var(--ink); border-bottom: 1px solid var(--line);
+    }
     .sidebar-brand, .sidebar-biz { display: none; }
-    .nav-item { flex: none; width: auto; white-space: nowrap; }
+    .nav-item { flex: none; width: auto; white-space: nowrap; color: var(--soft); }
+    .nav-item:hover { background: var(--teal-50); color: var(--teal-700); }
+    .nav-item.active { background: var(--teal-50); color: var(--teal-700); }
     .sidebar-foot { margin-top: 0; margin-left: auto; padding-top: 0; border-top: none; }
     .content { padding: 1.4rem 1.1rem 2.4rem; }
   }
