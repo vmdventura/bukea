@@ -1555,7 +1555,7 @@
     <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
     <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
     <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="go('cuenta')"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <button class="nav-btn" data-s="pro" onclick="openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -3246,6 +3246,17 @@
         proSlug() ? 'Administrar mi negocio' : 'Crear mi negocio';
     }
   }
+
+  // Botón "Perfil" del nav (2026-09-06): sin sesión no tiene sentido mostrar
+  // la pantalla de cuenta con un único botón "Iniciar sesión" — vamos
+  // directo al login. Con sesión sí muestra la cuenta normal.
+  window.openPerfil = function () {
+    if (!getSession()) {
+      requireAccount(function () { go('cuenta'); }, 'Inicia sesión para ver tu perfil');
+      return;
+    }
+    go('cuenta');
+  };
 
   window.clientLogout = function () {
     localStorage.removeItem('bukea_session');
