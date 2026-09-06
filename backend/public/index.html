@@ -266,11 +266,11 @@
   /* Verificación de correo obligatoria (2026-08-27) — modal centrado, no
      descartable con un toque afuera ni con "atrás": la única salida es
      verificar o cerrar sesión, a propósito. */
-  .verify-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 22px; padding: 1.9rem 1.7rem; box-shadow: 0 20px 50px rgba(10,40,38,0.28); animation: splash-pop 280ms var(--ease); text-align: left; }
+  .verify-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 22px; padding: 1.9rem 1.7rem; box-shadow: 0 20px 50px rgba(10,40,38,0.28); animation: splash-pop 280ms var(--ease); text-align: center; }
   .verify-card h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.3rem; color: var(--ink); margin: 0 0 0.8rem; }
   .verify-card p { font-size: 0.88rem; color: var(--soft); line-height: 1.55; margin: 0 0 0.9rem; }
-  .verify-card .v-email { font-weight: 700; color: var(--ink); }
-  .verify-card .v-actions { display: flex; align-items: center; justify-content: flex-end; gap: 1.1rem; margin-top: 1.2rem; }
+  .verify-card .v-email { font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .verify-card .v-actions { display: flex; align-items: center; justify-content: center; gap: 1.1rem; margin-top: 1.2rem; }
   .verify-card .v-logout { background: none; border: none; color: var(--teal-700); font-weight: 700; font-size: 0.86rem; cursor: pointer; padding: 0.4rem; }
   .verify-card .v-resend { background: var(--brand-teal); color: #fff; border: none; border-radius: 999px; padding: 0.75rem 1.4rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; box-shadow: var(--sh-teal); transition: transform 120ms var(--ease); }
   .verify-card .v-resend:active { transform: scale(0.96); }
@@ -1005,6 +1005,16 @@
     <!-- Paso 1: teléfono -->
     <div id="w-step-phone">
       <p class="w-sub" id="w-lead">Ingresa tu número para continuar</p>
+
+      <div class="reg-cat-grid" id="w-account-type" style="grid-template-columns:repeat(2,1fr)">
+        <button type="button" class="reg-cat-card sel" onclick="pickAccountType(this,'client')">
+          <svg class="icon"><use href="#i-user"/></svg><span class="lbl">Soy cliente</span>
+        </button>
+        <button type="button" class="reg-cat-card" onclick="pickAccountType(this,'owner')">
+          <svg class="icon"><use href="#i-scissors"/></svg><span class="lbl">Tengo un negocio</span>
+        </button>
+      </div>
+
       <div class="phone-group">
         <span class="flag">🇩🇴</span><span class="prefix">+1</span>
         <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
@@ -1562,7 +1572,7 @@
   <div class="sheet-backdrop center" id="verify-backdrop">
     <div class="verify-card">
       <h2>Verifica tu correo</h2>
-      <p>Hemos enviado un correo de verificación a:</p>
+      <p>Enviamos un correo a:</p>
       <p class="v-email" id="verify-email-addr"></p>
       <p>Haz clic en el enlace del correo para continuar. Puede tardar unos minutos; revisa también tu carpeta de spam.</p>
       <p class="w-error" id="verify-error"></p>
@@ -3331,6 +3341,19 @@
 
   let welcomePhone = '';
 
+  // Cliente vs. dueño de negocio (2026-09-06): se elige una vez, en el
+  // primer paso del login/registro, antes de escoger teléfono o Google/
+  // Apple — así aplica a los tres caminos de crear cuenta con un solo
+  // selector. Para una cuenta ya existente el valor se ignora en el
+  // servidor (routes/auth.js), no hay forma de "perder" tu tipo por
+  // tocar el botón equivocado en un login normal.
+  let pendingAccountType = 'client';
+  window.pickAccountType = function (btn, type) {
+    document.querySelectorAll('#w-account-type .reg-cat-card').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    pendingAccountType = type;
+  };
+
   /* ===== Login con Google y Apple =====
      Un solo botón "activo" sirve para el cliente y, gracias a
      requireAccount()/openPro(), también para entrar como negocio.
@@ -3487,7 +3510,7 @@
   }
 
   function handleGoogleCredential(response) {
-    socialLogin('/api/auth/google', { idToken: response.credential }, 'google');
+    socialLogin('/api/auth/google', { idToken: response.credential, accountType: pendingAccountType }, 'google');
   }
 
   async function loginWithApple() {
@@ -3505,7 +3528,7 @@
         });
         const r = result.response || {};
         const fullName = [r.givenName, r.familyName].filter(Boolean).join(' ') || null;
-        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName }, 'apple');
+        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName, accountType: pendingAccountType }, 'apple');
       } catch (err) {
         // El usuario cerró la hoja del sistema: no es un error que mostrar.
         if (err && /cancel/i.test(String(err.message || err.error || ''))) return;
@@ -3521,7 +3544,7 @@
       const fullName = result.user && result.user.name
         ? [result.user.name.firstName, result.user.name.lastName].filter(Boolean).join(' ')
         : null;
-      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName }, 'apple');
+      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName, accountType: pendingAccountType }, 'apple');
     } catch (err) {
       if (err && err.error === 'popup_closed_by_user') return;
       console.error(err);
@@ -3625,6 +3648,12 @@
       cb();
     } else {
       go('inicio');
+      // Cuenta de dueño (elegido al registrarse, ver pickAccountType): entra
+      // directo a su panel de negocio en vez del marketplace de cliente —
+      // pero solo en un login "de verdad" (sin pendingAfterLogin), nunca
+      // cuando el login fue just-in-time para completar otra cosa (ej.
+      // reservar), donde el callback ya sabe a dónde debe ir.
+      if (session && session.accountType === 'owner') openPro();
     }
   }
 
@@ -3711,6 +3740,7 @@
           name: document.getElementById('w-name').value,
           email: document.getElementById('w-email').value,
           pin: document.getElementById('w-newpin').value,
+          accountType: pendingAccountType,
         }),
       });
       const data = await res.json();

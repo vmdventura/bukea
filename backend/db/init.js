@@ -249,6 +249,15 @@ async function migrate() {
   // haber entrado nunca por Google al panel. `admin_token` es su propia
   // columna, solo la toca issueAdminToken (routes/admin.js).
   await safeAlter('ALTER TABLE users ADD COLUMN admin_token VARCHAR(64)');
+
+  // Cliente vs. dueño de negocio, fijado al registrarse (2026-09-06, a
+  // pedido de Víctor): se elige en el paso de crear cuenta (teléfono+PIN,
+  // Google o Apple) y decide a qué pantalla entra la app después de iniciar
+  // sesión (routes/auth.js incluye account_type en la sesión; el frontend
+  // decide en enterApp()). Cuentas ya existentes quedan en 'client' por
+  // defecto — no cambia nada para ellas, pueden seguir usando "Administrar
+  // mi negocio" desde Perfil igual que antes.
+  await safeAlter("ALTER TABLE users ADD COLUMN account_type ENUM('client','owner') NOT NULL DEFAULT 'client'");
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

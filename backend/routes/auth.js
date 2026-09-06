@@ -19,6 +19,14 @@ function loginLimitKeys(req, phone) {
   ];
 }
 
+// Cliente vs. dueño de negocio, elegido en el paso de crear cuenta — ver
+// db/init.js. Cualquier valor que no sea 'owner' cae en 'client' (el
+// default seguro), así un body vacío o corrupto nunca crea una cuenta con
+// un tipo inválido.
+function normalizeAccountType(value) {
+  return value === 'owner' ? 'owner' : 'client';
+}
+
 async function issueToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, userId]);
@@ -28,7 +36,7 @@ async function issueToken(userId) {
 // Busca una cuenta por proveedor social (o por email, para no duplicar la
 // cuenta de alguien que ya se había registrado con teléfono+PIN) y la crea
 // si no existe. Devuelve la misma forma de sesión que login/register.
-async function upsertSocialUser({ column, sub, email, name }) {
+async function upsertSocialUser({ column, sub, email, name, accountType }) {
   let [rows] = await pool.query(`SELECT * FROM users WHERE ${column} = ?`, [sub]);
   let user = rows[0];
 
@@ -45,21 +53,27 @@ async function upsertSocialUser({ column, sub, email, name }) {
     // El correo que da Google/Apple ya viene verificado por ellos — si la
     // cuenta no tenía email_verified_at (p.ej. nació por teléfono+PIN y
     // ahora vincula Google), se marca verificada en el mismo paso.
+    // accountType NO se toca aquí a propósito: es una cuenta que ya existe,
+    // su tipo se fijó cuando se creó.
     await pool.query(
       `UPDATE users SET ${column} = COALESCE(${column}, ?), email = COALESCE(email, ?),
          email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ?`,
       [sub, email, user.id]
     );
   } else {
+    const type = normalizeAccountType(accountType);
     const [result] = await pool.query(
-      `INSERT INTO users (phone, name, email, email_verified_at, ${column}) VALUES (NULL, ?, ?, NOW(), ?)`,
-      [name || 'Cliente Bukea', email, sub]
+      `INSERT INTO users (phone, name, email, email_verified_at, account_type, ${column}) VALUES (NULL, ?, ?, NOW(), ?, ?)`,
+      [name || 'Cliente Bukea', email, type, sub]
     );
-    user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email };
+    user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email, account_type: type };
   }
 
   const token = await issueToken(user.id);
-  return { token, name: user.name, phone: user.phone, email: user.email || email || null, emailVerified: true };
+  return {
+    token, name: user.name, phone: user.phone, email: user.email || email || null, emailVerified: true,
+    accountType: user.account_type || 'client',
+  };
 }
 
 router.post('/check', async (req, res) => {
@@ -87,6 +101,7 @@ router.post('/register', async (req, res) => {
   const name = (req.body.name || '').trim();
   const pin = String(req.body.pin || '');
   const email = String(req.body.email || '').trim().toLowerCase();
+  const accountType = normalizeAccountType(req.body.accountType);
 
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Ingresa un número dominicano válido (809, 829 u 849)' });
@@ -109,11 +124,11 @@ router.post('/register', async (req, res) => {
   const salt = crypto.randomBytes(16).toString('hex');
   const token = crypto.randomBytes(24).toString('hex');
   const [result] = await pool.query(
-    'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token) VALUES (?, ?, ?, ?, ?, ?)',
-    [phone, name, email, salt, hashPin(pin, salt), token]
+    'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token, account_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [phone, name, email, salt, hashPin(pin, salt), token, accountType]
   );
   await sendVerificationEmail(req, result.insertId, email, name);
-  res.status(201).json({ token, name, phone, email, emailVerified: false });
+  res.status(201).json({ token, name, phone, email, emailVerified: false, accountType });
 });
 
 // Enlace de verificación (2026-08-27): token de un solo uso, vence en 24h.
@@ -175,7 +190,7 @@ router.post('/resend-verification', requireAuth, async (req, res) => {
 router.get('/session', requireAuth, (req, res) => {
   res.json({
     id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
-    emailVerified: Boolean(req.user.email_verified_at),
+    emailVerified: Boolean(req.user.email_verified_at), accountType: req.user.account_type,
   });
 });
 
@@ -206,7 +221,10 @@ router.post('/login', async (req, res) => {
 
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
-  res.json({ token, name: user.name, phone: user.phone, email: user.email, emailVerified: Boolean(user.email_verified_at) });
+  res.json({
+    token, name: user.name, phone: user.phone, email: user.email,
+    emailVerified: Boolean(user.email_verified_at), accountType: user.account_type,
+  });
 });
 
 /* ===== Verificación por WhatsApp (OTP) =====
@@ -281,7 +299,10 @@ router.post('/otp/verify', async (req, res) => {
   if (users.length > 0) {
     const token = crypto.randomBytes(24).toString('hex');
     await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, users[0].id]);
-    return res.json({ verified: true, exists: true, token, name: users[0].name, phone, email: users[0].email, emailVerified: Boolean(users[0].email_verified_at) });
+    return res.json({
+      verified: true, exists: true, token, name: users[0].name, phone, email: users[0].email,
+      emailVerified: Boolean(users[0].email_verified_at), accountType: users[0].account_type,
+    });
   }
   res.json({ verified: true, exists: false, phone });
 });
@@ -354,7 +375,7 @@ router.post('/reset-pin', async (req, res) => {
     return res.status(401).json({ error: 'Código incorrecto' });
   }
 
-  const [users] = await pool.query('SELECT id, name, phone FROM users WHERE email = ?', [email]);
+  const [users] = await pool.query('SELECT id, name, phone, account_type FROM users WHERE email = ?', [email]);
   const user = users[0];
   if (!user) return res.status(404).json({ error: 'No encontramos esa cuenta' });
 
@@ -366,7 +387,7 @@ router.post('/reset-pin', async (req, res) => {
     'UPDATE users SET pin_salt = ?, pin_hash = ?, token = ? WHERE id = ?',
     [salt, hashPin(newPin, salt), token, user.id]
   );
-  res.json({ token, name: user.name, phone: user.phone });
+  res.json({ token, name: user.name, phone: user.phone, accountType: user.account_type });
 });
 
 /* ===== Login con Google y Apple =====
@@ -385,7 +406,7 @@ router.post('/google', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Google' });
   try {
     const payload = await oauth.verifyGoogleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'google_sub', ...payload });
+    const session = await upsertSocialUser({ column: 'google_sub', ...payload, accountType: req.body.accountType });
     res.json(session);
   } catch (err) {
     if (err.message === 'disabled') {
@@ -401,7 +422,7 @@ router.post('/apple', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Apple' });
   try {
     const payload = await oauth.verifyAppleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name });
+    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name, accountType: req.body.accountType });
     res.json(session);
   } catch (err) {
     if (err.message === 'disabled') {
