@@ -3482,7 +3482,8 @@
     go('cuenta');
   };
 
-  window.clientLogout = function () {
+  window.clientLogout = async function () {
+    await unregisterPushToken();
     localStorage.removeItem('bukea_session');
     localStorage.removeItem('bukea_pro_slug');
     applySessionUI();
@@ -3497,6 +3498,7 @@
     const ok2 = confirm('Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?');
     if (!ok2) return;
     try {
+      await unregisterPushToken();
       const res = await fetch(API_BASE + '/api/auth/delete-account', { method: 'POST', headers: authHeaders() });
       if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
       track('account_deleted');
@@ -3610,6 +3612,53 @@
      usa el mismo SDK web que el navegador, ver `nativeAppleReady` abajo). */
   const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const isIosApp = isNativeApp && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios';
+
+  /* ===== Notificaciones push (2026-09-06): avisar al dueño cuando un
+     cliente reserva con él, vía @capacitor-firebase/messaging. Solo tiene
+     sentido en la app empaquetada — el navegador no tiene el plugin. El
+     registro es "mejor esfuerzo": si el usuario no da permiso, o el
+     plugin no está listo, la app sigue funcionando igual sin push. */
+  async function registerPushToken() {
+    if (!isNativeApp || !getSession()) return;
+    const FirebaseMessaging = window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseMessaging;
+    if (!FirebaseMessaging) return;
+    try {
+      const perm = await FirebaseMessaging.checkPermissions();
+      if (perm.receive !== 'granted') {
+        const req = await FirebaseMessaging.requestPermissions();
+        if (req.receive !== 'granted') return;
+      }
+      const { token } = await FirebaseMessaging.getToken();
+      if (!token) return;
+      localStorage.setItem('bukea_push_token', token);
+      await fetch(API_BASE + '/api/auth/push-token', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ token, platform: isIosApp ? 'ios' : 'android' }),
+      });
+    } catch (err) {
+      console.error('No se pudo registrar el token de notificaciones:', err);
+    }
+  }
+  async function unregisterPushToken() {
+    if (!isNativeApp) return;
+    const token = localStorage.getItem('bukea_push_token');
+    if (!token) return;
+    localStorage.removeItem('bukea_push_token');
+    try {
+      await fetch(API_BASE + '/api/auth/push-token', {
+        method: 'DELETE',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ token }),
+      });
+    } catch (err) { /* el token igual expira solo en Firebase, no es crítico */ }
+  }
+  if (isNativeApp && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseMessaging) {
+    // El token puede rotar mientras la app corre (reinstalación, cambio de
+    // dispositivo) — sin este listener, un usuario que nunca vuelve a
+    // loguear se queda con un token viejo que Firebase ya invalidó.
+    window.Capacitor.Plugins.FirebaseMessaging.addListener('tokenReceived', () => registerPushToken());
+  }
 
   // Muestra los logos cuando las webfonts terminan de cargar (evita la "b"
   // cortada del primer render); a los 2s se muestran igual, pase lo que pase.
@@ -3872,6 +3921,7 @@
     track(method === 'sign_up' ? 'sign_up' : 'login', { method: method || 'phone' });
     applySessionUI();
     syncProSlug();
+    registerPushToken();
     if (session && session.emailVerified === false) {
       verifyGateShow(session.email);
     } else {
@@ -4108,6 +4158,7 @@
     applySessionUI();
     renderAccountBox();
     syncProSlug();
+    registerPushToken();
 
     // Enlaces directos desde el marketplace público (bukeard.com):
     // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>es</string>
 	<key>CFBundleDisplayName</key>
-        <string>Bukea</string>
+	<string>Bukea</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -18,10 +18,31 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.419876529270-reufso0m7njgbgeqc64sv5ea40khvstn</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Bukea usa la cámara solo si eliges tomar una foto para tu comprobante de pago o las fotos de tu negocio.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Bukea usa tu ubicación solo para mostrarte los profesionales más cercanos a ti.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bukea accede a tus fotos solo cuando eliges una para tu comprobante de pago, tu logo o la galería de tu negocio.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -34,23 +55,6 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.419876529270-reufso0m7njgbgeqc64sv5ea40khvstn</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Bukea usa tu ubicación solo para mostrarte los profesionales más cercanos a ti.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Bukea usa la cámara solo si eliges tomar una foto para tu comprobante de pago o las fotos de tu negocio.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Bukea accede a tus fotos solo cuando eliges una para tu comprobante de pago, tu logo o la galería de tu negocio.</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

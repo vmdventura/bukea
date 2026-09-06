@@ -9,3 +9,15 @@ ios/App/App/public/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# Android — copia de www/ dentro del proyecto nativo (se regenera con `cap sync android`).
+# El resto de los artefactos de build (build/, .gradle/, local.properties, *.apk)
+# ya están cubiertos por android/.gitignore (plantilla estándar de Android).
+android/app/src/main/assets/public/
+
+# Firebase (notificaciones push, 2026-09-06): archivos de configuración
+# descargados de la consola de Firebase para el proyecto "Bukea". No son
+# secretos de servidor, pero este repo es público — se quedan solo en
+# local. Ver native/README.md para cómo regenerarlos si se pierden.
+ios/App/App/GoogleService-Info.plist
+android/app/google-services.json
