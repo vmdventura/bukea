@@ -75,8 +75,10 @@ function initials(name) {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
+// Con separador de miles (2026-09-06, a pedido de Víctor: "en buen
+// dominicano" — RD$1,000 en vez de RD$1000) para que se lea de un vistazo.
 function formatPrice(cents) {
-  return 'RD$ ' + Math.round(cents / 100);
+  return 'RD$ ' + Math.round(cents / 100).toLocaleString('en-US');
 }
 
 function esc(value) {

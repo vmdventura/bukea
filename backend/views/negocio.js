@@ -234,6 +234,13 @@ function negocioShell({ base, googleClientId, appleClientId }) {
      a la izquierda (2026-09-06). El nombre del servicio se queda a la
      izquierda, como cualquier campo de texto largo. */
   .svc-row .sv-price { text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
+  .svc-row-head {
+    padding: 0 0.1rem 0.35rem; margin-bottom: 0.4rem !important; border-bottom: 1.5px solid var(--line);
+  }
+  .svc-row-head span {
+    font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--soft);
+  }
+  .svc-row-head span:nth-child(2), .svc-row-head span:nth-child(3) { text-align: center; }
   /* Duración con dos desplegables (horas / minutos). Se quita la flecha
      nativa del <select> — en un cupo tan angosto se comía el espacio del
      número — y se pone una propia, chiquita, sin robarle ancho al texto. */
@@ -609,6 +616,9 @@ ${ICON_SPRITE}
         <button class="btn btn-primary" onclick="saveServicios()">Guardar cambios</button>
       </div>
       <div class="card">
+        <div class="svc-row svc-row-head">
+          <span>Servicio</span><span>Duración</span><span>Precio</span><span></span>
+        </div>
         <div id="servicios-list"><p class="empty-hint">Cargando…</p></div>
         <button class="add-row" onclick="addServicioRow()"><svg class="icon" style="width:14px;height:14px"><use href="#n-plus"/></svg> Agregar servicio</button>
       </div>
@@ -1115,7 +1125,7 @@ ${ICON_SPRITE}
         '<select class="nb-svc-hours">' + svcHoursOptions(0) + '</select>' +
         '<select class="nb-svc-mins">' + svcMinsOptions(0) + '</select>' +
       '</div>' +
-      '<input class="nb-svc-price" type="number" min="0" step="50" placeholder="RD$">' +
+      '<input class="nb-svc-price" type="text" inputmode="numeric" placeholder="RD$" oninput="formatPriceInput(this)">' +
       '<button class="row-del" onclick="this.closest(\\'.nb-svc-row\\').remove()"><svg class="icon"><use href="#n-x"/></svg></button></div>';
   }
   window.nbAddServiceRow = function () {
@@ -1193,7 +1203,7 @@ ${ICON_SPRITE}
       var hours = Number(row.querySelector('.nb-svc-hours').value) || 0;
       var mins = Number(row.querySelector('.nb-svc-mins').value) || 0;
       var min = hours * 60 + mins;
-      var price = Number(row.querySelector('.nb-svc-price').value);
+      var price = parsePriceInput(row.querySelector('.nb-svc-price'));
       if (svcName && min > 0 && price > 0) {
         services.push({ name: svcName, durationMin: min, priceCents: Math.round(price * 100) });
       }
@@ -1309,6 +1319,19 @@ ${ICON_SPRITE}
 
   function money(cents) {
     return 'RD$' + Math.round((cents || 0) / 100).toLocaleString('es-DO');
+  }
+
+  // Precio con coma de miles mientras se escribe (2026-09-06, a pedido de
+  // Víctor: "para que se comprenda en buen dominicano", ej. 1,000 en vez de
+  // 1000). El campo es texto, no number — un <input type="number"> no
+  // puede mostrar comas. window.parsePriceInput quita las comas antes de
+  // guardar.
+  window.formatPriceInput = function (el) {
+    var raw = el.value.replace(/[^\d]/g, '');
+    el.value = raw ? Number(raw).toLocaleString('en-US') : '';
+  };
+  function parsePriceInput(el) {
+    return Number(el.value.replace(/[^\d]/g, '')) || 0;
   }
 
   async function fetchStats() {
@@ -1663,7 +1686,7 @@ ${ICON_SPRITE}
         '<select class="sv-hours">' + svcHoursOptions(s.durationMin) + '</select>' +
         '<select class="sv-mins">' + svcMinsOptions(s.durationMin) + '</select>' +
       '</div>' +
-      '<input type="number" class="sv-price" min="0" step="50" placeholder="RD$" value="' + (s.priceCents ? Math.round(s.priceCents / 100) : '') + '">' +
+      '<input type="text" inputmode="numeric" class="sv-price" placeholder="RD$" oninput="formatPriceInput(this)" value="' + (s.priceCents ? Math.round(s.priceCents / 100).toLocaleString('en-US') : '') + '">' +
       '<button class="row-del" onclick="this.closest(\\'.svc-row\\').remove()"><svg class="icon"><use href="#n-x"/></svg></button></div>';
   }
   function renderServicios() {
@@ -1682,7 +1705,7 @@ ${ICON_SPRITE}
       return {
         name: row.querySelector('.sv-name').value.trim(),
         durationMin: hours * 60 + mins,
-        priceCents: Math.round(Number(row.querySelector('.sv-price').value) * 100),
+        priceCents: parsePriceInput(row.querySelector('.sv-price')) * 100,
       };
     }).filter(function (s) { return s.name && s.durationMin > 0 && s.priceCents >= 0; });
     if (!services.length) { toast('Agrega al menos un servicio con nombre, duración y precio.'); return; }
