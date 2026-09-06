@@ -48,7 +48,7 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
-  body { margin: 0; font-family: "Plus Jakarta Sans", system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  body { margin: 0; font-family: "Plus Jakarta Sans", system-ui, sans-serif; background: var(--bg); color: var(--ink); padding-top: env(safe-area-inset-top, 0px); }
   h1, h2, h3 { font-family: "Fraunces", Georgia, serif; margin: 0; }
   a { color: inherit; }
   button, input, select { font-family: inherit; }
@@ -547,6 +547,7 @@ ${ICON_SPRITE}
 
 <div id="dash">
   <aside class="sidebar">
+    <button class="nav-item" id="nav-exit-app" style="display:none" onclick="exitToApp()"><svg class="icon"><use href="#n-chev-l"/></svg>Volver</button>
     <a href="/" class="sidebar-brand"><span class="mark">b</span>Bukea</a>
     <div class="sidebar-biz">
       <div class="name" id="sb-name">—</div>
@@ -1126,6 +1127,20 @@ ${ICON_SPRITE}
     localStorage.removeItem('bukea_session');
     localStorage.removeItem('bukea_pro_slug');
     location.reload();
+  };
+
+  // Embebido en la app nativa vía iframe (2026-09-06, a pedido de Víctor:
+  // "que todo se sienta como una app nativa, sin salir y sin botón de
+  // 'volver a la app'"). El wrapper de index.html ya no dibuja su propia
+  // barra "Volver a la app" — este botón vive DENTRO del panel, como un
+  // nav-item más, y le avisa al padre por postMessage que lo cierre.
+  // Fuera de la app (bukeard.com/negocio en un navegador normal) el panel
+  // es la página completa, no hay a dónde "volver", así que se queda oculto.
+  if (window.self !== window.top) {
+    document.getElementById('nav-exit-app').style.display = '';
+  }
+  window.exitToApp = function () {
+    window.parent.postMessage({ type: 'bukea:closePanel' }, '*');
   };
 
   /* ---------- Estado del negocio ---------- */

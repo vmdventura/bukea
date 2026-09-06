@@ -1582,10 +1582,10 @@
 
   <!-- ============ NAV ============ -->
   <div class="navbar">
-    <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
-    <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
-    <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <button class="nav-btn active" data-s="inicio" onclick="closePanelWeb();go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+    <button class="nav-btn" data-s="buscar" onclick="closePanelWeb();openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
+    <button class="nav-btn" data-s="miscitas" onclick="closePanelWeb();go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="pro" onclick="closePanelWeb();openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -4160,16 +4160,26 @@
   window.closePanelWeb = function () {
     document.getElementById('panel-web').style.display = 'none';
   };
+  // El panel (views/negocio.js) pide cerrarse a sí mismo por postMessage
+  // (2026-09-06, a pedido de Víctor: que se sienta parte de la app, sin una
+  // barra "Volver a la app" separada). Se valida e.source contra el propio
+  // iframe en vez de confiar en el origin, así ningún otro contenido puede
+  // simular el mensaje.
+  window.addEventListener('message', (e) => {
+    const frame = document.getElementById('panel-web-frame');
+    if (e.source === frame.contentWindow && e.data && e.data.type === 'bukea:closePanel') {
+      closePanelWeb();
+    }
+  });
 </script>
 
-<!-- Panel de negocio completo, embebido a pantalla completa -->
-<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:90; background:var(--bg); flex-direction:column;">
-  <div style="flex:none; display:flex; align-items:center; gap:0.6rem; padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px; background:var(--brand-teal); color:var(--brand-cream);">
-    <button onclick="closePanelWeb()" aria-label="Volver a la app" style="background:none; border:none; color:inherit; display:flex; align-items:center; gap:0.35rem; font-family:inherit; font-size:0.9rem; font-weight:700; padding:6px 4px; cursor:pointer;">
-      <svg class="icon"><use href="#i-chevron-left"/></svg>Volver a la app
-    </button>
-  </div>
-  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; border:none; background:var(--bg);"></iframe>
+<!-- Panel de negocio completo, embebido a pantalla completa. Sin barra
+     "Volver a la app" propia (2026-09-06, a pedido de Víctor): el panel se
+     cierra solo (postMessage) cuando su propio nav-item "Volver" se toca, o
+     al tocar cualquier pestaña de la navbar de abajo — por eso z-index queda
+     por debajo de .navbar (40), así la navbar sigue encima y funcional. -->
+<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:30; background:var(--bg); flex-direction:column;">
+  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; height:100%; border:none; background:var(--bg);"></iframe>
 </div>
 </body>
 </html>
