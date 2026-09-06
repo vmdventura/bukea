@@ -361,10 +361,11 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
     `SELECT b.id, b.client_name, b.day_label, b.time_label, b.appointment_at, b.status,
             b.payment_method, b.created_at, b.receipt_path,
             s.name AS service_name, s.price_cents, s.duration_min,
-            c.name AS collaborator_name
+            c.name AS collaborator_name, u.phone AS client_phone
      FROM bookings b
      JOIN services s ON s.id = b.service_id
      LEFT JOIN collaborators c ON c.id = b.collaborator_id
+     LEFT JOIN users u ON u.id = b.client_user_id
      WHERE b.professional_id = ?
      ORDER BY COALESCE(b.appointment_at, b.created_at) DESC`,
     [professional.id]
@@ -374,6 +375,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
     bookings.map(b => ({
       id: b.id,
       clientName: b.client_name,
+      clientPhone: b.client_phone || null,
       dayLabel: b.appointment_at ? dayLabel(b.appointment_at.slice(0, 10)) : b.day_label,
       timeLabel: b.appointment_at ? formatTime12h(b.appointment_at.slice(11, 16)) : b.time_label,
       appointmentAt: b.appointment_at,

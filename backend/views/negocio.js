@@ -383,6 +383,7 @@ ${ICON_SPRITE}
 <symbol id="n-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
 <symbol id="n-phone" viewBox="0 0 24 24"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.734 1.6l-.46.36a1 1 0 0 0-.29 1.2 12 12 0 0 0 6.316 6.32z"/></symbol>
 <symbol id="n-badge-check" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.74Z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 19.5 5.3 15.6A8 8 0 1 1 8.7 19L4 19.5Z"/><path d="M9 12.3l1.8 1.8 4-4.3"/></symbol>
 </defs></svg>
 
 <div id="auth" class="auth-wrap">
@@ -901,6 +902,7 @@ ${ICON_SPRITE}
     </div>
     <div class="modal-line"><span>Precio</span><span id="bm-price">—</span></div>
     <div class="modal-actions">
+      <a class="btn btn-ghost" id="bm-whatsapp" href="#" target="_blank" rel="noopener" style="display:none"><svg class="icon"><use href="#i-whatsapp"/></svg>WhatsApp</a>
       <button class="btn btn-danger" id="bm-cancel-btn" onclick="cancelBookingFromModal()">Cancelar cita</button>
     </div>
   </div>
@@ -1833,6 +1835,13 @@ ${ICON_SPRITE}
       receiptRow.style.display = 'none';
     }
     document.getElementById('bm-price').textContent = money(b.priceCents);
+    var waLink = document.getElementById('bm-whatsapp');
+    if (b.clientPhone) {
+      waLink.href = 'https://wa.me/1' + b.clientPhone;
+      waLink.style.display = 'flex';
+    } else {
+      waLink.style.display = 'none';
+    }
     var cancelBtn = document.getElementById('bm-cancel-btn');
     cancelBtn.style.display = b.status === 'cancelled' ? 'none' : 'flex';
     document.getElementById('booking-modal-backdrop').classList.add('show');
@@ -2080,9 +2089,16 @@ ${ICON_SPRITE}
 
   /* ---------- Horario ---------- */
   var DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  // El servidor devuelve domingo primero (weekday 0-6, estándar de
+  // JS Date#getDay()) pero en RD la semana visual empieza lunes — este
+  // orden es solo para pintar la lista, weekday real no cambia.
+  var WEEKDAY_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
   function renderHours() {
     var el = document.getElementById('hours-list');
-    el.innerHTML = state.hours.map(function (d) {
+    var ordered = WEEKDAY_DISPLAY_ORDER.map(function (wd) {
+      return state.hours.filter(function (d) { return d.weekday === wd; })[0];
+    }).filter(Boolean);
+    el.innerHTML = ordered.map(function (d) {
       return '<div class="hour-row" data-weekday="' + d.weekday + '">' +
         '<input type="checkbox" ' + (d.open ? 'checked' : '') + ' onchange="toggleHourDay(this)">' +
         '<span class="day">' + DAY_NAMES[d.weekday] + '</span>' +
