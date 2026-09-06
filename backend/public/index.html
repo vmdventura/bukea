@@ -466,13 +466,25 @@
   }
 
   /* Formularios B2B */
-  .field { margin-bottom: 0.9rem; }
+  .field { margin-bottom: 0.9rem; position: relative; }
   .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
   .field input {
     width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
     padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
   }
   .field input:focus { outline: none; border-color: var(--teal-600); }
+  /* Buscador de sector (2026-09-06): sugerencias de sectores reales bajo
+     el campo — sigue siendo texto libre, solo ayuda a escribirlo bien. */
+  .sector-list {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.3rem;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
+    box-shadow: 0 14px 34px rgba(15,40,38,0.14); max-height: 220px; overflow-y: auto; z-index: 20; text-align: left;
+  }
+  .sector-opt {
+    display: block; width: 100%; padding: 0.6rem 0.9rem; background: none; border: none;
+    font-family: inherit; font-size: 0.86rem; color: var(--ink); text-align: left; cursor: pointer;
+  }
+  .sector-opt:hover { background: var(--teal-50); color: var(--teal-700); }
 
   .svc-row { display: flex; gap: 0.45rem; margin-bottom: 0.5rem; align-items: center; }
   .svc-row input { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
@@ -2584,6 +2596,63 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+
+  // Sectores del Gran Santo Domingo (2026-09-06) — mismo listado y patrón
+  // de buscador que el panel de negocio (views/negocio.js), duplicado aquí
+  // porque este archivo no puede reusar módulos del servidor. Texto libre
+  // igual: solo ayuda a escribir bien el sector, no bloquea otros.
+  const RD_SECTORS = [
+    'Piantini', 'Naco', 'Bella Vista', 'Los Cacicazgos', 'Gazcue', 'Ciudad Colonial',
+    'Zona Universitaria', 'Mirador Sur', 'Mirador Norte', 'Ensanche Quisqueya', 'Ensanche Naco',
+    'Ensanche La Fe', 'Ensanche Julieta', 'Ensanche Espaillat', 'Ensanche Luperón',
+    'Villa Consuelo', 'Villa Juana', 'Villa Francisca', 'Villas Agrícolas', 'María Auxiliadora',
+    'Los Ríos', 'Cristo Rey', 'Simón Bolívar', '30 de Mayo', 'San Carlos', 'Villa María',
+    'Honduras del Norte', 'Honduras del Oeste', 'Buenos Aires', 'Centro de los Héroes',
+    'Jardines del Sur', 'Paraíso', 'Arroyo Hondo', 'Los Prados', 'Los Restauradores',
+    'El Millón', 'La Julia', 'Renacimiento', 'Miraflores', 'Serrallés', 'San Gerónimo',
+    'La Esperilla', 'Evaristo Morales', 'Los Jardines', 'Atala', 'La Zurza', 'Domingo Savio',
+    'Gualey', 'Guachupita', 'Capotillo', '24 de Abril', 'Ciudad Nueva', 'San Antón',
+    'Mejoramiento Social', 'Los Peralejos', 'Invivienda', 'Ensanche Isabelita', 'Cancino',
+    'Alma Rosa I', 'Alma Rosa II', 'Los Mina', 'Los Mina Norte', 'Los Mina Sur',
+    'Ensanche Ozama', 'San Isidro', 'Villa Faro', 'Los Frailes', 'Los Trinitarios',
+    'El Almirante', 'La Caleta', 'Boca Chica', 'Sabana Perdida', 'Villa Mella',
+    'Guaricano', 'La Victoria', 'Pantoja', 'Manoguayabo', 'Herrera', 'Bayona',
+    'Buenos Aires de Herrera', 'Cacique', 'Palmarejo', 'Engombe', 'Cristo Rey de Herrera',
+    'Hato Nuevo',
+  ];
+  function initSectorSearch(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || input.dataset.sectorSearchReady) return;
+    input.dataset.sectorSearchReady = '1';
+    input.setAttribute('autocomplete', 'off');
+    const list = document.createElement('div');
+    list.className = 'sector-list';
+    list.id = inputId + '-list';
+    input.insertAdjacentElement('afterend', list);
+
+    function render(query) {
+      const q = query.trim().toLowerCase();
+      const matches = q
+        ? RD_SECTORS.filter(s => s.toLowerCase().indexOf(q) !== -1).slice(0, 8)
+        : RD_SECTORS.slice(0, 8);
+      if (!matches.length) { list.style.display = 'none'; return; }
+      list.innerHTML = matches.map(s => '<button type="button" class="sector-opt">' + esc(s) + '</button>').join('');
+      list.style.display = 'block';
+    }
+    input.addEventListener('focus', () => render(input.value));
+    input.addEventListener('input', () => render(input.value));
+    input.addEventListener('blur', () => {
+      setTimeout(() => { list.style.display = 'none'; }, 150);
+    });
+    list.addEventListener('mousedown', e => {
+      const opt = e.target.closest('.sector-opt');
+      if (!opt) return;
+      input.value = opt.textContent;
+      list.style.display = 'none';
+    });
+  }
+  initSectorSearch('reg-neighborhood');
+  initSectorSearch('pf-neighborhood');
   function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
   function startOfMonth() { const d = startOfToday(); d.setDate(1); return d; }
   function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
