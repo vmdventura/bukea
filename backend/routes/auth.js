@@ -187,10 +187,103 @@ router.post('/resend-verification', requireAuth, async (req, res) => {
   res.json({ sent: true });
 });
 
+/* ===== Cuenta (2026-09-06): editar nombre, correo, PIN y verificar
+   teléfono desde una sesión ya autenticada — antes solo existían las vías
+   de registro/recuperación, no de edición. ===== */
+
+router.patch('/name', requireAuth, async (req, res) => {
+  const name = String(req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Ingresa tu nombre' });
+  await pool.query('UPDATE users SET name = ? WHERE id = ?', [name, req.user.id]);
+  res.json({ name });
+});
+
+router.post('/change-email', requireAuth, async (req, res) => {
+  const newEmail = String(req.body.newEmail || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(newEmail)) return res.status(400).json({ error: 'Ingresa un correo válido' });
+
+  const [taken] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, req.user.id]);
+  if (taken.length > 0) return res.status(409).json({ error: 'Ese correo ya está en uso por otra cuenta' });
+
+  await pool.query('UPDATE users SET email = ?, email_verified_at = NULL WHERE id = ?', [newEmail, req.user.id]);
+  if (mailer.isConfigured()) {
+    await sendVerificationEmail(req, req.user.id, newEmail, req.user.name);
+  }
+  res.json({ email: newEmail, emailVerified: false });
+});
+
+router.post('/change-pin', requireAuth, async (req, res) => {
+  const currentPin = String(req.body.currentPin || '');
+  const newPin = String(req.body.newPin || '');
+  if (!/^\d{4}$/.test(newPin)) return res.status(400).json({ error: 'El PIN nuevo debe ser de 4 dígitos' });
+
+  // Cuentas creadas solo con Google/Apple no tienen PIN todavía — este
+  // mismo endpoint sirve para fijar el primero, sin pedir uno "actual" que
+  // nunca existió.
+  if (req.user.pin_hash) {
+    if (hashPin(currentPin, req.user.pin_salt) !== req.user.pin_hash) {
+      return res.status(401).json({ error: 'El PIN actual no es correcto' });
+    }
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  await pool.query('UPDATE users SET pin_salt = ?, pin_hash = ? WHERE id = ?', [salt, hashPin(newPin, salt), req.user.id]);
+  res.json({ ok: true });
+});
+
+router.post('/verify-phone/send', requireAuth, async (req, res) => {
+  if (!whatsapp.isConfigured()) {
+    return res.status(503).json({ error: 'La verificación por WhatsApp aún no está activa' });
+  }
+  if (!req.user.phone) return res.status(400).json({ error: 'Tu cuenta no tiene un número de teléfono' });
+  if (req.user.phone_verified_at) return res.json({ sent: false, alreadyVerified: true });
+
+  const wait = rateLimit.check([{ key: 'phone-verify:' + req.user.id }]);
+  if (wait > 0) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+  rateLimit.hit([{ key: 'phone-verify:' + req.user.id, max: 3, windowMs: 10 * 60 * 1000, blockMs: 10 * 60 * 1000 }]);
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  const salt = crypto.randomBytes(16).toString('hex');
+  await pool.query(
+    'INSERT INTO auth_codes (phone, code_hash, code_salt, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL 5 MINUTE)',
+    [req.user.phone, hashPin(code, salt), salt]
+  );
+  try {
+    await whatsapp.sendAuthCode(req.user.phone, code);
+  } catch (err) {
+    console.error('Error enviando verificación de teléfono:', err.message);
+    return res.status(502).json({ error: 'No se pudo enviar el código por WhatsApp, intenta de nuevo' });
+  }
+  res.json({ sent: true });
+});
+
+router.post('/verify-phone/verify', requireAuth, async (req, res) => {
+  const code = String(req.body.code || '');
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'El código es de 6 dígitos' });
+
+  const [rows] = await pool.query(
+    'SELECT * FROM auth_codes WHERE phone = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+    [req.user.phone]
+  );
+  const record = rows[0];
+  if (!record) return res.status(404).json({ error: 'Código vencido, pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos, pide un código nuevo' });
+
+  if (hashPin(code, record.code_salt) !== record.code_hash) {
+    await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
+    return res.status(401).json({ error: 'Código incorrecto' });
+  }
+
+  await pool.query('DELETE FROM auth_codes WHERE phone = ?', [req.user.phone]);
+  await pool.query('UPDATE users SET phone_verified_at = NOW() WHERE id = ?', [req.user.id]);
+  res.json({ verified: true });
+});
+
 router.get('/session', requireAuth, (req, res) => {
   res.json({
     id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
     emailVerified: Boolean(req.user.email_verified_at), accountType: req.user.account_type,
+    phoneVerified: Boolean(req.user.phone_verified_at),
   });
 });
 

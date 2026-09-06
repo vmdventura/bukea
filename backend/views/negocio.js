@@ -203,6 +203,19 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .list-row .badge.cancelled { background: var(--danger-100); color: var(--danger); }
   .empty-hint { color: var(--soft); font-size: 0.88rem; padding: 1.2rem 0; text-align: center; }
 
+  /* ===== Mi cuenta ===== */
+  .acct-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+  .acct-row:last-child { border-bottom: none; }
+  .acct-row-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--teal-50); color: var(--teal-700); display: flex; align-items: center; justify-content: center; flex: none; }
+  .acct-row-info { flex: 1; min-width: 0; }
+  .acct-row-info .lbl { font-size: 0.78rem; color: var(--soft); font-weight: 600; }
+  .acct-row-info .val { font-size: 0.98rem; font-weight: 700; color: var(--ink); word-break: break-word; }
+  .acct-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; font-weight: 800; padding: 0.22rem 0.55rem; border-radius: 999px; background: var(--teal-50); color: var(--teal-700); margin-left: 0.5rem; text-transform: none; }
+  .acct-badge.pending { background: #fdf1de; color: #a3660b; }
+  .acct-badge .icon { width: 13px; height: 13px; }
+  .acct-form { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); display: none; }
+  .acct-form.open { display: block; }
+
   /* ===== Calendario (Hoy / Semana / Mes) ===== */
   .cal-view-tabs { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem; margin-bottom: 0.9rem; gap: 0.15rem; }
   .cal-view-tab { background: none; border: none; font-family: inherit; font-size: 0.8rem; font-weight: 700; color: var(--soft); padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
@@ -366,6 +379,10 @@ ${ICON_SPRITE}
 <symbol id="n-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
 <symbol id="n-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
 <symbol id="n-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+<symbol id="n-mail" viewBox="0 0 24 24"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></symbol>
+<symbol id="n-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="n-phone" viewBox="0 0 24 24"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.734 1.6l-.46.36a1 1 0 0 0-.29 1.2 12 12 0 0 0 6.316 6.32z"/></symbol>
+<symbol id="n-badge-check" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.74Z"/><path d="m9 12 2 2 4-4"/></symbol>
 </defs></svg>
 
 <div id="auth" class="auth-wrap">
@@ -727,6 +744,28 @@ ${ICON_SPRITE}
       </div>
 
       <div class="card">
+        <div class="card-head"><h3>Identidad del negocio</h3></div>
+        <p id="perfil-error" class="auth-error" style="margin-bottom:1rem"></p>
+        <div class="field">
+          <label for="pf-name">Tu nombre</label>
+          <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+        </div>
+        <div class="field">
+          <label for="pf-business">Nombre del negocio</label>
+          <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+        </div>
+        <div class="field">
+          <label for="pf-category">Categoría</label>
+          <select id="pf-category"></select>
+        </div>
+        <div class="field" style="margin-bottom:0.8rem">
+          <label for="pf-neighborhood">Sector</label>
+          <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="savePerfil()">Guardar cambios</button>
+      </div>
+
+      <div class="card">
         <div class="card-head"><h3>Logo del negocio</h3></div>
         <div class="nb-logo-pick" style="justify-content:flex-start;gap:1rem;align-items:center">
           <img id="biz-logo-preview" alt="" style="display:none">
@@ -765,32 +804,84 @@ ${ICON_SPRITE}
       </div>
     </div>
 
-    <!-- ===== Mi perfil ===== -->
+    <!-- ===== Mi perfil (cuenta) ===== -->
     <div class="panel" id="panel-perfil">
       <div class="content-head">
         <div>
           <h1>Mi perfil</h1>
-          <p>La información de tu negocio, visible en tu perfil público.</p>
+          <p>Los datos de acceso a tu cuenta de Bukea.</p>
         </div>
-        <button class="btn btn-primary" onclick="savePerfil()">Guardar cambios</button>
       </div>
+
       <div class="card">
-        <p id="perfil-error" class="auth-error" style="margin-bottom:1rem"></p>
-        <div class="field">
-          <label for="pf-name">Tu nombre</label>
-          <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+        <div class="acct-row">
+          <div class="acct-row-icon"><svg class="icon"><use href="#n-user"/></svg></div>
+          <div class="acct-row-info">
+            <div class="lbl">Nombre de la cuenta</div>
+            <div class="val" id="acct-name-val">—</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleAcctForm('acct-name-form')">Editar</button>
         </div>
-        <div class="field">
-          <label for="pf-business">Nombre del negocio</label>
-          <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+        <div class="acct-form" id="acct-name-form">
+          <p id="acct-name-error" class="auth-error" style="margin-bottom:0.8rem"></p>
+          <div class="field" style="margin-bottom:0.6rem">
+            <input id="acct-name-input" type="text" placeholder="Tu nombre">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveAcctName()">Guardar</button>
         </div>
-        <div class="field">
-          <label for="pf-category">Categoría</label>
-          <select id="pf-category"></select>
+
+        <div class="acct-row">
+          <div class="acct-row-icon"><svg class="icon"><use href="#n-mail"/></svg></div>
+          <div class="acct-row-info">
+            <div class="lbl">Correo<span class="acct-badge" id="acct-email-badge"></span></div>
+            <div class="val" id="acct-email-val">—</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleAcctForm('acct-email-form')">Cambiar correo</button>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <label for="pf-neighborhood">Sector</label>
-          <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+        <div class="acct-form" id="acct-email-form">
+          <p id="acct-email-error" class="auth-error" style="margin-bottom:0.8rem"></p>
+          <div class="field" style="margin-bottom:0.6rem">
+            <input id="acct-email-input" type="email" placeholder="nuevo@correo.com">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveAcctEmail()">Guardar y verificar</button>
+        </div>
+
+        <div class="acct-row">
+          <div class="acct-row-icon"><svg class="icon"><use href="#n-lock"/></svg></div>
+          <div class="acct-row-info">
+            <div class="lbl">Contraseña</div>
+            <div class="val">••••</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleAcctForm('acct-pin-form')">Cambiar contraseña</button>
+        </div>
+        <div class="acct-form" id="acct-pin-form">
+          <p id="acct-pin-error" class="auth-error" style="margin-bottom:0.8rem"></p>
+          <div class="field" id="acct-pin-current-field" style="margin-bottom:0.6rem">
+            <label for="acct-pin-current">PIN actual</label>
+            <input id="acct-pin-current" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+          </div>
+          <div class="field" style="margin-bottom:0.6rem">
+            <label for="acct-pin-new">PIN nuevo</label>
+            <input id="acct-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveAcctPin()">Guardar</button>
+        </div>
+
+        <div class="acct-row">
+          <div class="acct-row-icon"><svg class="icon"><use href="#n-phone"/></svg></div>
+          <div class="acct-row-info">
+            <div class="lbl">Número de teléfono<span class="acct-badge" id="acct-phone-badge"></span></div>
+            <div class="val" id="acct-phone-val">—</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="acct-phone-btn" onclick="startPhoneVerify()">Verificar</button>
+        </div>
+        <div class="acct-form" id="acct-phone-form">
+          <p id="acct-phone-error" class="auth-error" style="margin-bottom:0.8rem"></p>
+          <p class="dash-sub" style="margin-bottom:0.6rem">Te mandamos un código de 6 dígitos por WhatsApp.</p>
+          <div class="field" style="margin-bottom:0.6rem">
+            <input id="acct-phone-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="confirmPhoneVerify()">Verificar código</button>
         </div>
       </div>
     </div>
@@ -1036,7 +1127,7 @@ ${ICON_SPRITE}
   };
 
   /* ---------- Estado del negocio ---------- */
-  var state = { profile: null, bookings: [], hours: [], calDate: startOfToday(), calView: 'hoy' };
+  var state = { profile: null, account: null, bookings: [], hours: [], calDate: startOfToday(), calView: 'hoy' };
 
   function startOfToday() {
     var d = new Date();
@@ -1308,15 +1399,17 @@ ${ICON_SPRITE}
 
   async function loadAll() {
     var slug = proSlug();
-    var [profileRes, bookingsRes, hoursRes] = await Promise.all([
+    var [profileRes, bookingsRes, hoursRes, sessionRes] = await Promise.all([
       fetch(BASE + '/api/professionals/' + slug, { headers: authHeaders() }),
       fetch(BASE + '/api/professionals/' + slug + '/bookings', { headers: authHeaders() }),
       fetch(BASE + '/api/professionals/' + slug + '/hours', { headers: authHeaders() }),
+      fetch(BASE + '/api/auth/session', { headers: authHeaders() }),
     ]);
     if (profileRes.status === 401 || profileRes.status === 403) return logout();
     state.profile = await profileRes.json();
     state.bookings = bookingsRes.ok ? await bookingsRes.json() : [];
     state.hours = hoursRes.ok ? await hoursRes.json() : [];
+    state.account = sessionRes.ok ? await sessionRes.json() : null;
 
     document.getElementById('sb-name').textContent = state.profile.businessName;
     document.getElementById('sb-cat').textContent = CAT_LABELS[state.profile.category] || state.profile.category;
@@ -1337,6 +1430,7 @@ ${ICON_SPRITE}
     renderBizLogo();
     renderBizPhotos();
     renderPerfil();
+    renderCuenta();
   }
 
   function money(cents) {
@@ -2136,6 +2230,126 @@ ${ICON_SPRITE}
     renderTeam();
     renderCalendar();
     toast('Perfil guardado.');
+  };
+
+  /* ---------- Mi cuenta (2026-09-06): nombre, correo, PIN, teléfono ---------- */
+  function renderCuenta() {
+    var a = state.account;
+    if (!a) return;
+    document.getElementById('acct-name-val').textContent = a.name || '—';
+    document.getElementById('acct-name-input').value = a.name || '';
+
+    document.getElementById('acct-email-val').textContent = a.email || 'Sin correo';
+    document.getElementById('acct-email-input').value = a.email || '';
+    var emailBadge = document.getElementById('acct-email-badge');
+    if (a.email) {
+      emailBadge.className = 'acct-badge' + (a.emailVerified ? '' : ' pending');
+      emailBadge.innerHTML = a.emailVerified
+        ? '<svg class="icon"><use href="#n-badge-check"/></svg> Verificado'
+        : 'Pendiente de verificar';
+    } else {
+      emailBadge.innerHTML = '';
+    }
+
+    document.getElementById('acct-phone-val').textContent = a.phone || 'Sin teléfono';
+    var phoneBadge = document.getElementById('acct-phone-badge');
+    var phoneBtn = document.getElementById('acct-phone-btn');
+    if (!a.phone) {
+      phoneBadge.innerHTML = '';
+      phoneBtn.style.display = 'none';
+    } else if (a.phoneVerified) {
+      phoneBadge.className = 'acct-badge';
+      phoneBadge.innerHTML = '<svg class="icon"><use href="#n-badge-check"/></svg> Verificado';
+      phoneBtn.style.display = 'none';
+    } else {
+      phoneBadge.className = 'acct-badge pending';
+      phoneBadge.innerHTML = 'Sin verificar';
+      phoneBtn.style.display = '';
+      phoneBtn.textContent = 'Verificar';
+    }
+  }
+
+  window.toggleAcctForm = function (id) {
+    document.querySelectorAll('.acct-form').forEach(function (f) {
+      f.classList.toggle('open', f.id === id && !f.classList.contains('open'));
+    });
+  };
+
+  window.saveAcctName = async function () {
+    document.getElementById('acct-name-error').style.display = 'none';
+    var name = document.getElementById('acct-name-input').value.trim();
+    if (!name) return showAuthError('acct-name-error', 'Ingresa tu nombre.');
+    var res = await fetch(BASE + '/api/auth/name', {
+      method: 'PATCH', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ name: name }),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) return showAuthError('acct-name-error', d.error || 'No se pudo guardar.');
+    state.account.name = d.name;
+    renderCuenta();
+    document.getElementById('acct-name-form').classList.remove('open');
+    toast('Nombre actualizado.');
+  };
+
+  window.saveAcctEmail = async function () {
+    document.getElementById('acct-email-error').style.display = 'none';
+    var newEmail = document.getElementById('acct-email-input').value.trim();
+    var res = await fetch(BASE + '/api/auth/change-email', {
+      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ newEmail: newEmail }),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) return showAuthError('acct-email-error', d.error || 'No se pudo cambiar el correo.');
+    state.account.email = d.email;
+    state.account.emailVerified = d.emailVerified;
+    renderCuenta();
+    document.getElementById('acct-email-form').classList.remove('open');
+    toast('Correo actualizado. Revisa tu bandeja para verificarlo.');
+  };
+
+  window.saveAcctPin = async function () {
+    document.getElementById('acct-pin-error').style.display = 'none';
+    var currentPin = document.getElementById('acct-pin-current').value.trim();
+    var newPin = document.getElementById('acct-pin-new').value.trim();
+    if (!/^\\d{4}$/.test(newPin)) return showAuthError('acct-pin-error', 'El PIN nuevo debe ser de 4 dígitos.');
+    var res = await fetch(BASE + '/api/auth/change-pin', {
+      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ currentPin: currentPin, newPin: newPin }),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) return showAuthError('acct-pin-error', d.error || 'No se pudo cambiar la contraseña.');
+    document.getElementById('acct-pin-current').value = '';
+    document.getElementById('acct-pin-new').value = '';
+    document.getElementById('acct-pin-form').classList.remove('open');
+    toast('Contraseña actualizada.');
+  };
+
+  window.startPhoneVerify = async function () {
+    document.getElementById('acct-phone-error').style.display = 'none';
+    var res = await fetch(BASE + '/api/auth/verify-phone/send', {
+      method: 'POST', headers: authHeaders(),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) return showAuthError('acct-phone-error', d.error || 'No se pudo enviar el código.');
+    if (d.alreadyVerified) { state.account.phoneVerified = true; renderCuenta(); return; }
+    document.getElementById('acct-phone-form').classList.add('open');
+    toast('Código enviado por WhatsApp.');
+  };
+
+  window.confirmPhoneVerify = async function () {
+    document.getElementById('acct-phone-error').style.display = 'none';
+    var code = document.getElementById('acct-phone-code').value.trim();
+    var res = await fetch(BASE + '/api/auth/verify-phone/verify', {
+      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ code: code }),
+    });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) return showAuthError('acct-phone-error', d.error || 'Código incorrecto.');
+    state.account.phoneVerified = true;
+    renderCuenta();
+    document.getElementById('acct-phone-form').classList.remove('open');
+    document.getElementById('acct-phone-code').value = '';
+    toast('Teléfono verificado.');
   };
 
   /* ---------- Navegación de panel ---------- */

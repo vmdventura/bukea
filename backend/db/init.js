@@ -258,6 +258,12 @@ async function migrate() {
   // defecto — no cambia nada para ellas, pueden seguir usando "Administrar
   // mi negocio" desde Perfil igual que antes.
   await safeAlter("ALTER TABLE users ADD COLUMN account_type ENUM('client','owner') NOT NULL DEFAULT 'client'");
+
+  // Verificación de teléfono (2026-09-06, a pedido de Víctor: sección "Mi
+  // perfil" gana "Número de teléfono (agregar verificación)"). Independiente
+  // de email_verified_at, y separada del OTP de login: aquí se verifica el
+  // teléfono de una cuenta ya autenticada, no se usa para entrar.
+  await safeAlter('ALTER TABLE users ADD COLUMN phone_verified_at DATETIME');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una
