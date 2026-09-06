@@ -97,10 +97,23 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .auth-brand .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--teal-600); color: #fff; display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-style: italic; font-weight: 700; }
   .auth-card h1 { font-size: 1.4rem; font-weight: 600; color: var(--teal-900); margin-bottom: 0.3rem; }
   .auth-sub { color: var(--soft); font-size: 0.88rem; margin: 0 0 1.4rem; }
-  .field { margin-bottom: 1rem; text-align: center; }
+  .field { margin-bottom: 1rem; text-align: center; position: relative; }
   .field label { display: block; font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--soft); margin-bottom: 0.4rem; }
   .field input, .field select { width: 100%; padding: 0.72rem 0.9rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.92rem; color: var(--ink); text-align: center; }
   .field input:focus, .field select:focus { outline: none; border-color: var(--teal-500); box-shadow: 0 0 0 4px rgba(15,133,131,0.14); }
+  /* Buscador de sector (2026-09-06): lista de sugerencias bajo el campo de
+     texto — sigue siendo texto libre, esto solo ayuda a escribir bien el
+     nombre del sector real en vez de que cada quien lo escriba distinto. */
+  .sector-list {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.3rem;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
+    box-shadow: var(--sh-3); max-height: 240px; overflow-y: auto; z-index: 20; text-align: left;
+  }
+  .sector-opt {
+    display: block; width: 100%; padding: 0.6rem 0.9rem; background: none; border: none;
+    font-family: inherit; font-size: 0.86rem; color: var(--ink); text-align: left; cursor: pointer;
+  }
+  .sector-opt:hover { background: var(--teal-50); color: var(--teal-700); }
   .auth-error { color: var(--danger); font-size: 0.82rem; margin: 0 0 0.9rem; display: none; }
   .auth-switch { text-align: center; margin-top: 1.2rem; font-size: 0.85rem; color: var(--soft); }
   .auth-switch button { background: none; border: none; color: var(--teal-700); font-weight: 700; cursor: pointer; font-size: inherit; text-decoration: underline; }
@@ -1029,6 +1042,69 @@ ${ICON_SPRITE}
   }
 
   /* ---------- Crear negocio (sesión sin negocio vinculado todavía) ---------- */
+  // Sectores del Gran Santo Domingo (2026-09-06, a pedido de Víctor: "que
+  // no coloquen mal los nombres" — antes era texto libre, ahora un
+  // buscador). Lista de sectores reales conocidos del Distrito Nacional y
+  // los municipios de Santo Domingo Este/Norte/Oeste — no es el listado
+  // oficial completo de circunscripciones, es una ayuda para escribir bien
+  // el nombre, no un catálogo cerrado: el campo sigue aceptando texto libre
+  // si el sector de alguien no aparece aquí.
+  var RD_SECTORS = [
+    'Piantini', 'Naco', 'Bella Vista', 'Los Cacicazgos', 'Gazcue', 'Ciudad Colonial',
+    'Zona Universitaria', 'Mirador Sur', 'Mirador Norte', 'Ensanche Quisqueya', 'Ensanche Naco',
+    'Ensanche La Fe', 'Ensanche Julieta', 'Ensanche Espaillat', 'Ensanche Luperón',
+    'Villa Consuelo', 'Villa Juana', 'Villa Francisca', 'Villas Agrícolas', 'María Auxiliadora',
+    'Los Ríos', 'Cristo Rey', 'Simón Bolívar', '30 de Mayo', 'San Carlos', 'Villa María',
+    'Honduras del Norte', 'Honduras del Oeste', 'Buenos Aires', 'Centro de los Héroes',
+    'Jardines del Sur', 'Paraíso', 'Arroyo Hondo', 'Los Prados', 'Los Restauradores',
+    'El Millón', 'La Julia', 'Renacimiento', 'Miraflores', 'Serrallés', 'San Gerónimo',
+    'La Esperilla', 'Evaristo Morales', 'Los Jardines', 'Atala', 'La Zurza', 'Domingo Savio',
+    'Gualey', 'Guachupita', 'Capotillo', '24 de Abril', 'Ciudad Nueva', 'San Antón',
+    'Mejoramiento Social', 'Los Peralejos', 'Invivienda', 'Ensanche Isabelita', 'Cancino',
+    'Alma Rosa I', 'Alma Rosa II', 'Los Mina', 'Los Mina Norte', 'Los Mina Sur',
+    'Ensanche Ozama', 'San Isidro', 'Villa Faro', 'Los Frailes', 'Los Trinitarios',
+    'El Almirante', 'La Caleta', 'Boca Chica', 'Sabana Perdida', 'Villa Mella',
+    'Guaricano', 'La Victoria', 'Pantoja', 'Manoguayabo', 'Herrera', 'Bayona',
+    'Buenos Aires de Herrera', 'Cacique', 'Palmarejo', 'Engombe', 'Cristo Rey de Herrera',
+    'Hato Nuevo',
+  ];
+
+  function initSectorSearch(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input || input.dataset.sectorSearchReady) return;
+    input.dataset.sectorSearchReady = '1';
+    input.setAttribute('autocomplete', 'off');
+    var list = document.createElement('div');
+    list.className = 'sector-list';
+    list.id = inputId + '-list';
+    input.insertAdjacentElement('afterend', list);
+
+    function render(query) {
+      var q = query.trim().toLowerCase();
+      var matches = q
+        ? RD_SECTORS.filter(function (s) { return s.toLowerCase().indexOf(q) !== -1; }).slice(0, 8)
+        : RD_SECTORS.slice(0, 8);
+      if (!matches.length) { list.style.display = 'none'; return; }
+      list.innerHTML = matches.map(function (s) {
+        return '<button type="button" class="sector-opt">' + esc(s) + '</button>';
+      }).join('');
+      list.style.display = 'block';
+    }
+    input.addEventListener('focus', function () { render(input.value); });
+    input.addEventListener('input', function () { render(input.value); });
+    input.addEventListener('blur', function () {
+      // Retraso para que el click en una opción registre antes de ocultar
+      // la lista (blur del input dispara antes que el click en la lista).
+      setTimeout(function () { list.style.display = 'none'; }, 150);
+    });
+    list.addEventListener('mousedown', function (e) {
+      var opt = e.target.closest('.sector-opt');
+      if (!opt) return;
+      input.value = opt.textContent;
+      list.style.display = 'none';
+    });
+  }
+
   var NB_CATS = Object.keys(CAT_LABELS);
   var nbSelectedCat = NB_CATS[0];
 
@@ -1958,6 +2034,9 @@ ${ICON_SPRITE}
       if (requestedPanel) showPanel(requestedPanel);
     }
   })();
+
+  initSectorSearch('nb-neighborhood');
+  initSectorSearch('pf-neighborhood');
 })();
 </script>
 </body>
