@@ -241,6 +241,14 @@ async function migrate() {
   // vencimiento propio (más corto que el de la app normal, que no vence) y
   // segundo factor por correo sobre el PIN — ver routes/admin.js.
   await safeAlter('ALTER TABLE users ADD COLUMN admin_token_expires_at DATETIME');
+
+  // Token del panel separado del token de la app normal (2026-09-06): antes
+  // ambos compartían la columna `token`, así que un login normal (PIN,
+  // Google o Apple de la app) reemitía ese mismo valor sin tocar
+  // `admin_token_expires_at`, y esa sesión nueva pasaba requireAdmin sin
+  // haber entrado nunca por Google al panel. `admin_token` es su propia
+  // columna, solo la toca issueAdminToken (routes/admin.js).
+  await safeAlter('ALTER TABLE users ADD COLUMN admin_token VARCHAR(64)');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

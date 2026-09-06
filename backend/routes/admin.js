@@ -29,7 +29,7 @@ const ADMIN_SESSION_HOURS = 8;
 function issueAdminToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
   return pool.query(
-    'UPDATE users SET token = ?, admin_token_expires_at = NOW() + INTERVAL ? HOUR WHERE id = ?',
+    'UPDATE users SET admin_token = ?, admin_token_expires_at = NOW() + INTERVAL ? HOUR WHERE id = ?',
     [token, ADMIN_SESSION_HOURS, userId]
   ).then(() => token);
 }
@@ -292,6 +292,17 @@ router.get('/users/:id', async (req, res) => {
 });
 
 router.patch('/users/:id', async (req, res) => {
+  // Bloquea editar el correo del super administrador desde el panel: si se
+  // permitiera, un admin podría cambiarlo primero y luego pasar el chequeo
+  // de email exacto de /toggle-disabled sin que esa cuenta lo detecte como
+  // protegida. Igual que toggle-disabled, la comparación es case-insensitive.
+  if (req.body.email !== undefined) {
+    const [current] = await pool.query('SELECT email FROM users WHERE id = ?', [req.params.id]);
+    if (current[0] && current[0].email && current[0].email.toLowerCase() === SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'El correo del super administrador no se puede cambiar desde el panel' });
+    }
+  }
+
   const fields = [];
   const params = [];
   if (req.body.name !== undefined) {
@@ -326,7 +337,7 @@ router.post('/users/:id/reset-pin', async (req, res) => {
 router.post('/users/:id/toggle-disabled', async (req, res) => {
   const [rows] = await pool.query('SELECT disabled_at, email FROM users WHERE id = ?', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Usuario no encontrado' });
-  if (rows[0].email === SUPER_ADMIN_EMAIL) {
+  if (rows[0].email && rows[0].email.toLowerCase() === SUPER_ADMIN_EMAIL) {
     return res.status(403).json({ error: 'La cuenta del super administrador no se puede desactivar desde el panel' });
   }
 

@@ -2,8 +2,9 @@ const express = require('express');
 const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
 const { receiptUpload, receiptUrl } = require('../lib/uploads');
+const { getSettings } = require('../lib/settings');
 const {
-  nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes,
+  nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes, computeFreeSlots,
 } = require('../lib/availability');
 
 const router = express.Router();
@@ -55,24 +56,46 @@ router.post('/', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Profesional no encontrado' });
   }
 
-  // Revalida contra el horario real y las citas ya tomadas — nunca confiar
-  // en que el horario que mandó el cliente sigue libre (pudo cambiar entre
-  // que cargó la pantalla y que dio "Confirmar").
+  // Revalida contra el horario real, el colchón de antelación y las citas ya
+  // tomadas — nunca confiar en que el horario que mandó el cliente sigue
+  // libre (pudo cambiar entre que cargó la pantalla y que dio "Confirmar").
+  // Antes solo se comprobaba que cupiera dentro del horario del día: dos
+  // servicios con horas de inicio distintas pero que se solapan en el medio
+  // (ej. 45 min a las 9:00 y 30 min a las 9:15) pasaban los dos porque
+  // UNIQUE(professional_id, appointment_at) solo bloquea el mismo minuto
+  // exacto. Ahora se exige que la hora pedida sea uno de los huecos que
+  // realmente devuelve el cálculo de disponibilidad (mismo computeFreeSlots
+  // que usan los endpoints GET), así el solapamiento y el colchón de
+  // antelación se aplican también aquí, no solo en lo que muestra la UI.
   const [hoursRows] = await pool.query(
     'SELECT start_time, end_time FROM professional_hours WHERE professional_id = ? AND weekday = ?',
     [professionalId, weekdayOf(date)]
   );
   const startMin = timeToMinutes(time);
-  const withinHours = hoursRows.some(
-    h => startMin >= timeToMinutes(h.start_time) && startMin + service.duration_min <= timeToMinutes(h.end_time)
-  );
-  if (!withinHours) {
-    return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
+  const { date: today, minutes: nowMinutes } = nowInSantoDomingo();
+  const isToday = date === today;
+
+  if (date < today || (isToday && startMin < nowMinutes)) {
+    return res.status(409).json({ error: 'Esa hora ya pasó, elige otra' });
   }
 
-  const { date: today, minutes: nowMinutes } = nowInSantoDomingo();
-  if (date < today || (date === today && startMin <= nowMinutes)) {
-    return res.status(409).json({ error: 'Esa hora ya pasó, elige otra' });
+  const { bookingSlotMin, bookingBufferMin } = await getSettings();
+  const [busyRows] = await pool.query(
+    `SELECT appointment_at, duration_min FROM bookings
+     WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?`,
+    [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
+  );
+  const busyRanges = busyRows.map(b => {
+    const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
+    return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
+  });
+
+  const freeSlots = computeFreeSlots({
+    hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
+    slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
+  });
+  if (!freeSlots.includes(startMin)) {
+    return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
   }
 
   const appointmentAt = `${date} ${time}:00`;

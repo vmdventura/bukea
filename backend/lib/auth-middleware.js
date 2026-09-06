@@ -16,20 +16,24 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-// Exige que el token de sesión pertenezca a una cuenta con role = 'admin'
-// (asignada a mano por SQL o autoprovisionada para el super administrador
-// fijo — ver db/make-admin.js y lib/super-admin.js) y que la sesión del
-// panel no haya vencido (admin_token_expires_at, ver ADMIN_SESSION_HOURS en
-// routes/admin.js — la app normal no vence, el panel sí, es la puerta más
-// sensible). Responde 404, no 401/403, para que la ruta del panel no delate
-// su existencia a quien no tiene acceso.
+// Exige un token del panel (admin_token, distinto de `token` — la sesión de
+// la app normal — desde 2026-09-06: antes compartían columna, así que un
+// login normal de PIN/Google/Apple reemitía `token` sin tocar
+// admin_token_expires_at, y esa sesión nueva pasaba este chequeo sin haber
+// entrado nunca por Google al panel) que pertenezca a una cuenta con
+// role = 'admin' (asignada a mano por SQL o autoprovisionada para el super
+// administrador fijo — ver db/make-admin.js y lib/super-admin.js) y que la
+// sesión del panel no haya vencido (admin_token_expires_at, ver
+// ADMIN_SESSION_HOURS en routes/admin.js — la app normal no vence, el panel
+// sí, es la puerta más sensible). Responde 404, no 401/403, para que la
+// ruta del panel no delate su existencia a quien no tiene acceso.
 async function requireAdmin(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(404).end();
 
   const [rows] = await pool.query(
-    'SELECT id, name, phone, email, role, disabled_at, admin_token_expires_at FROM users WHERE token = ?',
+    'SELECT id, name, phone, email, role, disabled_at, admin_token_expires_at FROM users WHERE admin_token = ?',
     [token]
   );
   const user = rows[0];

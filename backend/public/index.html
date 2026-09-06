@@ -1465,12 +1465,32 @@
     <h1 class="app-h1">Mis citas</h1>
     <p class="app-sub">Tus reservas en Bukea</p>
     <div id="miscitas-list"></div>
+  </div>
 
-    <!-- Mi cuenta: visible solo con sesión. "Eliminar mi cuenta" es
-         requisito del App Store (regla 5.1.1) para toda app con registro. -->
-    <div id="account-box" style="display:none;margin-top:2rem;padding-top:1.2rem;border-top:1px solid var(--line, rgba(0,0,0,0.08))">
+  <!-- ============ PERFIL (cuenta del cliente + entrada al negocio) ============
+       Antes esta pestaña llevaba directo al panel de negocio (confuso: un
+       cliente sin negocio caía en un wizard de "crear negocio" al tocar
+       "Perfil"). Ahora es la cuenta del cliente de verdad — nombre, cerrar
+       sesión, eliminar cuenta — y desde aquí, un solo botón hacia el lado de
+       negocio, con el texto según si la cuenta ya tiene uno o no. Así se
+       divide cliente de dueño sin mezclar los dos flujos en el mismo tap. -->
+  <div class="screen" id="cuenta">
+    <h1 class="app-h1">Perfil</h1>
+
+    <div id="cuenta-logged-out">
+      <p class="app-sub">Inicia sesión para ver tu cuenta y gestionar tu negocio.</p>
+      <button class="cta" onclick="requireAccount(function(){go('cuenta');}, 'Inicia sesión para ver tu perfil')">Iniciar sesión</button>
+    </div>
+
+    <div id="cuenta-logged-in" style="display:none">
+      <p class="app-sub" id="account-who"></p>
+
+      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="openPro()">
+        <svg class="icon"><use href="#i-scissors"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
+      </button>
+
+      <!-- Mi cuenta: "Eliminar mi cuenta" es requisito del App Store (regla 5.1.1) para toda app con registro. -->
       <p class="sec-title">Mi cuenta</p>
-      <p id="account-who" style="color:var(--soft);font-size:0.85rem;margin:0 0 0.8rem"></p>
       <button class="add-svc" style="width:100%" onclick="clientLogout()">Cerrar sesión</button>
       <button id="btn-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
     </div>
@@ -1524,7 +1544,7 @@
     <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
     <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
     <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <button class="nav-btn" data-s="pro" onclick="go('cuenta')"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -1889,12 +1909,16 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     el.classList.add('active');
-    const navKey = id.startsWith('pro-') ? 'pro' : id;
+    // 'cuenta' (Perfil) y las pantallas 'pro-*' del negocio comparten el
+    // mismo botón del nav (data-s="pro"): entrar a administrar el negocio
+    // desde Perfil no debe apagar el resaltado de esa pestaña.
+    const navKey = (id.startsWith('pro-') || id === 'cuenta') ? 'pro' : id;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
     document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
+    if (id === 'cuenta') renderAccountBox();
     if (id === 'reserva') loadAvailabilityDays();
   }
 
@@ -2029,9 +2053,9 @@
       row.className = 'card';
       row.style.cssText = 'padding:0.7rem 0.9rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;gap:0.6rem';
       row.innerHTML =
-        '<div><div style="font-weight:700;font-size:0.85rem">' + a.bankName + ' · ' + a.accountType + '</div>' +
-        '<div style="font-size:0.8rem;color:var(--soft)">' + a.accountNumber + '</div>' +
-        '<div style="font-size:0.75rem;color:var(--soft)">' + a.accountHolder + ' · Cédula/RNC ' + a.cedulaRnc + '</div></div>' +
+        '<div><div style="font-weight:700;font-size:0.85rem">' + esc(a.bankName) + ' · ' + esc(a.accountType) + '</div>' +
+        '<div style="font-size:0.8rem;color:var(--soft)">' + esc(a.accountNumber) + '</div>' +
+        '<div style="font-size:0.75rem;color:var(--soft)">' + esc(a.accountHolder) + ' · Cédula/RNC ' + esc(a.cedulaRnc) + '</div></div>' +
         '<button type="button" class="btn-copy">Copiar</button>';
       row.querySelector('.btn-copy').addEventListener('click', (e) => {
         navigator.clipboard.writeText(a.accountNumber).then(() => {
@@ -2272,6 +2296,27 @@
     return localStorage.getItem('bukea_pro_slug');
   }
 
+  // Consulta al servidor si la cuenta logueada ya tiene un negocio (el slug
+  // guardado en este dispositivo puede faltar aunque sí tenga uno: login
+  // nuevo en este teléfono, reinstalación, etc. — mismo endpoint que ya usa
+  // el panel de escritorio desde el 2026-08-25, GET /api/professionals/me) y
+  // refresca el botón "Administrar mi negocio"/"Crear mi negocio" de Perfil
+  // (renderAccountBox). Se llama tanto al entrar a la app con sesión ya
+  // guardada (boot) como justo después de iniciar sesión (enterApp), para
+  // que el botón esté correcto antes de que el usuario lo toque.
+  async function syncProSlug() {
+    if (!getSession()) { renderAccountBox(); return; }
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/me', { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.slug) localStorage.setItem('bukea_pro_slug', data.slug);
+        else localStorage.removeItem('bukea_pro_slug');
+      }
+    } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
+    renderAccountBox();
+  }
+
   async function openPro() {
     // El panel de negocio ahora exige sesión real (Google, Apple o
     // teléfono+PIN) — antes bastaba con conocer el slug guardado en
@@ -2280,20 +2325,7 @@
       requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
       return;
     }
-    if (!proSlug()) {
-      // El slug guardado en este dispositivo puede faltar aunque el dueño ya
-      // tenga negocio (login nuevo en este teléfono, reinstalación, etc.) —
-      // antes de mandarlo al asistente de "Crea tu negocio", preguntamos al
-      // servidor (mismo endpoint que ya usa el panel de escritorio desde el
-      // 2026-08-25, ver GET /api/professionals/me).
-      try {
-        const res = await fetch(API_BASE + '/api/professionals/me', { headers: authHeaders() });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.slug) localStorage.setItem('bukea_pro_slug', data.slug);
-        }
-      } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
-    }
+    if (!proSlug()) await syncProSlug();
     if (proSlug()) {
       loadPanel();
       go('pro-panel');
@@ -2425,6 +2457,7 @@
       }
       const { slug } = await res.json();
       localStorage.setItem('bukea_pro_slug', slug);
+      renderAccountBox();
       track('business_signup', { item_id: slug, category: category });
       regStep = REG_TOTAL_STEPS + 1;
       regShowStep();
@@ -3066,7 +3099,6 @@
 
   async function renderMisCitas() {
     const container = document.getElementById('miscitas-list');
-    renderAccountBox();
     if (!getSession()) {
       container.innerHTML =
         '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
@@ -3190,13 +3222,17 @@
 
   /* ===== Mi cuenta (cerrar sesión y eliminar cuenta) ===== */
   function renderAccountBox() {
-    const box = document.getElementById('account-box');
-    if (!box) return;
+    const loggedOut = document.getElementById('cuenta-logged-out');
+    const loggedIn = document.getElementById('cuenta-logged-in');
+    if (!loggedOut || !loggedIn) return;
     const s = getSession();
-    box.style.display = s ? 'block' : 'none';
+    loggedOut.style.display = s ? 'none' : 'block';
+    loggedIn.style.display = s ? 'block' : 'none';
     if (s) {
-      const who = document.getElementById('account-who');
-      who.textContent = s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+      document.getElementById('account-who').textContent =
+        s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+      document.getElementById('cuenta-negocio-label').textContent =
+        proSlug() ? 'Administrar mi negocio' : 'Crear mi negocio';
     }
   }
 
@@ -3204,6 +3240,7 @@
     localStorage.removeItem('bukea_session');
     localStorage.removeItem('bukea_pro_slug');
     applySessionUI();
+    renderAccountBox();
     renderMisCitas();
     go('inicio');
   };
@@ -3220,6 +3257,7 @@
       localStorage.removeItem('bukea_session');
       localStorage.removeItem('bukea_pro_slug');
       applySessionUI();
+      renderAccountBox();
       alert('Tu cuenta fue eliminada. Gracias por probar Bukea.');
       go('inicio');
       renderMisCitas();
@@ -3305,8 +3343,14 @@
      nativo (@codetrix-studio/capacitor-google-auth, vía
      window.Capacitor.Plugins.GoogleAuth) en vez del SDK web; en el
      navegador normal seguimos usando el SDK web de siempre. Apple no
-     tiene esa restricción — su SDK web funciona igual en ambos casos. */
+     tiene esa restricción — su SDK web funciona igual en ambos casos
+     (incluida la app empaquetada de Android, que no tiene un plugin
+     nativo de Apple Sign In real: @capacitor-community/apple-sign-in
+     solo implementa iOS, en Android es un stub vacío que registra el
+     plugin pero no responde nada — por eso el flujo de Apple en Android
+     usa el mismo SDK web que el navegador, ver `nativeAppleReady` abajo). */
   const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const isIosApp = isNativeApp && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios';
 
   // Muestra los logos cuando las webfonts terminan de cargar (evita la "b"
   // cortada del primer render); a los 2s se muestran igual, pase lo que pase.
@@ -3316,22 +3360,23 @@
     setTimeout(fontsOk, 2000);
   })();
 
-  /* El plugin nativo (GoogleAuth) necesita un iosClientId real (creado en
-     Google Cloud Console para el bundle ID com.bukea.app) en
-     capacitor.config.json — mientras Víctor no lo entregue, ese campo
-     queda como placeholder "__IOS_GOOGLE_CLIENT_ID__". Inicializar el SDK
-     nativo de Google con ese valor no falla con un error manejable: hace
-     crashear la app entera. Por eso se verifica ANTES de tocar el plugin,
-     usando Capacitor.getConfig() (expone en runtime el mismo
+  /* El plugin nativo (GoogleAuth) necesita un client ID real por plataforma
+     (iosClientId en iOS, androidClientId en Android — creados en Google
+     Cloud Console para com.bukea.app) en capacitor.config.json — mientras
+     Víctor no lo entregue, ese campo queda como placeholder. Inicializar el
+     SDK nativo de Google con ese valor no falla con un error manejable:
+     hace crashear la app entera. Por eso se verifica ANTES de tocar el
+     plugin, usando Capacitor.getConfig() (expone en runtime el mismo
      capacitor.config.json que ya está empacado en el binario nativo). */
   // Capacitor no siempre expone getConfig() en el WebView (según versión):
   // si no se puede leer, se asume listo — el capacitor.config.json del
-  // paquete ya trae el iosClientId real (creado el 2026-08-26). El guard
-  // solo sigue bloqueando si se LEE la config y el valor es el placeholder.
-  const iosGoogleClientId = isNativeApp && typeof window.Capacitor.getConfig === 'function'
-    ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth && window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId)
+  // paquete ya trae el client ID real de cada plataforma. El guard solo
+  // sigue bloqueando si se LEE la config y el valor es el placeholder.
+  const nativeGoogleClientId = isNativeApp && typeof window.Capacitor.getConfig === 'function'
+    ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth &&
+        (isIosApp ? window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId : window.Capacitor.getConfig().plugins.GoogleAuth.androidClientId))
     : null;
-  const nativeGoogleReady = !isNativeApp || (iosGoogleClientId ? iosGoogleClientId.indexOf('__') !== 0 : true);
+  const nativeGoogleReady = !isNativeApp || (nativeGoogleClientId ? nativeGoogleClientId.indexOf('__') !== 0 : true);
 
   // Reintenta unos segundos antes de rendirse: en la app empaquetada
   // (iOS/Capacitor) el HTML local carga instantáneo, así que el evento
@@ -3345,15 +3390,17 @@
     const googleReady = isNativeApp
       ? (nativeGoogleReady && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth))
       : (window.google && google.accounts && google.accounts.id);
-    // En la app empaquetada el login de Apple es el nativo del sistema
+    // En iOS empaquetado el login de Apple es el nativo del sistema
     // (plugin SignInWithApple) — no depende del SDK web ni de APPLE_CLIENT_ID.
-    const nativeAppleReady = isNativeApp && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple);
+    // En Android empaquetado (y en el navegador normal) no hay plugin nativo,
+    // así que se usa el mismo SDK web que la versión de escritorio/móvil web.
+    const nativeAppleReady = isIosApp && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple);
     const appleReady = nativeAppleReady || window.AppleID;
 
     if (attemptsLeft > 0 && GOOGLE_CLIENT_ID && nativeGoogleReady && !googleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
-    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !isNativeApp && !appleReady) {
+    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !isIosApp && !appleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
 
@@ -3379,9 +3426,9 @@
       AppleID.auth.init({
         clientId: APPLE_CLIENT_ID,
         scope: 'name email',
-        // API_BASE ya es absoluto (empaquetado en iOS) o relativo al mismo
-        // origen (web) — anteponer location.origin aquí duplicaría el
-        // origen cuando API_BASE ya trae el suyo (https://www.bukeard.com/app).
+        // API_BASE ya es absoluto (empaquetado en iOS/Android) o relativo
+        // al mismo origen (web) — anteponer location.origin aquí duplicaría
+        // el origen cuando API_BASE ya trae el suyo (https://www.bukeard.com/app).
         redirectURI: (/^https?:\/\//.test(API_BASE) ? API_BASE : window.location.origin + API_BASE) + '/',
         usePopup: true,
       });
@@ -3444,11 +3491,13 @@
   }
 
   async function loginWithApple() {
-    // En la app empaquetada (iOS) el popup web de Apple no funciona dentro
+    // En la app empaquetada de iOS el popup web de Apple no funciona dentro
     // del WKWebView — se usa el Sign in with Apple nativo del sistema
     // (plugin SignInWithApple); el backend acepta el token con audience
-    // com.bukea.app además del Service ID web.
-    if (isNativeApp && window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple) {
+    // com.bukea.app además del Service ID web. En Android (sin plugin nativo
+    // real, ver nota de nativeAppleReady arriba) se cae al SDK web de Apple,
+    // igual que en el navegador — más abajo en esta función.
+    if (isIosApp && window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple) {
       wError('w-error-social');
       try {
         const result = await window.Capacitor.Plugins.SignInWithApple.authorize({
@@ -3563,6 +3612,7 @@
     localStorage.removeItem('bukea_guest');
     track(method === 'sign_up' ? 'sign_up' : 'login', { method: method || 'phone' });
     applySessionUI();
+    syncProSlug();
     if (session && session.emailVerified === false) {
       verifyGateShow(session.email);
     } else {
@@ -3790,6 +3840,8 @@
   const SPLASH_MS = 1400;
   function boot() {
     applySessionUI();
+    renderAccountBox();
+    syncProSlug();
 
     // Enlaces directos desde el marketplace público (bukeard.com):
     // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —
