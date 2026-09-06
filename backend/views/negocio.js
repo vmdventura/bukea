@@ -120,8 +120,9 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .nb-cat-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.8rem 0.5rem; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--soft); text-align: center; }
   .nb-cat-card:hover { border-color: var(--teal-500); }
   .nb-cat-card.sel { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-800, var(--teal-700)); }
-  .nb-svc-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-  .nb-svc-row input { padding: 0.6rem 0.75rem; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.85rem; color: var(--ink); min-width: 0; }
+  .nb-svc-row { display: grid; grid-template-columns: 1.5fr 1.3fr 0.9fr auto; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+  .nb-svc-row input { padding: 0.6rem 0.6rem; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.85rem; color: var(--ink); min-width: 0; }
+  .nb-svc-row .nb-svc-price { text-align: center; }
   .nb-logo-pick { display: flex; justify-content: center; margin-bottom: 1.2rem; }
   .nb-logo-pick img, .nb-logo-placeholder { width: 108px; height: 108px; border-radius: 24px; object-fit: cover; }
   .nb-logo-placeholder { display: flex; align-items: center; justify-content: center; background: var(--teal-50); border: 1.5px dashed var(--line); color: var(--soft); }
@@ -209,12 +210,27 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .cal-more { font-size: 0.68rem; font-weight: 800; color: var(--teal-700); cursor: pointer; padding: 0.1rem 0.4rem; }
 
   /* ===== Servicios / Horario / Equipo / Cuentas forms ===== */
-  .svc-row, .team-row, .bank-row { display: grid; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-  .svc-row { grid-template-columns: 2fr 1fr 1fr auto; }
+  .svc-row, .team-row, .bank-row { display: grid; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+  .svc-row { grid-template-columns: 1.5fr 1.3fr 0.9fr auto; }
   .team-row { grid-template-columns: 1.2fr 1fr auto; }
   .bank-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto; }
   .svc-row input, .team-row input, .bank-row input, .bank-row select {
-    padding: 0.6rem 0.75rem; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.85rem; color: var(--ink); min-width: 0;
+    padding: 0.6rem 0.6rem; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 0.85rem; color: var(--ink); min-width: 0;
+  }
+  /* Precio centrado — es un valor corto, se lee mejor centrado que pegado
+     a la izquierda (2026-09-06). El nombre del servicio se queda a la
+     izquierda, como cualquier campo de texto largo. */
+  .svc-row .sv-price { text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
+  /* Duración con dos desplegables (horas / minutos). Se quita la flecha
+     nativa del <select> — en un cupo tan angosto se comía el espacio del
+     número — y se pone una propia, chiquita, sin robarle ancho al texto. */
+  .sv-duration { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
+  .sv-duration select {
+    flex: 1; min-width: 0; padding: 0.6rem 0.9rem 0.6rem 0.3rem; border-radius: 10px; border: 1.5px solid var(--line);
+    background-color: var(--bg); font-size: 0.78rem; font-weight: 600; color: var(--ink); text-align: center; text-align-last: center;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23708986' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 4px center; background-size: 10px;
   }
   .row-del { background: none; border: none; color: var(--soft); cursor: pointer; padding: 0.3rem; }
   .row-del:hover { color: var(--danger); }
@@ -1019,7 +1035,10 @@ ${ICON_SPRITE}
   function nbSvcRowHtml() {
     return '<div class="nb-svc-row">' +
       '<input class="nb-svc-name" type="text" placeholder="Servicio (ej: Corte clásico)">' +
-      '<input class="nb-svc-min" type="number" min="5" step="5" placeholder="Min">' +
+      '<div class="sv-duration">' +
+        '<select class="nb-svc-hours">' + svcHoursOptions(0) + '</select>' +
+        '<select class="nb-svc-mins">' + svcMinsOptions(0) + '</select>' +
+      '</div>' +
       '<input class="nb-svc-price" type="number" min="0" step="50" placeholder="RD$">' +
       '<button class="row-del" onclick="this.closest(\\'.nb-svc-row\\').remove()"><svg class="icon"><use href="#n-x"/></svg></button></div>';
   }
@@ -1095,7 +1114,9 @@ ${ICON_SPRITE}
     var services = [];
     document.querySelectorAll('#nb-svc-rows .nb-svc-row').forEach(function (row) {
       var svcName = row.querySelector('.nb-svc-name').value.trim();
-      var min = Number(row.querySelector('.nb-svc-min').value);
+      var hours = Number(row.querySelector('.nb-svc-hours').value) || 0;
+      var mins = Number(row.querySelector('.nb-svc-mins').value) || 0;
+      var min = hours * 60 + mins;
       var price = Number(row.querySelector('.nb-svc-price').value);
       if (svcName && min > 0 && price > 0) {
         services.push({ name: svcName, durationMin: min, priceCents: Math.round(price * 100) });
@@ -1533,11 +1554,39 @@ ${ICON_SPRITE}
   };
 
   /* ---------- Servicios ---------- */
+  // Duración con dos desplegables (horas / minutos) en vez de escribir los
+  // minutos totales a mano (2026-09-06, a pedido de Víctor: "muchos
+  // clientes no comprenden cómo colocar el tiempo estimado"). Si la
+  // duración guardada no cae en los pasos de 15 min de la lista (ej. un
+  // servicio viejo de 40 min), se agrega su propio valor exacto como opción
+  // extra para no alterar el dato solo por mostrarlo — cambia de verdad
+  // únicamente si el dueño elige otra opción y guarda.
+  function svcHoursOptions(totalMin) {
+    var h = Math.floor((totalMin || 0) / 60);
+    var opts = '';
+    for (var i = 0; i <= 8; i++) {
+      opts += '<option value="' + i + '"' + (i === h ? ' selected' : '') + '>' + i + 'h</option>';
+    }
+    return opts;
+  }
+  function svcMinsOptions(totalMin) {
+    var m = (totalMin || 0) % 60;
+    var steps = [0, 15, 30, 45];
+    var opts = '';
+    if (steps.indexOf(m) === -1) opts += '<option value="' + m + '" selected>' + m + 'm</option>';
+    steps.forEach(function (s) {
+      opts += '<option value="' + s + '"' + (s === m ? ' selected' : '') + '>' + String(s).padStart(2, '0') + 'm</option>';
+    });
+    return opts;
+  }
   function svcRowHtml(s) {
     s = s || {};
     return '<div class="svc-row">' +
       '<input type="text" class="sv-name" placeholder="Servicio (ej: Corte clásico)" value="' + esc(s.name || '') + '">' +
-      '<input type="number" class="sv-min" min="5" step="5" placeholder="Min" value="' + (s.durationMin || '') + '">' +
+      '<div class="sv-duration">' +
+        '<select class="sv-hours">' + svcHoursOptions(s.durationMin) + '</select>' +
+        '<select class="sv-mins">' + svcMinsOptions(s.durationMin) + '</select>' +
+      '</div>' +
       '<input type="number" class="sv-price" min="0" step="50" placeholder="RD$" value="' + (s.priceCents ? Math.round(s.priceCents / 100) : '') + '">' +
       '<button class="row-del" onclick="this.closest(\\'.svc-row\\').remove()"><svg class="icon"><use href="#n-x"/></svg></button></div>';
   }
@@ -1552,9 +1601,11 @@ ${ICON_SPRITE}
   window.saveServicios = async function () {
     var rows = document.querySelectorAll('#servicios-list .svc-row');
     var services = Array.prototype.map.call(rows, function (row) {
+      var hours = Number(row.querySelector('.sv-hours').value) || 0;
+      var mins = Number(row.querySelector('.sv-mins').value) || 0;
       return {
         name: row.querySelector('.sv-name').value.trim(),
-        durationMin: Number(row.querySelector('.sv-min').value),
+        durationMin: hours * 60 + mins,
         priceCents: Math.round(Number(row.querySelector('.sv-price').value) * 100),
       };
     }).filter(function (s) { return s.name && s.durationMin > 0 && s.priceCents >= 0; });
