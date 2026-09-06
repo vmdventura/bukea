@@ -203,10 +203,24 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .list-row .badge.cancelled { background: var(--danger-100); color: var(--danger); }
   .empty-hint { color: var(--soft); font-size: 0.88rem; padding: 1.2rem 0; text-align: center; }
 
-  /* ===== Calendario (vista mensual) ===== */
+  /* ===== Calendario (Hoy / Semana / Mes) ===== */
+  .cal-view-tabs { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem; margin-bottom: 0.9rem; gap: 0.15rem; }
+  .cal-view-tab { background: none; border: none; font-family: inherit; font-size: 0.8rem; font-weight: 700; color: var(--soft); padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
+  .cal-view-tab.active { background: var(--card); color: var(--teal-700); box-shadow: var(--sh-1, 0 1px 2px rgba(0,0,0,0.08)); }
   .cal-toolbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
   .cal-toolbar .cal-date { font-weight: 700; font-size: 1rem; color: var(--teal-900); min-width: 15ch; }
   .cal-toolbar .spacer { flex: 1; }
+  /* Vista Hoy: lista simple, reusa .list-row/.empty-hint dentro de la
+     misma tarjeta que ya tenía el mes. */
+  #cal-grid { padding: 0.4rem 1.2rem; }
+  #cal-grid > .cal-month-grid { margin: -0.4rem -1.2rem; }
+  /* Vista Semana: un bloque por día, cada uno con su propia mini-lista —
+     evita meter 7 columnas angostas en mobile como haría un grid real. */
+  .cal-week-day { border-bottom: 1px solid var(--line); padding: 0.9rem 0; }
+  .cal-week-day:last-child { border-bottom: none; }
+  .cal-week-day-head { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--soft); margin-bottom: 0.4rem; }
+  .cal-week-day.today .cal-week-day-head { color: var(--teal-700); }
+  .cal-week-day .empty-hint { padding: 0.3rem 0; font-size: 0.82rem; }
   .cal-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--sh-2); overflow-x: auto; }
   .cal-month-grid { display: grid; grid-template-columns: repeat(7, minmax(122px, 1fr)); min-width: 800px; }
   .cal-month-head { padding: 0.7rem 0.5rem; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--soft); text-align: center; border-bottom: 1px solid var(--line); background: var(--teal-50); }
@@ -594,10 +608,15 @@ ${ICON_SPRITE}
           <p>Las citas de tu negocio, mes por mes.</p>
         </div>
       </div>
+      <div class="cal-view-tabs">
+        <button class="cal-view-tab active" data-view="hoy" onclick="calSetView('hoy')">Hoy</button>
+        <button class="cal-view-tab" data-view="semana" onclick="calSetView('semana')">Semana</button>
+        <button class="cal-view-tab" data-view="mes" onclick="calSetView('mes')">Mes</button>
+      </div>
       <div class="cal-toolbar">
-        <button class="btn-icon" onclick="calShiftMonth(-1)" aria-label="Mes anterior"><svg class="icon"><use href="#n-chev-l"/></svg></button>
+        <button class="btn-icon" onclick="calShift(-1)" aria-label="Anterior"><svg class="icon"><use href="#n-chev-l"/></svg></button>
         <span class="cal-date" id="cal-date-label">—</span>
-        <button class="btn-icon" onclick="calShiftMonth(1)" aria-label="Mes siguiente"><svg class="icon"><use href="#n-chev-r"/></svg></button>
+        <button class="btn-icon" onclick="calShift(1)" aria-label="Siguiente"><svg class="icon"><use href="#n-chev-r"/></svg></button>
         <button class="btn btn-ghost btn-sm" onclick="calGoToday()">Hoy</button>
         <div class="spacer"></div>
       </div>
@@ -786,6 +805,9 @@ ${ICON_SPRITE}
     <div class="modal-line"><span>Fecha</span><span id="bm-date">—</span></div>
     <div class="modal-line"><span>Atiende</span><span id="bm-collab">—</span></div>
     <div class="modal-line"><span>Pago</span><span id="bm-pay">—</span></div>
+    <div class="modal-line" id="bm-receipt-row" style="display:none">
+      <span>Comprobante</span><span id="bm-receipt">—</span>
+    </div>
     <div class="modal-line"><span>Precio</span><span id="bm-price">—</span></div>
     <div class="modal-actions">
       <button class="btn btn-danger" id="bm-cancel-btn" onclick="cancelBookingFromModal()">Cancelar cita</button>
@@ -1014,7 +1036,7 @@ ${ICON_SPRITE}
   };
 
   /* ---------- Estado del negocio ---------- */
-  var state = { profile: null, bookings: [], hours: [], calMonth: startOfMonth() };
+  var state = { profile: null, bookings: [], hours: [], calDate: startOfToday(), calView: 'hoy' };
 
   function startOfToday() {
     var d = new Date();
@@ -1528,22 +1550,93 @@ ${ICON_SPRITE}
   }
   function capitalize(s) { return s.replace(/^./, function (c) { return c.toUpperCase(); }); }
 
-  window.calShiftMonth = function (delta) {
-    var d = new Date(state.calMonth);
-    d.setDate(1);
-    d.setMonth(d.getMonth() + delta);
-    state.calMonth = d;
+  // Vistas Hoy / Semana / Mes (2026-09-06, a pedido de Víctor: "para
+  // visualizar mejor los espacios"). state.calDate es la fecha de
+  // referencia para las tres — calShift() la mueve un día, una semana o un
+  // mes según la vista activa, en vez de tener una navegación de mes fija
+  // como antes.
+  window.calSetView = function (view) {
+    state.calView = view;
+    document.querySelectorAll('.cal-view-tab').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    renderCalendar();
+  };
+  window.calShift = function (delta) {
+    var d = new Date(state.calDate);
+    if (state.calView === 'mes') { d.setDate(1); d.setMonth(d.getMonth() + delta); }
+    else if (state.calView === 'semana') { d.setDate(d.getDate() + delta * 7); }
+    else { d.setDate(d.getDate() + delta); }
+    state.calDate = d;
     renderCalendar();
   };
   window.calGoToday = function () {
-    state.calMonth = startOfMonth();
+    state.calDate = startOfToday();
     renderCalendar();
   };
 
-  function renderCalendar() {
-    document.getElementById('cal-date-label').textContent = capitalize(MONTH_FMT.format(state.calMonth));
+  function bookingsOnDay(date) {
+    return state.bookings.filter(function (b) {
+      return b.appointmentAt && sameDay(new Date(b.appointmentAt), date);
+    }).sort(function (a, b) { return new Date(a.appointmentAt) - new Date(b.appointmentAt); });
+  }
+  function bookingListRowHtml(b) {
+    var cancelled = b.status === 'cancelled';
+    return '<div class="list-row" style="cursor:pointer" onclick="openBookingModal(' + b.id + ')">' +
+      '<div class="avatar">' + initials(b.clientName) + '</div>' +
+      '<div class="info"><div class="t1">' + esc(b.clientName) + '</div>' +
+      '<div class="t2">' + esc(b.serviceName) + ' · ' + esc(b.timeLabel) + (b.collaboratorName ? ' · ' + esc(b.collaboratorName) : '') + '</div></div>' +
+      '<span class="badge' + (cancelled ? ' cancelled' : '') + '">' + (cancelled ? 'Cancelada' : money(b.priceCents)) + '</span>' +
+      '</div>';
+  }
 
-    var year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+  function renderCalendar() {
+    if (state.calView === 'hoy') return renderCalendarDay();
+    if (state.calView === 'semana') return renderCalendarWeek();
+    return renderCalendarMonth();
+  }
+
+  function renderCalendarDay() {
+    document.getElementById('cal-date-label').textContent = capitalize(DATE_FMT.format(state.calDate));
+    var evs = bookingsOnDay(state.calDate);
+    var html = evs.length
+      ? '<div class="cal-day-list">' + evs.map(bookingListRowHtml).join('') + '</div>'
+      : '<p class="empty-hint">No hay citas este día.</p>';
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function renderCalendarWeek() {
+    // Semana de domingo a sábado, la misma que ya usa el mes (getDay()
+    // devuelve 0 para domingo) — evita mezclar dos convenciones distintas
+    // de inicio de semana en el mismo panel.
+    var start = new Date(state.calDate);
+    start.setDate(start.getDate() - start.getDay());
+    var end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    var RANGE_FMT = new Intl.DateTimeFormat('es-DO', { day: 'numeric', month: 'short' });
+    document.getElementById('cal-date-label').textContent =
+      capitalize(RANGE_FMT.format(start)) + ' – ' + capitalize(RANGE_FMT.format(end));
+
+    var today = startOfToday();
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+      var day = new Date(start);
+      day.setDate(day.getDate() + i);
+      var evs = bookingsOnDay(day);
+      html += '<div class="cal-week-day' + (sameDay(day, today) ? ' today' : '') + '">' +
+        '<div class="cal-week-day-head">' + capitalize(DAY_HEAD_NAMES[day.getDay()]) + ' ' + day.getDate() + '</div>';
+      html += evs.length
+        ? '<div class="cal-day-list">' + evs.map(bookingListRowHtml).join('') + '</div>'
+        : '<p class="empty-hint">Sin citas.</p>';
+      html += '</div>';
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function renderCalendarMonth() {
+    document.getElementById('cal-date-label').textContent = capitalize(MONTH_FMT.format(state.calDate));
+
+    var year = state.calDate.getFullYear(), month = state.calDate.getMonth();
     var startOffset = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month + 1, 0).getDate();
     var totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
@@ -1587,11 +1680,9 @@ ${ICON_SPRITE}
   }
 
   window.openDayAgenda = function (dayNum) {
-    var year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    var year = state.calDate.getFullYear(), month = state.calDate.getMonth();
     var date = new Date(year, month, dayNum);
-    var evs = state.bookings.filter(function (b) {
-      return b.appointmentAt && sameDay(new Date(b.appointmentAt), date);
-    }).sort(function (a, b) { return new Date(a.appointmentAt) - new Date(b.appointmentAt); });
+    var evs = bookingsOnDay(date);
 
     document.getElementById('da-date').textContent = capitalize(DATE_FMT.format(date));
     var list = document.getElementById('da-list');
@@ -1623,7 +1714,30 @@ ${ICON_SPRITE}
     document.getElementById('bm-service').textContent = b.serviceName;
     document.getElementById('bm-date').textContent = b.dayLabel + ' · ' + b.timeLabel;
     document.getElementById('bm-collab').textContent = b.collaboratorName || (state.profile ? state.profile.name : '—');
-    document.getElementById('bm-pay').textContent = b.paymentMethod === 'cash' ? 'Efectivo' : (b.paymentMethod === 'transfer' ? 'Transferencia' : (b.paymentMethod || '—'));
+    // 'bank' es el valor real que guarda el cliente al pagar por
+    // transferencia (routes/bookings.js) — el chequeo anterior comparaba
+    // contra 'transfer', que nunca llega a pasar, y mostraba el valor crudo
+    // en vez de "Transferencia".
+    document.getElementById('bm-pay').textContent =
+      b.paymentMethod === 'cash' ? 'Efectivo' :
+      b.paymentMethod === 'bank' ? 'Transferencia' :
+      b.paymentMethod === 'tpago' ? 'tPago' :
+      b.paymentMethod === 'card' ? 'Tarjeta' : (b.paymentMethod || '—');
+    // Comprobante de pago (2026-09-06, a pedido de Víctor): solo aplica a
+    // pagos por transferencia — el cliente lo adjunta desde "Mis citas"
+    // (routes/bookings.js POST /:id/receipt), el dueño solo lo ve, no lo sube.
+    var receiptRow = document.getElementById('bm-receipt-row');
+    var receiptEl = document.getElementById('bm-receipt');
+    if (b.paymentMethod === 'bank') {
+      receiptRow.style.display = 'flex';
+      if (b.receiptUrl) {
+        receiptEl.innerHTML = '<a href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>';
+      } else {
+        receiptEl.textContent = 'Sin comprobante todavía';
+      }
+    } else {
+      receiptRow.style.display = 'none';
+    }
     document.getElementById('bm-price').textContent = money(b.priceCents);
     var cancelBtn = document.getElementById('bm-cancel-btn');
     cancelBtn.style.display = b.status === 'cancelled' ? 'none' : 'flex';
