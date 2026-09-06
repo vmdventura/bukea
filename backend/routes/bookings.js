@@ -3,6 +3,7 @@ const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
 const { receiptUpload, receiptUrl } = require('../lib/uploads');
 const { getSettings } = require('../lib/settings');
+const push = require('../lib/push');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes, computeFreeSlots,
 } = require('../lib/availability');
@@ -48,7 +49,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [professionals] = await pool.query(
-    'SELECT name, business_name, neighborhood, lat, lng FROM professionals WHERE id = ?',
+    'SELECT name, business_name, neighborhood, lat, lng, owner_user_id FROM professionals WHERE id = ?',
     [professionalId]
   );
   const professional = professionals[0];
@@ -112,6 +113,16 @@ router.post('/', requireAuth, async (req, res) => {
         appointmentAt, service.duration_min, paymentMethod,
       ]
     );
+
+    // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
+    // propósito: si el envío de la notificación falla o tarda, la reserva
+    // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
+    // lanza, pero por si acaso el .catch() es la última red de seguridad.
+    push.sendToUser(professional.owner_user_id, {
+      title: 'Nueva reserva',
+      body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
+      data: { type: 'booking_created', bookingId: result.insertId },
+    }).catch(err => console.error('Error notificando la reserva:', err.message));
 
     res.status(201).json({
       id: result.insertId,

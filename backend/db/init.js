@@ -264,6 +264,24 @@ async function migrate() {
   // de email_verified_at, y separada del OTP de login: aquí se verifica el
   // teléfono de una cuenta ya autenticada, no se usa para entrar.
   await safeAlter('ALTER TABLE users ADD COLUMN phone_verified_at DATETIME');
+
+  // Notificaciones push (2026-09-06, a pedido de Víctor: avisar al dueño
+  // cuando un cliente reserva). Una fila por dispositivo/token — un mismo
+  // usuario puede tener varios (teléfono + tablet), y un mismo token puede
+  // pasar de un usuario a otro si alguien cierra sesión y otra persona
+  // entra en el mismo aparato, por eso no es UNIQUE por sí solo: lib/push.js
+  // hace SELECT antes de insertar para no duplicar por (user_id, token).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS push_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      token VARCHAR(255) NOT NULL,
+      platform VARCHAR(10) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_push_tokens_user (user_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

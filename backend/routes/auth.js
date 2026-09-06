@@ -279,6 +279,37 @@ router.post('/verify-phone/verify', requireAuth, async (req, res) => {
   res.json({ verified: true });
 });
 
+// Notificaciones push (2026-09-06): la app nativa registra el token de
+// FCM del dispositivo apenas hay sesión, y lo borra al cerrar sesión para
+// no seguirle notificando a un dispositivo donde ya nadie está logueado.
+router.post('/push-token', requireAuth, async (req, res) => {
+  const token = String(req.body.token || '').trim();
+  const platform = req.body.platform === 'android' ? 'android' : 'ios';
+  if (!token) return res.status(400).json({ error: 'Falta el token' });
+
+  const [existing] = await pool.query(
+    'SELECT id FROM push_tokens WHERE user_id = ? AND token = ?', [req.user.id, token]
+  );
+  if (existing.length === 0) {
+    // Un mismo token de dispositivo pudo haber quedado de una sesión
+    // anterior de OTRA cuenta en el mismo aparato — se reasigna en vez de
+    // dejarlo duplicado apuntando a dos usuarios.
+    await pool.query('DELETE FROM push_tokens WHERE token = ?', [token]);
+    await pool.query(
+      'INSERT INTO push_tokens (user_id, token, platform) VALUES (?, ?, ?)',
+      [req.user.id, token, platform]
+    );
+  }
+  res.json({ ok: true });
+});
+
+router.delete('/push-token', requireAuth, async (req, res) => {
+  const token = String(req.body.token || '').trim();
+  if (!token) return res.status(400).json({ error: 'Falta el token' });
+  await pool.query('DELETE FROM push_tokens WHERE user_id = ? AND token = ?', [req.user.id, token]);
+  res.json({ ok: true });
+});
+
 router.get('/session', requireAuth, (req, res) => {
   res.json({
     id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
