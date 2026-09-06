@@ -3249,10 +3249,17 @@
 
   // Botón "Perfil" del nav (2026-09-06): sin sesión no tiene sentido mostrar
   // la pantalla de cuenta con un único botón "Iniciar sesión" — vamos
-  // directo al login. Con sesión sí muestra la cuenta normal.
+  // directo al login. Con sesión sí muestra la cuenta normal. Si quien
+  // inicia sesión aquí resulta ser una cuenta de dueño, la manda directo a
+  // su panel de negocio (mismo criterio que enterApp() usa cuando el login
+  // no viene de un callback pendiente) en vez de la pantalla de Perfil —
+  // no tiene sentido pasar por "Mi cuenta" primero si ya sabemos a dónde va.
   window.openPerfil = function () {
     if (!getSession()) {
-      requireAccount(function () { go('cuenta'); }, 'Inicia sesión para ver tu perfil');
+      requireAccount(function () {
+        const s = getSession();
+        if (s && s.accountType === 'owner') { openPro(); } else { go('cuenta'); }
+      }, 'Inicia sesión para ver tu perfil');
       return;
     }
     go('cuenta');
