@@ -10,9 +10,17 @@ const buckets = new Map(); // clave -> { count, windowStart, blockedUntil }
 
 const DEFAULTS = { max: 5, windowMs: 15 * 60 * 1000, blockMs: 15 * 60 * 1000 };
 
+// Apagado solo para pruebas de staging (2026-09-08): la suite de API crea
+// muchas cuentas/mensajes seguidos y agotaría estos límites en segundos.
+// Doble condición a propósito — nunca se apaga en producción aunque alguien
+// ponga la variable por error en el .env equivocado.
+const DISABLED = process.env.RATE_LIMIT_DISABLED === '1' && process.env.NODE_ENV !== 'production';
+if (DISABLED) console.warn('[rate-limit] DESACTIVADO (RATE_LIMIT_DISABLED=1) — solo válido fuera de producción');
+
 // ¿Alguna de las claves está bloqueada ahora mismo? Devuelve los ms que
 // faltan para desbloquear (0 si ninguna lo está).
 function check(entries) {
+  if (DISABLED) return 0;
   const now = Date.now();
   let wait = 0;
   for (const e of entries) {
@@ -26,6 +34,7 @@ function check(entries) {
 // límite de volumen). Si alguna clave excede su máximo dentro de su
 // ventana, la bloquea y devuelve los ms de bloqueo.
 function hit(entries) {
+  if (DISABLED) return 0;
   const now = Date.now();
   let wait = 0;
   for (const e of entries) {

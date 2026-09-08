@@ -1,10 +1,16 @@
 const express = require('express');
+const fs = require('fs');
 const pool = require('../db/pool');
 const { insertDefaultHours } = require('../lib/hours');
 const { requireAuth } = require('../lib/auth-middleware');
-const { receiptUrl, logoUpload, logoUrl, photoUpload, photoUrl } = require('../lib/uploads');
+const {
+  receiptUrl, logoUpload, logoUrl, photoUpload, photoUrl,
+  sniffFileType, IMAGE_MIME: IMAGE_MIME_SET,
+} = require('../lib/uploads');
 const { geocodeNeighborhood } = require('../lib/geocode');
 const { getSettings } = require('../lib/settings');
+const { loadBusinesses } = require('../lib/session-payload');
+const { normalizeSocial } = require('../lib/social');
 const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 const mailer = require('../lib/mailer');
 const {
@@ -89,8 +95,10 @@ router.get('/', async (req, res) => {
 // entraba desde otro dispositivo o navegador veía "Crea tu negocio" aunque
 // ya tuviera uno. Va antes de /:slug para no chocar con esa ruta.
 router.get('/me', requireAuth, async (req, res) => {
-  const [rows] = await pool.query('SELECT slug FROM professionals WHERE owner_user_id = ?', [req.user.id]);
-  res.json({ slug: rows[0] ? rows[0].slug : null });
+  const businesses = await loadBusinesses(req.user.id);
+  // `slug` se conserva para builds instalados que solo leen ese campo
+  // (primer negocio, igual que antes); `businesses` es aditivo.
+  res.json({ slug: businesses[0] ? businesses[0].slug : null, businesses });
 });
 
 const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
@@ -109,6 +117,19 @@ function slugify(text) {
 // asistente de registro; alimenta la validación de calle, nunca bloquea.
 const REFERRAL_SOURCES = ['instagram', 'tiktok', 'amigo', 'google', 'visita', 'otro'];
 
+// Alta de negocio (2026-09-08: reescrito para ser transaccional e
+// idempotente — antes un doble toque, un reintento tras timeout o dos
+// pestañas del mismo dueño podían crear dos negocios; GET /me solo
+// devuelve el primero, así que el segundo quedaba huérfano en la práctica).
+//
+// Política elegida: "un negocio activo por dueño". `SELECT ... FOR UPDATE`
+// sobre la fila de `users` sirve de mutex — dos POST concurrentes del
+// mismo usuario se serializan; el segundo, al ver que ya existe un
+// negocio, no crea nada y devuelve el existente. No se agrega UNIQUE a
+// `owner_user_id` (la guía pide no hacerlo sin revisar antes datos y
+// política de varios negocios) ni tabla de Idempotency-Key: no hace falta
+// para "un negocio por dueño", y si el proyecto habilita varios negocios
+// más adelante, ahí sí se justifica esa segunda capa.
 router.post('/', requireAuth, async (req, res) => {
   const { name, businessName, neighborhood, category, services, referralSource } = req.body;
 
@@ -127,56 +148,93 @@ router.post('/', requireAuth, async (req, res) => {
     }
   }
 
-  let slug = slugify(name) || 'profesional';
-  const [taken] = await pool.query('SELECT slug FROM professionals WHERE slug LIKE ?', [slug + '%']);
-  if (taken.some(r => r.slug === slug)) {
-    let n = 2;
-    while (taken.some(r => r.slug === slug + '-' + n)) n++;
-    slug = slug + '-' + n;
-  }
-
   const referral = REFERRAL_SOURCES.includes(referralSource) ? referralSource : null;
 
-  // Primeros FOUNDING_FREE_LIMIT negocios reales, gratis de por vida (ver
-  // FOUNDING_FREE_LIMIT en views/shared.js). Simplificación consciente: no
-  // hay lock de fila, así que dos registros exactos al mismo milisegundo
-  // podrían colar uno de más en el cupo — riesgo aceptable al ritmo de
-  // registro de hoy, no vale la pena una transacción para esto.
-  const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
-  const foundingFree = foundingCount < FOUNDING_FREE_LIMIT ? 1 : 0;
+  const conn = await pool.getConnection();
+  let professionalId = null;
+  let slug = null;
+  let existing = false;
+  let neighborhoodToGeocode = null;
+  try {
+    await conn.beginTransaction();
 
-  // verification_required = 1 (2026-09-08): todo negocio nuevo desde hoy
-  // necesita foto + correo/teléfono verificados del dueño para aparecer en
-  // el marketplace — ver VISIBLE_IN_MARKETPLACE_SQL arriba. Los negocios
-  // sembrados antes de esta columna quedaron en su DEFAULT 0 (exentos).
-  const [result] = await pool.query(
-    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source, founding_free, verification_required)
-     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?, ?, 1)`,
-    [slug, category, name, businessName, neighborhood, req.user.id, referral, foundingFree]
-  );
-  const professionalId = result.insertId;
+    // Mutex por usuario: serializa dos altas concurrentes del mismo dueño
+    // (doble toque, dos pestañas). No bloquea a otros usuarios distintos.
+    await conn.query('SELECT id FROM users WHERE id = ? FOR UPDATE', [req.user.id]);
 
-  for (const s of services) {
-    await pool.query(
-      'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
-      [professionalId, s.name, Math.round(Number(s.durationMin)), Math.round(Number(s.priceCents))]
+    const [already] = await conn.query(
+      'SELECT id, slug FROM professionals WHERE owner_user_id = ? ORDER BY id LIMIT 1',
+      [req.user.id]
     );
+    if (already[0]) {
+      // Cubre doble toque, reintento tras timeout y "la respuesta se
+      // perdió pero el commit anterior sí ocurrió": el cliente reintenta
+      // con el mismo payload y recibe el negocio que ya tiene, no un
+      // negocio nuevo.
+      professionalId = already[0].id;
+      slug = already[0].slug;
+      existing = true;
+      await conn.commit();
+    } else {
+      slug = slugify(name) || 'profesional';
+      const [taken] = await conn.query('SELECT slug FROM professionals WHERE slug LIKE ?', [slug + '%']);
+      if (taken.some(r => r.slug === slug)) {
+        let n = 2;
+        while (taken.some(r => r.slug === slug + '-' + n)) n++;
+        slug = slug + '-' + n;
+      }
+
+      // Primeros FOUNDING_FREE_LIMIT negocios reales, gratis de por vida.
+      // Sigue sin lock global entre dueños distintos (solo esta fila de
+      // `users` está bloqueada) — riesgo aceptado ya documentado, dos
+      // altas de dueños distintos en el mismo instante podrían colar uno
+      // de más en el cupo.
+      const [[{ foundingCount }]] = await conn.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
+      const foundingFree = foundingCount < FOUNDING_FREE_LIMIT ? 1 : 0;
+
+      const [result] = await conn.query(
+        `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source, founding_free, verification_required)
+         VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?, ?, 1)`,
+        [slug, category, name, businessName, neighborhood, req.user.id, referral, foundingFree]
+      );
+      professionalId = result.insertId;
+
+      for (const s of services) {
+        await conn.query(
+          'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
+          [professionalId, s.name, Math.round(Number(s.durationMin)), Math.round(Number(s.priceCents))]
+        );
+      }
+
+      await insertDefaultHours(professionalId, conn);
+
+      // Una cuenta registrada como 'client' que crea un negocio pasa a
+      // 'owner' en la misma transacción — antes se quedaba con la
+      // etiqueta vieja para siempre (accountType nunca se actualizaba).
+      await conn.query("UPDATE users SET account_type = 'owner' WHERE id = ?", [req.user.id]);
+
+      await conn.commit();
+      neighborhoodToGeocode = neighborhood;
+    }
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 
-  await insertDefaultHours(professionalId);
+  if (neighborhoodToGeocode) {
+    // No bloquea la respuesta — Nominatim puede tardar 1-2s. Va después
+    // del commit a propósito: si esto falla no debe tumbar el alta.
+    geocodeNeighborhood(neighborhoodToGeocode).then(point => {
+      if (point) {
+        pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, professionalId])
+          .catch(err => console.error('No se pudo guardar la geocodificación:', err.message));
+      }
+    });
+  }
 
-  // No bloquea la respuesta — Nominatim puede tardar 1-2s y "Crear mi
-  // cuenta" debe sentirse instantáneo. El pin aparece en el mapa en cuanto
-  // resuelve, o en el próximo arranque del servidor si falla (ver
-  // backfillMissingCoordinates en db/init.js).
-  geocodeNeighborhood(neighborhood).then(point => {
-    if (point) {
-      pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, professionalId])
-        .catch(err => console.error('No se pudo guardar la geocodificación:', err.message));
-    }
-  });
-
-  res.status(201).json({ slug });
+  res.status(existing ? 200 : 201).json({ slug, existing });
 });
 
 router.get('/:slug', async (req, res) => {
@@ -243,6 +301,9 @@ router.get('/:slug', async (req, res) => {
     // no hace falta duplicarla aquí). Público sin problema: no es dato
     // sensible, solo une bandera de configuración.
     verificationRequired: Boolean(professional.verification_required),
+    // true = el dueño confirmó el pin a mano en el mapa; false = coordenada
+    // aproximada por sector (geocodificación automática, puede no ser exacta).
+    locationConfirmed: Boolean(professional.location_set_by_owner_at),
     social: {
       instagram: professional.social_instagram || '',
       facebook: professional.social_facebook || '',
@@ -470,6 +531,21 @@ router.get('/:slug/stats', requireAuth, async (req, res) => {
   });
 });
 
+// Valida coordenadas de verdad (2026-09-08) — antes solo se comprobaba
+// Number.isFinite(Number(v)), que acepta booleanos (Number(true) === 1),
+// arrays de un elemento (Number([5]) === 5) y strings vacíos truncados por
+// Number('') === 0. Aquí solo pasan number o string estrictamente numérica,
+// dentro del rango real de lat/lng. Devuelve null si no es válido.
+function parseCoordinate(value, min, max) {
+  if (typeof value === 'boolean' || value === null || value === undefined) return null;
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  const str = typeof value === 'string' ? value.trim() : String(value);
+  if (str === '' || !/^-?\d+(\.\d+)?$/.test(str)) return null;
+  const num = Number(str);
+  if (!Number.isFinite(num) || num < min || num > max) return null;
+  return Math.round(num * 1e7) / 1e7;
+}
+
 const WEEKDAY_KEYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
 
 async function findOwnedProfessional(slug, userId) {
@@ -478,6 +554,23 @@ async function findOwnedProfessional(slug, userId) {
   if (!professional) return { error: [404, 'Profesional no encontrado'] };
   if (professional.owner_user_id !== userId) return { error: [403, 'No tienes acceso a este negocio'] };
   return { professional };
+}
+
+// Middleware de propiedad (2026-09-08) — usado en logo/fotos, donde antes
+// multer escribía el archivo en disco ANTES de comprobar que quien sube es
+// el dueño del negocio: una petición ajena con un slug cualquiera dejaba el
+// archivo persistido (y, para logo/fotos, servido públicamente por
+// express.static) aunque la respuesta terminara en 403. Colgar esta
+// comprobación antes del middleware de multer en la cadena de la ruta
+// cierra ese hueco: nada se escribe a disco si la autorización falla.
+function requireOwnedProfessional(req, res, next) {
+  findOwnedProfessional(req.params.slug, req.user.id)
+    .then(({ professional, error }) => {
+      if (error) return res.status(error[0]).json({ error: error[1] });
+      req.professional = professional;
+      next();
+    })
+    .catch(next);
 }
 
 // Editar perfil del negocio (2026-08-24) — nombre del dueño, nombre del
@@ -508,7 +601,13 @@ router.put('/:slug/profile', requireAuth, async (req, res) => {
     [name, businessName, neighborhood, category, professional.id]
   );
 
-  if (before.neighborhood !== neighborhood) {
+  // Solo re-geocodifica si el dueño nunca confirmó un pin a mano (ver
+  // location_set_by_owner_at, PUT /:slug/location) — antes esto pisaba
+  // cualquier pin exacto ya guardado con solo editar el texto del sector.
+  const [[locState]] = await pool.query(
+    'SELECT location_set_by_owner_at FROM professionals WHERE id = ?', [professional.id]
+  );
+  if (before.neighborhood !== neighborhood && !locState.location_set_by_owner_at) {
     geocodeNeighborhood(neighborhood).then(point => {
       if (point) {
         pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [point.lat, point.lng, professional.id])
@@ -676,81 +775,94 @@ router.put('/:slug/collaborators', requireAuth, async (req, res) => {
 // No se borra el archivo viejo del disco (mismo criterio que receipts: el
 // espacio en disco no es crítico y complicar esto con limpieza no vale la
 // pena todavía).
-router.post('/:slug/logo', requireAuth, (req, res) => {
+router.post('/:slug/logo', requireAuth, requireOwnedProfessional, (req, res) => {
   logoUpload.single('logo')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
-    const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
-    if (error) return res.status(error[0]).json({ error: error[1] });
     if (!req.file) return res.status(400).json({ error: 'Falta la imagen' });
 
-    await pool.query('UPDATE professionals SET logo_path = ? WHERE id = ?', [req.file.filename, professional.id]);
+    const realType = await sniffFileType(req.file.path);
+    if (!realType || !IMAGE_MIME_SET.has(realType)) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ error: 'El archivo no es una imagen JPG, PNG o WEBP válida' });
+    }
+
+    await pool.query('UPDATE professionals SET logo_path = ? WHERE id = ?', [req.file.filename, req.professional.id]);
     res.json({ logoUrl: logoUrl(req, req.file.filename) });
   });
 });
 
-// Redes sociales (2026-08-25) — los 4 campos son opcionales, se guardan tal
-// cual los escribe el negocio (usuario/handle o URL completa, sin validar
-// formato: distintas redes usan convenciones distintas y no vale la pena
-// bloquear el guardado por eso).
+// Redes sociales (2026-08-25; normalizadas y validadas desde 2026-09-08 —
+// antes se guardaban tal cual, sin validar formato ni esquema, lo que
+// permitía colar `javascript:`/`data:` en "website"). Acepta handle, `@handle`
+// o URL completa; guarda el handle (o la URL canónica en website).
 router.put('/:slug/social', requireAuth, async (req, res) => {
   const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
 
-  const instagram = String(req.body.instagram || '').trim().slice(0, 190);
-  const facebook = String(req.body.facebook || '').trim().slice(0, 190);
-  const tiktok = String(req.body.tiktok || '').trim().slice(0, 190);
-  const website = String(req.body.website || '').trim().slice(0, 190);
+  const { value, errors } = normalizeSocial(req.body);
+  if (Object.keys(errors).length > 0) {
+    const [field, message] = Object.entries(errors)[0];
+    return res.status(400).json({ error: message, field });
+  }
 
   await pool.query(
     'UPDATE professionals SET social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_website = ? WHERE id = ?',
-    [instagram || null, facebook || null, tiktok || null, website || null, professional.id]
+    [value.instagram, value.facebook, value.tiktok, value.website, professional.id]
   );
-  res.json({ saved: true });
+  res.json({ saved: true, ...value });
 });
 
 // Ubicación exacta en el mapa (2026-08-25) — el registro solo geocodifica el
 // sector (ver lib/geocode.js), así que el pin puede quedar impreciso. Aquí
 // el dueño lo arrastra en el mapa de "Mi negocio" y guarda coordenadas
-// exactas, que a partir de ahí ya no se pisan al cambiar el sector en texto.
+// exactas. `location_set_by_owner_at` (2026-09-08) marca que este pin es
+// del dueño, para que PUT /:slug/profile deje de pisarlo al re-geocodificar.
 router.put('/:slug/location', requireAuth, async (req, res) => {
   const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
 
-  const lat = Number(req.body.lat);
-  const lng = Number(req.body.lng);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+  const lat = parseCoordinate(req.body.lat, -90, 90);
+  const lng = parseCoordinate(req.body.lng, -180, 180);
+  if (lat === null || lng === null) {
     return res.status(400).json({ error: 'Coordenadas inválidas' });
   }
 
-  await pool.query('UPDATE professionals SET lat = ?, lng = ? WHERE id = ?', [lat, lng, professional.id]);
+  await pool.query(
+    'UPDATE professionals SET lat = ?, lng = ?, location_set_by_owner_at = NOW() WHERE id = ?',
+    [lat, lng, professional.id]
+  );
   res.json({ saved: true, lat, lng });
 });
 
 // Galería de fotos del negocio (2026-08-25) — 0..N fotos, cada una se sube y
 // se borra individualmente (a diferencia del logo, que es un solo slot).
-router.post('/:slug/photos', requireAuth, (req, res) => {
+router.post('/:slug/photos', requireAuth, requireOwnedProfessional, (req, res) => {
   photoUpload.single('photo')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
-    const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
-    if (error) return res.status(error[0]).json({ error: error[1] });
     if (!req.file) return res.status(400).json({ error: 'Falta la imagen' });
+
+    const realType = await sniffFileType(req.file.path);
+    if (!realType || !IMAGE_MIME_SET.has(realType)) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ error: 'El archivo no es una imagen JPG, PNG o WEBP válida' });
+    }
 
     const [result] = await pool.query(
       'INSERT INTO business_photos (professional_id, path) VALUES (?, ?)',
-      [professional.id, req.file.filename]
+      [req.professional.id, req.file.filename]
     );
     res.status(201).json({ id: result.insertId, url: photoUrl(req, req.file.filename) });
   });
 });
 
-router.delete('/:slug/photos/:photoId', requireAuth, async (req, res) => {
-  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
-  if (error) return res.status(error[0]).json({ error: error[1] });
-
-  await pool.query(
+router.delete('/:slug/photos/:photoId', requireAuth, requireOwnedProfessional, async (req, res) => {
+  const [result] = await pool.query(
     'DELETE FROM business_photos WHERE id = ? AND professional_id = ?',
-    [req.params.photoId, professional.id]
+    [req.params.photoId, req.professional.id]
   );
+  if (result.affectedRows === 0) {
+    return res.status(404).json({ error: 'Foto no encontrada' });
+  }
   res.json({ deleted: true });
 });
 
@@ -817,34 +929,79 @@ router.put('/:slug/services', requireAuth, async (req, res) => {
 // vía por un hilo real: el dueño escribe desde "Mi negocio", ve la
 // respuesta del admin en la misma pantalla, y puede seguir escribiendo.
 // Un solo hilo por cuenta (no por negocio) — support_messages.user_id.
+// GET ya NO marca leído (2026-09-08) — antes cualquier lectura del hilo,
+// incluido un polling oculto de badge, apagaba el punto de "sin leer" sin
+// que el dueño hubiera visto nada. Marcar leído es ahora un paso explícito,
+// ver POST /messages/read. `?after=<id>` permite traer solo lo nuevo.
 router.get('/:slug/messages', requireAuth, async (req, res) => {
   const { error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
 
-  const [messages] = await pool.query(
-    'SELECT id, sender, body, created_at FROM support_messages WHERE user_id = ? ORDER BY id',
+  const after = Number(req.query.after);
+  const params = [req.user.id];
+  let sql = 'SELECT id, sender, body, created_at FROM support_messages WHERE user_id = ?';
+  if (Number.isInteger(after) && after > 0) {
+    sql += ' AND id > ?';
+    params.push(after);
+  }
+  sql += ' ORDER BY id';
+  const [messages] = await pool.query(sql, params);
+  res.json(messages.map(m => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.created_at })));
+});
+
+// Conteo de no leídos (2026-09-08) — para el badge del hub "Negocio", sin
+// tener que abrir el hilo completo ni marcar nada como leído al consultarlo.
+router.get('/:slug/messages/unread-count', requireAuth, async (req, res) => {
+  const { error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const [[row]] = await pool.query(
+    "SELECT COUNT(*) AS n FROM support_messages WHERE user_id = ? AND sender = 'admin' AND read_at IS NULL",
     [req.user.id]
   );
-  // Al abrir el chat, se dan por leídos los mensajes del admin — así el
-  // punto de "sin leer" del panel de negocio desaparece.
+  res.json({ unread: Number(row.n) });
+});
+
+// Marcar leído (2026-09-08) — paso explícito, separado del GET: el
+// frontend lo llama al abrir el chat con la pantalla visible, no en un
+// intervalo de fondo.
+router.post('/:slug/messages/read', requireAuth, async (req, res) => {
+  const { error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
   await pool.query(
     "UPDATE support_messages SET read_at = NOW() WHERE user_id = ? AND sender = 'admin' AND read_at IS NULL",
     [req.user.id]
   );
-  res.json(messages.map(m => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.created_at })));
+  res.json({ ok: true });
 });
 
 router.post('/:slug/messages', requireAuth, async (req, res) => {
   const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
 
-  const message = String(req.body.message || '').trim().slice(0, 3000);
+  const message = String(req.body.message || '').trim();
   if (!message) return res.status(400).json({ error: 'Escribe tu mensaje' });
+  // Rechazo explícito en vez de truncar en silencio (2026-09-08) — antes
+  // un mensaje de más de 3000 caracteres se guardaba cortado sin avisar.
+  if (message.length > 3000) {
+    return res.status(400).json({ error: 'El mensaje no puede pasar de 3.000 caracteres' });
+  }
+  const clientKey = req.body.clientKey ? String(req.body.clientKey).slice(0, 64) : null;
 
-  await pool.query(
-    "INSERT INTO support_messages (user_id, sender, body) VALUES (?, 'user', ?)",
-    [req.user.id, message]
-  );
+  try {
+    await pool.query(
+      "INSERT INTO support_messages (user_id, sender, body, client_key) VALUES (?, 'user', ?, ?)",
+      [req.user.id, message, clientKey]
+    );
+  } catch (err) {
+    // Reintento con la misma clientKey (doble toque, respuesta perdida):
+    // el mensaje ya está guardado de un intento anterior, no se duplica.
+    if (err.code === 'ER_DUP_ENTRY' && clientKey) {
+      return res.json({ sent: true, duplicate: true });
+    }
+    throw err;
+  }
 
   // Aviso por correo a Bukea, igual que el ticket anterior — así Víctor no
   // depende de estar viendo el panel de admin para enterarse de un mensaje

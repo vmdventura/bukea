@@ -2,7 +2,8 @@ const express = require('express');
 const path = require('path');
 const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
-const { receiptUpload, receiptUrl, RECEIPTS_DIR } = require('../lib/uploads');
+const { receiptUpload, receiptUrl, RECEIPTS_DIR, sniffFileType, ALLOWED_MIME } = require('../lib/uploads');
+const fs = require('fs');
 const { getSettings } = require('../lib/settings');
 const push = require('../lib/push');
 const {
@@ -237,17 +238,26 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
 // transferencia adjunta la foto/PDF del comprobante, en el momento de
 // reservar o después desde "Mis citas". Solo el cliente dueño de la cita
 // puede subirlo (no el negocio — el negocio solo lo ve).
-router.post('/:id/receipt', requireAuth, (req, res) => {
+// Autorización antes de multer (2026-09-08): antes multer escribía el
+// archivo en disco antes de comprobar que quien sube es el cliente dueño de
+// la cita — una petición ajena dejaba el archivo persistido aunque la
+// respuesta terminara en 403. Ahora la cita y su dueño se comprueban primero.
+router.post('/:id/receipt', requireAuth, async (req, res, next) => {
+  const [rows] = await pool.query('SELECT client_user_id FROM bookings WHERE id = ?', [req.params.id]);
+  const booking = rows[0];
+  if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
+  if (booking.client_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No puedes adjuntar un comprobante a esta cita' });
+  }
   receiptUpload.single('receipt')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
-
-    const [rows] = await pool.query('SELECT client_user_id FROM bookings WHERE id = ?', [req.params.id]);
-    const booking = rows[0];
-    if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
-    if (booking.client_user_id !== req.user.id) {
-      return res.status(403).json({ error: 'No puedes adjuntar un comprobante a esta cita' });
-    }
     if (!req.file) return res.status(400).json({ error: 'Falta el archivo del comprobante' });
+
+    const realType = await sniffFileType(req.file.path);
+    if (!realType || !ALLOWED_MIME.has(realType)) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ error: 'El archivo no es una imagen (JPG, PNG, WEBP) o PDF válido' });
+    }
 
     await pool.query(
       'UPDATE bookings SET receipt_path = ?, receipt_uploaded_at = NOW() WHERE id = ?',

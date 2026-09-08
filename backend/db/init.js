@@ -329,6 +329,20 @@ async function migrate() {
   //    en el marketplace. DEFAULT 0 deja exentos a los negocios ya
   //    existentes — no se ocultan retroactivamente. Ver schema.sql.
   await safeAlter('ALTER TABLE professionals ADD COLUMN verification_required TINYINT(1) NOT NULL DEFAULT 0');
+
+  // 5) Pin manual del dueño (2026-09-08): antes, cualquier cambio de sector
+  //    en "Mi perfil" volvía a geocodificar y pisaba el pin exacto que el
+  //    dueño ya había arrastrado en el mapa. Esta columna marca cuándo el
+  //    dueño confirmó el pin a mano — PUT /:slug/profile solo re-geocodifica
+  //    si sigue NULL. Ver routes/professionals.js.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN location_set_by_owner_at DATETIME');
+
+  // 6) Deduplicación del chat de soporte (2026-09-08): un envío con la misma
+  //    clave de cliente (doble toque, reintento tras respuesta perdida) no
+  //    crea un segundo mensaje. NULL para mensajes viejos y para los que
+  //    manda el admin (esos no necesitan clave).
+  await safeAlter('ALTER TABLE support_messages ADD COLUMN client_key VARCHAR(64)');
+  await safeAlter('ALTER TABLE support_messages ADD UNIQUE INDEX uq_support_client_key (user_id, client_key)');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

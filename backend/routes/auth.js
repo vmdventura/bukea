@@ -7,6 +7,7 @@ const oauth = require('../lib/oauth');
 const { PHONE_RE, normalizePhone, hashPin } = require('../lib/credentials');
 const rateLimit = require('../lib/rate-limit');
 const { requireAuth } = require('../lib/auth-middleware');
+const { buildSessionPayload } = require('../lib/session-payload');
 
 const router = express.Router();
 
@@ -70,10 +71,11 @@ async function upsertSocialUser({ column, sub, email, name, accountType }) {
   }
 
   const token = await issueToken(user.id);
-  return {
-    token, name: user.name, phone: user.phone, email: user.email || email || null, emailVerified: true,
-    accountType: user.account_type || 'client',
-  };
+  // Refetch: la fila `user` de la rama existente es anterior al UPDATE
+  // (email_verified_at pudo cambiar recién), y la rama nueva es un objeto
+  // armado a mano sin ese campo — buildSessionPayload necesita la fila real.
+  const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+  return buildSessionPayload(fresh[0], { token });
 }
 
 router.post('/check', async (req, res) => {
@@ -123,12 +125,29 @@ router.post('/register', async (req, res) => {
 
   const salt = crypto.randomBytes(16).toString('hex');
   const token = crypto.randomBytes(24).toString('hex');
-  const [result] = await pool.query(
-    'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token, account_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [phone, name, email, salt, hashPin(pin, salt), token, accountType]
-  );
+  let result;
+  try {
+    [result] = await pool.query(
+      'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token, account_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [phone, name, email, salt, hashPin(pin, salt), token, accountType]
+    );
+  } catch (err) {
+    // Carrera real (2026-09-08, encontrada corriendo la suite de pruebas en
+    // paralelo): dos registros con el mismo teléfono entre el SELECT de
+    // arriba y este INSERT. Antes esto tumbaba el proceso entero (una
+    // promesa rechazada sin capturar en una ruta async revienta a Express 4
+    // completo, cortando a TODOS los usuarios conectados, no solo a este).
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ese número ya tiene cuenta, inicia sesión con tu PIN' });
+    }
+    throw err;
+  }
   await sendVerificationEmail(req, result.insertId, email, name);
-  res.status(201).json({ token, name, phone, email, emailVerified: false, accountType });
+  const payload = await buildSessionPayload(
+    { id: result.insertId, name, phone, email, email_verified_at: null, phone_verified_at: null, account_type: accountType },
+    { token }
+  );
+  res.status(201).json(payload);
 });
 
 // Enlace de verificación (2026-08-27): token de un solo uso, vence en 24h.
@@ -310,12 +329,8 @@ router.delete('/push-token', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/session', requireAuth, (req, res) => {
-  res.json({
-    id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
-    emailVerified: Boolean(req.user.email_verified_at), accountType: req.user.account_type,
-    phoneVerified: Boolean(req.user.phone_verified_at),
-  });
+router.get('/session', requireAuth, async (req, res) => {
+  res.json(await buildSessionPayload(req.user));
 });
 
 router.post('/login', async (req, res) => {
@@ -345,10 +360,7 @@ router.post('/login', async (req, res) => {
 
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
-  res.json({
-    token, name: user.name, phone: user.phone, email: user.email,
-    emailVerified: Boolean(user.email_verified_at), accountType: user.account_type,
-  });
+  res.json(await buildSessionPayload(user, { token }));
 });
 
 /* ===== Verificación por WhatsApp (OTP) =====
@@ -423,10 +435,8 @@ router.post('/otp/verify', async (req, res) => {
   if (users.length > 0) {
     const token = crypto.randomBytes(24).toString('hex');
     await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, users[0].id]);
-    return res.json({
-      verified: true, exists: true, token, name: users[0].name, phone, email: users[0].email,
-      emailVerified: Boolean(users[0].email_verified_at), accountType: users[0].account_type,
-    });
+    const payload = await buildSessionPayload(users[0], { token });
+    return res.json({ verified: true, exists: true, ...payload });
   }
   res.json({ verified: true, exists: false, phone });
 });
@@ -499,7 +509,7 @@ router.post('/reset-pin', async (req, res) => {
     return res.status(401).json({ error: 'Código incorrecto' });
   }
 
-  const [users] = await pool.query('SELECT id, name, phone, account_type FROM users WHERE email = ?', [email]);
+  const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   const user = users[0];
   if (!user) return res.status(404).json({ error: 'No encontramos esa cuenta' });
 
@@ -511,7 +521,7 @@ router.post('/reset-pin', async (req, res) => {
     'UPDATE users SET pin_salt = ?, pin_hash = ?, token = ? WHERE id = ?',
     [salt, hashPin(newPin, salt), token, user.id]
   );
-  res.json({ token, name: user.name, phone: user.phone, accountType: user.account_type });
+  res.json(await buildSessionPayload(user, { token }));
 });
 
 /* ===== Login con Google y Apple =====

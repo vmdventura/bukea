@@ -2218,6 +2218,12 @@ ${ICON_SPRITE}
         ? messages.map(chatBubbleHtml).join('')
         : '<p class="dash-sub">Todavía no has escrito nada. Cuéntanos qué necesitas.</p>';
       box.scrollTop = box.scrollHeight;
+      // El GET ya no marca leído por su cuenta (2026-09-08) — el panel lo
+      // hace aquí, de forma explícita, solo cuando el chat está realmente
+      // visible (no en un polling de fondo).
+      fetch(BASE + '/api/professionals/' + proSlug() + '/messages/read', {
+        method: 'POST', headers: authHeaders(),
+      }).catch(function () {});
     } catch (err) {
       box.innerHTML = '<p class="dash-sub">No se pudo cargar el chat.</p>';
     }
@@ -2229,9 +2235,10 @@ ${ICON_SPRITE}
     var textarea = document.getElementById('ticket-message');
     var message = textarea.value.trim();
     if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
+    var clientKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
     var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/messages', {
       method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-      body: JSON.stringify({ message: message }),
+      body: JSON.stringify({ message: message, clientKey: clientKey }),
     });
     var data = await res.json().catch(function () { return {}; });
     if (!res.ok) { errEl.textContent = data.error || 'No se pudo enviar. Intenta de nuevo.'; errEl.style.display = 'block'; return; }

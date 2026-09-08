@@ -86,8 +86,32 @@ function photoUrl(req, storedPath) {
   return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/uploads/business-photos/${storedPath.split('/').pop()}`;
 }
 
+// Comprueba el contenido real del archivo, no solo el `mimetype` que
+// declaró el cliente (2026-09-08) — multer's `fileFilter` solo mira la
+// cabecera `Content-Type` del multipart, que cualquier cliente puede
+// falsear (ej. subir un .exe renombrado a foto.jpg con
+// Content-Type: image/jpeg). Lee los primeros bytes y compara contra la
+// firma real de cada formato admitido. Devuelve el mimetype detectado o
+// null si no coincide con ninguno.
+async function sniffFileType(filePath) {
+  const fd = await fs.promises.open(filePath, 'r');
+  try {
+    const buf = Buffer.alloc(12);
+    const { bytesRead } = await fd.read(buf, 0, 12, 0);
+    if (bytesRead < 4) return null;
+    if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+    if (bytesRead >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+    if (buf.toString('ascii', 0, 4) === '%PDF') return 'application/pdf';
+    return null;
+  } finally {
+    await fd.close();
+  }
+}
+
 module.exports = {
   receiptUpload, receiptUrl, RECEIPTS_DIR,
   logoUpload, logoUrl, LOGOS_DIR,
   photoUpload, photoUrl, PHOTOS_DIR,
+  sniffFileType, IMAGE_MIME, ALLOWED_MIME,
 };
