@@ -266,11 +266,11 @@
   /* Verificación de correo obligatoria (2026-08-27) — modal centrado, no
      descartable con un toque afuera ni con "atrás": la única salida es
      verificar o cerrar sesión, a propósito. */
-  .verify-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 22px; padding: 1.9rem 1.7rem; box-shadow: 0 20px 50px rgba(10,40,38,0.28); animation: splash-pop 280ms var(--ease); text-align: left; }
+  .verify-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 22px; padding: 1.9rem 1.7rem; box-shadow: 0 20px 50px rgba(10,40,38,0.28); animation: splash-pop 280ms var(--ease); text-align: center; }
   .verify-card h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.3rem; color: var(--ink); margin: 0 0 0.8rem; }
   .verify-card p { font-size: 0.88rem; color: var(--soft); line-height: 1.55; margin: 0 0 0.9rem; }
-  .verify-card .v-email { font-weight: 700; color: var(--ink); }
-  .verify-card .v-actions { display: flex; align-items: center; justify-content: flex-end; gap: 1.1rem; margin-top: 1.2rem; }
+  .verify-card .v-email { font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .verify-card .v-actions { display: flex; align-items: center; justify-content: center; gap: 1.1rem; margin-top: 1.2rem; }
   .verify-card .v-logout { background: none; border: none; color: var(--teal-700); font-weight: 700; font-size: 0.86rem; cursor: pointer; padding: 0.4rem; }
   .verify-card .v-resend { background: var(--brand-teal); color: #fff; border: none; border-radius: 999px; padding: 0.75rem 1.4rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; box-shadow: var(--sh-teal); transition: transform 120ms var(--ease); }
   .verify-card .v-resend:active { transform: scale(0.96); }
@@ -466,20 +466,38 @@
   }
 
   /* Formularios B2B */
-  .field { margin-bottom: 0.9rem; }
+  .field { margin-bottom: 0.9rem; position: relative; }
   .field label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); display: block; margin-bottom: 0.4rem; }
   .field input {
     width: 100%; background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
     padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
   }
   .field input:focus { outline: none; border-color: var(--teal-600); }
+  /* Buscador de sector (2026-09-06): sugerencias de sectores reales bajo
+     el campo — sigue siendo texto libre, solo ayuda a escribirlo bien. */
+  .sector-list {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.3rem;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
+    box-shadow: 0 14px 34px rgba(15,40,38,0.14); max-height: 220px; overflow-y: auto; z-index: 20; text-align: left;
+  }
+  .sector-opt {
+    display: block; width: 100%; padding: 0.6rem 0.9rem; background: none; border: none;
+    font-family: inherit; font-size: 0.86rem; color: var(--ink); text-align: left; cursor: pointer;
+  }
+  .sector-opt:hover { background: var(--teal-50); color: var(--teal-700); }
 
-  .svc-row { display: flex; gap: 0.45rem; margin-bottom: 0.5rem; align-items: center; }
-  .svc-row input { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.7rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
-  .svc-row input:focus { outline: none; border-color: var(--teal-600); }
-  .svc-row .svc-name { flex: 2.2; }
-  .svc-row .svc-min { flex: 1; }
-  .svc-row .svc-price { flex: 1.3; }
+  .svc-row { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center; }
+  .svc-row input, .svc-row select { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.6rem 0.5rem; font-size: 0.82rem; font-family: inherit; color: var(--ink); min-width: 0; }
+  .svc-row input:focus, .svc-row select:focus { outline: none; border-color: var(--teal-600); }
+  .svc-row .svc-name { flex: 2; }
+  .svc-row .svc-duration { display: flex; gap: 0.25rem; flex: 1.6; }
+  .svc-row .svc-duration select {
+    flex: 1; min-width: 0; text-align: center; text-align-last: center; font-weight: 600;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23708986' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 3px center; background-size: 9px; padding-right: 0.85rem;
+  }
+  .svc-row .svc-price { flex: 1.1; text-align: center; }
   .svc-row .svc-del { background: none; border: none; color: var(--soft); cursor: pointer; font-size: 1rem; padding: 0.2rem; flex: none; }
   .add-svc {
     background: none; border: 1.5px dashed var(--line); border-radius: 12px; width: 100%;
@@ -654,6 +672,13 @@
   .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-600); }
   .cal-dot.cancelled { background: var(--soft); opacity: 0.5; }
   .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+  .cal-view-tabs { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem; margin-bottom: 0.9rem; gap: 0.15rem; }
+  .cal-view-tab { background: none; border: none; font-family: inherit; font-size: 0.8rem; font-weight: 700; color: var(--soft); padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
+  .cal-view-tab.active { background: var(--card); color: var(--teal-700); box-shadow: var(--sh-1); }
+  .cal-week-day { border: 1px solid var(--line); border-radius: 14px; margin-bottom: 0.6rem; overflow: hidden; }
+  .cal-week-day-head { padding: 0.5rem 0.8rem; font-size: 0.78rem; font-weight: 800; color: var(--teal-900); background: var(--teal-50); }
+  .cal-week-day.today .cal-week-day-head { color: var(--teal-700); }
+  .cal-week-day .empty-hint { padding: 0.7rem 0.8rem; font-size: 0.8rem; color: var(--soft); }
 
   /* ===== Mi perfil ===== */
   .pf-error { display: none; color: #b3261e; font-size: 0.8rem; margin: 0 0 0.6rem; }
@@ -983,6 +1008,7 @@
 <symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></symbol>
 </defs>
 </svg>
 
@@ -1005,6 +1031,16 @@
     <!-- Paso 1: teléfono -->
     <div id="w-step-phone">
       <p class="w-sub" id="w-lead">Ingresa tu número para continuar</p>
+
+      <div class="reg-cat-grid" id="w-account-type" style="grid-template-columns:repeat(2,1fr)">
+        <button type="button" class="reg-cat-card sel" onclick="pickAccountType(this,'client')">
+          <svg class="icon"><use href="#i-user"/></svg><span class="lbl">Soy cliente</span>
+        </button>
+        <button type="button" class="reg-cat-card" onclick="pickAccountType(this,'owner')">
+          <svg class="icon"><use href="#i-store"/></svg><span class="lbl">Tengo un negocio</span>
+        </button>
+      </div>
+
       <div class="phone-group">
         <span class="flag">🇩🇴</span><span class="prefix">+1</span>
         <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
@@ -1315,15 +1351,20 @@
     <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
   </div>
 
-  <!-- ============ CALENDARIO (vista mensual) ============ -->
+  <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
   <div class="screen" id="calendario">
     <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Calendario</h1>
-    <p class="app-sub">Las citas de tu negocio, mes por mes.</p>
+    <p class="app-sub">Las citas de tu negocio.</p>
+    <div class="cal-view-tabs">
+      <button class="cal-view-tab active" data-view="hoy" onclick="calSetView('hoy')">Hoy</button>
+      <button class="cal-view-tab" data-view="semana" onclick="calSetView('semana')">Semana</button>
+      <button class="cal-view-tab" data-view="mes" onclick="calSetView('mes')">Mes</button>
+    </div>
     <div class="cal-toolbar">
-      <button class="cal-btn" onclick="calShiftMonth(-1)" aria-label="Mes anterior"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+      <button class="cal-btn" onclick="calShift(-1)" aria-label="Anterior"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
       <span class="cal-date" id="cal-date-label">—</span>
-      <button class="cal-btn" onclick="calShiftMonth(1)" aria-label="Mes siguiente"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="cal-btn" onclick="calShift(1)" aria-label="Siguiente"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
     </div>
     <button class="cal-today" style="display:block;margin:0 auto 0.9rem" onclick="calGoToday()">Hoy</button>
     <div id="cal-grid"></div>
@@ -1465,12 +1506,32 @@
     <h1 class="app-h1">Mis citas</h1>
     <p class="app-sub">Tus reservas en Bukea</p>
     <div id="miscitas-list"></div>
+  </div>
 
-    <!-- Mi cuenta: visible solo con sesión. "Eliminar mi cuenta" es
-         requisito del App Store (regla 5.1.1) para toda app con registro. -->
-    <div id="account-box" style="display:none;margin-top:2rem;padding-top:1.2rem;border-top:1px solid var(--line, rgba(0,0,0,0.08))">
+  <!-- ============ PERFIL (cuenta del cliente + entrada al negocio) ============
+       Antes esta pestaña llevaba directo al panel de negocio (confuso: un
+       cliente sin negocio caía en un wizard de "crear negocio" al tocar
+       "Perfil"). Ahora es la cuenta del cliente de verdad — nombre, cerrar
+       sesión, eliminar cuenta — y desde aquí, un solo botón hacia el lado de
+       negocio, con el texto según si la cuenta ya tiene uno o no. Así se
+       divide cliente de dueño sin mezclar los dos flujos en el mismo tap. -->
+  <div class="screen" id="cuenta">
+    <h1 class="app-h1">Perfil</h1>
+
+    <div id="cuenta-logged-out">
+      <p class="app-sub">Inicia sesión para ver tu cuenta y gestionar tu negocio.</p>
+      <button class="cta" onclick="requireAccount(function(){go('cuenta');}, 'Inicia sesión para ver tu perfil')">Iniciar sesión</button>
+    </div>
+
+    <div id="cuenta-logged-in" style="display:none">
+      <p class="app-sub" id="account-who"></p>
+
+      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="openPro()">
+        <svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
+      </button>
+
+      <!-- Mi cuenta: "Eliminar mi cuenta" es requisito del App Store (regla 5.1.1) para toda app con registro. -->
       <p class="sec-title">Mi cuenta</p>
-      <p id="account-who" style="color:var(--soft);font-size:0.85rem;margin:0 0 0.8rem"></p>
       <button class="add-svc" style="width:100%" onclick="clientLogout()">Cerrar sesión</button>
       <button id="btn-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
     </div>
@@ -1521,10 +1582,10 @@
 
   <!-- ============ NAV ============ -->
   <div class="navbar">
-    <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
-    <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
-    <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="openPro()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <button class="nav-btn active" data-s="inicio" onclick="closePanelWeb();go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+    <button class="nav-btn" data-s="buscar" onclick="closePanelWeb();openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
+    <button class="nav-btn" data-s="miscitas" onclick="closePanelWeb();go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="pro" onclick="closePanelWeb();openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -1538,11 +1599,29 @@
     </div>
   </div>
 
+  <!-- ============ HOJA: DETALLE DE CITA (panel de negocio) ============ -->
+  <div class="sheet-backdrop" id="booking-sheet" onclick="if(event.target===this) closeBookingSheet()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2 id="bs-client">—</h2>
+      <p class="s-sub" id="bs-service">—</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;margin:0.8rem 0 1rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.88rem"><span style="color:var(--soft)">Fecha</span><span id="bs-date">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.88rem"><span style="color:var(--soft)">Atiende</span><span id="bs-collab">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.88rem"><span style="color:var(--soft)">Pago</span><span id="bs-pay">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.88rem" id="bs-receipt-row"><span style="color:var(--soft)">Comprobante</span><span id="bs-receipt">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.88rem"><span style="color:var(--soft)">Precio</span><span id="bs-price">—</span></div>
+      </div>
+      <a id="bs-whatsapp" class="sheet-item" style="justify-content:center;display:none" target="_blank" rel="noopener"><svg class="icon"><use href="#i-whatsapp"/></svg>Escribir por WhatsApp</a>
+      <button class="sheet-skip" onclick="closeBookingSheet()">Cerrar</button>
+    </div>
+  </div>
+
   <!-- ============ VERIFICACIÓN DE CORREO OBLIGATORIA ============ -->
   <div class="sheet-backdrop center" id="verify-backdrop">
     <div class="verify-card">
       <h2>Verifica tu correo</h2>
-      <p>Hemos enviado un correo de verificación a:</p>
+      <p>Enviamos un correo a:</p>
       <p class="v-email" id="verify-email-addr"></p>
       <p>Haz clic en el enlace del correo para continuar. Puede tardar unos minutos; revisa también tu carpeta de spam.</p>
       <p class="w-error" id="verify-error"></p>
@@ -1573,11 +1652,13 @@
     receiptFile: null,
     bizProfile: null,
     bizBookings: [],
-    calMonth: null,
+    calDate: null,
+    calView: 'hoy',
   };
 
+  // Con separador de miles (2026-09-06): RD$1,000 en vez de RD$1000.
   function formatPrice(cents) {
-    return 'RD$ ' + Math.round(cents / 100);
+    return 'RD$ ' + Math.round(cents / 100).toLocaleString('en-US');
   }
 
   /* ===== "Cómo llegar" (2026-08-23) — abre Google Maps, Apple Maps o Waze
@@ -1889,12 +1970,16 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     el.classList.add('active');
-    const navKey = id.startsWith('pro-') ? 'pro' : id;
+    // 'cuenta' (Perfil) y las pantallas 'pro-*' del negocio comparten el
+    // mismo botón del nav (data-s="pro"): entrar a administrar el negocio
+    // desde Perfil no debe apagar el resaltado de esa pestaña.
+    const navKey = (id.startsWith('pro-') || id === 'cuenta') ? 'pro' : id;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
     document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
+    if (id === 'cuenta') renderAccountBox();
     if (id === 'reserva') loadAvailabilityDays();
   }
 
@@ -2029,9 +2114,9 @@
       row.className = 'card';
       row.style.cssText = 'padding:0.7rem 0.9rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;gap:0.6rem';
       row.innerHTML =
-        '<div><div style="font-weight:700;font-size:0.85rem">' + a.bankName + ' · ' + a.accountType + '</div>' +
-        '<div style="font-size:0.8rem;color:var(--soft)">' + a.accountNumber + '</div>' +
-        '<div style="font-size:0.75rem;color:var(--soft)">' + a.accountHolder + ' · Cédula/RNC ' + a.cedulaRnc + '</div></div>' +
+        '<div><div style="font-weight:700;font-size:0.85rem">' + esc(a.bankName) + ' · ' + esc(a.accountType) + '</div>' +
+        '<div style="font-size:0.8rem;color:var(--soft)">' + esc(a.accountNumber) + '</div>' +
+        '<div style="font-size:0.75rem;color:var(--soft)">' + esc(a.accountHolder) + ' · Cédula/RNC ' + esc(a.cedulaRnc) + '</div></div>' +
         '<button type="button" class="btn-copy">Copiar</button>';
       row.querySelector('.btn-copy').addEventListener('click', (e) => {
         navigator.clipboard.writeText(a.accountNumber).then(() => {
@@ -2272,7 +2357,28 @@
     return localStorage.getItem('bukea_pro_slug');
   }
 
-  function openPro() {
+  // Consulta al servidor si la cuenta logueada ya tiene un negocio (el slug
+  // guardado en este dispositivo puede faltar aunque sí tenga uno: login
+  // nuevo en este teléfono, reinstalación, etc. — mismo endpoint que ya usa
+  // el panel de escritorio desde el 2026-08-25, GET /api/professionals/me) y
+  // refresca el botón "Administrar mi negocio"/"Crear mi negocio" de Perfil
+  // (renderAccountBox). Se llama tanto al entrar a la app con sesión ya
+  // guardada (boot) como justo después de iniciar sesión (enterApp), para
+  // que el botón esté correcto antes de que el usuario lo toque.
+  async function syncProSlug() {
+    if (!getSession()) { renderAccountBox(); return; }
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/me', { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.slug) localStorage.setItem('bukea_pro_slug', data.slug);
+        else localStorage.removeItem('bukea_pro_slug');
+      }
+    } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
+    renderAccountBox();
+  }
+
+  async function openPro() {
     // El panel de negocio ahora exige sesión real (Google, Apple o
     // teléfono+PIN) — antes bastaba con conocer el slug guardado en
     // localStorage, y cualquiera podía ver la agenda de otro negocio.
@@ -2280,6 +2386,7 @@
       requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
       return;
     }
+    if (!proSlug()) await syncProSlug();
     if (proSlug()) {
       loadPanel();
       go('pro-panel');
@@ -2352,13 +2459,32 @@
     }
   }
 
+  // Duración con horas/minutos en desplegable y precio con coma de miles
+  // (2026-09-06, a pedido de Víctor: "muchos clientes no comprenden cómo
+  // colocar el tiempo estimado" / "en buen dominicano" — mismo patrón que
+  // el panel de negocio, views/negocio.js).
+  function svcHourOpts() {
+    let o = '';
+    for (let i = 0; i <= 8; i++) o += '<option value="' + i + '">' + i + 'h</option>';
+    return o;
+  }
+  function svcMinOpts() {
+    return [0, 15, 30, 45].map(m => '<option value="' + m + '"' + (m === 30 ? ' selected' : '') + '>' + String(m).padStart(2, '0') + 'm</option>').join('');
+  }
+  window.formatPriceInput = function (el) {
+    const raw = el.value.replace(/[^\d]/g, '');
+    el.value = raw ? Number(raw).toLocaleString('en-US') : '';
+  };
   function addServiceRow() {
     const row = document.createElement('div');
     row.className = 'svc-row';
     row.innerHTML =
       '<input class="svc-name" type="text" placeholder="Servicio (ej: Corte clásico)">' +
-      '<input class="svc-min" type="number" min="5" step="5" placeholder="Min">' +
-      '<input class="svc-price" type="number" min="0" step="50" placeholder="RD$">' +
+      '<div class="svc-duration">' +
+        '<select class="svc-hours">' + svcHourOpts() + '</select>' +
+        '<select class="svc-mins">' + svcMinOpts() + '</select>' +
+      '</div>' +
+      '<input class="svc-price" type="text" inputmode="numeric" placeholder="RD$" oninput="formatPriceInput(this)">' +
       '<button class="svc-del" title="Quitar servicio">✕</button>';
     row.querySelector('.svc-del').addEventListener('click', () => row.remove());
     document.getElementById('svc-rows').appendChild(row);
@@ -2381,8 +2507,10 @@
     const services = [];
     document.querySelectorAll('#svc-rows .svc-row').forEach(row => {
       const svcName = row.querySelector('.svc-name').value.trim();
-      const min = Number(row.querySelector('.svc-min').value);
-      const price = Number(row.querySelector('.svc-price').value);
+      const hours = Number(row.querySelector('.svc-hours').value) || 0;
+      const mins = Number(row.querySelector('.svc-mins').value) || 0;
+      const min = hours * 60 + mins;
+      const price = Number(row.querySelector('.svc-price').value.replace(/[^\d]/g, '')) || 0;
       if (svcName && min > 0 && price > 0) {
         services.push({ name: svcName, durationMin: min, priceCents: Math.round(price * 100) });
       }
@@ -2411,6 +2539,7 @@
       }
       const { slug } = await res.json();
       localStorage.setItem('bukea_pro_slug', slug);
+      renderAccountBox();
       track('business_signup', { item_id: slug, category: category });
       regStep = REG_TOTAL_STEPS + 1;
       regShowStep();
@@ -2526,6 +2655,63 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+
+  // Sectores del Gran Santo Domingo (2026-09-06) — mismo listado y patrón
+  // de buscador que el panel de negocio (views/negocio.js), duplicado aquí
+  // porque este archivo no puede reusar módulos del servidor. Texto libre
+  // igual: solo ayuda a escribir bien el sector, no bloquea otros.
+  const RD_SECTORS = [
+    'Piantini', 'Naco', 'Bella Vista', 'Los Cacicazgos', 'Gazcue', 'Ciudad Colonial',
+    'Zona Universitaria', 'Mirador Sur', 'Mirador Norte', 'Ensanche Quisqueya', 'Ensanche Naco',
+    'Ensanche La Fe', 'Ensanche Julieta', 'Ensanche Espaillat', 'Ensanche Luperón',
+    'Villa Consuelo', 'Villa Juana', 'Villa Francisca', 'Villas Agrícolas', 'María Auxiliadora',
+    'Los Ríos', 'Cristo Rey', 'Simón Bolívar', '30 de Mayo', 'San Carlos', 'Villa María',
+    'Honduras del Norte', 'Honduras del Oeste', 'Buenos Aires', 'Centro de los Héroes',
+    'Jardines del Sur', 'Paraíso', 'Arroyo Hondo', 'Los Prados', 'Los Restauradores',
+    'El Millón', 'La Julia', 'Renacimiento', 'Miraflores', 'Serrallés', 'San Gerónimo',
+    'La Esperilla', 'Evaristo Morales', 'Los Jardines', 'Atala', 'La Zurza', 'Domingo Savio',
+    'Gualey', 'Guachupita', 'Capotillo', '24 de Abril', 'Ciudad Nueva', 'San Antón',
+    'Mejoramiento Social', 'Los Peralejos', 'Invivienda', 'Ensanche Isabelita', 'Cancino',
+    'Alma Rosa I', 'Alma Rosa II', 'Los Mina', 'Los Mina Norte', 'Los Mina Sur',
+    'Ensanche Ozama', 'San Isidro', 'Villa Faro', 'Los Frailes', 'Los Trinitarios',
+    'El Almirante', 'La Caleta', 'Boca Chica', 'Sabana Perdida', 'Villa Mella',
+    'Guaricano', 'La Victoria', 'Pantoja', 'Manoguayabo', 'Herrera', 'Bayona',
+    'Buenos Aires de Herrera', 'Cacique', 'Palmarejo', 'Engombe', 'Cristo Rey de Herrera',
+    'Hato Nuevo',
+  ];
+  function initSectorSearch(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || input.dataset.sectorSearchReady) return;
+    input.dataset.sectorSearchReady = '1';
+    input.setAttribute('autocomplete', 'off');
+    const list = document.createElement('div');
+    list.className = 'sector-list';
+    list.id = inputId + '-list';
+    input.insertAdjacentElement('afterend', list);
+
+    function render(query) {
+      const q = query.trim().toLowerCase();
+      const matches = q
+        ? RD_SECTORS.filter(s => s.toLowerCase().indexOf(q) !== -1).slice(0, 8)
+        : RD_SECTORS.slice(0, 8);
+      if (!matches.length) { list.style.display = 'none'; return; }
+      list.innerHTML = matches.map(s => '<button type="button" class="sector-opt">' + esc(s) + '</button>').join('');
+      list.style.display = 'block';
+    }
+    input.addEventListener('focus', () => render(input.value));
+    input.addEventListener('input', () => render(input.value));
+    input.addEventListener('blur', () => {
+      setTimeout(() => { list.style.display = 'none'; }, 150);
+    });
+    list.addEventListener('mousedown', e => {
+      const opt = e.target.closest('.sector-opt');
+      if (!opt) return;
+      input.value = opt.textContent;
+      list.style.display = 'none';
+    });
+  }
+  initSectorSearch('reg-neighborhood');
+  initSectorSearch('pf-neighborhood');
   function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
   function startOfMonth() { const d = startOfToday(); d.setDate(1); return d; }
   function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
@@ -2659,37 +2845,94 @@
     btn.disabled = false;
   };
 
-  /* ---------- Calendario mensual ---------- */
+  /* ---------- Calendario (Hoy / Semana / Mes, 2026-09-06) ----------
+     state.calView: 'hoy' | 'semana' | 'mes'. state.calDate es la fecha de
+     referencia para las tres vistas — mismo patrón que views/negocio.js. */
   const CAL_DAY_HEADS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const CAL_DAY_HEAD_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const CAL_MONTH_FMT = new Intl.DateTimeFormat('es-DO', { month: 'long', year: 'numeric' });
   const CAL_DATE_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long' });
+  const CAL_RANGE_FMT = new Intl.DateTimeFormat('es-DO', { day: 'numeric', month: 'short' });
   let calSelectedDay = null;
   window.openCalendario = function () {
-    if (!state.calMonth) state.calMonth = startOfMonth();
+    if (!state.calDate) state.calDate = startOfToday();
+    if (!state.calView) state.calView = 'hoy';
     calSelectedDay = null;
-    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
-    document.getElementById('cal-day-list').innerHTML = '';
     renderCalendar();
     go('calendario');
   };
-  window.calShiftMonth = function (delta) {
-    const d = new Date(state.calMonth); d.setDate(1); d.setMonth(d.getMonth() + delta);
-    state.calMonth = d;
+  window.calSetView = function (view) {
+    state.calView = view;
+    document.querySelectorAll('.cal-view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     calSelectedDay = null;
-    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
-    document.getElementById('cal-day-list').innerHTML = '';
+    renderCalendar();
+  };
+  window.calShift = function (delta) {
+    const d = new Date(state.calDate);
+    if (state.calView === 'mes') { d.setDate(1); d.setMonth(d.getMonth() + delta); }
+    else if (state.calView === 'semana') { d.setDate(d.getDate() + delta * 7); }
+    else { d.setDate(d.getDate() + delta); }
+    state.calDate = d;
+    calSelectedDay = null;
     renderCalendar();
   };
   window.calGoToday = function () {
-    state.calMonth = startOfMonth();
+    state.calDate = startOfToday();
     calSelectedDay = null;
-    document.getElementById('cal-day-title').textContent = 'Selecciona un día';
-    document.getElementById('cal-day-list').innerHTML = '';
     renderCalendar();
   };
+
+  function bookingsOnDay(date) {
+    return state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), date))
+      .sort((a, b) => new Date(a.appointmentAt) - new Date(b.appointmentAt));
+  }
+  function citaCardHtml(b) {
+    const cancelled = b.status === 'cancelled';
+    return '<div class="cita-card" style="cursor:pointer' + (cancelled ? ';opacity:0.55' : '') + '" onclick="openBookingSheet(' + b.id + ')">' +
+      '<div class="c-top"><span>' + esc(b.clientName) + '</span><span>' + formatPrice(b.priceCents) + '</span></div>' +
+      '<div class="c-bottom"><span>' + esc(b.timeLabel) + '</span><span>' + esc(b.serviceName) + (b.collaboratorName ? ' · ' + esc(b.collaboratorName) : '') + '</span></div>' +
+      (cancelled ? '<span style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600">Cancelada</span>' : '') +
+      '</div>';
+  }
+
   function renderCalendar() {
-    document.getElementById('cal-date-label').textContent = capitalize(CAL_MONTH_FMT.format(state.calMonth));
-    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    document.getElementById('cal-day-title').style.display = state.calView === 'mes' ? '' : 'none';
+    if (state.calView === 'hoy') return renderCalDay();
+    if (state.calView === 'semana') return renderCalWeek();
+    return renderCalMonth();
+  }
+
+  function renderCalDay() {
+    document.getElementById('cal-date-label').textContent = capitalize(CAL_DATE_FMT.format(state.calDate));
+    document.getElementById('cal-day-list').innerHTML = '';
+    const evs = bookingsOnDay(state.calDate);
+    document.getElementById('cal-grid').innerHTML = evs.length
+      ? '<div class="dash-fade-in">' + evs.map(citaCardHtml).join('') + '</div>'
+      : '<p style="color:var(--soft);font-size:0.85rem">No hay citas este día.</p>';
+  }
+
+  function renderCalWeek() {
+    const start = new Date(state.calDate); start.setDate(start.getDate() - start.getDay());
+    const end = new Date(start); end.setDate(end.getDate() + 6);
+    document.getElementById('cal-date-label').textContent =
+      capitalize(CAL_RANGE_FMT.format(start)) + ' – ' + capitalize(CAL_RANGE_FMT.format(end));
+    document.getElementById('cal-day-list').innerHTML = '';
+    const today = startOfToday();
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start); day.setDate(day.getDate() + i);
+      const evs = bookingsOnDay(day);
+      html += '<div class="cal-week-day' + (sameDay(day, today) ? ' today' : '') + '">' +
+        '<div class="cal-week-day-head">' + capitalize(CAL_DAY_HEAD_NAMES[day.getDay()]) + ' ' + day.getDate() + '</div>' +
+        (evs.length ? evs.map(citaCardHtml).join('') : '<p class="empty-hint">Sin citas.</p>') +
+        '</div>';
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function renderCalMonth() {
+    document.getElementById('cal-date-label').textContent = capitalize(CAL_MONTH_FMT.format(state.calDate));
+    const year = state.calDate.getFullYear(), month = state.calDate.getMonth();
     const startOffset = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
@@ -2722,23 +2965,52 @@
   }
   window.showCalDay = function (dayNum) {
     calSelectedDay = dayNum;
-    renderCalendar();
-    const year = state.calMonth.getFullYear(), month = state.calMonth.getMonth();
+    renderCalMonth();
+    const year = state.calDate.getFullYear(), month = state.calDate.getMonth();
     const date = new Date(year, month, dayNum);
-    const evs = state.bizBookings.filter(b => b.appointmentAt && sameDay(new Date(b.appointmentAt), date))
-      .sort((a, b) => new Date(a.appointmentAt) - new Date(b.appointmentAt));
+    const evs = bookingsOnDay(date);
     document.getElementById('cal-day-title').textContent = capitalize(CAL_DATE_FMT.format(date));
     const list = document.getElementById('cal-day-list');
     list.classList.remove('dash-fade-in'); void list.offsetWidth; list.classList.add('dash-fade-in');
-    if (!evs.length) { list.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No hay citas este día.</p>'; return; }
-    list.innerHTML = evs.map(b => {
-      const cancelled = b.status === 'cancelled';
-      return '<div class="cita-card"' + (cancelled ? ' style="opacity:0.55"' : '') + '>' +
-        '<div class="c-top"><span>' + esc(b.clientName) + '</span><span>' + formatPrice(b.priceCents) + '</span></div>' +
-        '<div class="c-bottom"><span>' + esc(b.timeLabel) + '</span><span>' + esc(b.serviceName) + (b.collaboratorName ? ' · ' + esc(b.collaboratorName) : '') + '</span></div>' +
-        (cancelled ? '<span style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#b3261e;font-weight:600">Cancelada</span>' : '') +
-        '</div>';
-    }).join('');
+    list.innerHTML = evs.length ? evs.map(citaCardHtml).join('') : '<p style="color:var(--soft);font-size:0.85rem">No hay citas este día.</p>';
+  };
+
+  /* ---------- Hoja de detalle de cita (2026-09-06): nombre, servicio,
+     pago, comprobante y contacto del cliente por WhatsApp si está
+     disponible (users.phone vía client_user_id). ---------- */
+  window.openBookingSheet = function (id) {
+    const b = state.bizBookings.find(x => x.id === id);
+    if (!b) return;
+    document.getElementById('bs-client').textContent = b.clientName;
+    document.getElementById('bs-service').textContent = b.serviceName;
+    document.getElementById('bs-date').textContent = b.dayLabel + ' · ' + b.timeLabel;
+    document.getElementById('bs-collab').textContent = b.collaboratorName || '—';
+    document.getElementById('bs-pay').textContent =
+      b.paymentMethod === 'cash' ? 'Efectivo' :
+      b.paymentMethod === 'bank' ? 'Transferencia' :
+      b.paymentMethod === 'tpago' ? 'tPago' :
+      b.paymentMethod === 'card' ? 'Tarjeta' : (b.paymentMethod || '—');
+    const receiptRow = document.getElementById('bs-receipt-row');
+    if (b.paymentMethod === 'bank') {
+      receiptRow.style.display = 'flex';
+      document.getElementById('bs-receipt').innerHTML = b.receiptUrl
+        ? '<a href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>'
+        : 'Sin comprobante todavía';
+    } else {
+      receiptRow.style.display = 'none';
+    }
+    document.getElementById('bs-price').textContent = formatPrice(b.priceCents);
+    const waLink = document.getElementById('bs-whatsapp');
+    if (b.clientPhone) {
+      waLink.href = 'https://wa.me/1' + b.clientPhone;
+      waLink.style.display = 'flex';
+    } else {
+      waLink.style.display = 'none';
+    }
+    document.getElementById('booking-sheet').classList.add('show');
+  };
+  window.closeBookingSheet = function () {
+    document.getElementById('booking-sheet').classList.remove('show');
   };
 
   async function cancelBookingFromPanel(id) {
@@ -2776,8 +3048,11 @@
       });
       if (!res.ok) throw new Error('No se pudo cargar el horario');
       const days = await res.json();
+      // El servidor devuelve domingo primero (weekday 0-6) pero en RD la
+      // semana visual empieza lunes — reordena solo para pintar.
+      const ordered = [1, 2, 3, 4, 5, 6, 0].map(wd => days.find(d => d.weekday === wd)).filter(Boolean);
       el.innerHTML = '';
-      days.forEach(d => {
+      ordered.forEach(d => {
         const row = document.createElement('div');
         row.className = 'hour-row' + (d.open ? '' : ' closed');
         row.dataset.weekday = d.weekday;
@@ -3052,7 +3327,6 @@
 
   async function renderMisCitas() {
     const container = document.getElementById('miscitas-list');
-    renderAccountBox();
     if (!getSession()) {
       container.innerHTML =
         '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
@@ -3176,20 +3450,44 @@
 
   /* ===== Mi cuenta (cerrar sesión y eliminar cuenta) ===== */
   function renderAccountBox() {
-    const box = document.getElementById('account-box');
-    if (!box) return;
+    const loggedOut = document.getElementById('cuenta-logged-out');
+    const loggedIn = document.getElementById('cuenta-logged-in');
+    if (!loggedOut || !loggedIn) return;
     const s = getSession();
-    box.style.display = s ? 'block' : 'none';
+    loggedOut.style.display = s ? 'none' : 'block';
+    loggedIn.style.display = s ? 'block' : 'none';
     if (s) {
-      const who = document.getElementById('account-who');
-      who.textContent = s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+      document.getElementById('account-who').textContent =
+        s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+      document.getElementById('cuenta-negocio-label').textContent =
+        proSlug() ? 'Administrar mi negocio' : 'Crear mi negocio';
     }
   }
 
-  window.clientLogout = function () {
+  // Botón "Perfil" del nav (2026-09-06): sin sesión no tiene sentido mostrar
+  // la pantalla de cuenta con un único botón "Iniciar sesión" — vamos
+  // directo al login. Con sesión sí muestra la cuenta normal. Si quien
+  // inicia sesión aquí resulta ser una cuenta de dueño, la manda directo a
+  // su panel de negocio (mismo criterio que enterApp() usa cuando el login
+  // no viene de un callback pendiente) en vez de la pantalla de Perfil —
+  // no tiene sentido pasar por "Mi cuenta" primero si ya sabemos a dónde va.
+  window.openPerfil = function () {
+    if (!getSession()) {
+      requireAccount(function () {
+        const s = getSession();
+        if (s && s.accountType === 'owner') { openPro(); } else { go('cuenta'); }
+      }, 'Inicia sesión para ver tu perfil');
+      return;
+    }
+    go('cuenta');
+  };
+
+  window.clientLogout = async function () {
+    await unregisterPushToken();
     localStorage.removeItem('bukea_session');
     localStorage.removeItem('bukea_pro_slug');
     applySessionUI();
+    renderAccountBox();
     renderMisCitas();
     go('inicio');
   };
@@ -3200,12 +3498,14 @@
     const ok2 = confirm('Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?');
     if (!ok2) return;
     try {
+      await unregisterPushToken();
       const res = await fetch(API_BASE + '/api/auth/delete-account', { method: 'POST', headers: authHeaders() });
       if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
       track('account_deleted');
       localStorage.removeItem('bukea_session');
       localStorage.removeItem('bukea_pro_slug');
       applySessionUI();
+      renderAccountBox();
       alert('Tu cuenta fue eliminada. Gracias por probar Bukea.');
       go('inicio');
       renderMisCitas();
@@ -3279,6 +3579,19 @@
 
   let welcomePhone = '';
 
+  // Cliente vs. dueño de negocio (2026-09-06): se elige una vez, en el
+  // primer paso del login/registro, antes de escoger teléfono o Google/
+  // Apple — así aplica a los tres caminos de crear cuenta con un solo
+  // selector. Para una cuenta ya existente el valor se ignora en el
+  // servidor (routes/auth.js), no hay forma de "perder" tu tipo por
+  // tocar el botón equivocado en un login normal.
+  let pendingAccountType = 'client';
+  window.pickAccountType = function (btn, type) {
+    document.querySelectorAll('#w-account-type .reg-cat-card').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    pendingAccountType = type;
+  };
+
   /* ===== Login con Google y Apple =====
      Un solo botón "activo" sirve para el cliente y, gracias a
      requireAccount()/openPro(), también para entrar como negocio.
@@ -3291,8 +3604,61 @@
      nativo (@codetrix-studio/capacitor-google-auth, vía
      window.Capacitor.Plugins.GoogleAuth) en vez del SDK web; en el
      navegador normal seguimos usando el SDK web de siempre. Apple no
-     tiene esa restricción — su SDK web funciona igual en ambos casos. */
+     tiene esa restricción — su SDK web funciona igual en ambos casos
+     (incluida la app empaquetada de Android, que no tiene un plugin
+     nativo de Apple Sign In real: @capacitor-community/apple-sign-in
+     solo implementa iOS, en Android es un stub vacío que registra el
+     plugin pero no responde nada — por eso el flujo de Apple en Android
+     usa el mismo SDK web que el navegador, ver `nativeAppleReady` abajo). */
   const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const isIosApp = isNativeApp && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios';
+
+  /* ===== Notificaciones push (2026-09-06): avisar al dueño cuando un
+     cliente reserva con él, vía @capacitor-firebase/messaging. Solo tiene
+     sentido en la app empaquetada — el navegador no tiene el plugin. El
+     registro es "mejor esfuerzo": si el usuario no da permiso, o el
+     plugin no está listo, la app sigue funcionando igual sin push. */
+  async function registerPushToken() {
+    if (!isNativeApp || !getSession()) return;
+    const FirebaseMessaging = window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseMessaging;
+    if (!FirebaseMessaging) return;
+    try {
+      const perm = await FirebaseMessaging.checkPermissions();
+      if (perm.receive !== 'granted') {
+        const req = await FirebaseMessaging.requestPermissions();
+        if (req.receive !== 'granted') return;
+      }
+      const { token } = await FirebaseMessaging.getToken();
+      if (!token) return;
+      localStorage.setItem('bukea_push_token', token);
+      await fetch(API_BASE + '/api/auth/push-token', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ token, platform: isIosApp ? 'ios' : 'android' }),
+      });
+    } catch (err) {
+      console.error('No se pudo registrar el token de notificaciones:', err);
+    }
+  }
+  async function unregisterPushToken() {
+    if (!isNativeApp) return;
+    const token = localStorage.getItem('bukea_push_token');
+    if (!token) return;
+    localStorage.removeItem('bukea_push_token');
+    try {
+      await fetch(API_BASE + '/api/auth/push-token', {
+        method: 'DELETE',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ token }),
+      });
+    } catch (err) { /* el token igual expira solo en Firebase, no es crítico */ }
+  }
+  if (isNativeApp && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseMessaging) {
+    // El token puede rotar mientras la app corre (reinstalación, cambio de
+    // dispositivo) — sin este listener, un usuario que nunca vuelve a
+    // loguear se queda con un token viejo que Firebase ya invalidó.
+    window.Capacitor.Plugins.FirebaseMessaging.addListener('tokenReceived', () => registerPushToken());
+  }
 
   // Muestra los logos cuando las webfonts terminan de cargar (evita la "b"
   // cortada del primer render); a los 2s se muestran igual, pase lo que pase.
@@ -3302,22 +3668,23 @@
     setTimeout(fontsOk, 2000);
   })();
 
-  /* El plugin nativo (GoogleAuth) necesita un iosClientId real (creado en
-     Google Cloud Console para el bundle ID com.bukea.app) en
-     capacitor.config.json — mientras Víctor no lo entregue, ese campo
-     queda como placeholder "__IOS_GOOGLE_CLIENT_ID__". Inicializar el SDK
-     nativo de Google con ese valor no falla con un error manejable: hace
-     crashear la app entera. Por eso se verifica ANTES de tocar el plugin,
-     usando Capacitor.getConfig() (expone en runtime el mismo
+  /* El plugin nativo (GoogleAuth) necesita un client ID real por plataforma
+     (iosClientId en iOS, androidClientId en Android — creados en Google
+     Cloud Console para com.bukea.app) en capacitor.config.json — mientras
+     Víctor no lo entregue, ese campo queda como placeholder. Inicializar el
+     SDK nativo de Google con ese valor no falla con un error manejable:
+     hace crashear la app entera. Por eso se verifica ANTES de tocar el
+     plugin, usando Capacitor.getConfig() (expone en runtime el mismo
      capacitor.config.json que ya está empacado en el binario nativo). */
   // Capacitor no siempre expone getConfig() en el WebView (según versión):
   // si no se puede leer, se asume listo — el capacitor.config.json del
-  // paquete ya trae el iosClientId real (creado el 2026-08-26). El guard
-  // solo sigue bloqueando si se LEE la config y el valor es el placeholder.
-  const iosGoogleClientId = isNativeApp && typeof window.Capacitor.getConfig === 'function'
-    ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth && window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId)
+  // paquete ya trae el client ID real de cada plataforma. El guard solo
+  // sigue bloqueando si se LEE la config y el valor es el placeholder.
+  const nativeGoogleClientId = isNativeApp && typeof window.Capacitor.getConfig === 'function'
+    ? (window.Capacitor.getConfig().plugins && window.Capacitor.getConfig().plugins.GoogleAuth &&
+        (isIosApp ? window.Capacitor.getConfig().plugins.GoogleAuth.iosClientId : window.Capacitor.getConfig().plugins.GoogleAuth.androidClientId))
     : null;
-  const nativeGoogleReady = !isNativeApp || (iosGoogleClientId ? iosGoogleClientId.indexOf('__') !== 0 : true);
+  const nativeGoogleReady = !isNativeApp || (nativeGoogleClientId ? nativeGoogleClientId.indexOf('__') !== 0 : true);
 
   // Reintenta unos segundos antes de rendirse: en la app empaquetada
   // (iOS/Capacitor) el HTML local carga instantáneo, así que el evento
@@ -3331,15 +3698,17 @@
     const googleReady = isNativeApp
       ? (nativeGoogleReady && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth))
       : (window.google && google.accounts && google.accounts.id);
-    // En la app empaquetada el login de Apple es el nativo del sistema
+    // En iOS empaquetado el login de Apple es el nativo del sistema
     // (plugin SignInWithApple) — no depende del SDK web ni de APPLE_CLIENT_ID.
-    const nativeAppleReady = isNativeApp && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple);
+    // En Android empaquetado (y en el navegador normal) no hay plugin nativo,
+    // así que se usa el mismo SDK web que la versión de escritorio/móvil web.
+    const nativeAppleReady = isIosApp && !!(window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple);
     const appleReady = nativeAppleReady || window.AppleID;
 
     if (attemptsLeft > 0 && GOOGLE_CLIENT_ID && nativeGoogleReady && !googleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
-    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !isNativeApp && !appleReady) {
+    if (attemptsLeft > 0 && APPLE_CLIENT_ID && !isIosApp && !appleReady) {
       return setTimeout(function () { initSocialLogin(attemptsLeft - 1); }, 250);
     }
 
@@ -3365,9 +3734,9 @@
       AppleID.auth.init({
         clientId: APPLE_CLIENT_ID,
         scope: 'name email',
-        // API_BASE ya es absoluto (empaquetado en iOS) o relativo al mismo
-        // origen (web) — anteponer location.origin aquí duplicaría el
-        // origen cuando API_BASE ya trae el suyo (https://www.bukeard.com/app).
+        // API_BASE ya es absoluto (empaquetado en iOS/Android) o relativo
+        // al mismo origen (web) — anteponer location.origin aquí duplicaría
+        // el origen cuando API_BASE ya trae el suyo (https://www.bukeard.com/app).
         redirectURI: (/^https?:\/\//.test(API_BASE) ? API_BASE : window.location.origin + API_BASE) + '/',
         usePopup: true,
       });
@@ -3426,15 +3795,17 @@
   }
 
   function handleGoogleCredential(response) {
-    socialLogin('/api/auth/google', { idToken: response.credential }, 'google');
+    socialLogin('/api/auth/google', { idToken: response.credential, accountType: pendingAccountType }, 'google');
   }
 
   async function loginWithApple() {
-    // En la app empaquetada (iOS) el popup web de Apple no funciona dentro
+    // En la app empaquetada de iOS el popup web de Apple no funciona dentro
     // del WKWebView — se usa el Sign in with Apple nativo del sistema
     // (plugin SignInWithApple); el backend acepta el token con audience
-    // com.bukea.app además del Service ID web.
-    if (isNativeApp && window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple) {
+    // com.bukea.app además del Service ID web. En Android (sin plugin nativo
+    // real, ver nota de nativeAppleReady arriba) se cae al SDK web de Apple,
+    // igual que en el navegador — más abajo en esta función.
+    if (isIosApp && window.Capacitor.Plugins && window.Capacitor.Plugins.SignInWithApple) {
       wError('w-error-social');
       try {
         const result = await window.Capacitor.Plugins.SignInWithApple.authorize({
@@ -3442,7 +3813,7 @@
         });
         const r = result.response || {};
         const fullName = [r.givenName, r.familyName].filter(Boolean).join(' ') || null;
-        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName }, 'apple');
+        await socialLogin('/api/auth/apple', { idToken: r.identityToken, name: fullName, accountType: pendingAccountType }, 'apple');
       } catch (err) {
         // El usuario cerró la hoja del sistema: no es un error que mostrar.
         if (err && /cancel/i.test(String(err.message || err.error || ''))) return;
@@ -3458,7 +3829,7 @@
       const fullName = result.user && result.user.name
         ? [result.user.name.firstName, result.user.name.lastName].filter(Boolean).join(' ')
         : null;
-      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName }, 'apple');
+      await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName, accountType: pendingAccountType }, 'apple');
     } catch (err) {
       if (err && err.error === 'popup_closed_by_user') return;
       console.error(err);
@@ -3549,6 +3920,8 @@
     localStorage.removeItem('bukea_guest');
     track(method === 'sign_up' ? 'sign_up' : 'login', { method: method || 'phone' });
     applySessionUI();
+    syncProSlug();
+    registerPushToken();
     if (session && session.emailVerified === false) {
       verifyGateShow(session.email);
     } else {
@@ -3561,6 +3934,12 @@
       cb();
     } else {
       go('inicio');
+      // Cuenta de dueño (elegido al registrarse, ver pickAccountType): entra
+      // directo a su panel de negocio en vez del marketplace de cliente —
+      // pero solo en un login "de verdad" (sin pendingAfterLogin), nunca
+      // cuando el login fue just-in-time para completar otra cosa (ej.
+      // reservar), donde el callback ya sabe a dónde debe ir.
+      if (session && session.accountType === 'owner') openPro();
     }
   }
 
@@ -3647,6 +4026,7 @@
           name: document.getElementById('w-name').value,
           email: document.getElementById('w-email').value,
           pin: document.getElementById('w-newpin').value,
+          accountType: pendingAccountType,
         }),
       });
       const data = await res.json();
@@ -3776,6 +4156,9 @@
   const SPLASH_MS = 1400;
   function boot() {
     applySessionUI();
+    renderAccountBox();
+    syncProSlug();
+    registerPushToken();
 
     // Enlaces directos desde el marketplace público (bukeard.com):
     // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —
@@ -3828,16 +4211,26 @@
   window.closePanelWeb = function () {
     document.getElementById('panel-web').style.display = 'none';
   };
+  // El panel (views/negocio.js) pide cerrarse a sí mismo por postMessage
+  // (2026-09-06, a pedido de Víctor: que se sienta parte de la app, sin una
+  // barra "Volver a la app" separada). Se valida e.source contra el propio
+  // iframe en vez de confiar en el origin, así ningún otro contenido puede
+  // simular el mensaje.
+  window.addEventListener('message', (e) => {
+    const frame = document.getElementById('panel-web-frame');
+    if (e.source === frame.contentWindow && e.data && e.data.type === 'bukea:closePanel') {
+      closePanelWeb();
+    }
+  });
 </script>
 
-<!-- Panel de negocio completo, embebido a pantalla completa -->
-<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:90; background:var(--bg); flex-direction:column;">
-  <div style="flex:none; display:flex; align-items:center; gap:0.6rem; padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px; background:var(--brand-teal); color:var(--brand-cream);">
-    <button onclick="closePanelWeb()" aria-label="Volver a la app" style="background:none; border:none; color:inherit; display:flex; align-items:center; gap:0.35rem; font-family:inherit; font-size:0.9rem; font-weight:700; padding:6px 4px; cursor:pointer;">
-      <svg class="icon"><use href="#i-chevron-left"/></svg>Volver a la app
-    </button>
-  </div>
-  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; border:none; background:var(--bg);"></iframe>
+<!-- Panel de negocio completo, embebido a pantalla completa. Sin barra
+     "Volver a la app" propia (2026-09-06, a pedido de Víctor): el panel se
+     cierra solo (postMessage) cuando su propio nav-item "Volver" se toca, o
+     al tocar cualquier pestaña de la navbar de abajo — por eso z-index queda
+     por debajo de .navbar (40), así la navbar sigue encima y funcional. -->
+<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:30; background:var(--bg); flex-direction:column;">
+  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; height:100%; border:none; background:var(--bg);"></iframe>
 </div>
 </body>
 </html>

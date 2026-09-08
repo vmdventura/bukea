@@ -5,10 +5,14 @@
 //
 // Se activa solo cuando existe la variable de entorno
 // FIREBASE_SERVICE_ACCOUNT (el JSON de la cuenta de servicio de Firebase,
-// como texto plano). Sin ella, isConfigured() devuelve false y
-// sendToUser() no hace nada — mismo patrón que lib/mailer.js y
-// lib/whatsapp.js: una notificación que no se pudo mandar nunca debe
-// tumbar la reserva que la disparó.
+// codificado en base64 — NO como texto plano: el selector de Node.js de
+// cPanel hace un `export VAR=valor` sin comillas al arrancar la app, y un
+// JSON con comillas, dos puntos y saltos de línea rompe ese export y
+// llega truncado/corrupto a process.env. Base64 solo usa
+// [A-Za-z0-9+/=], inmune a ese problema). Sin la variable,
+// isConfigured() devuelve false y sendToUser() no hace nada — mismo
+// patrón que lib/mailer.js y lib/whatsapp.js: una notificación que no se
+// pudo mandar nunca debe tumbar la reserva que la disparó.
 
 const pool = require('../db/pool');
 
@@ -20,7 +24,8 @@ let messaging = null;
 function getMessaging() {
   if (messaging) return messaging;
   const admin = require('firebase-admin');
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  const json = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
+  const serviceAccount = JSON.parse(json);
   const app = admin.apps.length ? admin.app() : admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });

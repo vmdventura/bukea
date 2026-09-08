@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1024px; height:500px; overflow:hidden; }
+  body {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, #0f6f6a 0%, #0a4a47 32%, #052e2c 58%, #00201f 100%);
+    position: relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .noise {
+    position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    opacity: 0.5;
+  }
+  .wrap {
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:10px;
+  }
+  .mark {
+    font-family:"Fraunces", serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 72px;
+    color: #fdf6e3;
+    line-height:1;
+  }
+  .wordmark {
+    font-family:"Fraunces", serif;
+    font-weight: 600;
+    font-size: 56px;
+    color: #fdf6e3;
+    letter-spacing: -0.01em;
+    margin-top: -6px;
+  }
+  .tagline {
+    font-family:"Plus Jakarta Sans", sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: #e8a94a;
+    letter-spacing: 0.01em;
+    margin-top: 6px;
+  }
+  .dot {
+    position:absolute;
+    width: 10px; height:10px; border-radius:50%;
+    background: #e8a94a;
+  }
+</style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="wrap">
+    <div class="mark">b</div>
+    <div class="wordmark">Bukea</div>
+    <div class="tagline">Reserva tu cita en 60 segundos</div>
+  </div>
+</body>
+</html>

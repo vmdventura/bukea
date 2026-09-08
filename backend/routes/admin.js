@@ -12,13 +12,23 @@ const { requireAdmin } = require('../lib/auth-middleware');
 const { normalizePhone, hashPin } = require('../lib/credentials');
 const { insertDefaultHours } = require('../lib/hours');
 const { geocodeNeighborhood } = require('../lib/geocode');
-const { receiptUrl, RECEIPTS_DIR } = require('../lib/uploads');
+const { RECEIPTS_DIR } = require('../lib/uploads');
 const whatsapp = require('../lib/whatsapp');
 const mailer = require('../lib/mailer');
 const oauth = require('../lib/oauth');
 const { getSettings, updateSettings } = require('../lib/settings');
 const rateLimit = require('../lib/rate-limit');
 const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
+
+// Comprobantes (revisión externa 2026-09-08): el panel de admin ya no usa
+// receiptUrl() de lib/uploads.js (esa apunta a la ruta autenticada de la
+// app normal, protegida por requireAuth/token de usuario) — el admin entra
+// con su propio admin_token, así que necesita su propia ruta protegida por
+// requireAdmin (ver GET /bookings/:id/receipt-file más abajo).
+function adminReceiptUrl(req, bookingId, storedPath) {
+  if (!storedPath) return null;
+  return `${req.protocol}://${req.get('host')}/api/admin/bookings/${bookingId}/receipt-file`;
+}
 
 // Cuánto dura una sesión del panel antes de tener que volver a entrar —
 // mucho más corto que el de la app normal (que no vence): es la puerta más
@@ -52,7 +62,7 @@ function sendCsv(res, filename, csv) {
   res.type('text/csv').attachment(filename).send(csv);
 }
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
 
 function slugify(text) {
   return String(text)
@@ -156,7 +166,7 @@ router.get('/dashboard', async (req, res) => {
   const [[bookingStats]] = await pool.query(
     `SELECT
        COUNT(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS monthCount,
-       COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN s.price_cents END), 0) AS monthCents
+       COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS monthCents
      FROM bookings b JOIN services s ON s.id = b.service_id`
   );
   const [dailyRows] = await pool.query(
@@ -586,7 +596,7 @@ router.get('/bookings', async (req, res) => {
   const range = req.query.range;
 
   let sql = `SELECT b.id, b.client_name, b.status, b.payment_method, b.appointment_at, b.created_at, b.receipt_path,
-                    p.name AS professional_name, p.slug, s.name AS service_name, s.price_cents, c.name AS collaborator_name
+                    p.name AS professional_name, p.slug, COALESCE(b.service_name, s.name) AS service_name, COALESCE(b.price_cents, s.price_cents) AS price_cents, c.name AS collaborator_name
              FROM bookings b
              JOIN professionals p ON p.id = b.professional_id
              JOIN services s ON s.id = b.service_id
@@ -611,7 +621,7 @@ router.get('/bookings', async (req, res) => {
     paymentMethod: b.payment_method,
     appointmentAt: b.appointment_at,
     createdAt: b.created_at,
-    receiptUrl: receiptUrl(req, b.receipt_path),
+    receiptUrl: adminReceiptUrl(req, b.id, b.receipt_path),
     professionalName: b.professional_name,
     professionalSlug: b.slug,
     serviceName: b.service_name,
@@ -692,7 +702,7 @@ router.get('/moderation/receipts', async (req, res) => {
     professionalBusinessName: r.professional_business_name,
     uploadedAt: r.receipt_uploaded_at,
     status: r.status,
-    receiptUrl: receiptUrl(req, r.receipt_path),
+    receiptUrl: adminReceiptUrl(req, r.bookingId, r.receipt_path),
   })));
 });
 
@@ -711,6 +721,17 @@ router.delete('/bookings/:id/receipt', async (req, res) => {
   });
   await pool.query('UPDATE bookings SET receipt_path = NULL, receipt_uploaded_at = NULL WHERE id = ?', [req.params.id]);
   res.json({ saved: true });
+});
+
+// Servir el archivo del comprobante para el admin (revisión externa
+// 2026-09-08) — misma protección que la ruta equivalente de la app normal
+// (routes/bookings.js): ya no vive bajo public/uploads, requireAdmin (ver
+// router.use arriba) es quien exige la sesión aquí.
+router.get('/bookings/:id/receipt-file', async (req, res) => {
+  const [rows] = await pool.query('SELECT receipt_path FROM bookings WHERE id = ?', [req.params.id]);
+  const booking = rows[0];
+  if (!booking || !booking.receipt_path) return res.status(404).json({ error: 'Comprobante no encontrado' });
+  res.sendFile(path.join(RECEIPTS_DIR, booking.receipt_path));
 });
 
 // ===== Métricas (Fase 2) =====
@@ -765,7 +786,7 @@ router.get('/metrics', async (req, res) => {
 
   const [topBusinesses] = await pool.query(
     `SELECT p.business_name,
-            COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN s.price_cents END), 0) AS volumeCents,
+            COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS volumeCents,
             COUNT(CASE WHEN b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS totalThisMonth,
             COUNT(CASE WHEN b.status = 'cancelled' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS cancelledThisMonth
      FROM professionals p LEFT JOIN bookings b ON b.professional_id = p.id

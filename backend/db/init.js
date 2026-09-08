@@ -7,9 +7,10 @@ const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
-  'ER_DUP_FIELDNAME', // la columna ya existe
-  'ER_DUP_KEYNAME',   // el índice/UNIQUE ya existe
-  'ER_FK_DUP_NAME',   // la llave foránea ya existe
+  'ER_DUP_FIELDNAME',           // la columna ya existe
+  'ER_DUP_KEYNAME',             // el índice/UNIQUE ya existe
+  'ER_FK_DUP_NAME',             // la llave foránea ya existe
+  'ER_CANT_DROP_FIELD_OR_KEY',  // el índice/columna a borrar ya no existe
 ]);
 
 // Algunas versiones de MySQL/MariaDB (visto en producción, 2026-08-23) no
@@ -282,6 +283,52 @@ async function migrate() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Revisión externa de seguridad/confiabilidad (2026-09-08):
+  //
+  // 1) Cancelar una cita liberaba el horario solo en la UI: la fila
+  //    cancelada seguía ocupando (professional_id, appointment_at) en el
+  //    UNIQUE viejo, así que nadie más podía reservar exactamente esa hora
+  //    otra vez. active_appointment_at es NULL en canceladas (columna
+  //    generada) — MySQL no cuenta NULL como duplicado en un índice UNIQUE,
+  //    así que el nuevo índice solo compite entre citas 'confirmed'.
+  // Orden importa: uq_bookings_slot es hoy el único índice que empieza en
+  // professional_id, así que las FK sin nombre hacia professionals/services
+  // lo necesitan como soporte — borrarlo primero falla con ER_DROP_INDEX_FK
+  // (visto en local, MySQL 9.6). El nuevo índice también arranca en
+  // professional_id, así que se crea antes de soltar el viejo para que
+  // nunca haya un momento sin índice de soporte para esas FK.
+  await safeAlter(
+    "ALTER TABLE bookings ADD COLUMN active_appointment_at DATETIME " +
+    "GENERATED ALWAYS AS (CASE WHEN status = 'confirmed' THEN appointment_at END) VIRTUAL"
+  );
+  await safeAlter('ALTER TABLE bookings ADD UNIQUE INDEX uq_bookings_active_slot (professional_id, active_appointment_at)');
+  await safeAlter('ALTER TABLE bookings DROP INDEX uq_bookings_slot');
+
+  // 2) "Mi Cuadre" sumaba el precio VIGENTE del servicio (JOIN services),
+  //    no el que pagó el cliente al reservar — si el negocio sube un precio,
+  //    las citas viejas cambiaban de valor solas en las estadísticas.
+  //    service_name/price_cents guardan la foto del servicio al reservar.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN service_name VARCHAR(120)');
+  await safeAlter('ALTER TABLE bookings ADD COLUMN price_cents INT');
+  await pool.query(`
+    UPDATE bookings b JOIN services s ON s.id = b.service_id
+    SET b.service_name = s.name, b.price_cents = s.price_cents
+    WHERE b.service_name IS NULL
+  `);
+
+  // 3) "Guardar servicios" borraba y reinsertaba todos los servicios del
+  //    negocio — con reservas ya asociadas a un servicio borrado, el UPDATE
+  //    de arriba (y cualquier lectura futura que necesite el servicio
+  //    original) se queda sin fila. archived_at deja el historial intacto:
+  //    PUT /:slug/services ahora archiva en vez de borrar, ver professionals.js.
+  await safeAlter('ALTER TABLE services ADD COLUMN archived_at TIMESTAMP NULL DEFAULT NULL');
+
+  // 4) Requisitos obligatorios para negocios nuevos (2026-09-08, a pedido de
+  //    Víctor): foto + correo/teléfono verificados del dueño para aparecer
+  //    en el marketplace. DEFAULT 0 deja exentos a los negocios ya
+  //    existentes — no se ocultan retroactivamente. Ver schema.sql.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN verification_required TINYINT(1) NOT NULL DEFAULT 0');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

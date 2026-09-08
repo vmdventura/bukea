@@ -1,7 +1,8 @@
 const express = require('express');
+const path = require('path');
 const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
-const { receiptUpload, receiptUrl } = require('../lib/uploads');
+const { receiptUpload, receiptUrl, RECEIPTS_DIR } = require('../lib/uploads');
 const { getSettings } = require('../lib/settings');
 const push = require('../lib/push');
 const {
@@ -25,7 +26,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [services] = await pool.query(
-    'SELECT id, name, price_cents, duration_min FROM services WHERE id = ? AND professional_id = ?',
+    'SELECT id, name, price_cents, duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
     [serviceId, professionalId]
   );
   const service = services[0];
@@ -81,38 +82,58 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const { bookingSlotMin, bookingBufferMin } = await getSettings();
-  const [busyRows] = await pool.query(
-    `SELECT appointment_at, duration_min FROM bookings
-     WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?`,
-    [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
-  );
-  const busyRanges = busyRows.map(b => {
-    const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
-    return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
-  });
-
-  const freeSlots = computeFreeSlots({
-    hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
-    slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
-  });
-  if (!freeSlots.includes(startMin)) {
-    return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
-  }
-
   const appointmentAt = `${date} ${time}:00`;
 
+  // Reserva atómica (revisión externa 2026-09-08): antes se leía la
+  // disponibilidad y se insertaba en dos pasos sueltos del pool — dos
+  // clientes pidiendo horarios distintos que se solapan (ej. 45 min a las
+  // 9:00 y 30 min a las 9:15) podían pasar los dos la comprobación al mismo
+  // tiempo, porque el UNIQUE solo bloquea el mismo minuto exacto, no el
+  // solape. Una sola conexión, en transacción, con FOR UPDATE sobre las
+  // citas del día del negocio, serializa a cualquier otra reserva del mismo
+  // profesional que intente correr en paralelo — la segunda espera a que la
+  // primera confirme (o falle) antes de leer "libre".
+  const conn = await pool.getConnection();
   try {
-    const [result] = await pool.query(
+    await conn.beginTransaction();
+
+    const [busyRows] = await conn.query(
+      `SELECT appointment_at, duration_min FROM bookings
+       WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?
+       FOR UPDATE`,
+      [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
+    );
+    const busyRanges = busyRows.map(b => {
+      const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
+      return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
+    });
+
+    const freeSlots = computeFreeSlots({
+      hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
+      slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
+    });
+    if (!freeSlots.includes(startMin)) {
+      await conn.rollback();
+      return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
+    }
+
+    // service_name/price_cents (revisión externa 2026-09-08): foto del
+    // servicio al momento de reservar, para que "Mi Cuadre" y el historial
+    // no cambien de valor si el negocio edita el precio después. Ver
+    // db/init.js (migración) y GET /:slug/bookings, GET /:slug/stats.
+    const [result] = await conn.query(
       `INSERT INTO bookings
          (professional_id, service_id, collaborator_id, client_user_id, client_name, day_label, time_label,
-          appointment_at, duration_min, payment_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          appointment_at, duration_min, service_name, price_cents, payment_method)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         professionalId, serviceId, collaboratorId || null, req.user.id, clientName,
         dayLabel(date), formatTime12h(time),
-        appointmentAt, service.duration_min, paymentMethod,
+        appointmentAt, service.duration_min, service.name, service.price_cents, paymentMethod,
       ]
     );
+
+    await conn.commit();
 
     // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
     // propósito: si el envío de la notificación falla o tarda, la reserva
@@ -139,10 +160,13 @@ router.post('/', requireAuth, async (req, res) => {
       collaboratorName,
     });
   } catch (err) {
+    await conn.rollback();
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
     }
     throw err;
+  } finally {
+    conn.release();
   }
 });
 
@@ -153,7 +177,7 @@ router.get('/me', requireAuth, async (req, res) => {
     `SELECT b.id, b.status, b.payment_method, b.appointment_at, b.day_label, b.time_label, b.receipt_path,
             p.name AS professional_name, p.business_name, p.slug AS professional_slug,
             p.neighborhood, p.lat, p.lng,
-            s.name AS service_name, s.price_cents,
+            COALESCE(b.service_name, s.name) AS service_name, COALESCE(b.price_cents, s.price_cents) AS price_cents,
             c.name AS collaborator_name
      FROM bookings b
      JOIN professionals p ON p.id = b.professional_id
@@ -180,7 +204,7 @@ router.get('/me', requireAuth, async (req, res) => {
       dayLabel: b.appointment_at ? dayLabel(b.appointment_at.slice(0, 10)) : b.day_label,
       timeLabel: b.appointment_at ? formatTime12h(b.appointment_at.slice(11, 16)) : b.time_label,
       isPast: b.appointment_at ? b.appointment_at < nowInSantoDomingo().date + ' 00:00:00' : false,
-      receiptUrl: receiptUrl(req, b.receipt_path),
+      receiptUrl: receiptUrl(req, b.id, b.receipt_path),
       collaboratorName: b.collaborator_name || null,
     }))
   );
@@ -229,8 +253,31 @@ router.post('/:id/receipt', requireAuth, (req, res) => {
       'UPDATE bookings SET receipt_path = ?, receipt_uploaded_at = NOW() WHERE id = ?',
       [req.file.filename, req.params.id]
     );
-    res.json({ id: Number(req.params.id), receiptUrl: receiptUrl(req, req.file.filename) });
+    res.json({ id: Number(req.params.id), receiptUrl: receiptUrl(req, req.params.id, req.file.filename) });
   });
+});
+
+// Servir el archivo del comprobante (revisión externa 2026-09-08): antes
+// vivía bajo public/uploads/receipts, servido por express.static sin
+// autenticación — cualquiera con la URL (nombre de archivo difícil de
+// adivinar, pero no imposible, y URLs quedan en logs/historial) podía verlo.
+// Un comprobante de pago es información sensible; ahora exige sesión y solo
+// se sirve al cliente dueño de la cita o al dueño del negocio. RECEIPTS_DIR
+// vive fuera de public/ (ver lib/uploads.js), así que ya no hay ruta pública
+// que lo alcance sin pasar por aquí.
+router.get('/:id/receipt-file', requireAuth, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT b.receipt_path, b.client_user_id, p.owner_user_id
+     FROM bookings b JOIN professionals p ON p.id = b.professional_id
+     WHERE b.id = ?`,
+    [req.params.id]
+  );
+  const booking = rows[0];
+  if (!booking || !booking.receipt_path) return res.status(404).json({ error: 'Comprobante no encontrado' });
+  if (booking.client_user_id !== req.user.id && booking.owner_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes acceso a este comprobante' });
+  }
+  res.sendFile(path.join(RECEIPTS_DIR, booking.receipt_path));
 });
 
 module.exports = router;

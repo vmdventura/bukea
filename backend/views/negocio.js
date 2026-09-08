@@ -216,6 +216,20 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .acct-form { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); display: none; }
   .acct-form.open { display: block; }
 
+  /* ===== Compartir mi perfil (link + plantillas de WhatsApp) ===== */
+  .share-link-row { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+  .share-link-row input { flex: 1; min-width: 0; font-family: inherit; font-size: 0.85rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; }
+  .share-tpl { border: 1px solid var(--line); border-radius: 12px; padding: 0.8rem; margin-top: 0.8rem; }
+  .share-tpl:first-child { margin-top: 0; }
+  .share-tpl p { margin: 0 0 0.6rem; font-size: 0.85rem; color: var(--ink); white-space: pre-wrap; }
+
+  /* ===== Aviso de verificación pendiente (2026-09-08) ===== */
+  .verify-banner { display: none; background: #fdf1de; border: 1px solid #f0ce9c; border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; }
+  .verify-banner.show { display: block; }
+  .verify-banner h3 { margin: 0 0 0.3rem; font-size: 0.95rem; color: #7a4d0a; }
+  .verify-banner p { margin: 0 0 0.7rem; font-size: 0.82rem; color: #8a5c14; }
+  .verify-banner .btn { margin-right: 0.5rem; margin-bottom: 0.4rem; }
+
   /* ===== Calendario (Hoy / Semana / Mes) ===== */
   .cal-view-tabs { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem; margin-bottom: 0.9rem; gap: 0.15rem; }
   .cal-view-tab { background: none; border: none; font-family: inherit; font-size: 0.8rem; font-weight: 700; color: var(--soft); padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
@@ -570,6 +584,14 @@ ${ICON_SPRITE}
   <div class="content">
     <!-- ===== Resumen ===== -->
     <div class="panel show" id="panel-resumen">
+      <!-- Aviso de verificación pendiente (2026-09-08): solo se muestra si
+           este negocio nace bajo la regla nueva (verificationRequired) y le
+           falta algo — los negocios viejos, exentos, nunca lo ven. -->
+      <div class="verify-banner" id="verify-banner">
+        <h3>Tu negocio todavía no aparece en el marketplace</h3>
+        <p id="verify-banner-text"></p>
+        <div id="verify-banner-actions"></div>
+      </div>
       <div class="content-head">
         <div>
           <h1>Resumen</h1>
@@ -716,6 +738,25 @@ ${ICON_SPRITE}
         </div>
         <button class="btn btn-primary" onclick="saveSocial()">Guardar cambios</button>
       </div>
+
+      <!-- Compartir mi perfil (2026-09-08): el link directo a /p/:slug, para
+           pegarlo en la bio de Instagram o mandarlo por WhatsApp, y unas
+           plantillas de texto listas para copiar y pegar en un chat. -->
+      <div class="card">
+        <div class="card-head"><h3>Compartir mi perfil</h3></div>
+        <p class="dash-sub">Pégalo en tu bio de Instagram o mándalo por WhatsApp para que te reserven directo.</p>
+        <div class="share-link-row">
+          <input id="share-link-url" type="text" readonly>
+          <button class="btn btn-ghost btn-sm" onclick="copyShareText('share-link-url', this)">Copiar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Mensajes listos para WhatsApp</h3></div>
+        <p class="dash-sub">Cópialos y pégalos en tu chat con la clientela, tal cual o editados.</p>
+        <div id="share-templates-list"></div>
+      </div>
+
       <div class="card">
         <div class="field">
           <label for="sc-instagram">Instagram</label>
@@ -931,17 +972,23 @@ ${ICON_SPRITE}
     try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
   }
 
-  // La app nativa embebe este panel en un iframe y le pasa su sesión ya
-  // iniciada por el hash (#app-session=...), para que el dueño no tenga que
-  // volver a poner teléfono y PIN dentro del panel. El hash nunca viaja al
-  // servidor y se borra de la URL apenas se consume.
+  // La app nativa navega aquí de verdad (2026-09-08: antes lo embebía en un
+  // <iframe>) y le pasa su sesión ya iniciada por el hash
+  // (#app-session=...), para que el dueño no tenga que volver a poner
+  // teléfono y PIN dentro del panel. El hash nunca viaja al servidor y se
+  // borra de la URL apenas se consume. cameFromApp queda en true cuando esa
+  // navegación viene de la app — es lo que decide si se muestra "Volver a
+  // la app" (ver exitToApp más abajo); antes ese chequeo era
+  // window.self !== window.top (detectar el iframe), ya no aplica.
   // La app nativa también puede pedir abrir directo en un panel puntual
   // (ej. #panel=negocio para el logo/pin del mapa, #panel=servicios) en vez
   // de caer siempre en "Resumen" — se aplica después del login en boot().
   var requestedPanel = (/[#&]panel=([a-z]+)/.exec(location.hash || '') || [])[1] || null;
+  var cameFromApp = false;
   (function adoptAppSession() {
     var m = /[#&]app-session=([^&]+)/.exec(location.hash || '');
     if (!m) return;
+    cameFromApp = true;
     try {
       var s = JSON.parse(decodeURIComponent(m[1]));
       if (s && s.token) localStorage.setItem('bukea_session', JSON.stringify(s));
@@ -955,6 +1002,21 @@ ${ICON_SPRITE}
     var s = getSession();
     return s && s.token ? { Authorization: 'Bearer ' + s.token } : {};
   }
+
+  // Comprobantes de pago (revisión externa 2026-09-08): la URL ahora exige
+  // sesión (GET /api/bookings/:id/receipt-file), un <a href> plano no manda
+  // el header Authorization. Se descarga con fetch() autenticado y se abre
+  // como blob:// en pestaña nueva.
+  window.openAuthedFile = async function (url) {
+    try {
+      var res = await fetch(url, { headers: authHeaders() });
+      if (!res.ok) { toast('No se pudo abrir el comprobante.'); return; }
+      var blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch (err) {
+      toast('No se pudo abrir el comprobante.');
+    }
+  };
 
   function toast(msg) {
     var t = document.getElementById('toast');
@@ -1129,18 +1191,16 @@ ${ICON_SPRITE}
     location.reload();
   };
 
-  // Embebido en la app nativa vía iframe (2026-09-06, a pedido de Víctor:
-  // "que todo se sienta como una app nativa, sin salir y sin botón de
-  // 'volver a la app'"). El wrapper de index.html ya no dibuja su propia
-  // barra "Volver a la app" — este botón vive DENTRO del panel, como un
-  // nav-item más, y le avisa al padre por postMessage que lo cierre.
-  // Fuera de la app (bukeard.com/negocio en un navegador normal) el panel
-  // es la página completa, no hay a dónde "volver", así que se queda oculto.
-  if (window.self !== window.top) {
+  // Abierto desde la app nativa (2026-09-08: navegación de verdad a
+  // /negocio, ya no un iframe — ver openPanelWeb en public/index.html).
+  // cameFromApp (seteado en adoptAppSession arriba) es cómo se sabe que se
+  // llegó desde ahí. Fuera de la app (bukeard.com/negocio en un navegador
+  // normal) no hay a dónde "volver", así que el botón se queda oculto.
+  if (cameFromApp) {
     document.getElementById('nav-exit-app').style.display = '';
   }
   window.exitToApp = function () {
-    window.parent.postMessage({ type: 'bukea:closePanel' }, '*');
+    location.href = BASE + '/';
   };
 
   /* ---------- Estado del negocio ---------- */
@@ -1444,10 +1504,12 @@ ${ICON_SPRITE}
     renderTeam();
     renderBanks();
     renderSocial();
+    renderShareCard();
     renderBizLogo();
     renderBizPhotos();
     renderPerfil();
     renderCuenta();
+    renderVerifyBanner();
   }
 
   function money(cents) {
@@ -1842,7 +1904,14 @@ ${ICON_SPRITE}
     if (b.paymentMethod === 'bank') {
       receiptRow.style.display = 'flex';
       if (b.receiptUrl) {
-        receiptEl.innerHTML = '<a href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>';
+        // &quot; en vez de \' (2026-09-08): este archivo entero es un
+        // template literal de JS del lado del servidor (negocioShell()) —
+        // un \' aquí lo evalúa el servidor ANTES de enviarlo al navegador,
+        // así que llega como ' suelta y rompe el string de abajo en tiempo
+        // de ejecución (rompió authCheck y todo el resto del script). El
+        // entity HTML sí sobrevive las dos capas: el navegador lo decodifica
+        // a " al leer el atributo, válido también como delimitador de string JS.
+        receiptEl.innerHTML = '<a href="#" onclick="openAuthedFile(&quot;' + esc(b.receiptUrl) + '&quot;);return false;" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>';
       } else {
         receiptEl.textContent = 'Sin comprobante todavía';
       }
@@ -1912,7 +1981,11 @@ ${ICON_SPRITE}
   }
   function svcRowHtml(s) {
     s = s || {};
-    return '<div class="svc-row">' +
+    // data-id (2026-09-08): manda el id de vuelta en saveServicios() para
+    // que el servidor actualice la fila existente en vez de archivarla y
+    // crear una nueva — así una reserva ya hecha sigue apuntando al mismo
+    // servicio aunque el negocio le cambie el precio o el nombre.
+    return '<div class="svc-row" data-id="' + (s.id || '') + '">' +
       '<input type="text" class="sv-name" placeholder="Servicio (ej: Corte clásico)" value="' + esc(s.name || '') + '">' +
       '<div class="sv-duration">' +
         '<select class="sv-hours">' + svcHoursOptions(s.durationMin) + '</select>' +
@@ -1935,6 +2008,7 @@ ${ICON_SPRITE}
       var hours = Number(row.querySelector('.sv-hours').value) || 0;
       var mins = Number(row.querySelector('.sv-mins').value) || 0;
       return {
+        id: Number(row.getAttribute('data-id')) || null,
         name: row.querySelector('.sv-name').value.trim(),
         durationMin: hours * 60 + mins,
         priceCents: parsePriceInput(row.querySelector('.sv-price')) * 100,
@@ -1962,6 +2036,68 @@ ${ICON_SPRITE}
     document.getElementById('sc-tiktok').value = s.tiktok || '';
     document.getElementById('sc-website').value = s.website || '';
   }
+  /* ---------- Compartir mi perfil (2026-09-08) ---------- */
+  function shareTemplates(p) {
+    var name = (p && p.name) || '';
+    var biz = (p && p.businessName) || '';
+    var link = (p && p.publicUrl) || '';
+    return [
+      'Hola! Soy ' + name + ', de ' + biz + '. Agenda tu cita conmigo por aquí, sin llamadas: ' + link,
+      'Gracias por tu visita! Cuando quieras tu próxima cita, resérvala directo aquí: ' + link,
+      'Sígueme y reserva tu cita en un toque: ' + link,
+    ];
+  }
+  function renderShareCard() {
+    var p = state.profile;
+    if (!p) return;
+    document.getElementById('share-link-url').value = p.publicUrl || '';
+    var el = document.getElementById('share-templates-list');
+    el.innerHTML = shareTemplates(p).map(function (text, i) {
+      return '<div class="share-tpl"><p id="share-tpl-' + i + '">' + esc(text) + '</p>' +
+        '<button class="btn btn-ghost btn-sm" onclick="copyShareText(&quot;share-tpl-' + i + '&quot;, this)">Copiar</button></div>';
+    }).join('');
+  }
+  window.copyShareText = function (elId, btn) {
+    var el = document.getElementById(elId);
+    var text = 'value' in el ? el.value : el.textContent;
+    var done = function () {
+      var original = btn.textContent;
+      btn.textContent = 'Copiado';
+      setTimeout(function () { btn.textContent = original; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () { toast('No se pudo copiar.'); });
+    } else {
+      el.select ? el.select() : null;
+      try { document.execCommand('copy'); done(); } catch (e) { toast('No se pudo copiar.'); }
+    }
+  };
+
+  /* ---------- Aviso de verificación pendiente (2026-09-08) ---------- */
+  function renderVerifyBanner() {
+    var p = state.profile, a = state.account;
+    var banner = document.getElementById('verify-banner');
+    if (!p || !a || !p.verificationRequired) { banner.classList.remove('show'); return; }
+
+    var missing = [];
+    if (!p.logoUrl) missing.push('foto de perfil');
+    if (!a.emailVerified) missing.push('correo verificado');
+    if (!a.phoneVerified) missing.push('teléfono verificado');
+    if (missing.length === 0) { banner.classList.remove('show'); return; }
+
+    document.getElementById('verify-banner-text').textContent =
+      'Falta: ' + missing.join(', ') + '. Sin esto, tu negocio no aparece en el inicio, el mapa ni las búsquedas de Bukea (tu link directo sí funciona).';
+    var actions = document.getElementById('verify-banner-actions');
+    actions.innerHTML = '';
+    if (!p.logoUrl) {
+      actions.insertAdjacentHTML('beforeend', '<button class="btn btn-primary btn-sm" onclick="showPanel(\\'negocio\\')">Subir foto</button>');
+    }
+    if (!a.emailVerified || !a.phoneVerified) {
+      actions.insertAdjacentHTML('beforeend', '<button class="btn btn-primary btn-sm" onclick="showPanel(\\'perfil\\')">Verificar cuenta</button>');
+    }
+    banner.classList.add('show');
+  }
+
   window.saveSocial = async function () {
     var slug = proSlug();
     var res = await fetch(BASE + '/api/professionals/' + slug + '/social', {
@@ -2002,6 +2138,7 @@ ${ICON_SPRITE}
     var data = await res.json();
     state.profile.logoUrl = data.logoUrl;
     renderBizLogo();
+    renderVerifyBanner();
     toast('Logo actualizado.');
   };
 
@@ -2378,6 +2515,7 @@ ${ICON_SPRITE}
     if (!res.ok) return showAuthError('acct-phone-error', d.error || 'Código incorrecto.');
     state.account.phoneVerified = true;
     renderCuenta();
+    renderVerifyBanner();
     document.getElementById('acct-phone-form').classList.remove('open');
     document.getElementById('acct-phone-code').value = '';
     toast('Teléfono verificado.');

@@ -533,6 +533,20 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
       .catch(function (err) { alert(err.message); });
   }
 
+  // Comprobantes de pago (revisión externa 2026-09-08): la URL ahora exige
+  // sesión de admin (GET /api/admin/bookings/:id/receipt-file), mismo motivo
+  // que downloadCsv de arriba — un <a href> plano no manda el header
+  // Authorization.
+  window.openAuthedFile = function (url) {
+    fetch(url, { headers: { Authorization: 'Bearer ' + getToken() } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('No se pudo abrir el comprobante');
+        return res.blob();
+      })
+      .then(function (blob) { window.open(URL.createObjectURL(blob), '_blank'); })
+      .catch(function (err) { alert(err.message); });
+  };
+
   function api(path, opts) {
     opts = opts || {};
     var headers = { Authorization: 'Bearer ' + getToken() };
@@ -984,7 +998,11 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
       var payLabel = { cash: 'Efectivo', bank: 'Transferencia', tpago: 'tPago', card: 'Tarjeta' };
       var body = rows.map(function (b) {
         var statusChip = b.status === 'cancelled' ? '<span class="chip off">Cancelada</span>' : '<span class="chip ok">Confirmada</span>';
-        var payChip = '<span class="chip mid">' + esc(payLabel[b.paymentMethod] || b.paymentMethod) + '</span>' + (b.receiptUrl ? ' <a class="chip teal" href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="text-decoration:none">Comprobante</a>' : '');
+        // &quot; en vez de \' (2026-09-08): admin.js entero es un template
+        // literal de JS del servidor (adminShell()) — un \' lo evalúa el
+        // servidor antes de enviarlo, llega como ' suelta y rompe el script
+        // completo en el navegador. &quot; sobrevive las dos capas.
+        var payChip = '<span class="chip mid">' + esc(payLabel[b.paymentMethod] || b.paymentMethod) + '</span>' + (b.receiptUrl ? ' <a class="chip teal" href="#" onclick="openAuthedFile(&quot;' + esc(b.receiptUrl) + '&quot;);return false;" style="text-decoration:none">Comprobante</a>' : '');
         return '<tr>' +
           '<td><div class="who"><div class="dot">' + esc(initials(b.clientName)) + '</div><b>' + esc(b.clientName) + '</b></div></td>' +
           '<td>' + esc(b.professionalName) + (b.collaboratorName ? '<br><small style="color:var(--faint)">Atiende: ' + esc(b.collaboratorName) + '</small>' : '') + '</td>' +
@@ -1066,7 +1084,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
           '<td>' + fmtDateTime(r.uploadedAt) + '</td>' +
           '<td>' + (r.status === 'cancelled' ? '<span class="chip off">Cancelada</span>' : '<span class="chip ok">Confirmada</span>') + '</td>' +
           '<td><div class="rowactions">' +
-            '<a class="iconbtn" href="' + esc(r.receiptUrl) + '" target="_blank" rel="noopener" title="Ver comprobante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></a>' +
+            '<a class="iconbtn" href="#" onclick="openAuthedFile(&quot;' + esc(r.receiptUrl) + '&quot;);return false;" title="Ver comprobante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></a>' +
             '<button class="iconbtn" data-delete-receipt="' + r.bookingId + '" title="Eliminar comprobante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
           '</div></td></tr>';
       }).join('');

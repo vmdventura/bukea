@@ -13,6 +13,24 @@ const router = express.Router();
 const CATEGORIES = Object.keys(CAT_LABELS);
 const CITIES = Object.keys(CITY_LABELS);
 
+// Requisito de verificación (2026-09-08) para aparecer en el marketplace
+// público — nunca en el perfil directo (/p/:slug, GET /:slug más abajo).
+// Duplicado a propósito en routes/professionals.js (misma condición, mismo
+// criterio que directionLinks en lib/geocode.js): son consultas SQL
+// independientes en archivos distintos, no vale una capa de indirección
+// para una condición de una línea.
+const VISIBLE_IN_MARKETPLACE_SQL = `(
+  verification_required = 0
+  OR (
+    logo_path IS NOT NULL
+    AND owner_user_id IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM users u WHERE u.id = professionals.owner_user_id
+        AND u.email_verified_at IS NOT NULL AND u.phone_verified_at IS NOT NULL
+    )
+  )
+)`;
+
 function mktHeroHtml({ eyebrow, title, sub, ctaHtml }) {
   return `
   <div class="mkt-hero">
@@ -183,7 +201,7 @@ router.get('/', async (req, res) => {
   const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
   const ciudad = CITIES.includes(req.query.ciudad) ? req.query.ciudad : 'santo-domingo';
 
-  let sql = 'SELECT * FROM professionals WHERE hidden_at IS NULL';
+  let sql = `SELECT * FROM professionals WHERE hidden_at IS NULL AND ${VISIBLE_IN_MARKETPLACE_SQL}`;
   const params = [];
   if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
   // Todavía no hay columna de ciudad — los negocios reales de hoy son
@@ -303,7 +321,7 @@ router.get('/mapa', async (req, res) => {
   const base = req.baseUrlPrefix;
   const categoria = CATEGORIES.includes(req.query.categoria) ? req.query.categoria : null;
 
-  let sql = 'SELECT slug, name, business_name, neighborhood, category, rating, reviews_count, lat, lng FROM professionals WHERE hidden_at IS NULL AND lat IS NOT NULL AND lng IS NOT NULL';
+  let sql = `SELECT slug, name, business_name, neighborhood, category, rating, reviews_count, lat, lng FROM professionals WHERE hidden_at IS NULL AND lat IS NOT NULL AND lng IS NOT NULL AND ${VISIBLE_IN_MARKETPLACE_SQL}`;
   const params = [];
   if (categoria) { sql += ' AND category = ?'; params.push(categoria); }
 
@@ -470,10 +488,16 @@ router.get('/p/:slug', async (req, res) => {
     'SELECT weekday, start_time, end_time FROM professional_hours WHERE professional_id = ? ORDER BY weekday, start_time',
     [p.id]
   );
+  // Otras categorías, no la misma (2026-09-08, a pedido de Víctor): antes
+  // mostraba negocios de la MISMA categoría — competencia directa del
+  // profesional dentro de su propio link para compartir. Ahora sugiere
+  // categorías distintas (cross-sell: el barbero de arriba también le
+  // enseña la manicurista), nunca a quien le compite por la misma clientela.
   const [nearby] = await pool.query(
     `SELECT slug, name, business_name, neighborhood, rating, reviews_count FROM professionals
-     WHERE category = ? AND slug != ? AND hidden_at IS NULL ORDER BY reviews_count DESC LIMIT 4`,
-    [p.category, p.slug]
+     WHERE category != ? AND hidden_at IS NULL AND ${VISIBLE_IN_MARKETPLACE_SQL}
+     ORDER BY reviews_count DESC LIMIT 4`,
+    [p.category]
   );
 
   const bookHref = `${base}/?pro=${encodeURIComponent(p.slug)}`;
@@ -535,7 +559,7 @@ router.get('/p/:slug', async (req, res) => {
   </div>` : '';
 
   const nearbyHtml = nearby.length ? `
-  <h2 class="reveal" style="--i:6">Establecimientos cerca</h2>
+  <h2 class="reveal" style="--i:6">También te puede interesar</h2>
   <div class="nearby-grid reveal" style="--i:6">
     ${nearby.map(n => `
     <a class="nearby-card" href="/p/${esc(n.slug)}">
@@ -609,7 +633,7 @@ ${lat !== null && lng !== null ? '<link rel="stylesheet" href="https://unpkg.com
   <h2 class="reveal" style="--i:4.5">Cómo llegar</h2>
   <div class="svc-list card reveal" style="--i:4.5;padding:0.9rem 1.2rem">
     ${lat !== null && lng !== null ? '<div id="profile-map"></div>' : ''}
-    <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;justify-content:center">
       <a class="btn btn-ghost" href="${links.google}" target="_blank" rel="noopener">Google Maps</a>
       <a class="btn btn-ghost" href="${links.apple}" target="_blank" rel="noopener">Apple Maps</a>
       <a class="btn btn-ghost" href="${links.waze}" target="_blank" rel="noopener">Waze</a>
@@ -789,10 +813,28 @@ router.get('/negocio', (req, res) => {
 router.get('/negocios', async (req, res) => {
   const base = req.baseUrlPrefix;
 
+  // Estructura tomada del sitio B2B de Booksy (biz.booksy.com, 2026-09-07,
+  // a pedido de Víctor): tres bloques de beneficio de ancho completo (no
+  // una grilla de tarjetas parejas) antes de la vitrina de funciones, una
+  // franja de cifras justo bajo el hero, y "Comenzar es fácil" en 3 pasos
+  // numerados seguido de FAQ. El copy es de Bukea, no traducido de Booksy.
+  const benefitBlocks = [
+    { icon: 'i-calendar', h: 'Agenda organizada, sin estrés', p: 'Mantén tu agenda activa con reservas online disponibles 24/7 y confirmaciones automáticas por WhatsApp. Dos clientes nunca quedan reservados a la misma hora con el mismo profesional.' },
+    { icon: 'i-cash', h: 'Adiós a las tareas de gestión. Céntrate en tus clientes.', p: 'Cuenta bancaria del negocio, comprobante de pago adjunto a cada cita, y "Mi Cuadre" con lo que vendiste hoy, en la semana y en el mes. Sin libreta ni Excel.' },
+    { icon: 'i-link', h: 'Construye un negocio que te llene de orgullo', p: 'Cada negocio tiene un perfil público compartible, encontrable por categoría y por mapa. Un enlace para la bio de Instagram o WhatsApp, en vez del de la competencia.' },
+  ].map((b, i) => `
+    <div class="m-benefit reveal" style="--i:${i}">
+      <div class="icon-badge"><svg class="icon"><use href="#${b.icon}"/></svg></div>
+      <div>
+        <h3>${b.h}</h3>
+        <p>${b.p}</p>
+      </div>
+    </div>`).join('');
+
   const steps = [
-    { n: '1', h: 'Crea tu perfil', p: 'Tu nombre, tu negocio, tu categoría y tu sector. Menos de un minuto, sin tarjeta de crédito.' },
-    { n: '2', h: 'Comparte tu enlace', p: 'Tu perfil de Bukea, listo para pegar en tu bio de Instagram o en tu estado de WhatsApp.' },
-    { n: '3', h: 'Recibe reservas', p: 'Tus clientes ven tu horario real y reservan solos. Tú confirmas y cobras como prefieras.' },
+    { n: '1', h: 'Configura tu perfil', p: 'Empieza gratis, sin tarjeta ni compromiso. Tu nombre, tu negocio, tu categoría y tu sector, en menos de un minuto.' },
+    { n: '2', h: 'Comparte tu enlace de reserva', p: 'Tu perfil de Bukea, listo para pegar en tu bio de Instagram o en tu estado de WhatsApp.' },
+    { n: '3', h: 'Empieza a recibir reservas', p: 'Tus clientes ven tu horario real y reservan solos, sin llamadas ni mensajes interminables.' },
   ].map((s, i) => `
     <li class="card m-step reveal" style="--i:${i}">
       <span class="num">${s.n}</span>
@@ -805,15 +847,28 @@ router.get('/negocios', async (req, res) => {
   ).join('');
 
   const faq = [
+    { q: '¿Qué es Bukea?', a: 'Una app de reservas y gestión de agenda para negocios de belleza en República Dominicana: perfil público en el marketplace, agenda con disponibilidad real, confirmaciones por WhatsApp, control de pagos y "Mi Cuadre", todo en un solo lugar.' },
     { q: '¿Bukea de verdad es gratis?', a: 'Sí. No hay suscripción ni comisión por cada cliente nuevo. Cuando llegue el momento de cobrar, los negocios que se unieron primero mantienen las condiciones con las que empezaron.' },
     { q: '¿Necesito tarjeta de crédito para registrarme?', a: 'No. Creas tu cuenta con tu número de teléfono y un PIN, en menos de un minuto.' },
-    { q: '¿Mis clientes tienen que bajar una app?', a: 'No. Reservan desde tu enlace de Bukea en el navegador, sin instalar nada. Tú sí puedes usar la app o el panel de escritorio para gestionar tu negocio.' },
+    { q: '¿Funciona en mi celular?', a: 'Sí. App instalable en iPhone y Android, y una versión web que corre igual sin instalar nada. Tus clientes reservan desde tu enlace, sin bajar nada.' },
     { q: '¿Cómo me pagan mis clientes?', a: 'Como tú prefieras: efectivo, transferencia (con tus cuentas bancarias visibles en tu perfil) o tPago. Tarjeta llega más adelante.' },
+    { q: '¿Cómo me encuentran los clientes?', a: 'Por el marketplace de Bukea (búsqueda, categorías, mapa) y por el perfil público que puedes compartir en tus redes.' },
     { q: '¿Puedo tener más de una persona atendiendo citas?', a: 'Sí. Puedes agregar a tu equipo. Cada quien aparece como opción al reservar, y tú ves quién atiende cada cita.' },
   ].map(f => `<details class="card"><summary>${f.q}</summary><p>${f.a}</p></details>`).join('');
 
   const body = `
 ${MARKETING_STYLE}
+<style>
+  /* Bloques de beneficio a todo el ancho (2026-09-07, estilo biz.booksy.com):
+     a diferencia de .m-bento (grilla de tarjetas parejas), cada beneficio
+     es una fila propia con su ícono, para que el titular lea uno a la vez
+     en vez de escanear seis tarjetas iguales. */
+  .m-benefits { display: flex; flex-direction: column; gap: 2.4rem; margin: 0 0 3.5rem; }
+  .m-benefit { display: flex; gap: 1.4rem; align-items: flex-start; }
+  .m-benefit .icon-badge { flex: none; }
+  .m-benefit h3 { margin: 0 0 0.4rem; font-size: 1.15rem; color: var(--teal-900); }
+  .m-benefit p { margin: 0; color: var(--soft); font-size: 0.94rem; line-height: 1.65; max-width: 60ch; }
+</style>
 <div class="m-access-bar">
   <span>¿Ya tienes tu negocio en Bukea?</span>
   <a class="btn btn-primary" href="/negocio">Accede ahora a tu negocio</a>
@@ -821,44 +876,50 @@ ${MARKETING_STYLE}
 <div class="wrap">
   ${mktHeroHtml({
     eyebrow: 'Para negocios de belleza',
-    title: 'Tu agenda y tu clientela, sin pagar comisión',
-    sub: 'Bukea es la app de reservas hecha para el negocio de belleza dominicano: WhatsApp, pagos a la dominicana y agenda real, de raíz.',
-    ctaHtml: '<a class="btn btn-primary" href="/negocio">Únete a Bukea, es gratis</a>',
+    title: 'La app de gestión y reservas para tu negocio',
+    sub: 'Agenda, clientes y cobros en un solo lugar, hecha para el barbero, estilista o manicurista dominicano. Sin mensualidad, sin comisión por cliente nuevo.',
+    ctaHtml: '<a class="btn btn-primary" href="/negocio">Empieza gratis</a>',
   })}
 
   <div class="m-highlights reveal">
+    <div><b>RD$0</b><span>de mensualidad</span></div>
     <div><b>0%</b><span>comisión por cliente</span></div>
-    <div><b>2 min</b><span>para crear tu perfil</span></div>
-    <div><b>WhatsApp</b><span>confirmaciones nativas</span></div>
+    <div><b>iOS y Android</b><span>más versión web</span></div>
   </div>
 
+  <div class="m-benefits">${benefitBlocks}</div>
+
+  <div class="m-section-head reveal">
+    <h2>Explora las funciones</h2>
+    <p>Procesamiento de pagos, WhatsApp nativo, agenda y equipo. Así te ahorra tiempo Bukea.</p>
+  </div>
   <div class="m-bento">
     <div class="card m-feature -lg reveal" style="--i:0">
-      <div class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></div>
-      <h3>Agenda real</h3>
-      <p>Tus clientes ven tu horario de verdad y reservan sin llamarte. Tú confirmas, cancelas y llevas el control desde tu celular o tu computadora.</p>
+      <div class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></div>
+      <h3>WhatsApp de verdad, no simulado</h3>
+      <p>Confirmaciones y recordatorios por WhatsApp Business, desde un número propio de Bukea. Menos citas olvidadas, menos mensajes manuales para confirmar la hora.</p>
     </div>
     <div class="card m-feature reveal" style="--i:1">
+      <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
+      <h3>Pagos a la dominicana</h3>
+      <p>Efectivo y transferencia de primera clase, con comprobante adjunto desde la misma reserva.</p>
+    </div>
+    <div class="card m-feature reveal" style="--i:2">
       <div class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></div>
       <h3>Mi Cuadre</h3>
       <p>Cuánto vendiste hoy, en los últimos 7 días y en el mes, sin hoja de cálculo, sin cuaderno.</p>
     </div>
-    <div class="card m-feature reveal" style="--i:2">
-      <div class="icon-badge"><svg class="icon"><use href="#i-cash"/></svg></div>
-      <h3>A la dominicana</h3>
-      <p>Efectivo, transferencia y tPago desde el primer día. Tarjeta cuando la necesites.</p>
-    </div>
     <div class="card m-feature -lg reveal" style="--i:3">
-      <div class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></div>
-      <h3>WhatsApp nativo</h3>
-      <p>Confirmaciones y recordatorios donde ya está tu clientela, no una notificación push que nadie abre.</p>
+      <div class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></div>
+      <h3>Calendario y equipo</h3>
+      <p>Horario semanal editable, disponibilidad calculada en vivo. Un salón puede sumar colaboradores además del titular; cada cliente elige quién lo atiende.</p>
     </div>
     <div class="card m-feature reveal" style="--i:4">
       <div class="icon-badge"><svg class="icon"><use href="#i-users"/></svg></div>
       <h3>Tu equipo también reserva</h3>
-      <p>Agrega a las personas que atienden contigo. Cada cliente elige con quién quiere su cita.</p>
+      <p>Agrega a las personas que atienden contigo. Tú ves quién atiende cada cita.</p>
     </div>
-    <div class="card m-feature -lg -dark reveal" style="--i:5">
+    <div class="card m-feature -dark reveal" style="--i:5">
       <div class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></div>
       <h3>Cero comisión</h3>
       <p>Nunca te cobramos por cliente nuevo. Lo que vendes es tuyo.</p>
@@ -866,7 +927,7 @@ ${MARKETING_STYLE}
   </div>
 
   <div class="m-section-head reveal">
-    <h2>Cómo funciona</h2>
+    <h2>Comenzar es fácil</h2>
     <p>De cero a tu primera reserva, sin fricción.</p>
   </div>
   <ol class="m-steps">${steps}</ol>

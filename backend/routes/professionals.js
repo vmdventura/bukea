@@ -14,10 +14,28 @@ const {
 
 const router = express.Router();
 
+// Requisito de verificación (2026-09-08) para aparecer en las listas del
+// marketplace (este endpoint, y las páginas públicas en routes/pages.js) —
+// nunca en GET /:slug (el perfil directo sigue vivo aunque falte algo).
+// Duplicado a propósito en los dos archivos (mismo criterio que
+// directionLinks en lib/geocode.js): son consultas SQL independientes, no
+// vale la pena una capa de indirección para una condición de una línea.
+const VISIBLE_IN_MARKETPLACE_SQL = `(
+  verification_required = 0
+  OR (
+    logo_path IS NOT NULL
+    AND owner_user_id IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM users u WHERE u.id = professionals.owner_user_id
+        AND u.email_verified_at IS NOT NULL AND u.phone_verified_at IS NOT NULL
+    )
+  )
+)`;
+
 router.get('/', async (req, res) => {
   const { category } = req.query;
   const params = [];
-  let sql = 'SELECT * FROM professionals WHERE hidden_at IS NULL';
+  let sql = `SELECT * FROM professionals WHERE hidden_at IS NULL AND ${VISIBLE_IN_MARKETPLACE_SQL}`;
   if (category) {
     sql += ' AND category = ?';
     params.push(category);
@@ -31,7 +49,7 @@ router.get('/', async (req, res) => {
   let photoByProfessional = {};
   if (ids.length > 0) {
     const [services] = await pool.query(
-      `SELECT professional_id, name FROM services WHERE professional_id IN (?) ORDER BY id`,
+      `SELECT professional_id, name FROM services WHERE professional_id IN (?) AND archived_at IS NULL ORDER BY id`,
       [ids]
     );
     servicesByProfessional = services.reduce((acc, s) => {
@@ -75,7 +93,7 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json({ slug: rows[0] ? rows[0].slug : null });
 });
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
 
 function slugify(text) {
   return text
@@ -127,9 +145,13 @@ router.post('/', requireAuth, async (req, res) => {
   const [[{ foundingCount }]] = await pool.query('SELECT COUNT(*) AS foundingCount FROM professionals WHERE founding_free = 1');
   const foundingFree = foundingCount < FOUNDING_FREE_LIMIT ? 1 : 0;
 
+  // verification_required = 1 (2026-09-08): todo negocio nuevo desde hoy
+  // necesita foto + correo/teléfono verificados del dueño para aparecer en
+  // el marketplace — ver VISIBLE_IN_MARKETPLACE_SQL arriba. Los negocios
+  // sembrados antes de esta columna quedaron en su DEFAULT 0 (exentos).
   const [result] = await pool.query(
-    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source, founding_free)
-     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?, ?)`,
+    `INSERT INTO professionals (slug, category, name, business_name, neighborhood, rating, reviews_count, accepts_whatsapp, accepts_cash, owner_user_id, referral_source, founding_free, verification_required)
+     VALUES (?, ?, ?, ?, ?, 0, 0, 1, 1, ?, ?, ?, 1)`,
     [slug, category, name, businessName, neighborhood, req.user.id, referral, foundingFree]
   );
   const professionalId = result.insertId;
@@ -168,7 +190,7 @@ router.get('/:slug', async (req, res) => {
   }
 
   const [services] = await pool.query(
-    'SELECT id, name, duration_min, price_cents FROM services WHERE professional_id = ?',
+    'SELECT id, name, duration_min, price_cents FROM services WHERE professional_id = ? AND archived_at IS NULL',
     [professional.id]
   );
 
@@ -210,6 +232,17 @@ router.get('/:slug', async (req, res) => {
     acceptsWhatsapp: Boolean(professional.accepts_whatsapp),
     acceptsCash: Boolean(professional.accepts_cash),
     logoUrl: logoUrl(req, professional.logo_path),
+    // Absoluta con el dominio real (2026-09-08) — el panel de negocio corre
+    // dentro de la app empaquetada (capacitor://localhost) o embebido en un
+    // iframe de la SPA, ninguno de los dos tiene el dominio público en
+    // window.location.origin. Mismo criterio que logoUrl/receiptUrl arriba.
+    publicUrl: `${req.protocol}://${req.get('host')}/p/${professional.slug}`,
+    // Solo dice si la regla APLICA a este negocio, no si ya la cumple (eso
+    // depende de la verificación de correo/teléfono del dueño, que es
+    // privada — el panel de negocio ya la tiene en GET /api/auth/session,
+    // no hace falta duplicarla aquí). Público sin problema: no es dato
+    // sensible, solo une bandera de configuración.
+    verificationRequired: Boolean(professional.verification_required),
     social: {
       instagram: professional.social_instagram || '',
       facebook: professional.social_facebook || '',
@@ -247,7 +280,7 @@ router.get('/:slug/availability/days', async (req, res) => {
 
   const serviceId = Number(req.query.serviceId);
   const [services] = await pool.query(
-    'SELECT duration_min FROM services WHERE id = ? AND professional_id = ?',
+    'SELECT duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
     [serviceId, professional.id]
   );
   if (!services[0]) return res.status(400).json({ error: 'Selecciona un servicio válido' });
@@ -309,7 +342,7 @@ router.get('/:slug/availability/times', async (req, res) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Fecha inválida' });
 
   const [services] = await pool.query(
-    'SELECT duration_min FROM services WHERE id = ? AND professional_id = ?',
+    'SELECT duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
     [serviceId, professional.id]
   );
   if (!services[0]) return res.status(400).json({ error: 'Selecciona un servicio válido' });
@@ -360,7 +393,9 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
   const [bookings] = await pool.query(
     `SELECT b.id, b.client_name, b.day_label, b.time_label, b.appointment_at, b.status,
             b.payment_method, b.created_at, b.receipt_path,
-            s.name AS service_name, s.price_cents, s.duration_min,
+            COALESCE(b.service_name, s.name) AS service_name,
+            COALESCE(b.price_cents, s.price_cents) AS price_cents,
+            COALESCE(b.duration_min, s.duration_min) AS duration_min,
             c.name AS collaborator_name, u.phone AS client_phone
      FROM bookings b
      JOIN services s ON s.id = b.service_id
@@ -385,7 +420,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
       priceCents: b.price_cents,
       durationMin: b.duration_min,
       createdAt: b.created_at,
-      receiptUrl: receiptUrl(req, b.receipt_path),
+      receiptUrl: receiptUrl(req, b.id, b.receipt_path),
       collaboratorName: b.collaborator_name || null,
     }))
   );
@@ -411,14 +446,17 @@ router.get('/:slug/stats', requireAuth, async (req, res) => {
   // DATE(...) acota cada cubeta a un rango cerrado (hoy, últimos 7 días,
   // mes en curso hasta hoy) — con appointment_at una cita agendada a futuro
   // no debe contar como "de hoy" solo porque su fecha es >= CURDATE().
+  // COALESCE(b.price_cents, s.price_cents) usa el precio del momento de la
+  // reserva (revisión externa 2026-09-08); el JOIN a services solo queda
+  // como respaldo para citas viejas anteriores a ese snapshot.
   const [[stats]] = await pool.query(
     `SELECT
        COUNT(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) = CURDATE() THEN 1 END) AS today_count,
-       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) = CURDATE() THEN s.price_cents END), 0) AS today_cents,
+       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) = CURDATE() THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS today_cents,
        COUNT(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() THEN 1 END) AS week_count,
-       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() THEN s.price_cents END), 0) AS week_cents,
+       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS week_cents,
        COUNT(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() THEN 1 END) AS month_count,
-       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() THEN s.price_cents END), 0) AS month_cents
+       COALESCE(SUM(CASE WHEN DATE(COALESCE(b.appointment_at, b.created_at)) BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS month_cents
      FROM bookings b
      JOIN services s ON s.id = b.service_id
      WHERE b.professional_id = ? AND b.status = 'confirmed'`,
@@ -716,12 +754,19 @@ router.delete('/:slug/photos/:photoId', requireAuth, async (req, res) => {
   res.json({ deleted: true });
 });
 
-// Servicios editables (2026-08-25) — hasta ahora solo se creaban en el
-// wizard de registro; mismo patrón "reemplazar todo" que bank-accounts y
-// collaborators. Los IDs de citas ya reservadas contra un servicio borrado
-// se quedan con service_id apuntando a una fila que ya no existe — no rompe
-// nada porque bookings solo lee service_id al reservar, no con FK con
-// ON DELETE CASCADE hacia bookings (ver schema.sql).
+// Servicios editables (2026-08-25). Hasta el 2026-09-08 este endpoint borraba
+// y reinsertaba todos los servicios del negocio (mismo patrón que
+// bank-accounts/collaborators) — pero a diferencia de esas dos tablas,
+// bookings.service_id SÍ tiene una FK normal hacia services (sin ON DELETE),
+// así que borrar un servicio con reservas asociadas rompía el guardado
+// entero con un error de llave foránea. Ahora: los servicios que llegan con
+// `id` se actualizan en su propia fila (conserva el id, así las reservas
+// existentes lo siguen encontrando); los que no traen `id` (o no coincide
+// con uno del negocio) se insertan nuevos; los que existían y ya no vienen
+// en la lista se archivan (archived_at) en vez de borrarse — desaparecen del
+// perfil público y de "elegir servicio" al reservar (ver los WHERE
+// archived_at IS NULL en este archivo) pero siguen ahí para las reservas
+// viejas que ya los referencian.
 router.put('/:slug/services', requireAuth, async (req, res) => {
   const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
   if (error) return res.status(error[0]).json({ error: error[1] });
@@ -733,18 +778,36 @@ router.put('/:slug/services', requireAuth, async (req, res) => {
     const durationMin = Math.round(Number(s.durationMin));
     const priceCents = Math.round(Number(s.priceCents));
     if (!name || !Number.isFinite(durationMin) || durationMin <= 0 || !Number.isFinite(priceCents) || priceCents < 0) continue;
-    clean.push({ name, durationMin, priceCents });
+    const id = Number.isInteger(Number(s.id)) && Number(s.id) > 0 ? Number(s.id) : null;
+    clean.push({ id, name, durationMin, priceCents });
   }
   if (clean.length === 0) {
     return res.status(400).json({ error: 'Agrega al menos un servicio válido' });
   }
 
-  await pool.query('DELETE FROM services WHERE professional_id = ?', [professional.id]);
+  const [existingRows] = await pool.query('SELECT id FROM services WHERE professional_id = ?', [professional.id]);
+  const existingIds = new Set(existingRows.map(r => r.id));
+  const keptIds = new Set();
+
   for (const s of clean) {
-    await pool.query(
-      'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
-      [professional.id, s.name, s.durationMin, s.priceCents]
-    );
+    if (s.id && existingIds.has(s.id)) {
+      keptIds.add(s.id);
+      await pool.query(
+        'UPDATE services SET name = ?, duration_min = ?, price_cents = ?, archived_at = NULL WHERE id = ? AND professional_id = ?',
+        [s.name, s.durationMin, s.priceCents, s.id, professional.id]
+      );
+    } else {
+      const [result] = await pool.query(
+        'INSERT INTO services (professional_id, name, duration_min, price_cents) VALUES (?, ?, ?, ?)',
+        [professional.id, s.name, s.durationMin, s.priceCents]
+      );
+      keptIds.add(result.insertId);
+    }
+  }
+
+  const toArchive = existingRows.map(r => r.id).filter(id => !keptIds.has(id));
+  if (toArchive.length > 0) {
+    await pool.query('UPDATE services SET archived_at = NOW() WHERE id IN (?)', [toArchive]);
   }
 
   res.json({ saved: true, count: clean.length });

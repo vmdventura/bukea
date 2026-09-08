@@ -3,7 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 
-const RECEIPTS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'receipts');
+// Fuera de public/ a propósito (revisión externa 2026-09-08): un comprobante
+// de pago es información sensible y no debe quedar alcanzable por
+// express.static sin autenticación. Se sirve solo vía GET
+// /api/bookings/:id/receipt-file (ver routes/bookings.js), que exige sesión
+// y valida que quien pide sea el cliente dueño de la cita o el negocio.
+const RECEIPTS_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
 const LOGOS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'logos');
 const PHOTOS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'business-photos');
 // Carpetas nuevas (logos, business-photos) no vienen con .gitkeep en cada
@@ -64,10 +69,11 @@ const photoUpload = multer({
 
 // Absoluta (no solo el path) — la app empaquetada de iOS no comparte
 // origen con bukeard.com, así que un link relativo abriría en el sitio
-// equivocado (o en ninguno).
-function receiptUrl(req, storedPath) {
+// equivocado (o en ninguno). Apunta a la ruta autenticada, no a un archivo
+// estático — ver receipt-file en routes/bookings.js.
+function receiptUrl(req, bookingId, storedPath) {
   if (!storedPath) return null;
-  return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/uploads/receipts/${storedPath.split('/').pop()}`;
+  return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/api/bookings/${bookingId}/receipt-file`;
 }
 
 function logoUrl(req, storedPath) {

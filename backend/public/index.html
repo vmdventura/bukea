@@ -213,6 +213,24 @@
      como un badge pequeño superpuesto al borde, estilo "story". */
   /* 3 columnas (no 4): con 9 categorías da 3 filas exactas, sin fila
      huérfana con un solo círculo suelto. */
+  /* Paginador de categorías (2026-09-06, a pedido de Víctor): con más de
+     9 categorías, en vez de una cuarta fila huérfana, la segunda página
+     se desliza a la izquierda (scroll-snap nativo, sin librería). */
+  .cats-pager {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 0.6rem;
+  }
+  .cats-pager::-webkit-scrollbar { display: none; }
+  .cats-pager .cats-grid {
+    flex: 0 0 100%; scroll-snap-align: start; margin-bottom: 0;
+  }
+  .cats-dots { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.4rem; }
+  .cats-dots .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--line);
+    transition: background 180ms var(--ease), transform 180ms var(--ease);
+  }
+  .cats-dots .dot.on { background: var(--teal-500); transform: scale(1.3); }
+
   .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 1.4rem 0.6rem; }
   .cats-grid .cat {
     flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.4rem;
@@ -790,6 +808,23 @@
   .badge .icon { font-size: 0.85rem; }
   .badge.wa { background: var(--whatsapp-100); color: #1a7d43; }
   .badge.cash { background: var(--cash-100); color: var(--cash); }
+  .badge.pending { background: var(--gold-100); color: var(--gold-700); }
+
+  /* Mi cuenta (2026-09-08) — correo/teléfono/PIN del dueño, y el link para
+     su biografía, nativos dentro de la pantalla "Mi perfil" (antes solo
+     vivían en el panel de escritorio bukeard.com/negocio). */
+  .acct-line { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
+  .acct-line:last-child { border-bottom: none; }
+  .acct-line .lbl { font-size: 0.78rem; color: var(--soft); font-weight: 600; }
+  .acct-line .val { font-size: 0.92rem; font-weight: 700; color: var(--ink); word-break: break-word; }
+  .acct-form { display: none; margin: 0.6rem 0 1rem; }
+  .acct-form.open { display: block; }
+  .share-link-row { display: flex; gap: 0.5rem; margin: 0.6rem 0 1.3rem; }
+  .share-link-row input { flex: 1; min-width: 0; font-family: inherit; font-size: 0.82rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.75rem; }
+  .acct-btn {
+    background: none; border: 1.5px solid var(--teal-600); border-radius: 999px; color: var(--teal-700);
+    font-family: inherit; font-size: 0.76rem; font-weight: 700; padding: 0.4rem 0.85rem; cursor: pointer; flex: none;
+  }
 
   .portfolio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.3rem; }
   .work {
@@ -1007,6 +1042,9 @@
 <symbol id="c-canina" viewBox="0 0 24 24"><path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 4.75c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/></symbol>
 <symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
+<symbol id="c-trenzas" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></symbol>
+<symbol id="c-tatuadores" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="c-servicios-pro" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></symbol>
 </defs>
@@ -1132,17 +1170,25 @@
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
     <p class="option-label" style="margin-bottom:0.7rem">Explora servicios</p>
-    <div class="cats cats-grid">
-      <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
-      <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
-      <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
-      <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
-      <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
-      <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
-      <div class="cat" onclick="openCategory('entrenador','Entrenador Personal')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-entrenador"/></svg></span><span class="txt">Entrenador Personal</span></div>
-      <div class="cat" onclick="openCategory('peluqueria-canina','Peluquería Canina')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-canina"/></svg></span><span class="txt">Peluquería Canina</span></div>
-      <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
+    <div class="cats-pager" id="cats-pager">
+      <div class="cats cats-grid">
+        <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
+        <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
+        <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
+        <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
+        <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
+        <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
+        <div class="cat" onclick="openCategory('entrenador','Entrenador Personal')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-entrenador"/></svg></span><span class="txt">Entrenador Personal</span></div>
+        <div class="cat" onclick="openCategory('peluqueria-canina','Peluquería Canina')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-canina"/></svg></span><span class="txt">Peluquería Canina</span></div>
+        <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
+      </div>
+      <div class="cats cats-grid">
+        <div class="cat" onclick="openCategory('trenzas','Trenzas y Rastas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-trenzas"/></svg></span><span class="txt">Trenzas y Rastas</span></div>
+        <div class="cat" onclick="openCategory('tatuadores','Tatuadores')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-tatuadores"/></svg></span><span class="txt">Tatuadores</span></div>
+        <div class="cat" onclick="openCategory('servicios-profesionales','Servicios Profesionales')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-servicios-pro"/></svg></span><span class="txt">Servicios Profesionales</span></div>
+      </div>
     </div>
+    <div class="cats-dots" id="cats-dots"><span class="dot on"></span><span class="dot"></span></div>
 
 
     <button class="pro-link" onclick="openPro()">
@@ -1202,6 +1248,9 @@
         <button class="reg-cat-card" data-cat="entrenador" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-entrenador"/></svg><span class="lbl">Entrenador Personal</span></button>
         <button class="reg-cat-card" data-cat="peluqueria-canina" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-canina"/></svg><span class="lbl">Peluquería Canina</span></button>
         <button class="reg-cat-card" data-cat="spa" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-spa"/></svg><span class="lbl">Spa y Masajes</span></button>
+        <button class="reg-cat-card" data-cat="trenzas" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-trenzas"/></svg><span class="lbl">Trenzas y Rastas</span></button>
+        <button class="reg-cat-card" data-cat="tatuadores" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-tatuadores"/></svg><span class="lbl">Tatuadores</span></button>
+        <button class="reg-cat-card" data-cat="servicios-profesionales" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-servicios-pro"/></svg><span class="lbl">Servicios Profesionales</span></button>
       </div>
     </div>
 
@@ -1343,12 +1392,78 @@
       <button class="reg-cat-card" data-cat="entrenador" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-entrenador"/></svg><span class="lbl">Entrenador Personal</span></button>
       <button class="reg-cat-card" data-cat="peluqueria-canina" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-canina"/></svg><span class="lbl">Peluquería Canina</span></button>
       <button class="reg-cat-card" data-cat="spa" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-spa"/></svg><span class="lbl">Spa y Masajes</span></button>
+      <button class="reg-cat-card" data-cat="trenzas" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-trenzas"/></svg><span class="lbl">Trenzas y Rastas</span></button>
+      <button class="reg-cat-card" data-cat="tatuadores" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-tatuadores"/></svg><span class="lbl">Tatuadores</span></button>
+      <button class="reg-cat-card" data-cat="servicios-profesionales" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-servicios-pro"/></svg><span class="lbl">Servicios Profesionales</span></button>
     </div>
     <div class="field">
       <label for="pf-neighborhood">Sector</label>
       <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
     </div>
     <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+
+    <!-- Mi cuenta + link de biografía (2026-09-08) — nativos aquí, no en el
+         panel de escritorio. El link es el mismo que antes solo vivía en
+         "Redes sociales" de bukeard.com/negocio; a propósito va debajo de
+         Mi perfil, no ahí. -->
+    <p class="sec-title" style="margin-top:1.3rem">Mi cuenta</p>
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Correo<span class="badge pending" id="acct-email-badge" style="margin-left:0.4rem"></span></div>
+        <div class="val" id="acct-email-val">—</div>
+      </div>
+      <button class="acct-btn" onclick="toggleAcctForm('acct-email-form')">Cambiar</button>
+    </div>
+    <div class="acct-form" id="acct-email-form">
+      <p id="acct-email-error" class="pf-error"></p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <input id="acct-email-input" type="email" placeholder="nuevo@correo.com">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
+    </div>
+
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Teléfono<span class="badge pending" id="acct-phone-badge" style="margin-left:0.4rem"></span></div>
+        <div class="val" id="acct-phone-val">—</div>
+      </div>
+      <button class="acct-btn" id="acct-phone-btn" onclick="startPhoneVerify()">Verificar</button>
+    </div>
+    <div class="acct-form" id="acct-phone-form">
+      <p id="acct-phone-error" class="pf-error"></p>
+      <p style="color:var(--soft);font-size:0.78rem;margin:0 0 0.6rem">Te mandamos un código de 6 dígitos por WhatsApp.</p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <input id="acct-phone-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
+    </div>
+
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Contraseña</div>
+        <div class="val">••••</div>
+      </div>
+      <button class="acct-btn" onclick="toggleAcctForm('acct-pin-form')">Cambiar</button>
+    </div>
+    <div class="acct-form" id="acct-pin-form">
+      <p id="acct-pin-error" class="pf-error"></p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <label for="acct-pin-current">PIN actual</label>
+        <input id="acct-pin-current" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <div class="field" style="margin-bottom:0.6rem">
+        <label for="acct-pin-new">PIN nuevo</label>
+        <input id="acct-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
+    </div>
+
+    <p class="sec-title" style="margin-top:1.1rem">Link para tu biografía</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0">Pégalo en tu bio de Instagram o mándalo por WhatsApp para que te reserven directo.</p>
+    <div class="share-link-row">
+      <input id="acct-share-link" type="text" readonly>
+      <button class="acct-btn" onclick="copyBioLink(this)">Copiar</button>
+    </div>
   </div>
 
   <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
@@ -1582,10 +1697,10 @@
 
   <!-- ============ NAV ============ -->
   <div class="navbar">
-    <button class="nav-btn active" data-s="inicio" onclick="closePanelWeb();go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
-    <button class="nav-btn" data-s="buscar" onclick="closePanelWeb();openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
-    <button class="nav-btn" data-s="miscitas" onclick="closePanelWeb();go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="closePanelWeb();openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+    <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
+    <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+    <button class="nav-btn" data-s="pro" onclick="openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -1775,6 +1890,7 @@
     ['', 'Todos'], ['barberia', 'Barbería'], ['unas', 'Uñas'], ['salon', 'Salón'],
     ['maquillaje', 'Maquillaje'], ['cejas-mua', 'Cejas & MUA'], ['pilates', 'Pilates'],
     ['entrenador', 'Entrenador'], ['peluqueria-canina', 'Peluquería Canina'], ['spa', 'Spa y Masajes'],
+    ['trenzas', 'Trenzas y Rastas'], ['tatuadores', 'Tatuadores'], ['servicios-profesionales', 'Servicios Profesionales'],
   ];
 
   function distanceKm(lat1, lng1, lat2, lng2) {
@@ -2351,7 +2467,7 @@
   }
 
   /* ===== Lado B2B: registro y panel del profesional ===== */
-  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates' };
+  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates', 'entrenador': 'Entrenador Personal', 'peluqueria-canina': 'Peluquería Canina', 'spa': 'Spa y Masajes', 'trenzas': 'Trenzas y Rastas', 'tatuadores': 'Tatuadores', 'servicios-profesionales': 'Servicios Profesionales' };
 
   function proSlug() {
     return localStorage.getItem('bukea_pro_slug');
@@ -2600,9 +2716,8 @@
           card.querySelector('.c-svc').textContent = c.serviceName + (c.collaboratorName ? ' · Atendió: ' + c.collaboratorName : '');
           if (c.paymentMethod === 'bank' && c.receiptUrl) {
             const link = document.createElement('a');
-            link.href = c.receiptUrl;
-            link.target = '_blank';
-            link.rel = 'noopener';
+            link.href = '#';
+            link.addEventListener('click', e => { e.preventDefault(); openAuthedFile(c.receiptUrl); });
             link.textContent = 'Ver comprobante';
             link.style.cssText = 'display:block;margin-top:0.3rem;font-size:0.78rem;font-weight:600;color:var(--teal-700)';
             card.appendChild(link);
@@ -2802,6 +2917,8 @@
     pfSelectedCat = p.category;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
     document.getElementById('pf-error').style.display = 'none';
+    document.getElementById('acct-share-link').value = p.publicUrl || '';
+    loadAcctSection();
     go('mi-perfil');
   };
   window.pickPfCat = function (btn) {
@@ -2843,6 +2960,144 @@
       btn.textContent = original;
     }
     btn.disabled = false;
+  };
+
+  /* ---------- Mi cuenta (correo/teléfono/PIN) + link de biografía
+     (2026-09-08) — nativos dentro de "Mi perfil", mismos endpoints que ya
+     usaba el panel de escritorio (views/negocio.js), no hace falta nada
+     nuevo del lado del servidor. */
+  async function loadAcctSection() {
+    try {
+      const res = await fetch(API_BASE + '/api/auth/session', { headers: authHeaders() });
+      if (!res.ok) return;
+      state.bizAccount = await res.json();
+      renderAcctSection();
+    } catch (err) { /* sin internet: se queda con lo último mostrado */ }
+  }
+  function renderAcctSection() {
+    const a = state.bizAccount;
+    if (!a) return;
+    document.getElementById('acct-email-val').textContent = a.email || 'Sin correo';
+    document.getElementById('acct-email-input').value = a.email || '';
+    const emailBadge = document.getElementById('acct-email-badge');
+    if (a.email) {
+      emailBadge.style.display = '';
+      emailBadge.classList.toggle('pending', !a.emailVerified);
+      emailBadge.textContent = a.emailVerified ? 'Verificado' : 'Pendiente';
+    } else {
+      emailBadge.style.display = 'none';
+    }
+    document.getElementById('acct-phone-val').textContent = a.phone || 'Sin teléfono';
+    const phoneBadge = document.getElementById('acct-phone-badge');
+    const phoneBtn = document.getElementById('acct-phone-btn');
+    if (!a.phone) {
+      phoneBadge.style.display = 'none';
+      phoneBtn.style.display = 'none';
+    } else if (a.phoneVerified) {
+      phoneBadge.style.display = '';
+      phoneBadge.classList.remove('pending');
+      phoneBadge.textContent = 'Verificado';
+      phoneBtn.style.display = 'none';
+    } else {
+      phoneBadge.style.display = '';
+      phoneBadge.classList.add('pending');
+      phoneBadge.textContent = 'Sin verificar';
+      phoneBtn.style.display = '';
+    }
+  }
+  window.toggleAcctForm = function (id) {
+    document.querySelectorAll('#mi-perfil .acct-form').forEach(f => {
+      f.classList.toggle('open', f.id === id && !f.classList.contains('open'));
+    });
+  };
+  window.saveAcctEmail = async function () {
+    const errEl = document.getElementById('acct-email-error');
+    errEl.style.display = 'none';
+    const newEmail = document.getElementById('acct-email-input').value.trim();
+    try {
+      const res = await fetch(API_BASE + '/api/auth/change-email', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ newEmail }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo cambiar el correo.');
+      state.bizAccount.email = d.email;
+      state.bizAccount.emailVerified = d.emailVerified;
+      renderAcctSection();
+      document.getElementById('acct-email-form').classList.remove('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.startPhoneVerify = async function () {
+    const errEl = document.getElementById('acct-phone-error');
+    errEl.style.display = 'none';
+    try {
+      const res = await fetch(API_BASE + '/api/auth/verify-phone/send', { method: 'POST', headers: authHeaders() });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo enviar el código.');
+      if (d.alreadyVerified) { state.bizAccount.phoneVerified = true; renderAcctSection(); return; }
+      document.getElementById('acct-phone-form').classList.add('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.confirmPhoneVerify = async function () {
+    const errEl = document.getElementById('acct-phone-error');
+    errEl.style.display = 'none';
+    const code = document.getElementById('acct-phone-code').value.trim();
+    try {
+      const res = await fetch(API_BASE + '/api/auth/verify-phone/verify', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ code }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'Código incorrecto.');
+      state.bizAccount.phoneVerified = true;
+      renderAcctSection();
+      document.getElementById('acct-phone-form').classList.remove('open');
+      document.getElementById('acct-phone-code').value = '';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.saveAcctPin = async function () {
+    const errEl = document.getElementById('acct-pin-error');
+    errEl.style.display = 'none';
+    const currentPin = document.getElementById('acct-pin-current').value.trim();
+    const newPin = document.getElementById('acct-pin-new').value.trim();
+    if (!/^\d{4}$/.test(newPin)) {
+      errEl.textContent = 'El PIN nuevo debe ser de 4 dígitos.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE + '/api/auth/change-pin', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ currentPin, newPin }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo cambiar la contraseña.');
+      document.getElementById('acct-pin-current').value = '';
+      document.getElementById('acct-pin-new').value = '';
+      document.getElementById('acct-pin-form').classList.remove('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.copyBioLink = function (btn) {
+    const el = document.getElementById('acct-share-link');
+    const done = () => { const t = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = t; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(el.value).then(done).catch(() => { el.select(); });
+    } else {
+      el.select();
+      try { document.execCommand('copy'); done(); } catch (e) { /* nada más que hacer */ }
+    }
   };
 
   /* ---------- Calendario (Hoy / Semana / Mes, 2026-09-06) ----------
@@ -2994,7 +3249,7 @@
     if (b.paymentMethod === 'bank') {
       receiptRow.style.display = 'flex';
       document.getElementById('bs-receipt').innerHTML = b.receiptUrl
-        ? '<a href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>'
+        ? '<a href="#" onclick="openAuthedFile(\'' + esc(b.receiptUrl) + '\');return false;" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>'
         : 'Sin comprobante todavía';
     } else {
       receiptRow.style.display = 'none';
@@ -3384,9 +3639,8 @@
       if (c.paymentMethod === 'bank' && c.status !== 'cancelled') {
         if (c.receiptUrl) {
           const link = document.createElement('a');
-          link.href = c.receiptUrl;
-          link.target = '_blank';
-          link.rel = 'noopener';
+          link.href = '#';
+          link.addEventListener('click', e => { e.preventDefault(); openAuthedFile(c.receiptUrl); });
           link.textContent = 'Ver comprobante';
           link.style.cssText = 'display:block;margin-top:0.4rem;font-size:0.8rem;font-weight:600;color:var(--teal-700)';
           card.appendChild(link);
@@ -3479,6 +3733,13 @@
       }, 'Inicia sesión para ver tu perfil');
       return;
     }
+    // Cuenta 'owner' con sesión ya guardada (2026-09-08): antes solo se
+    // mandaba directo al panel de negocio la primera vez que iniciaba sesión
+    // desde este botón — en cualquier toque posterior (sesión ya en
+    // localStorage) caía siempre en la pantalla "Perfil" intermedia, aunque
+    // fuera dueño. Mismo criterio en los dos casos ahora.
+    const s = getSession();
+    if (s && s.accountType === 'owner') { openPro(); return; }
     go('cuenta');
   };
 
@@ -3751,7 +4012,7 @@
      (img/cats/<categoria>.jpg). Si existe, la lámina reemplaza al círculo
      con ícono; si no, el círculo dorado se queda como respaldo. */
   (function () {
-    var cats = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+    var cats = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
     var tiles = document.querySelectorAll('.cats-grid .cat');
     cats.forEach(function (key, i) {
       var tile = tiles[i];
@@ -3773,6 +4034,18 @@
         probe.src = candidates[i];
       })(0);
     });
+  })();
+
+  /* Puntos del paginador de categorías: activo = página más cercana al
+     scroll actual (redondeo, no exige llegar exacto al snap). */
+  (function () {
+    var pager = document.getElementById('cats-pager');
+    var dots = document.querySelectorAll('#cats-dots .dot');
+    if (!pager || !dots.length) return;
+    pager.addEventListener('scroll', function () {
+      var page = Math.round(pager.scrollLeft / pager.clientWidth);
+      dots.forEach(function (dot, i) { dot.classList.toggle('on', i === page); });
+    }, { passive: true });
   })();
 
   async function loginWithGoogle() {
@@ -3857,6 +4130,22 @@
   function authHeaders() {
     const s = getSession();
     return s && s.token ? { 'Authorization': 'Bearer ' + s.token } : {};
+  }
+
+  // Comprobantes de pago (revisión externa 2026-09-08): la URL del
+  // comprobante ahora exige sesión (ver GET /api/bookings/:id/receipt-file
+  // en el backend), así que un <a href> plano ya no sirve — un link directo
+  // no manda el header Authorization. Se descarga con fetch() autenticado y
+  // se abre como blob:// en pestaña nueva.
+  async function openAuthedFile(url) {
+    try {
+      const res = await fetch(url, { headers: authHeaders() });
+      if (!res.ok) { alert('No se pudo abrir el comprobante.'); return; }
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch (err) {
+      alert('No se pudo abrir el comprobante.');
+    }
   }
 
   function welcomeStep(step) {
@@ -4190,47 +4479,30 @@
     if (e.persisted) go('inicio');
   });
 
-  /* ===== Panel de negocio completo (bukeard.com/negocio embebido) =====
-     El panel grande de la web se abre dentro de la app en un iframe a
-     pantalla completa, pasándole la sesión ya iniciada por el hash
-     (#app-session=...) para no pedir teléfono y PIN otra vez. */
+  /* ===== Panel de negocio completo (bukeard.com/negocio) =====
+     Hasta el 2026-09-08 se embebía dentro de la app en un <iframe> a
+     pantalla completa — se sentía "atrapado dentro de un marco" y el
+     salto de tema (claro del marketplace vs oscuro de la app) se notaba
+     igual de brusco ahí adentro. Ahora es una navegación de verdad a
+     /negocio, pasándole la sesión ya iniciada por el hash
+     (#app-session=...) para no pedir teléfono y PIN otra vez —
+     views/negocio.js reconoce ese hash y muestra su propio "Volver a la
+     app" (ver exitToApp allá) en vez del nav-item oculto que asumía iframe. */
   window.openPanelWeb = function (panel) {
     const s = getSession();
-    const wrap = document.getElementById('panel-web');
-    const frame = document.getElementById('panel-web-frame');
     // El panel vive en la raíz del dominio (bukeard.com/negocio), no bajo
-    // /app, que es donde está montado el bundle de la app y su API.
+    // BASE (donde está montado el bundle de la app y su API — /app en
+    // producción, pero puede ser otro prefijo en desarrollo local). Ruta
+    // absoluta desde la raíz en vez de derivarla de API_BASE (2026-09-08):
+    // la versión anterior le quitaba el sufijo "/app" con un regex que solo
+    // reconocía ese prefijo exacto, así que en local (BASE_PATH=/bukea)
+    // armaba "/bukea/negocio", una ruta que no existe.
     // panel opcional (ej. "negocio", "servicios") abre directo esa sección
     // del panel en vez de caer siempre en "Resumen".
     let hash = s ? '#app-session=' + encodeURIComponent(JSON.stringify(s)) : '';
     if (panel) hash += (hash ? '&' : '#') + 'panel=' + panel;
-    const url = API_BASE.replace(/\/app\/?$/, '') + '/negocio' + hash;
-    frame.setAttribute('src', url);
-    wrap.style.display = 'flex';
+    location.href = '/negocio' + hash;
   };
-  window.closePanelWeb = function () {
-    document.getElementById('panel-web').style.display = 'none';
-  };
-  // El panel (views/negocio.js) pide cerrarse a sí mismo por postMessage
-  // (2026-09-06, a pedido de Víctor: que se sienta parte de la app, sin una
-  // barra "Volver a la app" separada). Se valida e.source contra el propio
-  // iframe en vez de confiar en el origin, así ningún otro contenido puede
-  // simular el mensaje.
-  window.addEventListener('message', (e) => {
-    const frame = document.getElementById('panel-web-frame');
-    if (e.source === frame.contentWindow && e.data && e.data.type === 'bukea:closePanel') {
-      closePanelWeb();
-    }
-  });
 </script>
-
-<!-- Panel de negocio completo, embebido a pantalla completa. Sin barra
-     "Volver a la app" propia (2026-09-06, a pedido de Víctor): el panel se
-     cierra solo (postMessage) cuando su propio nav-item "Volver" se toca, o
-     al tocar cualquier pestaña de la navbar de abajo — por eso z-index queda
-     por debajo de .navbar (40), así la navbar sigue encima y funcional. -->
-<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:30; background:var(--bg); flex-direction:column;">
-  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; height:100%; border:none; background:var(--bg);"></iframe>
-</div>
 </body>
 </html>

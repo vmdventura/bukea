@@ -3,9 +3,11 @@ backend/.env
 .DS_Store
 .gstack/
 
-# Comprobantes de pago subidos por clientes — datos de usuarios, no código
-backend/public/uploads/receipts/*
-!backend/public/uploads/receipts/.gitkeep
+# Comprobantes de pago subidos por clientes — datos de usuarios, no código.
+# Fuera de public/ a propósito desde el 2026-09-08 (revisión externa): no
+# debe quedar alcanzable por express.static sin sesión. Ver lib/uploads.js.
+backend/uploads/receipts/*
+!backend/uploads/receipts/.gitkeep
 
 # Logos y fotos de negocio subidos desde el panel — mismo criterio que receipts
 backend/public/uploads/logos/*

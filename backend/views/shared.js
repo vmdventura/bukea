@@ -15,6 +15,9 @@ const CAT_LABELS = {
   entrenador: 'Entrenador Personal',
   'peluqueria-canina': 'Peluquería Canina',
   spa: 'Spa y Masajes',
+  trenzas: 'Trenzas y Rastas',
+  tatuadores: 'Tatuadores',
+  'servicios-profesionales': 'Servicios Profesionales',
 };
 
 const CAT_ICONS = {
@@ -27,6 +30,9 @@ const CAT_ICONS = {
   entrenador: 'c-entrenador',
   'peluqueria-canina': 'c-canina',
   spa: 'c-spa',
+  trenzas: 'c-trenzas',
+  tatuadores: 'c-tatuadores',
+  'servicios-profesionales': 'c-servicios-pro',
 };
 
 // Ciudades destacadas en el buscador del home — hoy todos los negocios
@@ -121,6 +127,9 @@ const ICON_SPRITE = `<svg style="position:absolute;width:0;height:0;overflow:hid
 <symbol id="c-canina" viewBox="0 0 24 24"><path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 4.75c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/></symbol>
 <symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
+<symbol id="c-trenzas" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></symbol>
+<symbol id="c-tatuadores" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="c-servicios-pro" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
 </defs></svg>`;
 
 // Banner de anuncio (2026-08-24, Configuración del panel de administración)

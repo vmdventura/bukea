@@ -20,7 +20,7 @@
 | Seguridad del login (fuerza bruta) | ✅ Nuevo: bloqueo por intentos fallidos por teléfono e IP en login normal y admin, límite de enumeración en `/check`, límite de registro masivo, cabeceras de seguridad — ver sección de seguridad en CLAUDE.md |
 | Compila | ✅ `xcodebuild` (Debug, simulador) compila limpio con los 2 plugins; probada arrancando en el simulador iPhone 17 Pro contra la API de producción |
 
-**⚠️ Antes de enviar a revisión hay que desplegar el backend a producción** — el botón "Eliminar mi cuenta" y el login de Apple nativo llaman a endpoints/cambios (`delete-account`, audience nativo) que hoy solo existen en el repo local. Si el revisor de Apple toca "Eliminar mi cuenta" contra el servidor viejo, falla y es rechazo seguro.
+**✅ Resuelto 2026-08-27: backend ya desplegado y verificado en producción.** `POST /app/api/auth/delete-account` responde 401 (existe, exige sesión) en vez de 404, `GET /app/api/auth/providers` devuelve `{"google":true,"apple":true}`, y `/privacidad` responde 200. También se confirmó que `native/capacitor.config.json` ya tiene `iosClientId` real (ya no el placeholder `__IOS_GOOGLE_CLIENT_ID__`) — el botón de Google en la app nativa debería funcionar, no solo el de Apple. `xcodebuild` para simulador sigue compilando limpio.
 
 ---
 
@@ -34,11 +34,8 @@
 1. Certificates, Identifiers & Profiles → Identifiers → `+` → App ID `com.bukea.app`.
 2. Marcar la capacidad **Sign in with Apple** en ese App ID (sin esto, el build firmado se rechaza al subir).
 
-### Paso 3 — Credenciales de Google para la app nativa (15 min, opcional pero recomendado)
-El botón de Google en la app nativa está en "Próximamente" hasta esto:
-1. Google Cloud Console → el mismo proyecto del login web → Credentials → Create OAuth client ID → tipo **iOS**, bundle `com.bukea.app`.
-2. Poner el client ID resultante en `native/capacitor.config.json` → `plugins.GoogleAuth.iosClientId` (hoy dice `__IOS_GOOGLE_CLIENT_ID__`) y recompilar.
-   - Si se decide lanzar sin Google en la app, el botón queda "Próximamente" y no es motivo de rechazo (Apple sí, Google no es obligatorio).
+### Paso 3 — ~~Credenciales de Google para la app nativa~~ ✅ Ya hecho
+`native/capacitor.config.json` ya tiene un `iosClientId` real (confirmado 2026-08-27, ya no el placeholder). El botón de Google en la app nativa no debería estar en "Próximamente" — probarlo en el simulador/TestFlight para confirmar que abre el flujo nativo de verdad.
 
 ### Paso 4 — App Store Connect (30 min)
 1. [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → Mis apps → `+` → Nueva app: nombre **Bukea**, idioma principal **español (México)** (no hay es-DO), bundle `com.bukea.app`, SKU `bukea-ios`.

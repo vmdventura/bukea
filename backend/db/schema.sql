@@ -45,16 +45,28 @@ CREATE TABLE IF NOT EXISTS professionals (
   social_facebook VARCHAR(190),
   social_tiktok VARCHAR(190),
   social_website VARCHAR(190),
+  -- verification_required (2026-09-08, a pedido de Víctor): negocios nuevos
+  -- necesitan foto de perfil + correo y teléfono verificados del dueño para
+  -- aparecer en el marketplace público (inicio, mapa, búsqueda) — su perfil
+  -- directo (/p/:slug) sigue visible igual. DEFAULT 0 a propósito: los
+  -- negocios que ya existían quedan exentos (no se ocultan retroactivamente
+  -- de un momento a otro). Solo las cuentas creadas desde POST /api/professionals
+  -- en adelante insertan este campo en 1. Ver routes/professionals.js y
+  -- routes/pages.js (WHERE de las listas del marketplace).
+  verification_required TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- archived_at (revisión externa 2026-09-08): "editar servicios" ya no borra
+-- filas con reservas asociadas, las archiva. Ver PUT /:slug/services.
 CREATE TABLE IF NOT EXISTS services (
   id INT AUTO_INCREMENT PRIMARY KEY,
   professional_id INT NOT NULL,
   name VARCHAR(120) NOT NULL,
   duration_min INT NOT NULL,
   price_cents INT NOT NULL,
+  archived_at TIMESTAMP NULL DEFAULT NULL,
   FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -85,6 +97,14 @@ CREATE TABLE IF NOT EXISTS collaborators (
   FOREIGN KEY (professional_id) REFERENCES professionals(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- service_name/price_cents (revisión externa 2026-09-08): copia del servicio
+-- en el momento de reservar. services.price_cents puede cambiar después (o
+-- el servicio archivarse) sin alterar lo que "Mi Cuadre" ya reportó como
+-- vendido — el precio histórico real es el que pagó el cliente, no el
+-- vigente hoy. active_appointment_at es NULL en canceladas a propósito: el
+-- UNIQUE de abajo solo compite por el horario entre citas confirmed (MySQL
+-- no cuenta NULL como duplicado), así una cancelación libera el horario de
+-- verdad, no solo en la UI.
 CREATE TABLE IF NOT EXISTS bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   professional_id INT NOT NULL,
@@ -95,7 +115,10 @@ CREATE TABLE IF NOT EXISTS bookings (
   day_label VARCHAR(40) NOT NULL,
   time_label VARCHAR(40) NOT NULL,
   appointment_at DATETIME,
+  active_appointment_at DATETIME GENERATED ALWAYS AS (CASE WHEN status = 'confirmed' THEN appointment_at END) VIRTUAL,
   duration_min INT,
+  service_name VARCHAR(120),
+  price_cents INT,
   status VARCHAR(20) NOT NULL DEFAULT 'confirmed', -- confirmed | cancelled
   payment_method VARCHAR(30) NOT NULL,
   receipt_path VARCHAR(255),
@@ -105,7 +128,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   FOREIGN KEY (service_id) REFERENCES services(id),
   FOREIGN KEY (collaborator_id) REFERENCES collaborators(id) ON DELETE SET NULL,
   FOREIGN KEY (client_user_id) REFERENCES users(id) ON DELETE SET NULL,
-  UNIQUE KEY uq_bookings_slot (professional_id, appointment_at)
+  UNIQUE KEY uq_bookings_active_slot (professional_id, active_appointment_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Cuentas bancarias del negocio para que el cliente transfiera y copie el
