@@ -213,6 +213,24 @@
      como un badge pequeño superpuesto al borde, estilo "story". */
   /* 3 columnas (no 4): con 9 categorías da 3 filas exactas, sin fila
      huérfana con un solo círculo suelto. */
+  /* Paginador de categorías (2026-09-06, a pedido de Víctor): con más de
+     9 categorías, en vez de una cuarta fila huérfana, la segunda página
+     se desliza a la izquierda (scroll-snap nativo, sin librería). */
+  .cats-pager {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 0.6rem;
+  }
+  .cats-pager::-webkit-scrollbar { display: none; }
+  .cats-pager .cats-grid {
+    flex: 0 0 100%; scroll-snap-align: start; margin-bottom: 0;
+  }
+  .cats-dots { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.4rem; }
+  .cats-dots .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--line);
+    transition: background 180ms var(--ease), transform 180ms var(--ease);
+  }
+  .cats-dots .dot.on { background: var(--teal-500); transform: scale(1.3); }
+
   .cats-grid { grid-template-columns: repeat(3, 1fr); gap: 1.4rem 0.6rem; }
   .cats-grid .cat {
     flex-direction: column; justify-content: flex-start; align-items: center; gap: 0.4rem;
@@ -581,6 +599,65 @@
   .panel-stat .k { font-size: 0.8rem; color: var(--soft); }
   .panel-stat .v { font-family: "Fraunces", serif; font-size: 1.3rem; font-weight: 600; color: var(--teal-700); }
 
+  /* ===== Negocio: hub y pantallas nuevas (2026-09-08) ===== */
+  .negocio-hub { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
+  .negocio-row {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 0.9rem; font-family: inherit; font-size: 0.88rem; font-weight: 600;
+    color: var(--ink); cursor: pointer;
+  }
+  .negocio-row span { flex: 1; }
+  .negocio-row .chev { transform: rotate(180deg); color: var(--soft); font-size: 0.9rem; flex: none; }
+  .negocio-row .icon:first-child { color: var(--teal-600); flex: none; }
+
+  .verify-banner {
+    background: #fff7e6; border: 1px solid #f0d38a; border-radius: 14px;
+    padding: 0.7rem 0.85rem; margin-bottom: 0.8rem; font-size: 0.82rem;
+  }
+  .verify-banner p { margin: 0 0 0.4rem; color: #7a5a10; }
+  .verify-item {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    color: var(--teal-700); font-weight: 700; font-family: inherit; font-size: 0.82rem;
+    padding: 0.2rem 0; cursor: pointer;
+  }
+
+  .biz-logo-row { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.4rem; }
+  .biz-logo-img, .biz-logo-placeholder {
+    width: 72px; height: 72px; border-radius: 16px; flex: none; object-fit: cover;
+  }
+  .biz-logo-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--panel); border: 1px dashed var(--line); color: var(--soft); font-size: 0.7rem; text-align: center;
+  }
+  .biz-photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.7rem; }
+  .biz-photo-cell { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--panel); }
+  .biz-photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .biz-photo-del {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 0.7rem; cursor: pointer;
+  }
+
+  .biz-chat-msgs {
+    display: flex; flex-direction: column; gap: 0.5rem; min-height: 200px; max-height: 50vh;
+    overflow-y: auto; margin-bottom: 0.7rem; padding: 0.2rem;
+  }
+  .biz-chat-msg {
+    max-width: 82%; padding: 0.55rem 0.75rem; border-radius: 14px; font-size: 0.85rem; line-height: 1.4;
+  }
+  .biz-chat-msg time { display: block; font-size: 0.65rem; opacity: 0.6; margin-top: 0.2rem; }
+  .biz-chat-msg.user { align-self: flex-end; background: var(--teal-600); color: #fff; border-bottom-right-radius: 4px; }
+  .biz-chat-msg.admin { align-self: flex-start; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-bottom-left-radius: 4px; }
+  .biz-chat-input-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+  /* .add-svc trae width:100% por defecto (pensado para botones de una sola
+     columna) — aquí comparte fila con el textarea, así que necesita un
+     ancho propio en vez de reclamar el 100% de la fila entera. */
+  .biz-chat-input-row .add-svc { width: auto; flex: none; white-space: nowrap; margin-bottom: 0; }
+  .biz-chat-input-row textarea {
+    flex: 1; border-radius: 12px; border: 1px solid var(--line); padding: 0.6rem 0.7rem;
+    font-family: inherit; font-size: 0.85rem; resize: none;
+  }
+
   .cuadre-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.6rem; }
   .cuadre-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
@@ -790,6 +867,23 @@
   .badge .icon { font-size: 0.85rem; }
   .badge.wa { background: var(--whatsapp-100); color: #1a7d43; }
   .badge.cash { background: var(--cash-100); color: var(--cash); }
+  .badge.pending { background: var(--gold-100); color: var(--gold-700); }
+
+  /* Mi cuenta (2026-09-08) — correo/teléfono/PIN del dueño, y el link para
+     su biografía, nativos dentro de la pantalla "Mi perfil" (antes solo
+     vivían en el panel de escritorio bukeard.com/negocio). */
+  .acct-line { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
+  .acct-line:last-child { border-bottom: none; }
+  .acct-line .lbl { font-size: 0.78rem; color: var(--soft); font-weight: 600; }
+  .acct-line .val { font-size: 0.92rem; font-weight: 700; color: var(--ink); word-break: break-word; }
+  .acct-form { display: none; margin: 0.6rem 0 1rem; }
+  .acct-form.open { display: block; }
+  .share-link-row { display: flex; gap: 0.5rem; margin: 0.6rem 0 1.3rem; }
+  .share-link-row input { flex: 1; min-width: 0; font-family: inherit; font-size: 0.82rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.75rem; }
+  .acct-btn {
+    background: none; border: 1.5px solid var(--teal-600); border-radius: 999px; color: var(--teal-700);
+    font-family: inherit; font-size: 0.76rem; font-weight: 700; padding: 0.4rem 0.85rem; cursor: pointer; flex: none;
+  }
 
   .portfolio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.3rem; }
   .work {
@@ -950,8 +1044,13 @@
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 480px; z-index: 40;
     background: rgba(255,255,255,0.97); border-top: 1px solid var(--line);
-    display: flex; padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 8px));
     backdrop-filter: blur(6px);
+  }
+  /* Dos barras conviven en el DOM (cliente/negocio, ver renderNavbar) — solo
+     una visible a la vez, cada una con el mismo padding/flex que antes
+     tenía .navbar directamente. */
+  .navbar-row {
+    display: flex; padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 8px));
   }
   .nav-btn {
     flex: 1; background: none; border: none; cursor: pointer; text-align: center;
@@ -1007,6 +1106,9 @@
 <symbol id="c-canina" viewBox="0 0 24 24"><path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 4.75c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/></symbol>
 <symbol id="c-spa" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5 2.5 0 4.7 1 6.2 2.6C10.6 13.5 11.2 10 12 7c.8 3 1.4 6.5 1.8 9.1 1.5-1.6 3.7-2.6 6.2-2.6 0 4.4-3.6 7.5-8 7.5Z"/><path d="M12 7c-.8-1.8-2.3-3.2-4.2-3.9C9 2.4 10.6 2 12 2s3 .4 4.2 1.1C14.3 3.8 12.8 5.2 12 7Z"/></symbol>
 <symbol id="c-pilates" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.7"/><path d="M12 6.2v5.4"/><path d="M12 8 8.3 4.8"/><path d="M12 8l3.7-3.2"/><path d="M12 11.6 8 19"/><path d="M12 11.6l4.4 7.2"/><path d="M4.5 21.5h15"/></symbol>
+<symbol id="c-trenzas" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></symbol>
+<symbol id="c-tatuadores" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="c-servicios-pro" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></symbol>
 </defs>
@@ -1132,20 +1234,32 @@
     <div class="searchbar"><svg class="icon"><use href="#i-search"/></svg> Busca barbero, salón, manicurista…</div>
 
     <p class="option-label" style="margin-bottom:0.7rem">Explora servicios</p>
-    <div class="cats cats-grid">
-      <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
-      <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
-      <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
-      <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
-      <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
-      <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
-      <div class="cat" onclick="openCategory('entrenador','Entrenador Personal')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-entrenador"/></svg></span><span class="txt">Entrenador Personal</span></div>
-      <div class="cat" onclick="openCategory('peluqueria-canina','Peluquería Canina')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-canina"/></svg></span><span class="txt">Peluquería Canina</span></div>
-      <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
+    <div class="cats-pager" id="cats-pager">
+      <div class="cats cats-grid">
+        <div class="cat" onclick="openCategory('barberia','Barbería')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-barberia"/></svg></span><span class="txt">Barbería</span></div>
+        <div class="cat" onclick="openCategory('unas','Uñas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-unas"/></svg></span><span class="txt">Uñas</span></div>
+        <div class="cat" onclick="openCategory('salon','Salón')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-salon"/></svg></span><span class="txt">Salón</span></div>
+        <div class="cat" onclick="openCategory('maquillaje','Maquillaje')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-maquillaje"/></svg></span><span class="txt">Maquillaje</span></div>
+        <div class="cat" onclick="openCategory('cejas-mua','Cejas &amp; MUA')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-cejas"/></svg></span><span class="txt">Cejas &amp; MUA</span></div>
+        <div class="cat" onclick="openCategory('pilates','Pilates')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-pilates"/></svg></span><span class="txt">Pilates</span></div>
+        <div class="cat" onclick="openCategory('entrenador','Entrenador Personal')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-entrenador"/></svg></span><span class="txt">Entrenador Personal</span></div>
+        <div class="cat" onclick="openCategory('peluqueria-canina','Peluquería Canina')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-canina"/></svg></span><span class="txt">Peluquería Canina</span></div>
+        <div class="cat" onclick="openCategory('spa','Spa y Masajes')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-spa"/></svg></span><span class="txt">Spa y Masajes</span></div>
+      </div>
+      <div class="cats cats-grid">
+        <div class="cat" onclick="openCategory('trenzas','Trenzas y Rastas')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-trenzas"/></svg></span><span class="txt">Trenzas y Rastas</span></div>
+        <div class="cat" onclick="openCategory('tatuadores','Tatuadores')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-tatuadores"/></svg></span><span class="txt">Tatuadores</span></div>
+        <div class="cat" onclick="openCategory('servicios-profesionales','Servicios Profesionales')"><span class="cat-badge"><svg class="cat-ic"><use href="#c-servicios-pro"/></svg></span><span class="txt">Servicios Profesionales</span></div>
+      </div>
     </div>
+    <div class="cats-dots" id="cats-dots"><span class="dot on"></span><span class="dot"></span></div>
 
 
-    <button class="pro-link" onclick="openPro()">
+    <button class="pro-link mode-switch" style="display:none" onclick="switchMode('business')">
+      <svg class="icon"><use href="#i-store"/></svg>
+      Tienes un negocio en Bukea. <b class="mode-switch-label">Cambiar a Mi negocio</b>
+    </button>
+    <button class="pro-link join-cta" onclick="guardBusiness()">
       <svg class="icon"><use href="#i-scissors"/></svg>
       ¿Eres barbero, estilista o tienes un negocio? <b>Únete a Bukea</b>
     </button>
@@ -1202,6 +1316,9 @@
         <button class="reg-cat-card" data-cat="entrenador" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-entrenador"/></svg><span class="lbl">Entrenador Personal</span></button>
         <button class="reg-cat-card" data-cat="peluqueria-canina" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-canina"/></svg><span class="lbl">Peluquería Canina</span></button>
         <button class="reg-cat-card" data-cat="spa" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-spa"/></svg><span class="lbl">Spa y Masajes</span></button>
+        <button class="reg-cat-card" data-cat="trenzas" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-trenzas"/></svg><span class="lbl">Trenzas y Rastas</span></button>
+        <button class="reg-cat-card" data-cat="tatuadores" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-tatuadores"/></svg><span class="lbl">Tatuadores</span></button>
+        <button class="reg-cat-card" data-cat="servicios-profesionales" onclick="pickRegCat(this)"><svg class="icon"><use href="#c-servicios-pro"/></svg><span class="lbl">Servicios Profesionales</span></button>
       </div>
     </div>
 
@@ -1228,7 +1345,7 @@
         <div class="reg-success-check"><svg class="icon"><use href="#i-check"/></svg></div>
         <h1 class="app-h1">¡Tu negocio ya está en Bukea!</h1>
         <p class="app-sub">Gratis para siempre, cero comisión.</p>
-        <button class="cta" onclick="loadPanel().then(() => go('pro-panel'))"><svg class="icon"><use href="#i-check"/></svg>Ir a mi negocio</button>
+        <button class="cta" onclick="guardBusiness()"><svg class="icon"><use href="#i-check"/></svg>Ir a mi negocio</button>
       </div>
     </div>
 
@@ -1242,9 +1359,9 @@
   <!-- ============ PANEL PROFESIONAL (B2B) ============ -->
   <div class="screen" id="pro-panel">
     <h1 class="app-h1" id="panel-business">Mi negocio</h1>
-    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="openMiPerfil(); return false;">Editar</a></p>
+    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="go('pro-negocio'); return false;">Ver todo</a></p>
 
-    <button class="cta" style="margin-bottom:1.1rem" onclick="openPanelWeb()"><svg class="icon"><use href="#i-calendar"/></svg>Calendario y panel completo</button>
+    <div id="pro-verify-banner"></div>
 
     <div class="panel-stat">
       <span class="k">Citas recibidas</span>
@@ -1281,38 +1398,159 @@
     <p class="sec-title">Mejor miembro del equipo</p>
     <div id="mejor-equipo-table" style="margin-bottom:1.1rem"></div>
 
-    <p class="sec-title">Agenda <a href="#" onclick="loadPanel(); return false;">Actualizar</a></p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem"><a href="#" onclick="openCalendario(); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Ver calendario del mes →</a></p>
+    <p class="sec-title">Agenda próxima <a href="#" onclick="loadPanel(); return false;">Actualizar</a></p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem"><a href="#" onclick="go('calendario'); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Ver agenda completa →</a></p>
     <div id="panel-citas">
       <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
     </div>
 
-    <p class="sec-title" style="margin-top:1.1rem">Mis servicios <a href="#" onclick="openPanelWeb('servicios'); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Agregar o quitar</a></p>
-    <div id="panel-servicios"></div>
+    <button class="add-svc" style="margin-top:1.1rem" onclick="go('pro-negocio')">Ir a Negocio (servicios, horario, imágenes, ubicación, redes, soporte)</button>
+    <button class="logout-btn mode-switch" style="display:none" onclick="logoutPro()">Cambiar a modo Cliente</button>
+  </div>
 
-    <p class="sec-title" style="margin-top:1.1rem">Logo y ubicación en el mapa <a href="#" onclick="openPanelWeb('negocio'); return false;" style="color:var(--teal-600);font-weight:700;text-decoration:none">Editar</a></p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Sube el logo de tu negocio y ajusta el pin en el mapa arrastrándolo hasta la ubicación exacta.</p>
+  <!-- ============ NEGOCIO (hub, 2026-09-08) =====
+       Reúne todo lo que antes solo vivía en bukeard.com/negocio: servicios,
+       horario, equipo, bancos, identidad, imágenes, ubicación, redes,
+       compartir y soporte — para que el dueño nunca tenga que salir de la
+       app a gestionar su negocio (spec §0). ============ -->
+  <div class="screen" id="pro-negocio">
+    <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Negocio</h1>
+    <p class="app-sub">Todo lo de tu negocio, dentro de Bukea.</p>
 
-    <p class="sec-title" style="margin-top:1.1rem">Mi horario</p>
+    <div id="pro-negocio-verify"></div>
+
+    <div class="negocio-hub">
+      <button class="negocio-row" onclick="go('mi-perfil')"><svg class="icon"><use href="#i-user"/></svg><span>Identidad del negocio</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-servicios')"><svg class="icon"><use href="#i-scissors"/></svg><span>Servicios</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-horario')"><svg class="icon"><use href="#i-calendar"/></svg><span>Horario semanal</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-equipo')"><svg class="icon"><use href="#i-user"/></svg><span>Equipo</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-bancos')"><svg class="icon"><use href="#i-store"/></svg><span>Cuentas bancarias</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-imagenes')"><svg class="icon"><use href="#i-store"/></svg><span>Logo y fotos</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-ubicacion')"><svg class="icon"><use href="#i-search"/></svg><span>Ubicación en el mapa</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-redes')"><svg class="icon"><use href="#i-store"/></svg><span>Redes y compartir</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-soporte')"><svg class="icon"><use href="#i-user"/></svg><span>Soporte</span><span class="badge pending" id="soporte-unread-badge" style="display:none"></span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ============ SERVICIOS (editar, 2026-09-08) ============ -->
+  <div class="screen" id="pro-servicios">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Servicios</h1>
+    <p class="app-sub">Lo que ofreces, con duración y precio.</p>
+    <div id="biz-svc-rows"></div>
+    <button class="add-svc" onclick="addBizServiceRow()">+ Agregar servicio</button>
+    <p id="biz-svc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
+    <button class="add-svc" id="biz-svc-save-btn" onclick="saveBizServices()">Guardar cambios</button>
+  </div>
+
+  <!-- ============ HORARIO (extraído de pro-panel) ============ -->
+  <div class="screen" id="pro-horario">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Mi horario</h1>
+    <p class="app-sub">Cuándo estás disponible para reservas.</p>
     <div id="panel-horario"></div>
     <p id="horario-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
+  </div>
 
-    <p class="sec-title" style="margin-top:1.1rem">Cuentas para transferencia</p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
+  <!-- ============ CUENTAS BANCARIAS (extraído de pro-panel) ============ -->
+  <div class="screen" id="pro-bancos">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Cuentas para transferencia</h1>
+    <p class="app-sub">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
     <div id="bank-rows"></div>
     <button class="add-svc" onclick="addBankRow()">+ Agregar cuenta</button>
     <p id="bank-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
+  </div>
 
-    <p class="sec-title" style="margin-top:1.1rem">Mi equipo</p>
-    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0.7rem">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
+  <!-- ============ EQUIPO (extraído de pro-panel) ============ -->
+  <div class="screen" id="pro-equipo">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Mi equipo</h1>
+    <p class="app-sub">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
     <div id="collab-rows"></div>
     <button class="add-svc" onclick="addCollabRow()">+ Agregar colaborador</button>
     <p id="collab-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
+  </div>
 
-    <button class="logout-btn" onclick="logoutPro()">Salir de mi cuenta de negocio</button>
+  <!-- ============ IMÁGENES: logo y galería (2026-09-08) ============ -->
+  <div class="screen" id="pro-imagenes">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Logo y fotos</h1>
+    <p class="app-sub">Cómo te ve la clientela en tu perfil público.</p>
+
+    <p class="sec-title">Logo</p>
+    <div class="biz-logo-row">
+      <img id="biz-logo-preview" class="biz-logo-img" alt="Logo del negocio" style="display:none">
+      <div id="biz-logo-placeholder" class="biz-logo-placeholder">Sin logo</div>
+      <label class="add-svc" style="display:inline-flex;align-items:center;justify-content:center;margin:0;cursor:pointer">
+        Cambiar logo
+        <input type="file" accept="image/jpeg,image/png,image/webp" id="biz-logo-input" style="display:none" onchange="bizLogoPicked(this)">
+      </label>
+    </div>
+    <p id="biz-logo-status" style="font-size:0.78rem;color:var(--soft);margin:0.4rem 0 0"></p>
+
+    <p class="sec-title" style="margin-top:1.2rem">Galería</p>
+    <div id="biz-photos-grid" class="biz-photos-grid"></div>
+    <label class="add-svc" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+      + Agregar foto
+      <input type="file" accept="image/jpeg,image/png,image/webp" id="biz-photo-input" style="display:none" onchange="bizPhotoPicked(this)">
+    </label>
+    <p id="biz-photo-status" style="font-size:0.78rem;color:var(--soft);margin:0.4rem 0 0"></p>
+  </div>
+
+  <!-- ============ UBICACIÓN en el mapa (2026-09-08) ============ -->
+  <div class="screen" id="pro-ubicacion">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Ubicación</h1>
+    <p class="app-sub" id="biz-loc-status">Ajusta el pin arrastrándolo hasta la ubicación exacta.</p>
+    <div id="biz-map" style="height:260px;border-radius:16px;overflow:hidden;margin-bottom:0.8rem;background:var(--panel)"></div>
+    <button class="add-svc" onclick="useMyLocationForBiz()">Usar mi ubicación</button>
+    <p class="sec-title" style="margin-top:1rem">O ingresa las coordenadas</p>
+    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lat">Latitud</label><input id="biz-lat" type="text" inputmode="decimal" placeholder="18.4655"></div>
+    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lng">Longitud</label><input id="biz-lng" type="text" inputmode="decimal" placeholder="-69.9313"></div>
+    <button class="add-svc" onclick="centerBizMapManual()">Centrar en estas coordenadas</button>
+    <p id="biz-loc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.6rem 0"></p>
+    <button class="add-svc" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
+  </div>
+
+  <!-- ============ REDES y compartir (2026-09-08) ============ -->
+  <div class="screen" id="pro-redes">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Redes y compartir</h1>
+    <p class="app-sub">Cómo te encuentran fuera de Bukea.</p>
+
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-ig">Instagram</label><input id="biz-ig" type="text" placeholder="@tunegocio"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-fb">Facebook</label><input id="biz-fb" type="text" placeholder="facebook.com/tunegocio"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com"></div>
+    <p id="biz-social-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
+    <button class="add-svc" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
+
+    <p class="sec-title" style="margin-top:1.3rem">Link para tu biografía</p>
+    <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0">Pégalo en tu bio de Instagram o mándalo por WhatsApp para que te reserven directo.</p>
+    <div class="share-link-row">
+      <input id="acct-share-link" type="text" readonly>
+      <button class="acct-btn" onclick="copyBioLink(this)">Copiar</button>
+    </div>
+    <p class="sec-title" style="margin-top:1.1rem">Plantillas para WhatsApp</p>
+    <div id="biz-share-templates"></div>
+  </div>
+
+  <!-- ============ SOPORTE (chat, 2026-09-08) ============ -->
+  <div class="screen" id="pro-soporte">
+    <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Soporte</h1>
+    <p class="app-sub">Escríbele a Bukea directamente.</p>
+    <div id="biz-chat-msgs" class="biz-chat-msgs"></div>
+    <p id="biz-chat-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0"></p>
+    <div class="biz-chat-input-row">
+      <textarea id="biz-chat-input" rows="2" maxlength="3000" placeholder="Escribe tu mensaje…" oninput="markDirty('chat')"></textarea>
+      <button class="add-svc" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
+    </div>
   </div>
 
   <!-- ============ MI PERFIL (editar) ============ -->
@@ -1320,8 +1558,6 @@
     <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Mi perfil</h1>
     <p class="app-sub">La información de tu negocio, visible en tu perfil público.</p>
-
-    <button class="add-svc" style="margin-bottom:1.1rem" onclick="openPanelWeb('negocio')">Logo, fotos y ubicación en el mapa</button>
 
     <p id="pf-error" class="pf-error"></p>
     <div class="field">
@@ -1343,18 +1579,77 @@
       <button class="reg-cat-card" data-cat="entrenador" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-entrenador"/></svg><span class="lbl">Entrenador Personal</span></button>
       <button class="reg-cat-card" data-cat="peluqueria-canina" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-canina"/></svg><span class="lbl">Peluquería Canina</span></button>
       <button class="reg-cat-card" data-cat="spa" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-spa"/></svg><span class="lbl">Spa y Masajes</span></button>
+      <button class="reg-cat-card" data-cat="trenzas" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-trenzas"/></svg><span class="lbl">Trenzas y Rastas</span></button>
+      <button class="reg-cat-card" data-cat="tatuadores" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-tatuadores"/></svg><span class="lbl">Tatuadores</span></button>
+      <button class="reg-cat-card" data-cat="servicios-profesionales" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-servicios-pro"/></svg><span class="lbl">Servicios Profesionales</span></button>
     </div>
     <div class="field">
       <label for="pf-neighborhood">Sector</label>
       <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
     </div>
     <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+
+    <!-- Mi cuenta + link de biografía (2026-09-08) — nativos aquí, no en el
+         panel de escritorio. El link es el mismo que antes solo vivía en
+         "Redes sociales" de bukeard.com/negocio; a propósito va debajo de
+         Mi perfil, no ahí. -->
+    <p class="sec-title" style="margin-top:1.3rem">Mi cuenta</p>
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Correo<span class="badge pending" id="acct-email-badge" style="margin-left:0.4rem"></span></div>
+        <div class="val" id="acct-email-val">—</div>
+      </div>
+      <button class="acct-btn" onclick="toggleAcctForm('acct-email-form')">Cambiar</button>
+    </div>
+    <div class="acct-form" id="acct-email-form">
+      <p id="acct-email-error" class="pf-error"></p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <input id="acct-email-input" type="email" placeholder="nuevo@correo.com">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
+    </div>
+
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Teléfono<span class="badge pending" id="acct-phone-badge" style="margin-left:0.4rem"></span></div>
+        <div class="val" id="acct-phone-val">—</div>
+      </div>
+      <button class="acct-btn" id="acct-phone-btn" onclick="startPhoneVerify()">Verificar</button>
+    </div>
+    <div class="acct-form" id="acct-phone-form">
+      <p id="acct-phone-error" class="pf-error"></p>
+      <p style="color:var(--soft);font-size:0.78rem;margin:0 0 0.6rem">Te mandamos un código de 6 dígitos por WhatsApp.</p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <input id="acct-phone-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
+    </div>
+
+    <div class="acct-line">
+      <div>
+        <div class="lbl">Contraseña</div>
+        <div class="val">••••</div>
+      </div>
+      <button class="acct-btn" onclick="toggleAcctForm('acct-pin-form')">Cambiar</button>
+    </div>
+    <div class="acct-form" id="acct-pin-form">
+      <p id="acct-pin-error" class="pf-error"></p>
+      <div class="field" style="margin-bottom:0.6rem">
+        <label for="acct-pin-current">PIN actual</label>
+        <input id="acct-pin-current" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <div class="field" style="margin-bottom:0.6rem">
+        <label for="acct-pin-new">PIN nuevo</label>
+        <input id="acct-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
+    </div>
   </div>
 
   <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
   <div class="screen" id="calendario">
     <button class="back-btn" onclick="go('pro-panel')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
-    <h1 class="app-h1">Calendario</h1>
+    <h1 class="app-h1">Agenda del negocio</h1>
     <p class="app-sub">Las citas de tu negocio.</p>
     <div class="cal-view-tabs">
       <button class="cal-view-tab active" data-view="hoy" onclick="calSetView('hoy')">Hoy</button>
@@ -1526,7 +1821,7 @@
     <div id="cuenta-logged-in" style="display:none">
       <p class="app-sub" id="account-who"></p>
 
-      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="openPro()">
+      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
         <svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
       </button>
 
@@ -1582,10 +1877,18 @@
 
   <!-- ============ NAV ============ -->
   <div class="navbar">
-    <button class="nav-btn active" data-s="inicio" onclick="closePanelWeb();go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
-    <button class="nav-btn" data-s="buscar" onclick="closePanelWeb();openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
-    <button class="nav-btn" data-s="miscitas" onclick="closePanelWeb();go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
-    <button class="nav-btn" data-s="pro" onclick="closePanelWeb();openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    <div class="navbar-row" id="nav-client">
+      <button class="nav-btn active" data-s="inicio" onclick="go('inicio')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Inicio</span></button>
+      <button class="nav-btn" data-s="buscar" onclick="openBuscar()"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Buscar</span></button>
+      <button class="nav-btn" data-s="miscitas" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Mis citas</span></button>
+      <button class="nav-btn" data-s="pro" onclick="openPerfil()"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Perfil</span></button>
+    </div>
+    <div class="navbar-row" id="nav-business" style="display:none">
+      <button class="nav-btn" data-s="resumen" onclick="go('pro-panel')"><svg class="icon"><use href="#i-home"/></svg><span class="n-txt">Resumen</span></button>
+      <button class="nav-btn" data-s="agenda" onclick="go('calendario')"><svg class="icon"><use href="#i-calendar"/></svg><span class="n-txt">Agenda</span></button>
+      <button class="nav-btn" data-s="negocio" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-search"/></svg><span class="n-txt">Negocio</span></button>
+      <button class="nav-btn" data-s="cuenta" onclick="go('mi-perfil')"><svg class="icon"><use href="#i-user"/></svg><span class="n-txt">Cuenta</span></button>
+    </div>
   </div>
 
   <!-- ============ HOJA: CÓMO LLEGAR ============ -->
@@ -1654,7 +1957,25 @@
     bizBookings: [],
     calDate: null,
     calView: 'hoy',
+    // Cliente y negocio en una sola app (2026-09-08): sessionStatus sigue
+    // el contrato del spec §4.2 (loading|authenticated|anonymous|unavailable).
+    // `session` es la copia validada por el servidor (capabilities,
+    // businesses), separada del objeto crudo en localStorage.
+    sessionStatus: 'loading',
+    sessionUnavailableReason: null, // 'network' | 'disabled' | null
+    session: null,
+    capabilities: { bookAsClient: false, manageBusiness: false },
+    businesses: [],
+    activeMode: 'client', // 'client' | 'business'
+    activeBusiness: null,
+    dirtyForms: new Set(),
   };
+
+  // Incrementa en cada login/logout — cargas async en vuelo capturan su
+  // valor y comprueban que no cambió antes de pintar (spec: "una respuesta
+  // lenta de la cuenta A nunca puede pintar su agenda después de iniciar
+  // sesión con la cuenta B").
+  let sessionGen = 0;
 
   // Con separador de miles (2026-09-06): RD$1,000 en vez de RD$1000.
   function formatPrice(cents) {
@@ -1775,6 +2096,7 @@
     ['', 'Todos'], ['barberia', 'Barbería'], ['unas', 'Uñas'], ['salon', 'Salón'],
     ['maquillaje', 'Maquillaje'], ['cejas-mua', 'Cejas & MUA'], ['pilates', 'Pilates'],
     ['entrenador', 'Entrenador'], ['peluqueria-canina', 'Peluquería Canina'], ['spa', 'Spa y Masajes'],
+    ['trenzas', 'Trenzas y Rastas'], ['tatuadores', 'Tatuadores'], ['servicios-profesionales', 'Servicios Profesionales'],
   ];
 
   function distanceKm(lat1, lng1, lat2, lng2) {
@@ -1966,21 +2288,53 @@
     go(state.returnTo || 'inicio');
   }
 
+  // Qué pestaña de CADA barra debe iluminarse por pantalla — las dos barras
+  // conviven en el DOM (una oculta según el modo, ver renderNavbar) así que
+  // cada una resalta su propia pestaña sin pisar a la otra.
+  const SCREEN_TO_CLIENT_TAB = { inicio: 'inicio', buscar: 'buscar', miscitas: 'miscitas', cuenta: 'pro' };
+  const SCREEN_TO_BIZ_TAB = {
+    'pro-panel': 'resumen', calendario: 'agenda',
+    'pro-negocio': 'negocio', 'pro-servicios': 'negocio', 'pro-horario': 'negocio',
+    'pro-bancos': 'negocio', 'pro-equipo': 'negocio', 'pro-imagenes': 'negocio',
+    'pro-ubicacion': 'negocio', 'pro-redes': 'negocio', 'pro-soporte': 'negocio',
+    'mi-perfil': 'cuenta',
+  };
+
   function go(id) {
+    // Pantallas de negocio requieren modo negocio activo y sesión válida
+    // (spec: cambiar de modo no navega directo, exige la misma puerta que
+    // el selector). No aplica a pro-registro, que es el asistente de alta.
+    if (id.startsWith('pro-') && id !== 'pro-registro' && state.activeMode !== 'business') {
+      guardBusiness(function () { go(id); });
+      return;
+    }
+    if (!confirmDiscardIfDirty()) return;
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     el.classList.add('active');
-    // 'cuenta' (Perfil) y las pantallas 'pro-*' del negocio comparten el
-    // mismo botón del nav (data-s="pro"): entrar a administrar el negocio
-    // desde Perfil no debe apagar el resaltado de esa pestaña.
-    const navKey = (id.startsWith('pro-') || id === 'cuenta') ? 'pro' : id;
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === navKey));
+    document.querySelectorAll('#nav-client .nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === SCREEN_TO_CLIENT_TAB[id]));
+    document.querySelectorAll('#nav-business .nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === SCREEN_TO_BIZ_TAB[id]));
     document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
     if (id === 'cuenta') renderAccountBox();
     if (id === 'reserva') loadAvailabilityDays();
+    if (id === 'pro-panel') loadPanel();
+    // Agenda necesita state.bizBookings (lo llena loadPanel) — se
+    // re-consulta aquí también por si se entra directo por esta pestaña
+    // sin haber pasado antes por Resumen.
+    if (id === 'calendario') loadPanel().then(initCalendarioScreen);
+    if (id === 'mi-perfil') loadMiPerfilScreen();
+    if (id === 'pro-servicios') loadBizServices();
+    if (id === 'pro-horario') loadHours(proSlug());
+    if (id === 'pro-bancos') loadBankAccounts(proSlug());
+    if (id === 'pro-equipo') loadCollaborators(proSlug());
+    if (id === 'pro-imagenes') loadBizImages();
+    if (id === 'pro-ubicacion') openBizMap();
+    if (id === 'pro-redes') loadBizSocial();
+    if (id === 'pro-soporte') { loadChatApp(); startChatPolling(); } else { stopChatPolling(); }
+    if (id === 'pro-negocio') renderVerifyChecklist();
   }
 
   /* ===== Disponibilidad real: días y horas libres del profesional ===== */
@@ -2351,52 +2705,17 @@
   }
 
   /* ===== Lado B2B: registro y panel del profesional ===== */
-  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates' };
+  const CAT_LABELS = { 'barberia': 'Barbería', 'unas': 'Uñas', 'salon': 'Salón', 'maquillaje': 'Maquillaje', 'cejas-mua': 'Cejas & MUA', 'pilates': 'Pilates', 'entrenador': 'Entrenador Personal', 'peluqueria-canina': 'Peluquería Canina', 'spa': 'Spa y Masajes', 'trenzas': 'Trenzas y Rastas', 'tatuadores': 'Tatuadores', 'servicios-profesionales': 'Servicios Profesionales' };
 
   function proSlug() {
     return localStorage.getItem('bukea_pro_slug');
   }
 
-  // Consulta al servidor si la cuenta logueada ya tiene un negocio (el slug
-  // guardado en este dispositivo puede faltar aunque sí tenga uno: login
-  // nuevo en este teléfono, reinstalación, etc. — mismo endpoint que ya usa
-  // el panel de escritorio desde el 2026-08-25, GET /api/professionals/me) y
-  // refresca el botón "Administrar mi negocio"/"Crear mi negocio" de Perfil
-  // (renderAccountBox). Se llama tanto al entrar a la app con sesión ya
-  // guardada (boot) como justo después de iniciar sesión (enterApp), para
-  // que el botón esté correcto antes de que el usuario lo toque.
-  async function syncProSlug() {
-    if (!getSession()) { renderAccountBox(); return; }
-    try {
-      const res = await fetch(API_BASE + '/api/professionals/me', { headers: authHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.slug) localStorage.setItem('bukea_pro_slug', data.slug);
-        else localStorage.removeItem('bukea_pro_slug');
-      }
-    } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
-    renderAccountBox();
-  }
-
-  async function openPro() {
-    // El panel de negocio ahora exige sesión real (Google, Apple o
-    // teléfono+PIN) — antes bastaba con conocer el slug guardado en
-    // localStorage, y cualquiera podía ver la agenda de otro negocio.
-    if (!getSession()) {
-      requireAccount(openPro, 'Inicia sesión para gestionar tu negocio');
-      return;
-    }
-    if (!proSlug()) await syncProSlug();
-    if (proSlug()) {
-      loadPanel();
-      go('pro-panel');
-    } else {
-      if (document.querySelectorAll('#svc-rows .svc-row').length === 0) addServiceRow();
-      regStep = 1;
-      regShowStep();
-      go('pro-registro');
-    }
-  }
+  // syncProSlug() y openPro() (2026-09-08): reemplazados por initSession()
+  // (que ya trae businesses[] del servidor en cada consulta de sesión) y
+  // guardBusiness() (que además valida capabilities antes de entrar a
+  // modo negocio). Ver el bloque "Cliente y negocio en una sola app" más
+  // arriba, junto a getSession().
 
   function pickRegCat(btn) {
     document.querySelectorAll('#reg-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
@@ -2463,13 +2782,14 @@
   // (2026-09-06, a pedido de Víctor: "muchos clientes no comprenden cómo
   // colocar el tiempo estimado" / "en buen dominicano" — mismo patrón que
   // el panel de negocio, views/negocio.js).
-  function svcHourOpts() {
+  function svcHourOpts(selectedHour) {
     let o = '';
-    for (let i = 0; i <= 8; i++) o += '<option value="' + i + '">' + i + 'h</option>';
+    for (let i = 0; i <= 8; i++) o += '<option value="' + i + '"' + (i === selectedHour ? ' selected' : '') + '>' + i + 'h</option>';
     return o;
   }
-  function svcMinOpts() {
-    return [0, 15, 30, 45].map(m => '<option value="' + m + '"' + (m === 30 ? ' selected' : '') + '>' + String(m).padStart(2, '0') + 'm</option>').join('');
+  function svcMinOpts(selectedMin) {
+    if (selectedMin === undefined) selectedMin = 30;
+    return [0, 15, 30, 45].map(m => '<option value="' + m + '"' + (m === selectedMin ? ' selected' : '') + '>' + String(m).padStart(2, '0') + 'm</option>').join('');
   }
   window.formatPriceInput = function (el) {
     const raw = el.value.replace(/[^\d]/g, '');
@@ -2537,10 +2857,14 @@
         const data = await res.json().catch(() => ({}));
         return showRegError(data.error || 'No se pudo crear la cuenta. Intenta de nuevo.');
       }
-      const { slug } = await res.json();
-      localStorage.setItem('bukea_pro_slug', slug);
+      const data = await res.json();
+      // 200 existing:true (2026-09-08): la política del servidor es "un
+      // negocio activo por dueño" — un reintento (doble toque, respuesta
+      // perdida) devuelve el que ya existe en vez de crear otro. Se trata
+      // igual que un alta nueva de cara al usuario, sin mensaje de error.
+      await initSession(); // refresca capabilities/businesses desde el servidor
       renderAccountBox();
-      track('business_signup', { item_id: slug, category: category });
+      track('business_signup', { item_id: data.slug, category: category, existing: Boolean(data.existing) });
       regStep = REG_TOTAL_STEPS + 1;
       regShowStep();
     } catch (err) {
@@ -2600,9 +2924,8 @@
           card.querySelector('.c-svc').textContent = c.serviceName + (c.collaboratorName ? ' · Atendió: ' + c.collaboratorName : '');
           if (c.paymentMethod === 'bank' && c.receiptUrl) {
             const link = document.createElement('a');
-            link.href = c.receiptUrl;
-            link.target = '_blank';
-            link.rel = 'noopener';
+            link.href = '#';
+            link.addEventListener('click', e => { e.preventDefault(); openAuthedFile(c.receiptUrl); });
             link.textContent = 'Ver comprobante';
             link.style.cssText = 'display:block;margin-top:0.3rem;font-size:0.78rem;font-weight:600;color:var(--teal-700)';
             card.appendChild(link);
@@ -2629,22 +2952,7 @@
         });
       }
 
-      const svcEl = document.getElementById('panel-servicios');
-      svcEl.innerHTML = '';
-      prof.services.forEach(s => {
-        const row = document.createElement('div');
-        row.className = 'service';
-        row.style.cursor = 'default';
-        row.innerHTML = '<div><span class="s-name"></span><span class="s-time"></span></div><span class="s-price"></span>';
-        row.querySelector('.s-name').textContent = s.name;
-        row.querySelector('.s-time').textContent = s.durationMin + ' min';
-        row.querySelector('.s-price').textContent = formatPrice(s.priceCents);
-        svcEl.appendChild(row);
-      });
-
-      loadHours(slug);
-      loadBankAccounts(slug);
-      loadCollaborators(slug);
+      renderVerifyChecklist();
     } catch (err) {
       document.getElementById('panel-citas').innerHTML =
         '<p style="color:var(--soft);font-size:0.85rem">No se pudo conectar con el servidor.</p>';
@@ -2793,15 +3101,37 @@
 
   /* ---------- Mi perfil ---------- */
   let pfSelectedCat = null;
-  window.openMiPerfil = function () {
-    const p = state.bizProfile;
-    if (!p) return;
+  function fillMiPerfilFields(p) {
     document.getElementById('pf-name').value = p.name || '';
     document.getElementById('pf-business').value = p.businessName || '';
     document.getElementById('pf-neighborhood').value = p.neighborhood || '';
     pfSelectedCat = p.category;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
     document.getElementById('pf-error').style.display = 'none';
+  }
+  // Puebla los campos al entrar a "Mi perfil" (2026-09-08) — antes solo
+  // pasaba por aquí un único llamador (openMiPerfil, desde "Editar" en el
+  // panel viejo), que ya tenía state.bizProfile en memoria. Ahora la
+  // pantalla se abre también directo desde la pestaña "Cuenta" y desde el
+  // hub "Negocio" (Identidad), donde ese caché puede no existir todavía —
+  // se re-consulta al servidor si hace falta.
+  window.loadMiPerfilScreen = async function () {
+    let p = state.bizProfile;
+    const slug = proSlug();
+    if ((!p || p.slug !== slug) && slug) {
+      try {
+        const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+        p = await res.json();
+        state.bizProfile = p;
+      } catch (err) { console.error(err); return; }
+    }
+    if (p) fillMiPerfilFields(p);
+    loadAcctSection();
+  };
+  // Alias de compatibilidad para el link "Editar" que aún llama a esta
+  // función por su nombre viejo.
+  window.openMiPerfil = function () {
+    loadMiPerfilScreen();
     go('mi-perfil');
   };
   window.pickPfCat = function (btn) {
@@ -2845,6 +3175,144 @@
     btn.disabled = false;
   };
 
+  /* ---------- Mi cuenta (correo/teléfono/PIN) + link de biografía
+     (2026-09-08) — nativos dentro de "Mi perfil", mismos endpoints que ya
+     usaba el panel de escritorio (views/negocio.js), no hace falta nada
+     nuevo del lado del servidor. */
+  async function loadAcctSection() {
+    try {
+      const res = await fetch(API_BASE + '/api/auth/session', { headers: authHeaders() });
+      if (!res.ok) return;
+      state.bizAccount = await res.json();
+      renderAcctSection();
+    } catch (err) { /* sin internet: se queda con lo último mostrado */ }
+  }
+  function renderAcctSection() {
+    const a = state.bizAccount;
+    if (!a) return;
+    document.getElementById('acct-email-val').textContent = a.email || 'Sin correo';
+    document.getElementById('acct-email-input').value = a.email || '';
+    const emailBadge = document.getElementById('acct-email-badge');
+    if (a.email) {
+      emailBadge.style.display = '';
+      emailBadge.classList.toggle('pending', !a.emailVerified);
+      emailBadge.textContent = a.emailVerified ? 'Verificado' : 'Pendiente';
+    } else {
+      emailBadge.style.display = 'none';
+    }
+    document.getElementById('acct-phone-val').textContent = a.phone || 'Sin teléfono';
+    const phoneBadge = document.getElementById('acct-phone-badge');
+    const phoneBtn = document.getElementById('acct-phone-btn');
+    if (!a.phone) {
+      phoneBadge.style.display = 'none';
+      phoneBtn.style.display = 'none';
+    } else if (a.phoneVerified) {
+      phoneBadge.style.display = '';
+      phoneBadge.classList.remove('pending');
+      phoneBadge.textContent = 'Verificado';
+      phoneBtn.style.display = 'none';
+    } else {
+      phoneBadge.style.display = '';
+      phoneBadge.classList.add('pending');
+      phoneBadge.textContent = 'Sin verificar';
+      phoneBtn.style.display = '';
+    }
+  }
+  window.toggleAcctForm = function (id) {
+    document.querySelectorAll('#mi-perfil .acct-form').forEach(f => {
+      f.classList.toggle('open', f.id === id && !f.classList.contains('open'));
+    });
+  };
+  window.saveAcctEmail = async function () {
+    const errEl = document.getElementById('acct-email-error');
+    errEl.style.display = 'none';
+    const newEmail = document.getElementById('acct-email-input').value.trim();
+    try {
+      const res = await fetch(API_BASE + '/api/auth/change-email', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ newEmail }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo cambiar el correo.');
+      state.bizAccount.email = d.email;
+      state.bizAccount.emailVerified = d.emailVerified;
+      renderAcctSection();
+      document.getElementById('acct-email-form').classList.remove('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.startPhoneVerify = async function () {
+    const errEl = document.getElementById('acct-phone-error');
+    errEl.style.display = 'none';
+    try {
+      const res = await fetch(API_BASE + '/api/auth/verify-phone/send', { method: 'POST', headers: authHeaders() });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo enviar el código.');
+      if (d.alreadyVerified) { state.bizAccount.phoneVerified = true; renderAcctSection(); return; }
+      document.getElementById('acct-phone-form').classList.add('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.confirmPhoneVerify = async function () {
+    const errEl = document.getElementById('acct-phone-error');
+    errEl.style.display = 'none';
+    const code = document.getElementById('acct-phone-code').value.trim();
+    try {
+      const res = await fetch(API_BASE + '/api/auth/verify-phone/verify', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ code }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'Código incorrecto.');
+      state.bizAccount.phoneVerified = true;
+      renderAcctSection();
+      document.getElementById('acct-phone-form').classList.remove('open');
+      document.getElementById('acct-phone-code').value = '';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.saveAcctPin = async function () {
+    const errEl = document.getElementById('acct-pin-error');
+    errEl.style.display = 'none';
+    const currentPin = document.getElementById('acct-pin-current').value.trim();
+    const newPin = document.getElementById('acct-pin-new').value.trim();
+    if (!/^\d{4}$/.test(newPin)) {
+      errEl.textContent = 'El PIN nuevo debe ser de 4 dígitos.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE + '/api/auth/change-pin', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ currentPin, newPin }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'No se pudo cambiar la contraseña.');
+      document.getElementById('acct-pin-current').value = '';
+      document.getElementById('acct-pin-new').value = '';
+      document.getElementById('acct-pin-form').classList.remove('open');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  window.copyBioLink = function (btn) {
+    const el = document.getElementById('acct-share-link');
+    const done = () => { const t = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = t; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(el.value).then(done).catch(() => { el.select(); });
+    } else {
+      el.select();
+      try { document.execCommand('copy'); done(); } catch (e) { /* nada más que hacer */ }
+    }
+  };
+
   /* ---------- Calendario (Hoy / Semana / Mes, 2026-09-06) ----------
      state.calView: 'hoy' | 'semana' | 'mes'. state.calDate es la fecha de
      referencia para las tres vistas — mismo patrón que views/negocio.js. */
@@ -2854,11 +3322,18 @@
   const CAL_DATE_FMT = new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long' });
   const CAL_RANGE_FMT = new Intl.DateTimeFormat('es-DO', { day: 'numeric', month: 'short' });
   let calSelectedDay = null;
-  window.openCalendario = function () {
+  // Inicializa el estado del calendario si hace falta (2026-09-08: ahora
+  // "Agenda" es su propia pestaña del nav de negocio, no solo un link
+  // dentro de Resumen — necesita poder entrar por sí sola, no solo vía
+  // openCalendario()).
+  window.initCalendarioScreen = function () {
     if (!state.calDate) state.calDate = startOfToday();
     if (!state.calView) state.calView = 'hoy';
     calSelectedDay = null;
     renderCalendar();
+  };
+  window.openCalendario = function () {
+    initCalendarioScreen();
     go('calendario');
   };
   window.calSetView = function (view) {
@@ -2994,7 +3469,7 @@
     if (b.paymentMethod === 'bank') {
       receiptRow.style.display = 'flex';
       document.getElementById('bs-receipt').innerHTML = b.receiptUrl
-        ? '<a href="' + esc(b.receiptUrl) + '" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>'
+        ? '<a href="#" onclick="openAuthedFile(\'' + esc(b.receiptUrl) + '\');return false;" style="color:var(--teal-700);font-weight:700">Ver comprobante</a>'
         : 'Sin comprobante todavía';
     } else {
       receiptRow.style.display = 'none';
@@ -3316,9 +3791,12 @@
     }
   }
 
+  // Cambiar a modo Cliente (2026-09-08, antes "logoutPro" — no cierra
+  // sesión, solo cambia de modo, ver setMode). Conserva el nombre de la
+  // función para no tocar sus otros dos llamadores (loadPanel, cuando el
+  // negocio ya no existe o el token dejó de servir para él).
   function logoutPro() {
-    localStorage.removeItem('bukea_pro_slug');
-    go('inicio');
+    setMode('client');
   }
 
   /* ===== Mis citas (leídas del servidor por sesión — antes vivían solo en
@@ -3384,9 +3862,8 @@
       if (c.paymentMethod === 'bank' && c.status !== 'cancelled') {
         if (c.receiptUrl) {
           const link = document.createElement('a');
-          link.href = c.receiptUrl;
-          link.target = '_blank';
-          link.rel = 'noopener';
+          link.href = '#';
+          link.addEventListener('click', e => { e.preventDefault(); openAuthedFile(c.receiptUrl); });
           link.textContent = 'Ver comprobante';
           link.style.cssText = 'display:block;margin-top:0.4rem;font-size:0.8rem;font-weight:600;color:var(--teal-700)';
           card.appendChild(link);
@@ -3448,6 +3925,178 @@
     try { return JSON.parse(localStorage.getItem('bukea_session')); } catch (e) { return null; }
   }
 
+  /* ===== Cliente y negocio en una sola app (2026-09-08) =====
+     state.sessionStatus sigue el contrato del spec: loading | authenticated
+     | anonymous | unavailable. state.capabilities/businesses vienen SIEMPRE
+     del servidor (GET /api/auth/session), nunca de accountType ni de nada
+     guardado en el teléfono — eso es solo caché para pintar rápido antes de
+     que responda el servidor. */
+
+  function clearSessionStorage() {
+    localStorage.removeItem('bukea_session');
+    localStorage.removeItem('bukea_pro_slug');
+    // bukea_mode:<id> NO se borra aquí a propósito: es una preferencia de
+    // interfaz, no un dato de sesión — si el mismo dueño vuelve a entrar,
+    // recupera el modo en el que estaba.
+  }
+
+  // Consulta real al servidor. Se llama al arrancar (boot) y justo después
+  // de iniciar sesión (enterApp) — nunca se confía en la sesión guardada en
+  // localStorage para decidir capacidades, solo se usa como caché visual
+  // mientras responde. Distingue 401 (sesión inválida) de un error de red
+  // (spec 4.2.4: "no interpretar un error de red como 'no tienes negocio'").
+  async function initSession() {
+    const gen = ++sessionGen;
+    const cached = getSession();
+    if (!cached) {
+      state.sessionStatus = 'anonymous';
+      state.capabilities = { bookAsClient: false, manageBusiness: false };
+      state.businesses = [];
+      state.session = null;
+      return;
+    }
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeout = controller ? setTimeout(() => controller.abort(), 8000) : null;
+    try {
+      const res = await fetch(API_BASE + '/api/auth/session', {
+        headers: authHeaders(),
+        signal: controller ? controller.signal : undefined,
+      });
+      if (gen !== sessionGen) return; // otra sesión empezó mientras esperábamos
+      if (res.status === 401) {
+        clearSessionStorage();
+        state.sessionStatus = 'anonymous';
+        state.session = null;
+        state.capabilities = { bookAsClient: false, manageBusiness: false };
+        state.businesses = [];
+        return;
+      }
+      if (res.status === 403) {
+        state.sessionStatus = 'unavailable';
+        state.sessionUnavailableReason = 'disabled';
+        return;
+      }
+      if (!res.ok) throw new Error('respuesta ' + res.status);
+      const data = await res.json();
+      state.sessionStatus = 'authenticated';
+      state.sessionUnavailableReason = null;
+      state.session = data;
+      state.capabilities = data.capabilities || { bookAsClient: true, manageBusiness: false };
+      state.businesses = data.businesses || [];
+      // Se conserva el token (la respuesta de /session no lo repite) y se
+      // amplían los campos que sí trae — así bukea_session en localStorage
+      // sigue sirviendo de caché de arranque para la próxima vez.
+      localStorage.setItem('bukea_session', JSON.stringify(Object.assign({}, cached, data)));
+      if (state.businesses[0]) {
+        localStorage.setItem('bukea_pro_slug', state.businesses[0].slug);
+        if (!state.activeBusiness) state.activeBusiness = state.businesses[0];
+      } else {
+        localStorage.removeItem('bukea_pro_slug');
+        state.activeBusiness = null;
+      }
+    } catch (err) {
+      if (gen !== sessionGen) return;
+      // Red caída, timeout o 5xx: NO se borra la sesión guardada ni se
+      // lanza el asistente de alta — solo se marca "no pudimos comprobar".
+      state.sessionStatus = 'unavailable';
+      state.sessionUnavailableReason = 'network';
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
+  function modeStorageKey() {
+    const s = getSession();
+    return s && s.id ? 'bukea_mode:' + s.id : null;
+  }
+
+  // Primer login de un dueño (spec 3): abre Mi negocio. Después, restaura
+  // el último modo válido — pero solo si sigue teniendo esa capacidad (un
+  // dueño que eliminó su negocio no debe quedar atascado en modo negocio).
+  function restoreMode() {
+    if (!state.capabilities.manageBusiness) {
+      state.activeMode = 'client';
+      renderNavbar('client');
+      return;
+    }
+    const key = modeStorageKey();
+    const saved = key ? localStorage.getItem(key) : null;
+    setMode(saved === 'client' ? 'client' : 'business', { silent: true, skipGuard: true });
+  }
+
+  // Formularios sucios (UI-02): antes de cambiar de modo o navegar fuera de
+  // una pantalla con cambios sin guardar, se pregunta. Cada pantalla marca
+  // su propio id en state.dirtyForms al escribir, y lo limpia al guardar.
+  function confirmDiscardIfDirty() {
+    if (state.dirtyForms.size === 0) return true;
+    const ok = confirm('Tienes cambios sin guardar. ¿Quieres descartarlos?');
+    if (ok) state.dirtyForms.clear();
+    return ok;
+  }
+
+  // Cambia entre modo Cliente y Mi negocio SIN volver a autenticar (spec).
+  // No hace falta pedir sesión aquí: solo se llama con sesión ya válida
+  // (guardBusiness la exige antes de esto).
+  function setMode(mode, opts) {
+    opts = opts || {};
+    if (mode === 'business' && !state.capabilities.manageBusiness) mode = 'client';
+    if (!opts.skipGuard && !confirmDiscardIfDirty()) return;
+    state.activeMode = mode;
+    state.activeBusiness = state.businesses[0] || null;
+    const key = modeStorageKey();
+    if (key) localStorage.setItem(key, mode);
+    renderNavbar(mode);
+    if (!opts.silent) {
+      track('mode_switch', { mode: mode });
+      go(mode === 'business' ? 'pro-panel' : 'inicio');
+    }
+  }
+
+  // Puerta de entrada a "Mi negocio" (reemplaza la vieja openPro): exige
+  // sesión, exige negocio (o abre el asistente), y solo entonces cambia de
+  // modo. onOk es opcional — si no se pasa, solo cambia de modo y navega.
+  function guardBusiness(onOk) {
+    if (!getSession()) {
+      requireAccount(function () { guardBusiness(onOk); }, 'Inicia sesión para gestionar tu negocio');
+      return;
+    }
+    if (state.sessionStatus === 'unavailable') {
+      alert(state.sessionUnavailableReason === 'disabled'
+        ? 'Tu cuenta está desactivada.'
+        : 'No pudimos comprobar tu cuenta. Revisa tu conexión e intenta de nuevo.');
+      return;
+    }
+    if (!state.capabilities.manageBusiness) {
+      if (document.querySelectorAll('#svc-rows .svc-row').length === 0) addServiceRow();
+      regStep = 1;
+      regShowStep();
+      go('pro-registro');
+      return;
+    }
+    setMode('business', { skipGuard: true });
+    if (onOk) onOk();
+  }
+
+  function renderNavbar(mode) {
+    const clientNav = document.getElementById('nav-client');
+    const bizNav = document.getElementById('nav-business');
+    if (clientNav) clientNav.style.display = mode === 'business' ? 'none' : 'flex';
+    if (bizNav) bizNav.style.display = mode === 'business' ? 'flex' : 'none';
+    document.querySelectorAll('.mode-switch').forEach(function (el) {
+      el.style.display = state.capabilities.manageBusiness ? '' : 'none';
+    });
+    document.querySelectorAll('.join-cta').forEach(function (el) {
+      el.style.display = state.capabilities.manageBusiness ? 'none' : '';
+    });
+    document.querySelectorAll('.mode-switch-label').forEach(function (el) {
+      el.textContent = mode === 'business' ? 'Cambiar a Cliente' : 'Cambiar a Mi negocio';
+    });
+  }
+
+  window.switchMode = function (mode) {
+    if (mode === 'business') { guardBusiness(); } else { setMode('client'); }
+  };
+
   /* ===== Mi cuenta (cerrar sesión y eliminar cuenta) ===== */
   function renderAccountBox() {
     const loggedOut = document.getElementById('cuenta-logged-out');
@@ -3460,7 +4109,7 @@
       document.getElementById('account-who').textContent =
         s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
       document.getElementById('cuenta-negocio-label').textContent =
-        proSlug() ? 'Administrar mi negocio' : 'Crear mi negocio';
+        state.capabilities.manageBusiness ? 'Administrar mi negocio' : 'Crear mi negocio';
     }
   }
 
@@ -3471,12 +4120,15 @@
   // su panel de negocio (mismo criterio que enterApp() usa cuando el login
   // no viene de un callback pendiente) en vez de la pantalla de Perfil —
   // no tiene sentido pasar por "Mi cuenta" primero si ya sabemos a dónde va.
+  // Botón "Perfil" del nav de cliente (2026-09-08): ya no redirige a dueños
+  // a su panel de negocio — esa pestaña solo existe en modo Cliente (el nav
+  // de negocio no tiene "Perfil", tiene "Cuenta"), así que siempre es la
+  // cuenta personal del cliente. Cambiar a Mi negocio es un botón explícito
+  // dentro de esta misma pantalla (ver #cuenta-negocio-label), no un salto
+  // automático.
   window.openPerfil = function () {
     if (!getSession()) {
-      requireAccount(function () {
-        const s = getSession();
-        if (s && s.accountType === 'owner') { openPro(); } else { go('cuenta'); }
-      }, 'Inicia sesión para ver tu perfil');
+      requireAccount(function () { go('cuenta'); }, 'Inicia sesión para ver tu perfil');
       return;
     }
     go('cuenta');
@@ -3484,10 +4136,20 @@
 
   window.clientLogout = async function () {
     await unregisterPushToken();
-    localStorage.removeItem('bukea_session');
-    localStorage.removeItem('bukea_pro_slug');
+    stopChatPolling();
+    destroyBizMap();
+    sessionGen++; // invalida cualquier carga en vuelo de la sesión que se va
+    clearSessionStorage();
+    state.sessionStatus = 'anonymous';
+    state.session = null;
+    state.capabilities = { bookAsClient: false, manageBusiness: false };
+    state.businesses = [];
+    state.activeBusiness = null;
+    state.activeMode = 'client';
+    state.dirtyForms.clear();
     applySessionUI();
     renderAccountBox();
+    renderNavbar('client');
     renderMisCitas();
     go('inicio');
   };
@@ -3502,10 +4164,17 @@
       const res = await fetch(API_BASE + '/api/auth/delete-account', { method: 'POST', headers: authHeaders() });
       if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
       track('account_deleted');
-      localStorage.removeItem('bukea_session');
-      localStorage.removeItem('bukea_pro_slug');
+      sessionGen++;
+      clearSessionStorage();
+      state.sessionStatus = 'anonymous';
+      state.session = null;
+      state.capabilities = { bookAsClient: false, manageBusiness: false };
+      state.businesses = [];
+      state.activeBusiness = null;
+      state.activeMode = 'client';
       applySessionUI();
       renderAccountBox();
+      renderNavbar('client');
       alert('Tu cuenta fue eliminada. Gracias por probar Bukea.');
       go('inicio');
       renderMisCitas();
@@ -3594,7 +4263,7 @@
 
   /* ===== Login con Google y Apple =====
      Un solo botón "activo" sirve para el cliente y, gracias a
-     requireAccount()/openPro(), también para entrar como negocio.
+     requireAccount()/guardBusiness(), también para entrar como negocio.
 
      Google bloquea a propósito su SDK web de login dentro de cualquier
      WebView embebido en una app nativa (política antiphishing desde 2016,
@@ -3751,7 +4420,7 @@
      (img/cats/<categoria>.jpg). Si existe, la lámina reemplaza al círculo
      con ícono; si no, el círculo dorado se queda como respaldo. */
   (function () {
-    var cats = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+    var cats = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
     var tiles = document.querySelectorAll('.cats-grid .cat');
     cats.forEach(function (key, i) {
       var tile = tiles[i];
@@ -3773,6 +4442,18 @@
         probe.src = candidates[i];
       })(0);
     });
+  })();
+
+  /* Puntos del paginador de categorías: activo = página más cercana al
+     scroll actual (redondeo, no exige llegar exacto al snap). */
+  (function () {
+    var pager = document.getElementById('cats-pager');
+    var dots = document.querySelectorAll('#cats-dots .dot');
+    if (!pager || !dots.length) return;
+    pager.addEventListener('scroll', function () {
+      var page = Math.round(pager.scrollLeft / pager.clientWidth);
+      dots.forEach(function (dot, i) { dot.classList.toggle('on', i === page); });
+    }, { passive: true });
   })();
 
   async function loginWithGoogle() {
@@ -3859,6 +4540,22 @@
     return s && s.token ? { 'Authorization': 'Bearer ' + s.token } : {};
   }
 
+  // Comprobantes de pago (revisión externa 2026-09-08): la URL del
+  // comprobante ahora exige sesión (ver GET /api/bookings/:id/receipt-file
+  // en el backend), así que un <a href> plano ya no sirve — un link directo
+  // no manda el header Authorization. Se descarga con fetch() autenticado y
+  // se abre como blob:// en pestaña nueva.
+  async function openAuthedFile(url) {
+    try {
+      const res = await fetch(url, { headers: authHeaders() });
+      if (!res.ok) { alert('No se pudo abrir el comprobante.'); return; }
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch (err) {
+      alert('No se pudo abrir el comprobante.');
+    }
+  }
+
   function welcomeStep(step) {
     document.getElementById('w-step-phone').style.display = step === 'phone' ? 'block' : 'none';
     document.getElementById('w-step-pin').style.display = step === 'pin' ? 'block' : 'none';
@@ -3915,12 +4612,15 @@
     }
   }
 
-  function enterApp(session, method) {
+  async function enterApp(session, method) {
     if (session) localStorage.setItem('bukea_session', JSON.stringify(session));
     localStorage.removeItem('bukea_guest');
     track(method === 'sign_up' ? 'sign_up' : 'login', { method: method || 'phone' });
     applySessionUI();
-    syncProSlug();
+    // initSession() consulta el servidor de verdad (capabilities, businesses)
+    // antes de decidir el modo — reemplaza el viejo syncProSlug() + el
+    // chequeo de accountType, que confiaban en lo que mandó el login.
+    await initSession();
     registerPushToken();
     if (session && session.emailVerified === false) {
       verifyGateShow(session.email);
@@ -3933,13 +4633,12 @@
       go('inicio');       // volver al flujo; el callback decide a dónde ir
       cb();
     } else {
-      go('inicio');
-      // Cuenta de dueño (elegido al registrarse, ver pickAccountType): entra
-      // directo a su panel de negocio en vez del marketplace de cliente —
-      // pero solo en un login "de verdad" (sin pendingAfterLogin), nunca
+      // Primer login "de verdad" (sin callback pendiente): restaura el modo
+      // del dueño (o entra en modo Cliente si no tiene negocio) — nunca
       // cuando el login fue just-in-time para completar otra cosa (ej.
       // reservar), donde el callback ya sabe a dónde debe ir.
-      if (session && session.accountType === 'owner') openPro();
+      restoreMode();
+      go(state.activeMode === 'business' ? 'pro-panel' : 'inicio');
     }
   }
 
@@ -4150,19 +4849,27 @@
     go('inicio');
   }
 
-  /* Arranque: splash con el logo → inicio, navegable sin cuenta (como
-     Fresha). El login se pide just-in-time al reservar o al abrir
-     "Mis citas" / "Mi negocio", nunca antes. */
+  /* Arranque: splash con el logo → inicio (o Mi negocio, según el modo
+     restaurado), navegable sin cuenta (como Fresha). El login se pide
+     just-in-time al reservar o al abrir "Mis citas" / "Mi negocio", nunca
+     antes. Secuencia (spec 4.2): recuperar sesión guardada → consultar el
+     servidor de verdad ANTES de habilitar nada privado → restaurar modo,
+     validado contra las capacidades reales → aplicar ruta pendiente. */
   const SPLASH_MS = 1400;
-  function boot() {
+  async function boot() {
     applySessionUI();
     renderAccountBox();
-    syncProSlug();
+    renderNavbar('client'); // arranque siempre visualmente en cliente hasta que initSession resuelva
+    go('splash');
+    await initSession();
+    restoreMode();
     registerPushToken();
 
     // Enlaces directos desde el marketplace público (bukeard.com):
     // ?pro=slug abre ese perfil de una vez, ?join=1 abre "Únete a Bukea" —
     // sin esto los botones de las páginas públicas no tendrían a dónde ir.
+    // Se aplican DESPUÉS de validar sesión/negocio (spec: "aplicar ruta
+    // pendiente después de validar su usuario y negocio").
     const params = new URLSearchParams(window.location.search);
     const proSlugParam = params.get('pro');
     const joinParam = params.get('join');
@@ -4172,65 +4879,501 @@
       return;
     }
     if (joinParam) {
-      go('inicio');
-      openPro();
+      guardBusiness();
       return;
     }
 
-    go('splash');
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setTimeout(() => {
       if (document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'splash') {
-        go('inicio');
+        go(state.activeMode === 'business' ? 'pro-panel' : 'inicio');
       }
     }, reduce ? 300 : SPLASH_MS);
   }
+  /* ===== Negocio dentro de la app, sin panel externo (2026-09-08) =====
+     Hasta hoy, "Calendario y panel completo" navegaba a bukeard.com/negocio
+     pasando la sesión por el hash de la URL (#app-session=...) — antes de
+     eso, un <iframe> a pantalla completa. Los dos se retiran: todas las
+     pantallas de negocio (servicios, horario, equipo, bancos, identidad,
+     imágenes, ubicación, redes, soporte) viven ahora dentro de la app (ver
+     el hub #pro-negocio y sus pantallas), sin `location.href`, sin iframe
+     y sin sesión viajando en la URL. El panel de escritorio (/negocio)
+     sigue existiendo para quien lo use desde un navegador de verdad. */
+
+  const Biz = {}; // namespace de las funciones nuevas de esta sección
+
+  // ----- Formularios sucios (UI-02) -----
+  window.markDirty = function (formId) {
+    state.dirtyForms.add(formId);
+  };
+  function clearDirtyForm(formId) {
+    state.dirtyForms.delete(formId);
+  }
+
+  // ----- Checklist de verificación (spec 5.5) -----
+  function renderVerifyChecklist() {
+    const p = state.bizProfile;
+    const s = state.session;
+    if (!p || !s || !p.verificationRequired) {
+      document.getElementById('pro-verify-banner').innerHTML = '';
+      document.getElementById('pro-negocio-verify').innerHTML = '';
+      return;
+    }
+    const missing = [];
+    if (!p.logoUrl) missing.push({ label: 'Sube tu logo', go: 'pro-imagenes' });
+    if (!s.emailVerified) missing.push({ label: 'Verifica tu correo', go: 'mi-perfil' });
+    if (!s.phoneVerified) missing.push({ label: 'Verifica tu teléfono', go: 'mi-perfil' });
+    const html = missing.length === 0 ? '' : (
+      '<div class="verify-banner"><p><b>Falta esto para aparecer en el marketplace:</b></p>' +
+      missing.map(m => '<button class="verify-item" onclick="go(\'' + m.go + '\')">' + esc(m.label) + ' →</button>').join('') +
+      '</div>'
+    );
+    const b1 = document.getElementById('pro-verify-banner');
+    const b2 = document.getElementById('pro-negocio-verify');
+    if (b1) b1.innerHTML = html;
+    if (b2) b2.innerHTML = html;
+  }
+
+  // ----- Servicios (editable, PUT /services) -----
+  function bizSvcRowHtml(s) {
+    s = s || {};
+    const hours = Math.floor((s.durationMin || 0) / 60);
+    const mins = (s.durationMin || 0) % 60;
+    return (
+      '<input class="svc-name" type="text" placeholder="Servicio (ej: Corte clásico)" value="' + esc(s.name || '') + '" oninput="markDirty(\'services\')">' +
+      '<div class="svc-duration">' +
+        '<select class="svc-hours" onchange="markDirty(\'services\')">' + svcHourOpts(hours) + '</select>' +
+        '<select class="svc-mins" onchange="markDirty(\'services\')">' + svcMinOpts(mins) + '</select>' +
+      '</div>' +
+      '<input class="svc-price" type="text" inputmode="numeric" placeholder="RD$" value="' + (s.priceCents ? Math.round(s.priceCents / 100).toLocaleString('en-US') : '') + '" oninput="formatPriceInput(this);markDirty(\'services\')">' +
+      '<button class="svc-del" title="Quitar servicio">✕</button>'
+    );
+  }
+  window.addBizServiceRow = function (service) {
+    const row = document.createElement('div');
+    row.className = 'svc-row';
+    row.innerHTML = bizSvcRowHtml(service);
+    if (service && service.id) row.dataset.id = service.id;
+    row.querySelector('.svc-del').addEventListener('click', () => { row.remove(); markDirty('services'); });
+    document.getElementById('biz-svc-rows').appendChild(row);
+  };
+  window.loadBizServices = async function () {
+    const slug = proSlug();
+    const el = document.getElementById('biz-svc-rows');
+    if (!slug || !el) return;
+    el.innerHTML = '';
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+      const data = await res.json();
+      state.bizProfile = data;
+      data.services.forEach(s => addBizServiceRow(s));
+      renderVerifyChecklist();
+    } catch (err) { console.error(err); }
+    clearDirtyForm('services');
+  };
+  window.saveBizServices = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    document.getElementById('biz-svc-error').style.display = 'none';
+    const services = [...document.querySelectorAll('#biz-svc-rows .svc-row')].map(row => {
+      const hours = Number(row.querySelector('.svc-hours').value) || 0;
+      const mins = Number(row.querySelector('.svc-mins').value) || 0;
+      const price = Number(row.querySelector('.svc-price').value.replace(/[^\d]/g, '')) || 0;
+      const out = {
+        name: row.querySelector('.svc-name').value.trim(),
+        durationMin: hours * 60 + mins,
+        priceCents: Math.round(price * 100),
+      };
+      if (row.dataset.id) out.id = Number(row.dataset.id);
+      return out;
+    }).filter(s => s.name && s.durationMin > 0 && s.priceCents > 0);
+
+    if (services.length === 0) {
+      const e = document.getElementById('biz-svc-error');
+      e.textContent = 'Agrega al menos un servicio con duración y precio.';
+      e.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('biz-svc-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/services', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ services }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      clearDirtyForm('services');
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; loadBizServices(); }, 900);
+    } catch (err) {
+      const e = document.getElementById('biz-svc-error');
+      e.textContent = err.message;
+      e.style.display = 'block';
+      btn.textContent = original;
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  // ----- Logo y galería -----
+  window.loadBizImages = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+      const data = await res.json();
+      state.bizProfile = data;
+      const img = document.getElementById('biz-logo-preview');
+      const placeholder = document.getElementById('biz-logo-placeholder');
+      if (data.logoUrl) {
+        img.src = data.logoUrl + '?v=' + Date.now(); // evita caché al reemplazar
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+      const grid = document.getElementById('biz-photos-grid');
+      grid.innerHTML = '';
+      data.photos.forEach(p => {
+        const cell = document.createElement('div');
+        cell.className = 'biz-photo-cell';
+        cell.innerHTML = '<img src="' + esc(p.url) + '" alt="Foto del negocio"><button class="biz-photo-del" title="Quitar">✕</button>';
+        cell.querySelector('.biz-photo-del').addEventListener('click', () => deleteBizPhoto(p.id));
+        grid.appendChild(cell);
+      });
+      renderVerifyChecklist();
+    } catch (err) { console.error(err); }
+  };
+  window.bizLogoPicked = async function (input) {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('biz-logo-status');
+    if (file.size > 5 * 1024 * 1024) {
+      statusEl.textContent = 'La imagen no puede pasar de 5 MB.';
+      input.value = '';
+      return;
+    }
+    const preview = URL.createObjectURL(file);
+    const img = document.getElementById('biz-logo-preview');
+    img.src = preview;
+    img.style.display = 'block';
+    document.getElementById('biz-logo-placeholder').style.display = 'none';
+    statusEl.textContent = 'Subiendo…';
+    try {
+      const form = new FormData();
+      form.append('logo', file);
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/logo', {
+        method: 'POST', headers: authHeaders(), body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo subir el logo');
+      statusEl.textContent = 'Guardado.';
+      URL.revokeObjectURL(preview);
+      loadBizImages();
+    } catch (err) {
+      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      console.error(err);
+    } finally {
+      input.value = '';
+    }
+  };
+  window.bizPhotoPicked = async function (input) {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('biz-photo-status');
+    if (file.size > 5 * 1024 * 1024) {
+      statusEl.textContent = 'La imagen no puede pasar de 5 MB.';
+      input.value = '';
+      return;
+    }
+    statusEl.textContent = 'Subiendo…';
+    try {
+      const form = new FormData();
+      form.append('photo', file);
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/photos', {
+        method: 'POST', headers: authHeaders(), body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo subir la foto');
+      statusEl.textContent = 'Guardada.';
+      loadBizImages();
+    } catch (err) {
+      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      console.error(err);
+    } finally {
+      input.value = '';
+    }
+  };
+  window.deleteBizPhoto = async function (photoId) {
+    if (!confirm('¿Quitar esta foto?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/photos/' + photoId, {
+        method: 'DELETE', headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo quitar la foto');
+      loadBizImages();
+    } catch (err) {
+      alert('No se pudo quitar la foto. Intenta de nuevo.');
+      console.error(err);
+    }
+  };
+
+  // ----- Ubicación (Leaflet, reutiliza loadLeaflet() de Buscar) -----
+  let bizMap = null, bizMarker = null;
+  window.openBizMap = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    try {
+      await loadLeaflet();
+    } catch (err) {
+      document.getElementById('biz-map').innerHTML = '<p style="padding:1rem;color:var(--soft);font-size:0.85rem">No se pudo cargar el mapa. Revisa tu conexión.</p>';
+      return;
+    }
+    let profile = state.bizProfile;
+    if (!profile || profile.slug !== slug) {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+      profile = await res.json();
+      state.bizProfile = profile;
+    }
+    const lat = profile.lat || 18.4861, lng = profile.lng || -69.9312; // Santo Domingo por defecto
+    document.getElementById('biz-lat').value = profile.lat || '';
+    document.getElementById('biz-lng').value = profile.lng || '';
+    document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
+      ? 'Pin confirmado por ti.' : 'Aproximado por sector — ajústalo y guarda para confirmarlo.';
+    if (!bizMap) {
+      bizMap = L.map('biz-map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(bizMap);
+      bizMarker = L.marker([lat, lng], { draggable: true }).addTo(bizMap);
+      bizMarker.on('dragend', () => {
+        const p = bizMarker.getLatLng();
+        document.getElementById('biz-lat').value = p.lat.toFixed(7);
+        document.getElementById('biz-lng').value = p.lng.toFixed(7);
+        markDirty('location');
+      });
+    } else {
+      bizMap.setView([lat, lng], 15);
+      bizMarker.setLatLng([lat, lng]);
+    }
+    setTimeout(() => { if (bizMap) bizMap.invalidateSize(); }, 120);
+  };
+  window.destroyBizMap = function () {
+    if (bizMap) { bizMap.remove(); bizMap = null; bizMarker = null; }
+  };
+  window.useMyLocationForBiz = function () {
+    if (!navigator.geolocation) { alert('Tu teléfono no soporta ubicación.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        document.getElementById('biz-lat').value = lat.toFixed(7);
+        document.getElementById('biz-lng').value = lng.toFixed(7);
+        if (bizMap && bizMarker) { bizMap.setView([lat, lng], 16); bizMarker.setLatLng([lat, lng]); }
+        markDirty('location');
+      },
+      () => alert('No pudimos acceder a tu ubicación. Ajusta el pin a mano o escribe las coordenadas.')
+    );
+  };
+  window.centerBizMapManual = function () {
+    const lat = Number(document.getElementById('biz-lat').value);
+    const lng = Number(document.getElementById('biz-lng').value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) { alert('Coordenadas inválidas.'); return; }
+    if (bizMap && bizMarker) { bizMap.setView([lat, lng], 16); bizMarker.setLatLng([lat, lng]); }
+    markDirty('location');
+  };
+  window.saveBizLocation = async function () {
+    const lat = Number(document.getElementById('biz-lat').value);
+    const lng = Number(document.getElementById('biz-lng').value);
+    const errEl = document.getElementById('biz-loc-error');
+    errEl.style.display = 'none';
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+      errEl.textContent = 'Ingresa coordenadas válidas (latitud -90 a 90, longitud -180 a 180).';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('biz-loc-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/location', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ lat, lng }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      clearDirtyForm('location');
+      document.getElementById('biz-loc-status').textContent = 'Pin confirmado por ti.';
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; }, 1200);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  // ----- Redes y compartir -----
+  window.loadBizSocial = async function () {
+    const slug = proSlug();
+    if (!slug) return;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug));
+      const data = await res.json();
+      state.bizProfile = data;
+      document.getElementById('biz-ig').value = data.social.instagram || '';
+      document.getElementById('biz-fb').value = data.social.facebook || '';
+      document.getElementById('biz-tk').value = data.social.tiktok || '';
+      document.getElementById('biz-web').value = data.social.website || '';
+      document.getElementById('acct-share-link').value = data.publicUrl || '';
+      const templates = bizShareTemplates(data);
+      document.getElementById('biz-share-templates').innerHTML = templates.map((t, i) =>
+        '<div class="share-link-row" style="margin-bottom:0.5rem"><input type="text" readonly value="' + esc(t) + '"><button class="acct-btn" onclick="copyShareTemplate(this,' + i + ')">Copiar</button></div>'
+      ).join('');
+      Biz._shareTemplates = templates;
+      clearDirtyForm('social');
+    } catch (err) { console.error(err); }
+  };
+  function bizShareTemplates(p) {
+    const url = p.publicUrl || '';
+    return [
+      '¡Reserva tu cita en ' + p.businessName + ' por Bukea! ' + url,
+      p.businessName + ' ahora tiene sus citas por Bukea, sin llamadas. Bukea aquí: ' + url,
+      'Bukea tu próxima cita en ' + p.businessName + ': ' + url,
+    ];
+  }
+  window.copyShareTemplate = function (btn, i) {
+    const text = Biz._shareTemplates && Biz._shareTemplates[i];
+    if (!text) return;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => { const o = btn.textContent; btn.textContent = '¡Copiado!'; setTimeout(() => { btn.textContent = o; }, 1200); })
+      .catch(() => alert('No se pudo copiar. Selecciona el texto a mano.'));
+  };
+  window.saveBizSocial = async function () {
+    const errEl = document.getElementById('biz-social-error');
+    errEl.style.display = 'none';
+    const body = {
+      instagram: document.getElementById('biz-ig').value.trim(),
+      facebook: document.getElementById('biz-fb').value.trim(),
+      tiktok: document.getElementById('biz-tk').value.trim(),
+      website: document.getElementById('biz-web').value.trim(),
+    };
+    const btn = document.getElementById('biz-social-save-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Guardando…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/social', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      clearDirtyForm('social');
+      btn.textContent = '¡Guardado!';
+      setTimeout(() => { btn.textContent = original; loadBizSocial(); }, 900);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.textContent = original;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  // ----- Soporte (chat) -----
+  let chatPollTimer = null;
+  let chatLastId = 0;
+  window.loadChatApp = async function () {
+    const slug = proSlug();
+    const box = document.getElementById('biz-chat-msgs');
+    if (!slug || !box) return;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/messages', { headers: authHeaders() });
+      if (!res.ok) throw new Error();
+      const messages = await res.json();
+      chatLastId = messages.length ? messages[messages.length - 1].id : 0;
+      box.innerHTML = messages.length
+        ? messages.map(chatBubbleHtmlApp).join('')
+        : '<p style="color:var(--soft);font-size:0.85rem">Todavía no has escrito nada. Cuéntanos qué necesitas.</p>';
+      box.scrollTop = box.scrollHeight;
+      fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/messages/read', { method: 'POST', headers: authHeaders() }).catch(() => {});
+      updateSoporteBadge();
+    } catch (err) {
+      box.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar el chat.</p>';
+    }
+  };
+  function chatBubbleHtmlApp(m) {
+    const when = new Date(m.createdAt);
+    const time = isNaN(when) ? '' : when.toLocaleString('es-DO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return '<div class="biz-chat-msg ' + (m.sender === 'admin' ? 'admin' : 'user') + '">' + esc(m.body) + '<time>' + time + '</time></div>';
+  }
+  window.sendBizChatMessage = async function () {
+    const errEl = document.getElementById('biz-chat-error');
+    errEl.style.display = 'none';
+    const textarea = document.getElementById('biz-chat-input');
+    const message = textarea.value.trim();
+    if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
+    if (message.length > 3000) { errEl.textContent = 'El mensaje no puede pasar de 3.000 caracteres.'; errEl.style.display = 'block'; return; }
+    const clientKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/messages', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ message, clientKey }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo enviar');
+      clearDirtyForm('chat');
+      textarea.value = '';
+      loadChatApp();
+    } catch (err) {
+      errEl.textContent = err.message + ' — el borrador se conserva, intenta de nuevo.';
+      errEl.style.display = 'block';
+    }
+  };
+  window.startChatPolling = function () {
+    stopChatPolling();
+    chatPollTimer = setInterval(() => {
+      if (document.hidden) return;
+      const active = document.querySelector('.screen.active');
+      if (!active || active.id !== 'pro-soporte') { stopChatPolling(); return; }
+      loadChatApp();
+    }, 5000);
+  };
+  window.stopChatPolling = function () {
+    if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+  };
+  async function updateSoporteBadge() {
+    const slug = proSlug();
+    const badge = document.getElementById('soporte-unread-badge');
+    if (!slug || !badge) return;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/messages/unread-count', { headers: authHeaders() });
+      const data = await res.json();
+      if (data.unread > 0) { badge.textContent = data.unread; badge.style.display = 'inline-flex'; }
+      else { badge.style.display = 'none'; }
+    } catch (err) { /* silencioso: es solo un badge */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.activeMode === 'business' && document.querySelector('.screen.active') && document.querySelector('.screen.active').id === 'pro-soporte') {
+      loadChatApp();
+    }
+  });
+
   boot();
   window.addEventListener('pageshow', (e) => {
     if (e.persisted) go('inicio');
   });
 
-  /* ===== Panel de negocio completo (bukeard.com/negocio embebido) =====
-     El panel grande de la web se abre dentro de la app en un iframe a
-     pantalla completa, pasándole la sesión ya iniciada por el hash
-     (#app-session=...) para no pedir teléfono y PIN otra vez. */
-  window.openPanelWeb = function (panel) {
-    const s = getSession();
-    const wrap = document.getElementById('panel-web');
-    const frame = document.getElementById('panel-web-frame');
-    // El panel vive en la raíz del dominio (bukeard.com/negocio), no bajo
-    // /app, que es donde está montado el bundle de la app y su API.
-    // panel opcional (ej. "negocio", "servicios") abre directo esa sección
-    // del panel en vez de caer siempre en "Resumen".
-    let hash = s ? '#app-session=' + encodeURIComponent(JSON.stringify(s)) : '';
-    if (panel) hash += (hash ? '&' : '#') + 'panel=' + panel;
-    const url = API_BASE.replace(/\/app\/?$/, '') + '/negocio' + hash;
-    frame.setAttribute('src', url);
-    wrap.style.display = 'flex';
-  };
-  window.closePanelWeb = function () {
-    document.getElementById('panel-web').style.display = 'none';
-  };
-  // El panel (views/negocio.js) pide cerrarse a sí mismo por postMessage
-  // (2026-09-06, a pedido de Víctor: que se sienta parte de la app, sin una
-  // barra "Volver a la app" separada). Se valida e.source contra el propio
-  // iframe en vez de confiar en el origin, así ningún otro contenido puede
-  // simular el mensaje.
-  window.addEventListener('message', (e) => {
-    const frame = document.getElementById('panel-web-frame');
-    if (e.source === frame.contentWindow && e.data && e.data.type === 'bukea:closePanel') {
-      closePanelWeb();
-    }
-  });
 </script>
-
-<!-- Panel de negocio completo, embebido a pantalla completa. Sin barra
-     "Volver a la app" propia (2026-09-06, a pedido de Víctor): el panel se
-     cierra solo (postMessage) cuando su propio nav-item "Volver" se toca, o
-     al tocar cualquier pestaña de la navbar de abajo — por eso z-index queda
-     por debajo de .navbar (40), así la navbar sigue encima y funcional. -->
-<div id="panel-web" style="display:none; position:fixed; inset:0; z-index:30; background:var(--bg); flex-direction:column;">
-  <iframe id="panel-web-frame" title="Panel de mi negocio" style="flex:1; width:100%; height:100%; border:none; background:var(--bg);"></iframe>
-</div>
 </body>
 </html>
