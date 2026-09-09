@@ -347,6 +347,9 @@ router.get('/:slug/availability/days', async (req, res) => {
   if (!professional) return res.status(404).json({ error: 'Profesional no encontrado' });
 
   const serviceId = Number(req.query.serviceId);
+  if (!Number.isInteger(serviceId) || serviceId <= 0) {
+    return res.status(400).json({ error: 'Selecciona un servicio válido' });
+  }
   const [services] = await pool.query(
     'SELECT duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
     [serviceId, professional.id]
@@ -408,6 +411,9 @@ router.get('/:slug/availability/times', async (req, res) => {
   const serviceId = Number(req.query.serviceId);
   const date = String(req.query.date || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Fecha inválida' });
+  if (!Number.isInteger(serviceId) || serviceId <= 0) {
+    return res.status(400).json({ error: 'Selecciona un servicio válido' });
+  }
 
   const [services] = await pool.query(
     'SELECT duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
