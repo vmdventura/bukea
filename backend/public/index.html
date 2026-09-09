@@ -3679,7 +3679,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar el horario');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('horario-error');
       errEl.textContent = err.message;
@@ -3868,7 +3869,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('bank-error');
       errEl.textContent = err.message;
@@ -3943,7 +3945,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('collab-error');
       errEl.textContent = err.message;
@@ -5176,7 +5179,8 @@
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       clearDirtyForm('services');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; loadBizServices(); }, 900);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); loadBizServices(); }, 900);
     } catch (err) {
       const e = document.getElementById('biz-svc-error');
       e.textContent = err.message;
@@ -5440,7 +5444,8 @@
       clearDirtyForm('location');
       document.getElementById('biz-loc-status').textContent = 'Pin confirmado por ti.';
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1200);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1200);
     } catch (err) {
       errEl.textContent = err.message;
       errEl.style.display = 'block';
@@ -5509,7 +5514,8 @@
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       clearDirtyForm('social');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; loadBizSocial(); }, 900);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); loadBizSocial(); }, 900);
     } catch (err) {
       errEl.textContent = err.message;
       errEl.style.display = 'block';
