@@ -1050,7 +1050,8 @@
      una visible a la vez, cada una con el mismo padding/flex que antes
      tenía .navbar directamente. */
   .navbar-row {
-    display: flex; padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 8px));
+    display: flex; width: 100%; padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 8px));
+    box-sizing: border-box;
   }
   .nav-btn {
     flex: 1; background: none; border: none; cursor: pointer; text-align: center;
@@ -2314,7 +2315,12 @@
     el.classList.add('active');
     document.querySelectorAll('#nav-client .nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === SCREEN_TO_CLIENT_TAB[id]));
     document.querySelectorAll('#nav-business .nav-btn').forEach(b => b.classList.toggle('active', b.dataset.s === SCREEN_TO_BIZ_TAB[id]));
-    document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'flex';
+    // 'block', no 'flex' (2026-09-08): .navbar ya no es el contenedor flex
+    // directo de los botones — es el envoltorio fijo de las dos filas
+    // (#nav-client/#nav-business, cada una su propio .navbar-row flex).
+    // Ponerlo en flex encogía la fila visible a su ancho de contenido en
+    // vez de ocupar toda la pantalla (bug real, visto en iPhone real).
+    document.querySelector('.navbar').style.display = (id === 'welcome' || id === 'splash') ? 'none' : 'block';
     el.scrollTop = 0;
     if (id === 'confirmacion') playWaTyping();
     if (id === 'miscitas') renderMisCitas();
