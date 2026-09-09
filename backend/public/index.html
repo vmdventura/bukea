@@ -517,16 +517,33 @@
   }
   .svc-row .svc-price { flex: 1.1; text-align: center; }
   .svc-row .svc-del { background: none; border: none; color: var(--soft); cursor: pointer; font-size: 1rem; padding: 0.2rem; flex: none; }
+  /* Botón secundario (2026-09-09: el borde punteado leía "campo vacío /
+     placeholder" en vez de "acción lista para usar", sobre todo en los
+     "Guardar…" que también usaban esta clase — el botón que confirma el
+     cambio no debe verse menos terminado que el que solo agrega una fila.
+     .add-svc ahora es la acción secundaria (agregar fila, navegar, acción
+     neutral); .add-svc.primary es la acción principal de cada pantalla
+     (Guardar…, Enviar, Verificar…) con relleno sólido. Mismo radio/alto
+     que antes, para no romper el layout de ningún llamador. */
   .add-svc {
-    background: none; border: 1.5px dashed var(--line); border-radius: 12px; width: 100%;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; width: 100%;
     padding: 0.6rem; font-family: inherit; font-size: 0.8rem; font-weight: 600; color: var(--teal-700);
     cursor: pointer; margin-bottom: 1.1rem;
-    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease), box-shadow 160ms var(--ease);
   }
-  .add-svc:hover { border-color: var(--teal-500); }
+  .add-svc:hover { border-color: var(--teal-500); background: var(--teal-50); }
+  .add-svc:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--teal-100); border-color: var(--teal-500); }
   .add-svc:active { transform: scale(0.98); }
-  .add-svc:disabled { cursor: default; opacity: 0.75; }
-  .add-svc.success { border-style: solid; border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+  .add-svc:disabled { cursor: default; opacity: 0.6; }
+  .add-svc.success { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+  .add-svc.primary {
+    background: var(--teal-600); border-color: var(--teal-600); color: #fff;
+    box-shadow: var(--sh-1);
+  }
+  .add-svc.primary:hover { background: var(--teal-700); border-color: var(--teal-700); box-shadow: var(--sh-2); }
+  .add-svc.primary:focus-visible { box-shadow: 0 0 0 3px var(--teal-100), var(--sh-1); }
+  .add-svc.primary:disabled { background: var(--teal-600); border-color: var(--teal-600); }
+  .add-svc.primary.success { background: var(--teal-50); border-color: var(--teal-600); color: var(--teal-700); box-shadow: none; }
 
   /* Wizard de registro de negocio ("Únete a Bukea") */
   .reg-topbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.3rem; }
@@ -606,6 +623,17 @@
   .collab-row input:focus { outline: none; border-color: var(--teal-600); }
   .collab-row .collab-del { grid-column: 1 / -1; justify-self: end; background: none; border: none; color: var(--soft); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 0.2rem; }
 
+  /* Estado vacío de listas editables (2026-09-09) — sin esto, "Mi equipo"
+     y "Cuentas para transferencia" mostraban un vacío total entre el
+     texto de arriba y el botón "+ Agregar…", como si la pantalla no
+     hubiera cargado. Puramente CSS (:empty), desaparece solo en cuanto
+     se agrega la primera fila — nada que sincronizar desde el JS. */
+  #bank-rows:empty::before, #collab-rows:empty::before {
+    content: attr(data-empty); display: block; text-align: center; padding: 1.5rem 1.1rem;
+    border: 1.5px dashed var(--line); border-radius: 14px;
+    color: var(--soft); font-size: 0.82rem; line-height: 1.5; margin-bottom: 0.9rem;
+  }
+
   .panel-stat {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 0.9rem 1.05rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;
@@ -616,14 +644,21 @@
   /* ===== Negocio: hub y pantallas nuevas (2026-09-08) ===== */
   .negocio-hub { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
   .negocio-row {
-    display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left;
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 0.85rem 0.9rem; font-family: inherit; font-size: 0.88rem; font-weight: 600;
-    color: var(--ink); cursor: pointer;
+    padding: 0.75rem 0.9rem; font-family: inherit; font-size: 0.88rem; font-weight: 600;
+    color: var(--ink); cursor: pointer; box-shadow: var(--sh-1);
+    transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease), transform 120ms var(--ease);
   }
+  .negocio-row:hover { border-color: var(--teal-500); box-shadow: var(--sh-2); }
+  .negocio-row:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--teal-100), var(--sh-1); }
+  .negocio-row:active { transform: scale(0.99); }
   .negocio-row span { flex: 1; }
   .negocio-row .chev { transform: rotate(180deg); color: var(--soft); font-size: 0.9rem; flex: none; }
-  .negocio-row .icon:first-child { color: var(--teal-600); flex: none; }
+  .negocio-row .icon:first-child {
+    color: var(--teal-600); flex: none; box-sizing: content-box;
+    width: 1.1em; height: 1.1em; padding: 0.5rem; border-radius: 10px; background: var(--teal-50);
+  }
 
   .verify-banner {
     background: #fff7e6; border: 1px solid #f0d38a; border-radius: 14px;
@@ -1117,6 +1152,9 @@
 <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+<symbol id="i-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
 <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
 <symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/></symbol>
 <!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
@@ -1427,7 +1465,7 @@
       <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
     </div>
 
-    <button class="add-svc" style="margin-top:1.1rem" onclick="go('pro-negocio')">Configurar mi negocio</button>
+    <button class="add-svc primary" style="margin-top:1.1rem" onclick="go('pro-negocio')">Configurar mi negocio</button>
     <button class="logout-btn mode-switch" style="display:none" onclick="logoutPro()">Cambiar a modo Cliente</button>
   </div>
 
@@ -1447,12 +1485,12 @@
       <button class="negocio-row" onclick="go('mi-perfil')"><svg class="icon"><use href="#i-user"/></svg><span>Identidad del negocio</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
       <button class="negocio-row" onclick="go('pro-servicios')"><svg class="icon"><use href="#i-scissors"/></svg><span>Servicios</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
       <button class="negocio-row" onclick="go('pro-horario')"><svg class="icon"><use href="#i-calendar"/></svg><span>Horario semanal</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-equipo')"><svg class="icon"><use href="#i-user"/></svg><span>Equipo</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-bancos')"><svg class="icon"><use href="#i-store"/></svg><span>Cuentas bancarias</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-imagenes')"><svg class="icon"><use href="#i-store"/></svg><span>Logo y fotos</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-ubicacion')"><svg class="icon"><use href="#i-search"/></svg><span>Ubicación en el mapa</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-redes')"><svg class="icon"><use href="#i-store"/></svg><span>Redes y compartir</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-soporte')"><svg class="icon"><use href="#i-user"/></svg><span>Soporte</span><span class="badge pending" id="soporte-unread-badge" style="display:none"></span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-equipo')"><svg class="icon"><use href="#i-users"/></svg><span>Equipo</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-bancos')"><svg class="icon"><use href="#i-bank"/></svg><span>Cuentas bancarias</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-imagenes')"><svg class="icon"><use href="#i-camera"/></svg><span>Logo y fotos</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-ubicacion')"><svg class="icon"><use href="#i-map-pin"/></svg><span>Ubicación en el mapa</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-redes')"><svg class="icon"><use href="#i-share"/></svg><span>Redes y compartir</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-soporte')"><svg class="icon"><use href="#i-message"/></svg><span>Soporte</span><span class="badge pending" id="soporte-unread-badge" style="display:none"></span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
     </div>
   </div>
 
@@ -1464,7 +1502,7 @@
     <div id="biz-svc-rows"></div>
     <button class="add-svc" onclick="addBizServiceRow()">+ Agregar servicio</button>
     <p id="biz-svc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="biz-svc-save-btn" onclick="saveBizServices()">Guardar cambios</button>
+    <button class="add-svc primary" id="biz-svc-save-btn" onclick="saveBizServices()">Guardar cambios</button>
   </div>
 
   <!-- ============ HORARIO (extraído de pro-panel) ============ -->
@@ -1474,7 +1512,7 @@
     <p class="app-sub">Cuándo estás disponible para reservas.</p>
     <div id="panel-horario"></div>
     <p id="horario-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
+    <button class="add-svc primary" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
   </div>
 
   <!-- ============ CUENTAS BANCARIAS (extraído de pro-panel) ============ -->
@@ -1482,10 +1520,10 @@
     <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Cuentas para transferencia</h1>
     <p class="app-sub">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
-    <div id="bank-rows"></div>
+    <div id="bank-rows" data-empty="Todavía no agregas una cuenta. Tus clientes la verán al pagar por transferencia."></div>
     <button class="add-svc" onclick="addBankRow()">+ Agregar cuenta</button>
     <p id="bank-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
+    <button class="add-svc primary" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
   </div>
 
   <!-- ============ EQUIPO (extraído de pro-panel) ============ -->
@@ -1493,10 +1531,10 @@
     <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Mi equipo</h1>
     <p class="app-sub">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
-    <div id="collab-rows"></div>
+    <div id="collab-rows" data-empty="Todavía no agregas a nadie más. Si trabajas solo, no hace falta: tú ya apareces como titular."></div>
     <button class="add-svc" onclick="addCollabRow()">+ Agregar colaborador</button>
     <p id="collab-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
+    <button class="add-svc primary" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
   </div>
 
   <!-- ============ IMÁGENES: logo y galería (2026-09-08) ============ -->
@@ -1557,7 +1595,7 @@
     </div>
     <button class="add-svc" id="biz-sector-center-btn" onclick="centerBizMapBySector()">Centrar en este sector</button>
     <p id="biz-loc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.6rem 0"></p>
-    <button class="add-svc" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
+    <button class="add-svc primary" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
   </div>
 
   <!-- ============ REDES y compartir (2026-09-08) ============ -->
@@ -1571,7 +1609,7 @@
     <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio" oninput="markDirty('social')"></div>
     <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com" oninput="markDirty('social')"></div>
     <p id="biz-social-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
+    <button class="add-svc primary" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
 
     <p class="sec-title" style="margin-top:1.3rem">Link para tu biografía</p>
     <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0">Pégalo en tu bio de Instagram o mándalo por WhatsApp para que te reserven directo.</p>
@@ -1592,7 +1630,7 @@
     <p id="biz-chat-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0"></p>
     <div class="biz-chat-input-row">
       <textarea id="biz-chat-input" rows="2" maxlength="3000" placeholder="Escribe tu mensaje…" oninput="markDirty('chat')"></textarea>
-      <button class="add-svc" id="biz-chat-send-btn" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
+      <button class="add-svc primary" id="biz-chat-send-btn" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
     </div>
   </div>
 
@@ -1642,7 +1680,7 @@
       <label for="pf-neighborhood">Sector</label>
       <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo" oninput="markDirty('profile')">
     </div>
-    <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+    <button class="add-svc primary" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
 
     <!-- Mi cuenta + link de biografía (2026-09-08) — nativos aquí, no en el
          panel de escritorio. El link es el mismo que antes solo vivía en
@@ -1661,7 +1699,7 @@
       <div class="field" style="margin-bottom:0.6rem">
         <input id="acct-email-input" type="email" placeholder="nuevo@correo.com">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
     </div>
 
     <div class="acct-line">
@@ -1677,7 +1715,7 @@
       <div class="field" style="margin-bottom:0.6rem">
         <input id="acct-phone-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
     </div>
 
     <div class="acct-line">
@@ -1697,7 +1735,7 @@
         <label for="acct-pin-new">PIN nuevo</label>
         <input id="acct-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
     </div>
   </div>
 
