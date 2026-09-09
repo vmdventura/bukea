@@ -7,7 +7,8 @@ const {
   receiptUrl, logoUpload, logoUrl, photoUpload, photoUrl,
   sniffFileType, IMAGE_MIME: IMAGE_MIME_SET,
 } = require('../lib/uploads');
-const { geocodeNeighborhood } = require('../lib/geocode');
+const { geocodeNeighborhood, geocodeAddress } = require('../lib/geocode');
+const rateLimit = require('../lib/rate-limit');
 const { getSettings } = require('../lib/settings');
 const { loadBusinesses } = require('../lib/session-payload');
 const { normalizeSocial } = require('../lib/social');
@@ -855,6 +856,30 @@ router.put('/:slug/location', requireAuth, async (req, res) => {
     [lat, lng, professional.id]
   );
   res.json({ saved: true, lat, lng });
+});
+
+// Centrar el mapa por provincia + sector (2026-09-09, a pedido de Víctor):
+// "ingresa las coordenadas" era difícil de usar para público no técnico —
+// esto solo ubica el pin para que el dueño lo ajuste y confirme con
+// PUT .../location (arriba); no guarda nada por sí solo. Limitado a 20
+// solicitudes/hora por dueño porque cada llamada consume una solicitud a
+// Nominatim (máx. 1/segundo permitido por su política de uso, ver
+// lib/geocode.js) — un dueño ajustando su ubicación no necesita más que
+// eso en una sesión normal.
+router.post('/:slug/geocode-preview', requireAuth, async (req, res) => {
+  const { professional, error } = await findOwnedProfessional(req.params.slug, req.user.id);
+  if (error) return res.status(error[0]).json({ error: error[1] });
+
+  const wait = rateLimit.hit([{ key: 'geocode-preview:' + req.user.id, max: 20, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  const sector = String(req.body.sector || '').trim();
+  const province = String(req.body.province || '').trim();
+  if (!sector || !province) return res.status(400).json({ error: 'Selecciona provincia y sector' });
+
+  const coords = await geocodeAddress(sector, province);
+  if (!coords) return res.status(404).json({ error: 'No pudimos ubicar ese sector, ajusta el pin a mano' });
+  res.json(coords);
 });
 
 // Galería de fotos del negocio (2026-08-25) — 0..N fotos, cada una se sube y

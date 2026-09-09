@@ -39,6 +39,22 @@ async function geocodeNeighborhood(neighborhood) {
   }
 }
 
+// Centrar el mapa por provincia + sector (2026-09-09, a pedido de Víctor):
+// a diferencia de geocodeNeighborhood() (fija "Santo Domingo" porque hoy es
+// lo único que pregunta el registro), esta sí lleva la provincia real que
+// elige el dueño en la pantalla de Ubicación — sirve para cualquier parte
+// del país, no solo Santo Domingo. No guarda nada por sí sola: solo ubica
+// el pin en el mapa para que el dueño lo ajuste y confirme con "Guardar
+// ubicación", igual que "Usar mi ubicación" o las coordenadas manuales.
+async function geocodeAddress(sector, province) {
+  try {
+    return await geocode(`${sector}, ${province}, República Dominicana`);
+  } catch (err) {
+    console.error('No se pudo geocodificar "' + sector + ', ' + province + '":', err.message);
+    return null;
+  }
+}
+
 // Mismo cálculo de enlaces que usa el frontend (ver directionLinks() en
 // index.html) — server-side para el perfil público, que no corre el JS
 // de la app. Con coordenadas reales si ya se geocodificó; si no, busca por
@@ -59,4 +75,4 @@ function directionLinks(name, neighborhood, lat, lng) {
   };
 }
 
-module.exports = { geocodeNeighborhood, directionLinks };
+module.exports = { geocodeNeighborhood, geocodeAddress, directionLinks };

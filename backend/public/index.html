@@ -1419,7 +1419,7 @@
       <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
     </div>
 
-    <button class="add-svc" style="margin-top:1.1rem" onclick="go('pro-negocio')">Ir a Negocio (servicios, horario, imágenes, ubicación, redes, soporte)</button>
+    <button class="add-svc" style="margin-top:1.1rem" onclick="go('pro-negocio')">Configurar mi negocio</button>
     <button class="logout-btn mode-switch" style="display:none" onclick="logoutPro()">Cambiar a modo Cliente</button>
   </div>
 
@@ -1524,10 +1524,26 @@
     <p class="app-sub" id="biz-loc-status">Ajusta el pin arrastrándolo hasta la ubicación exacta.</p>
     <div id="biz-map" style="height:260px;border-radius:16px;overflow:hidden;margin-bottom:0.8rem;background:var(--panel)"></div>
     <button class="add-svc" onclick="useMyLocationForBiz()">Usar mi ubicación</button>
-    <p class="sec-title" style="margin-top:1rem">O ingresa las coordenadas</p>
-    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lat">Latitud</label><input id="biz-lat" type="text" inputmode="decimal" placeholder="18.4655"></div>
-    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lng">Longitud</label><input id="biz-lng" type="text" inputmode="decimal" placeholder="-69.9313"></div>
-    <button class="add-svc" onclick="centerBizMapManual()">Centrar en estas coordenadas</button>
+    <input id="biz-lat" type="hidden">
+    <input id="biz-lng" type="hidden">
+
+    <!-- Provincia + sector (2026-09-09) reemplaza "ingresa las coordenadas":
+         más fácil para ubicar el mapa que escribir latitud/longitud a mano,
+         y sirve para cualquier parte del país, no solo Santo Domingo. -->
+    <p class="sec-title" style="margin-top:1rem">O selecciona tu sector</p>
+    <div class="field" style="margin-bottom:0.5rem">
+      <label for="biz-province">Provincia</label>
+      <select id="biz-province" onchange="onBizProvinceChange()"></select>
+    </div>
+    <div class="field" style="margin-bottom:0.5rem">
+      <label for="biz-sector">Sector</label>
+      <select id="biz-sector" onchange="onBizSectorChange()" disabled></select>
+    </div>
+    <div class="field" id="biz-sector-other-field" style="margin-bottom:0.5rem;display:none">
+      <label for="biz-sector-other">¿Cuál sector?</label>
+      <input id="biz-sector-other" type="text" placeholder="Escribe el nombre de tu sector">
+    </div>
+    <button class="add-svc" id="biz-sector-center-btn" onclick="centerBizMapBySector()">Centrar en este sector</button>
     <p id="biz-loc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.6rem 0"></p>
     <button class="add-svc" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
   </div>
@@ -1583,6 +1599,18 @@
       <label for="pf-business">Nombre del negocio</label>
       <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido" oninput="markDirty('profile')">
     </div>
+
+    <!-- Link del perfil público (2026-09-09, a pedido de Víctor): antes solo
+         vivía en "Redes y compartir" — se agrega también aquí, justo debajo
+         del nombre del negocio, para no tener que salir a otra pantalla a
+         buscarlo. Mismo valor, mismo botón Copiar, solo con id propio
+         (#pf-share-link) porque el id no se puede repetir en la página. -->
+    <p class="sec-title" style="margin-top:0.2rem">Link de tu perfil</p>
+    <div class="share-link-row" style="margin-bottom:1rem">
+      <input id="pf-share-link" type="text" readonly>
+      <button class="acct-btn" onclick="copyBioLink(this,'pf-share-link')">Copiar</button>
+    </div>
+
     <p class="field-label-standalone" style="font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--soft);margin-bottom:0.4rem">¿A qué te dedicas?</p>
     <div class="reg-cat-grid" id="pf-cats">
       <button class="reg-cat-card" data-cat="barberia" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
@@ -3124,6 +3152,7 @@
   function fillMiPerfilFields(p) {
     document.getElementById('pf-name').value = p.name || '';
     document.getElementById('pf-business').value = p.businessName || '';
+    document.getElementById('pf-share-link').value = p.publicUrl || '';
     document.getElementById('pf-neighborhood').value = p.neighborhood || '';
     pfSelectedCat = p.category;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
@@ -3324,8 +3353,8 @@
       errEl.style.display = 'block';
     }
   };
-  window.copyBioLink = function (btn) {
-    const el = document.getElementById('acct-share-link');
+  window.copyBioLink = function (btn, inputId) {
+    const el = document.getElementById(inputId || 'acct-share-link');
     const done = () => { const t = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = t; }, 1500); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(el.value).then(done).catch(() => { el.select(); });
@@ -3610,6 +3639,64 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  /* ===== Provincia + sector (2026-09-09, a pedido de Víctor) — reemplaza
+     "ingresa las coordenadas" en Ubicación: escribir latitud/longitud a
+     mano no es claro para público no técnico, y para un negocio fuera de
+     Santo Domingo (Punta Cana, San Francisco de Macorís...) no había ni
+     esa opción cómoda. 32 divisiones (31 provincias + Distrito Nacional);
+     "sector" es la lista real de barrios del Distrito Nacional (fuente:
+     Wikipedia, Anexo:Barrios del Distrito Nacional) y, para el resto del
+     país, sus municipios (fuente: mipais.jmarcano.com) — la subdivisión
+     real más chica que cubre el país completo sin una base de datos de
+     miles de parajes rurales. "Otro" al final de cada lista deja escribir
+     el sector a mano si no aparece (barrio nuevo, paraje rural, etc.). ===== */
+  const PROVINCES = {
+    'Distrito Nacional': ['24 de Abril', '30 de Mayo', 'Altos de Arroyo Hondo', 'Arroyo Manzano', 'Atala', 'Bella Vista', 'Buenos Aires', 'El Cacique', 'Centro de los Héroes', 'Centro Olímpico', 'Cerros de Arroyo Hondo', 'Ciudad Colonial', 'Ciudad Nueva', 'Ciudad Universitaria', 'Cristo Rey', 'Domingo Savio', 'El Millón', 'Ensanche Capotillo', 'Ensanche Espaillat', 'Ensanche La Fe', 'Ensanche Luperón', 'Ensanche Naco', 'Ensanche Quisqueya', 'Gazcue', 'General Antonio Duvergé', 'Gualey', 'Honduras del Norte', 'Honduras del Oeste', 'Jardín Botánico', 'Jardín Zoológico', 'Jardines del Sur', 'Julieta Morales', 'La Agustina', 'La Castellana', 'La Esperilla', 'La Hondonada', 'La Isabela', 'La Julia', 'Las Praderas', 'La Zurza', 'Los Cacicazgos', 'Los Jardines', 'Los Peralejos', 'Los Prados', 'Los Restauradores', 'Los Ríos', 'María Auxiliadora', 'Mata Hambre', 'Mejoramiento Social', 'Mirador Norte', 'Mirador Sur', 'Miraflores', 'Miramar', 'Nuestra Señora de la Paz', 'Nuevo Arroyo Hondo', 'Palma Real', 'Paraíso', 'Paseo de los Indios', 'Piantini', 'Los Próceres', 'Renacimiento', 'San Carlos', 'San Diego', 'San Gerónimo', 'San Juan Bosco', 'Simón Bolívar', 'Viejo Arroyo Hondo', 'Villas Agrícolas', 'Villa Consuelo', 'Villa Francisca', 'Villa Juana'],
+    'Azua': ['Azua de Compostela', 'Estebanía', 'Guayabal', 'Las Charcas', 'Las Yayas de Viajama', 'Padre Las Casas', 'Peralta', 'Pueblo Viejo', 'Sabana Yegua', 'Tábara Arriba'],
+    'Bahoruco': ['Neiba', 'Galván', 'Los Ríos', 'Tamayo', 'Villa Jaragua'],
+    'Barahona': ['Barahona', 'Cabral', 'El Peñón', 'Enriquillo', 'Fundación', 'Jaquimeyes', 'La Ciénaga', 'Las Salinas', 'Paraíso', 'Polo', 'Vicente Noble'],
+    'Dajabón': ['Dajabón', 'El Pino', 'Loma de Cabrera', 'Partido', 'Restauración'],
+    'Duarte': ['San Francisco de Macorís', 'Arenoso', 'Castillo', 'Eugenio María de Hostos', 'Las Guáranas', 'Pimentel', 'Villa Riva'],
+    'El Seibo': ['El Seibo', 'Miches'],
+    'Elías Piña': ['Comendador', 'Bánica', 'El Llano', 'Hondo Valle', 'Juan Santiago', 'Pedro Santana'],
+    'Espaillat': ['Moca', 'Cayetano Germosén', 'Gaspar Hernández', 'Jamao al Norte'],
+    'Hato Mayor': ['Hato Mayor del Rey', 'El Valle', 'Sabana de la Mar'],
+    'Hermanas Mirabal': ['Salcedo', 'Tenares', 'Villa Tapia'],
+    'Independencia': ['Jimaní', 'Cristóbal', 'Duvergé', 'La Descubierta', 'Mella', 'Postrer Río'],
+    'La Altagracia': ['Higüey', 'San Rafael del Yuma', 'Punta Cana', 'Bávaro'],
+    'La Romana': ['La Romana', 'Guaymate', 'Villa Hermosa'],
+    'La Vega': ['La Vega', 'Constanza', 'Jarabacoa', 'Jima Abajo'],
+    'María Trinidad Sánchez': ['Nagua', 'Cabrera', 'El Factor', 'Río San Juan'],
+    'Monseñor Nouel': ['Bonao', 'Maimón', 'Piedra Blanca'],
+    'Montecristi': ['Montecristi', 'Castañuela', 'Guayubín', 'Las Matas de Santa Cruz', 'Pepillo Salcedo', 'Villa Vásquez'],
+    'Monte Plata': ['Monte Plata', 'Bayaguana', 'Peralvillo', 'Sabana Grande de Boyá', 'Yamasá'],
+    'Pedernales': ['Pedernales', 'Oviedo'],
+    'Peravia': ['Baní', 'Nizao'],
+    'Puerto Plata': ['Puerto Plata', 'Altamira', 'Guananico', 'Imbert', 'Los Hidalgos', 'Luperón', 'Sosúa', 'Villa Isabela', 'Villa Montellano'],
+    'Samaná': ['Samaná', 'Las Terrenas', 'Sánchez'],
+    'San Cristóbal': ['San Cristóbal', 'Bajos de Haina', 'Cambita Garabito', 'Los Cacaos', 'Sabana Grande de Palenque', 'San Gregorio de Nigua', 'Villa Altagracia', 'Yaguate'],
+    'San José de Ocoa': ['San José de Ocoa', 'Rancho Arriba', 'Sabana Larga'],
+    'San Juan': ['San Juan de la Maguana', 'Bohechío', 'El Cercado', 'Juan de Herrera', 'Las Matas de Farfán', 'Vallejuelo'],
+    'San Pedro de Macorís': ['San Pedro de Macorís', 'Consuelo', 'Guayacanes', 'Quisqueya', 'Ramón Santana', 'San José de Los Llanos'],
+    'Sánchez Ramírez': ['Cotuí', 'Cevicos', 'Fantino', 'La Mata'],
+    'Santiago': ['Santiago', 'Bisonó', 'Jánico', 'Licey al Medio', 'Puñal', 'Sabana Iglesia', 'San José de las Matas', 'Tamboril', 'Villa González'],
+    'Santiago Rodríguez': ['San Ignacio de Sabaneta', 'Los Almácigos', 'Monción'],
+    'Santo Domingo': ['Santo Domingo Este', 'Santo Domingo Norte', 'Santo Domingo Oeste', 'Boca Chica', 'Los Alcarrizos', 'Pedro Brand', 'San Antonio de Guerra'],
+    'Valverde': ['Mao', 'Esperanza', 'Laguna Salada'],
+  };
+  function provinceOptionsHtml(selected) {
+    return '<option value="">Selecciona tu provincia</option>' + Object.keys(PROVINCES).map(name =>
+      '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>'
+    ).join('');
+  }
+  function sectorOptionsHtml(province, selected) {
+    const sectors = PROVINCES[province] || [];
+    const known = sectors.includes(selected);
+    return '<option value="">Selecciona tu sector</option>' +
+      sectors.map(name => '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>').join('') +
+      '<option value="__otro"' + (!known && selected ? ' selected' : '') + '>Otro (escribir)</option>';
   }
 
   /* ===== Cuentas bancarias (2026-08-22/23) — para que el cliente que paga
@@ -4141,23 +4228,23 @@
 
   // Botón "Perfil" del nav (2026-09-06): sin sesión no tiene sentido mostrar
   // la pantalla de cuenta con un único botón "Iniciar sesión" — vamos
-  // directo al login. Con sesión sí muestra la cuenta normal. Si quien
-  // inicia sesión aquí resulta ser una cuenta de dueño, la manda directo a
-  // su panel de negocio (mismo criterio que enterApp() usa cuando el login
-  // no viene de un callback pendiente) en vez de la pantalla de Perfil —
-  // no tiene sentido pasar por "Mi cuenta" primero si ya sabemos a dónde va.
-  // Botón "Perfil" del nav de cliente (2026-09-08): ya no redirige a dueños
-  // a su panel de negocio — esa pestaña solo existe en modo Cliente (el nav
-  // de negocio no tiene "Perfil", tiene "Cuenta"), así que siempre es la
-  // cuenta personal del cliente. Cambiar a Mi negocio es un botón explícito
-  // dentro de esta misma pantalla (ver #cuenta-negocio-label), no un salto
-  // automático.
+  // directo al login. Con sesión sí muestra la cuenta normal.
+  // Vuelto a cambiar (2026-09-09, a pedido de Víctor): el 8-sep se quitó el
+  // salto directo al panel de negocio para no meter a clientes puros en el
+  // asistente de "crear negocio" al tocar Perfil — pero para una cuenta que
+  // YA tiene negocio, pasar primero por "Perfil" (con un solo botón
+  // "Administrar mi negocio") es un tap de más sin ningún propósito. Ahora
+  // una cuenta con negocio va directo a su panel; una cuenta sin negocio
+  // sigue viendo "Perfil" con "Crear mi negocio" como antes.
   window.openPerfil = function () {
+    const dest = state.capabilities.manageBusiness ? 'pro-panel' : 'cuenta';
     if (!getSession()) {
-      requireAccount(function () { go('cuenta'); }, 'Inicia sesión para ver tu perfil');
+      requireAccount(function () {
+        go(state.capabilities.manageBusiness ? 'pro-panel' : 'cuenta');
+      }, 'Inicia sesión para ver tu perfil');
       return;
     }
-    go('cuenta');
+    go(dest);
   };
 
   window.clientLogout = async function () {
@@ -5172,6 +5259,11 @@
     document.getElementById('biz-lng').value = profile.lng || '';
     document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
       ? 'Pin confirmado por ti.' : 'Aproximado por sector. Ajústalo y guarda para confirmarlo.';
+    document.getElementById('biz-province').innerHTML = provinceOptionsHtml('');
+    document.getElementById('biz-sector').innerHTML = '';
+    document.getElementById('biz-sector').disabled = true;
+    document.getElementById('biz-sector-other-field').style.display = 'none';
+    document.getElementById('biz-loc-error').style.display = 'none';
     if (!bizMap) {
       bizMap = L.map('biz-map').setView([lat, lng], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(bizMap);
@@ -5204,12 +5296,51 @@
       () => alert('No pudimos acceder a tu ubicación. Ajusta el pin a mano o escribe las coordenadas.')
     );
   };
-  window.centerBizMapManual = function () {
-    const lat = Number(document.getElementById('biz-lat').value);
-    const lng = Number(document.getElementById('biz-lng').value);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) { alert('Coordenadas inválidas.'); return; }
-    if (bizMap && bizMarker) { bizMap.setView([lat, lng], 16); bizMarker.setLatLng([lat, lng]); }
-    markDirty('location');
+  window.onBizProvinceChange = function () {
+    const province = document.getElementById('biz-province').value;
+    const sectorSel = document.getElementById('biz-sector');
+    sectorSel.disabled = !province;
+    sectorSel.innerHTML = province ? sectorOptionsHtml(province, '') : '';
+    document.getElementById('biz-sector-other-field').style.display = 'none';
+  };
+  window.onBizSectorChange = function () {
+    const isOther = document.getElementById('biz-sector').value === '__otro';
+    document.getElementById('biz-sector-other-field').style.display = isOther ? 'block' : 'none';
+  };
+  window.centerBizMapBySector = async function () {
+    const province = document.getElementById('biz-province').value;
+    const sectorSel = document.getElementById('biz-sector');
+    const sector = sectorSel.value === '__otro'
+      ? document.getElementById('biz-sector-other').value.trim()
+      : sectorSel.value;
+    const errEl = document.getElementById('biz-loc-error');
+    errEl.style.display = 'none';
+    if (!province || !sector) {
+      errEl.textContent = 'Selecciona tu provincia y tu sector.';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('biz-sector-center-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Buscando…'; btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/geocode-preview', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ province, sector }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || 'No se pudo ubicar ese sector.'; errEl.style.display = 'block'; return; }
+      document.getElementById('biz-lat').value = data.lat.toFixed(7);
+      document.getElementById('biz-lng').value = data.lng.toFixed(7);
+      if (bizMap && bizMarker) { bizMap.setView([data.lat, data.lng], 15); bizMarker.setLatLng([data.lat, data.lng]); }
+      markDirty('location');
+    } catch (err) {
+      errEl.textContent = 'No se pudo conectar. Revisa tu internet.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = original; btn.disabled = false;
+    }
   };
   window.saveBizLocation = async function () {
     const lat = Number(document.getElementById('biz-lat').value);
