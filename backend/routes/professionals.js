@@ -505,7 +505,7 @@ router.get('/:slug/bookings', requireAuth, async (req, res) => {
   // que el número del ícono baje a 0 sin esperar la próxima reserva nueva.
   // Después de res.json() a propósito: no debe atrasar la respuesta al
   // dueño, y un fallo aquí no debe convertir la carga de la agenda en error.
-  pool.query('UPDATE professionals SET bookings_seen_at = NOW() WHERE id = ?', [professional.id])
+  pool.query('UPDATE professionals SET bookings_seen_at = NOW(3) WHERE id = ?', [professional.id])
     .then(() => push.sendToUser(professional.owner_user_id, { badge: 0, silent: true }))
     .catch(err => console.error('Error limpiando el badge de la agenda:', err.message));
 });

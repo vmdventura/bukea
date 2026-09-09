@@ -345,6 +345,15 @@ async function migrate() {
   //    lib/push.js y GET /:slug/bookings en routes/professionals.js.
   await safeAlter('ALTER TABLE professionals ADD COLUMN bookings_seen_at DATETIME');
 
+  // Precisión de milisegundos en bookings_seen_at y bookings.created_at
+  // (2026-09-09): ambas eran de resolución de 1 segundo. countPendingBookings
+  // compara created_at > bookings_seen_at con `>` estricto — si el dueño
+  // abre la agenda y llega una reserva nueva dentro del mismo segundo, los
+  // dos truncaban al mismo valor y la reserva nueva no subía el badge
+  // (encontrado por tests/api/badge.test.js fallando de forma reproducible).
+  await pool.query('ALTER TABLE professionals MODIFY bookings_seen_at DATETIME(3)');
+  await pool.query('ALTER TABLE bookings MODIFY created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3)');
+
   // 6) Deduplicación del chat de soporte (2026-09-08): un envío con la misma
   //    clave de cliente (doble toque, reintento tras respuesta perdida) no
   //    crea un segundo mensaje. NULL para mensajes viejos y para los que
