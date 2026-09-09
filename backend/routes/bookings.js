@@ -155,11 +155,18 @@ router.post('/', requireAuth, async (req, res) => {
       // propósito: si el envío de la notificación falla o tarda, la reserva
       // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
       // lanza, pero por si acaso el .catch() es la última red de seguridad.
-      push.sendToUser(professional.owner_user_id, {
-        title: 'Nueva reserva',
-        body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
-        data: { type: 'booking_created', bookingId: result.insertId },
-      }).catch(err => console.error('Error notificando la reserva:', err.message));
+      // El badge del ícono (2026-09-09) cuenta las reservas confirmadas que
+      // el dueño no ha visto todavía, incluida esta — se calcula aparte
+      // porque la transacción ya cerró (conn.commit()) y no vale la pena
+      // mantener el lock solo para este conteo.
+      push.countPendingBookings(professionalId)
+        .then(badge => push.sendToUser(professional.owner_user_id, {
+          title: 'Nueva reserva',
+          body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
+          data: { type: 'booking_created', bookingId: result.insertId },
+          badge,
+        }))
+        .catch(err => console.error('Error notificando la reserva:', err.message));
 
       return res.status(201).json({
         id: result.insertId,

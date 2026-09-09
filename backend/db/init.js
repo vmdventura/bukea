@@ -337,6 +337,14 @@ async function migrate() {
   //    si sigue NULL. Ver routes/professionals.js.
   await safeAlter('ALTER TABLE professionals ADD COLUMN location_set_by_owner_at DATETIME');
 
+  // 6) Badge del ícono de la app (2026-09-09, a pedido de Víctor): marca
+  //    hasta cuándo el dueño ya revisó su agenda. El número que se manda en
+  //    cada push (apns badge) cuenta las reservas confirmadas creadas
+  //    después de esta marca; al abrir Resumen/Agenda se actualiza a NOW()
+  //    y se manda un push silencioso con badge:0 para limpiar el ícono. Ver
+  //    lib/push.js y GET /:slug/bookings en routes/professionals.js.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN bookings_seen_at DATETIME');
+
   // 6) Deduplicación del chat de soporte (2026-09-08): un envío con la misma
   //    clave de cliente (doble toque, reintento tras respuesta perdida) no
   //    crea un segundo mensaje. NULL para mensajes viejos y para los que
