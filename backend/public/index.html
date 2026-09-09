@@ -431,6 +431,13 @@
   }
   .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
   .welcome .w-sub { font-size: 0.9rem; opacity: 0.85; margin: 0 0 1.6rem; }
+  /* Saludo personalizado al volver a iniciar sesión (2026-09-09, a pedido
+     de Víctor): el nombre iba en texto plano dentro del subtítulo tenue,
+     perdido entre el resto de la frase. DESIGN.md ya reserva Fraunces
+     para "nombre del profesional, saludo de inicio" — esto es
+     literalmente eso, solo que nunca se le había aplicado. */
+  #w-pin-greeting { opacity: 1; }
+  #w-pin-greeting .w-pin-name { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.08em; }
   .phone-group {
     display: flex; align-items: center; justify-content: center; gap: 0.55rem;
     background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
@@ -1420,7 +1427,8 @@
   <!-- ============ PANEL PROFESIONAL (B2B) ============ -->
   <div class="screen" id="pro-panel">
     <h1 class="app-h1" id="panel-business">Mi negocio</h1>
-    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="go('pro-negocio'); return false;">Ver todo</a></p>
+    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span></p>
+    <button class="pill-btn" style="margin-bottom:1rem" onclick="go('pro-negocio')">Editar mi negocio</button>
 
     <div id="pro-verify-banner"></div>
 
@@ -1577,10 +1585,21 @@
          más fácil para ubicar el mapa que escribir latitud/longitud a mano,
          y sirve para cualquier parte del país, no solo Santo Domingo. -->
     <p class="sec-title" style="margin-top:1rem">O selecciona tu sector</p>
-    <div class="field" style="margin-bottom:0.5rem">
+
+    <!-- Orden jerárquico (2026-09-09, a pedido de Víctor): provincia
+         primero (con su propio buscador, igual tratamiento que sector,
+         antes era un <select> nativo sin filtro) y sector después, cada
+         uno agrupado con más espacio entre pasos para que se lea como
+         dos pasos, no como tres campos sueltos. -->
+    <div class="field" style="margin-bottom:0.4rem">
+      <label for="biz-province-search">Buscar tu provincia</label>
+      <input id="biz-province-search" type="text" placeholder="Escribe para filtrar…" oninput="filterBizProvinces()">
+    </div>
+    <div class="field" style="margin-bottom:1.1rem">
       <label for="biz-province">Provincia</label>
       <select id="biz-province" onchange="onBizProvinceChange()"></select>
     </div>
+
     <div class="field" style="margin-bottom:0.4rem">
       <label for="biz-sector-search">Buscar tu sector</label>
       <input id="biz-sector-search" type="text" placeholder="Escribe para filtrar…" oninput="filterBizSectors()" disabled>
@@ -2032,6 +2051,27 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ CONFIRMACIÓN genérica (2026-09-09) ============
+       Reemplaza confirm() nativo: reportado por Víctor que la pantalla
+       "Negocio" se quedaba congelada sin permitir nada — root cause más
+       probable es window.confirm() fallando en silencio dentro del
+       WebView de iOS (Safari puede suprimir diálogos nativos repetidos
+       sin avisar), y como go()/setMode() dependían de su valor de
+       retorno para navegar, un confirm() que nunca aparece deja la app
+       sin poder avanzar, sin ningún error visible. Mismo look que
+       verify-backdrop (.sheet-backdrop/.verify-card ya existentes),
+       pero genérico y con Promise en vez de bloquear el hilo. -->
+  <div class="sheet-backdrop center" id="confirm-backdrop">
+    <div class="verify-card">
+      <h2 id="confirm-title">Confirmar</h2>
+      <p id="confirm-message"></p>
+      <div class="v-actions">
+        <button class="v-logout" id="confirm-cancel-btn" onclick="resolveCustomConfirm(false)">Cancelar</button>
+        <button class="v-resend" id="confirm-ok-btn" onclick="resolveCustomConfirm(true)">Confirmar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -2398,7 +2438,8 @@
     'mi-perfil': 'cuenta',
   };
 
-  function go(id) {
+  function go(id, opts) {
+    opts = opts || {};
     // Pantallas de negocio requieren modo negocio activo y sesión válida
     // (spec: cambiar de modo no navega directo, exige la misma puerta que
     // el selector). No aplica a pro-registro, que es el asistente de alta.
@@ -2406,7 +2447,7 @@
       guardBusiness(function () { go(id); });
       return;
     }
-    if (!confirmDiscardIfDirty()) return;
+    if (!opts.skipDirtyCheck && !guardDirtyForms(function () { go(id, { skipDirtyCheck: true }); })) return;
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     el.classList.add('active');
@@ -3629,7 +3670,7 @@
   };
 
   async function cancelBookingFromPanel(id) {
-    if (!confirm('¿Cancelar esta cita?')) return;
+    if (!(await customConfirm('¿Cancelar esta cita?', { okLabel: 'Sí, cancelar', cancelLabel: 'No' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
         method: 'POST', headers: authHeaders(),
@@ -3776,8 +3817,14 @@
     'Santo Domingo': ['Santo Domingo Este', 'Santo Domingo Norte', 'Santo Domingo Oeste', 'Boca Chica', 'Los Alcarrizos', 'Pedro Brand', 'San Antonio de Guerra'],
     'Valverde': ['Mao', 'Esperanza', 'Laguna Salada'],
   };
-  function provinceOptionsHtml(selected) {
-    return '<option value="">Selecciona tu provincia</option>' + Object.keys(PROVINCES).map(name =>
+  function provinceOptionsHtml(selected, query) {
+    const q = (query || '').trim().toLowerCase();
+    let names = Object.keys(PROVINCES);
+    if (q) names = names.filter(name => name.toLowerCase().includes(q));
+    const placeholder = q && names.length === 0
+      ? '<option value="">Sin resultados para "' + esc(query.trim()) + '"</option>'
+      : '<option value="">Selecciona tu provincia</option>';
+    return placeholder + names.map(name =>
       '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>'
     ).join('');
   }
@@ -4122,7 +4169,7 @@
   }
 
   async function cancelBooking(id) {
-    if (!confirm('¿Cancelar esta cita?')) return;
+    if (!(await customConfirm('¿Cancelar esta cita?', { okLabel: 'Sí, cancelar', cancelLabel: 'No' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
         method: 'POST', headers: authHeaders(),
@@ -4240,14 +4287,46 @@
     setMode(saved === 'client' ? 'client' : 'business', { silent: true, skipGuard: true });
   }
 
+  // Confirmación propia en vez de confirm()/alert() nativos (2026-09-09):
+  // Safari en iOS puede suprimir diálogos nativos repetidos sin avisar
+  // (protección propia contra abuso de popups) — si eso pasa dentro de
+  // confirm(), la llamada devuelve false en el acto, sin mostrar nada, y
+  // cualquier código que dependa de su valor de retorno para continuar
+  // (go(), cancelar cita, eliminar cuenta...) queda sin poder avanzar,
+  // sin ningún error visible: exactamente el síntoma reportado ("Negocio
+  // se queda congelada"). Esta hoja corre dentro de la propia página, no
+  // depende de la API de diálogos del navegador.
+  let customConfirmResolve = null;
+  function customConfirm(message, opts) {
+    opts = opts || {};
+    document.getElementById('confirm-title').textContent = opts.title || 'Confirmar';
+    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-cancel-btn').textContent = opts.cancelLabel || 'Cancelar';
+    document.getElementById('confirm-ok-btn').textContent = opts.okLabel || 'Confirmar';
+    document.getElementById('confirm-backdrop').classList.add('show');
+    return new Promise(resolve => { customConfirmResolve = resolve; });
+  }
+  window.resolveCustomConfirm = function (result) {
+    document.getElementById('confirm-backdrop').classList.remove('show');
+    const resolve = customConfirmResolve;
+    customConfirmResolve = null;
+    if (resolve) resolve(result);
+  };
+
   // Formularios sucios (UI-02): antes de cambiar de modo o navegar fuera de
   // una pantalla con cambios sin guardar, se pregunta. Cada pantalla marca
   // su propio id en state.dirtyForms al escribir, y lo limpia al guardar.
-  function confirmDiscardIfDirty() {
+  // No bloquea (a diferencia del confirm() nativo que reemplaza): si hay
+  // cambios sin guardar, abre el diálogo propio y devuelve false de una
+  // vez — retryFn() es lo que hay que volver a intentar si el dueño elige
+  // "Descartar". Nunca hace `await` aquí para no tener que volver async
+  // a go()/setMode(), que muchos onclick="..." del HTML llaman sin await.
+  function guardDirtyForms(retryFn) {
     if (state.dirtyForms.size === 0) return true;
-    const ok = confirm('Tienes cambios sin guardar. ¿Quieres descartarlos?');
-    if (ok) state.dirtyForms.clear();
-    return ok;
+    customConfirm('Tienes cambios sin guardar. ¿Quieres descartarlos?', {
+      title: 'Cambios sin guardar', okLabel: 'Descartar', cancelLabel: 'Seguir editando',
+    }).then(ok => { if (ok) { state.dirtyForms.clear(); retryFn(); } });
+    return false;
   }
 
   // Cambia entre modo Cliente y Mi negocio SIN volver a autenticar (spec).
@@ -4256,7 +4335,7 @@
   function setMode(mode, opts) {
     opts = opts || {};
     if (mode === 'business' && !state.capabilities.manageBusiness) mode = 'client';
-    if (!opts.skipGuard && !confirmDiscardIfDirty()) return;
+    if (!opts.skipGuard && !guardDirtyForms(function () { setMode(mode, Object.assign({}, opts, { skipGuard: true })); })) return;
     state.activeMode = mode;
     state.activeBusiness = state.businesses[0] || null;
     const key = modeStorageKey();
@@ -4371,9 +4450,15 @@
   };
 
   window.deleteMyAccount = async function () {
-    const ok = confirm('¿Seguro que quieres eliminar tu cuenta de Bukea?\n\nSe borran tus datos de acceso y tu cuenta queda desactivada. Esta acción no se puede deshacer.');
+    const ok = await customConfirm(
+      '¿Seguro que quieres eliminar tu cuenta de Bukea? Se borran tus datos de acceso y tu cuenta queda desactivada. Esta acción no se puede deshacer.',
+      { title: 'Eliminar cuenta', okLabel: 'Eliminar', cancelLabel: 'Cancelar' }
+    );
     if (!ok) return;
-    const ok2 = confirm('Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?');
+    const ok2 = await customConfirm(
+      'Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?',
+      { title: 'Eliminar cuenta', okLabel: 'Sí, eliminar', cancelLabel: 'Cancelar' }
+    );
     if (!ok2) return;
     try {
       await unregisterPushToken();
@@ -4814,7 +4899,8 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-phone', data.error || 'Intenta de nuevo');
       if (data.exists) {
-        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋, ingresa tu PIN';
+        document.getElementById('w-pin-greeting').innerHTML =
+          'Hola de nuevo, <span class="w-pin-name">' + esc(firstName(data.name)) + '</span> 👋, ingresa tu PIN';
         welcomeStep('pin');
         document.getElementById('w-pin').focus();
       } else {
@@ -5014,7 +5100,7 @@
       const res = await fetch(API_BASE + '/api/auth/otp/status');
       const data = await res.json();
       const link = document.getElementById('w-otp-link');
-      if (link) link.style.display = data.enabled ? 'block' : 'none';
+      if (link) link.style.display = data.enabled ? 'inline-block' : 'none';
     } catch (err) { /* si falla, el enlace se queda oculto */ }
   }
   window.addEventListener('load', checkOtpStatus);
@@ -5328,7 +5414,7 @@
     }
   };
   window.deleteBizPhoto = async function (photoId) {
-    if (!confirm('¿Quitar esta foto?')) return;
+    if (!(await customConfirm('¿Quitar esta foto?', { okLabel: 'Quitar', cancelLabel: 'Cancelar' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/photos/' + photoId, {
         method: 'DELETE', headers: authHeaders(),
@@ -5364,6 +5450,7 @@
     document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
       ? 'Pin confirmado por ti.' : 'Aproximado por sector. Ajústalo y guarda para confirmarlo.';
     document.getElementById('biz-province').innerHTML = provinceOptionsHtml('');
+    document.getElementById('biz-province-search').value = '';
     document.getElementById('biz-sector').innerHTML = '';
     document.getElementById('biz-sector').disabled = true;
     document.getElementById('biz-sector-search').value = '';
@@ -5412,12 +5499,19 @@
     sectorSel.innerHTML = province ? sectorOptionsHtml(province, '') : '';
     document.getElementById('biz-sector-other-field').style.display = 'none';
   };
-  // Buscador de sector (2026-09-09, a pedido de Víctor): el Distrito
-  // Nacional solo tiene 71 barrios reales — sin filtro, encontrar el
-  // propio en un <select> tan largo es incómodo. Reconstruye las opciones
-  // del <select> en cada tecla en vez de esconder <option> sueltas: más
-  // confiable entre navegadores/SO que ocultar opciones de un <select>
-  // nativo.
+  // Buscador de provincia y de sector (2026-09-09, a pedido de Víctor):
+  // mismo tratamiento en los dos — el Distrito Nacional solo tiene 71
+  // barrios reales, sin filtro encontrar el propio en un <select> tan
+  // largo es incómodo, y antes provincia no tenía buscador aunque son 32
+  // opciones. Reconstruye las opciones del <select> en cada tecla en vez
+  // de esconder <option> sueltas: más confiable entre navegadores/SO que
+  // ocultar opciones de un <select> nativo.
+  window.filterBizProvinces = function () {
+    const query = document.getElementById('biz-province-search').value;
+    const provinceSel = document.getElementById('biz-province');
+    const current = provinceSel.value;
+    provinceSel.innerHTML = provinceOptionsHtml(current, query);
+  };
   window.filterBizSectors = function () {
     const province = document.getElementById('biz-province').value;
     const query = document.getElementById('biz-sector-search').value;
