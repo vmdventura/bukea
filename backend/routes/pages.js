@@ -7,8 +7,9 @@ const { nowInSantoDomingo, weekdayOf, formatTime12h } = require('../lib/availabi
 const { logoUrl, photoUrl } = require('../lib/uploads');
 const mailer = require('../lib/mailer');
 const rateLimit = require('../lib/rate-limit');
+const { wrapAsyncRouter } = require('../lib/async-router');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 const CATEGORIES = Object.keys(CAT_LABELS);
 const CITIES = Object.keys(CITY_LABELS);

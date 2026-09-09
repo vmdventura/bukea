@@ -1524,10 +1524,10 @@
     <h1 class="app-h1">Redes y compartir</h1>
     <p class="app-sub">Cómo te encuentran fuera de Bukea.</p>
 
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-ig">Instagram</label><input id="biz-ig" type="text" placeholder="@tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-fb">Facebook</label><input id="biz-fb" type="text" placeholder="facebook.com/tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-ig">Instagram</label><input id="biz-ig" type="text" placeholder="@tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-fb">Facebook</label><input id="biz-fb" type="text" placeholder="facebook.com/tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com" oninput="markDirty('social')"></div>
     <p id="biz-social-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
     <button class="add-svc" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
 
@@ -1550,7 +1550,7 @@
     <p id="biz-chat-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0"></p>
     <div class="biz-chat-input-row">
       <textarea id="biz-chat-input" rows="2" maxlength="3000" placeholder="Escribe tu mensaje…" oninput="markDirty('chat')"></textarea>
-      <button class="add-svc" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
+      <button class="add-svc" id="biz-chat-send-btn" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
     </div>
   </div>
 
@@ -1563,11 +1563,11 @@
     <p id="pf-error" class="pf-error"></p>
     <div class="field">
       <label for="pf-name">Tu nombre</label>
-      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista' oninput="markDirty('profile')">
     </div>
     <div class="field">
       <label for="pf-business">Nombre del negocio</label>
-      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido" oninput="markDirty('profile')">
     </div>
     <p class="field-label-standalone" style="font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--soft);margin-bottom:0.4rem">¿A qué te dedicas?</p>
     <div class="reg-cat-grid" id="pf-cats">
@@ -1586,7 +1586,7 @@
     </div>
     <div class="field">
       <label for="pf-neighborhood">Sector</label>
-      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo" oninput="markDirty('profile')">
     </div>
     <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
 
@@ -2340,7 +2340,7 @@
     if (id === 'pro-ubicacion') openBizMap();
     if (id === 'pro-redes') loadBizSocial();
     if (id === 'pro-soporte') { loadChatApp(); startChatPolling(); } else { stopChatPolling(); }
-    if (id === 'pro-negocio') renderVerifyChecklist();
+    if (id === 'pro-negocio') { renderVerifyChecklist(); updateSoporteBadge(); }
   }
 
   /* ===== Disponibilidad real: días y horas libres del profesional ===== */
@@ -2892,8 +2892,8 @@
         fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings', { headers: authHeaders() }),
         fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats', { headers: authHeaders() }),
       ]);
-      if (profRes.status === 404) { logoutPro(); return; }
-      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(); return; }
+      if (profRes.status === 404) { logoutPro(true); return; }
+      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(true); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
       const prof = await profRes.json();
       const citas = await citasRes.json();
@@ -3114,6 +3114,7 @@
     pfSelectedCat = p.category;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
     document.getElementById('pf-error').style.display = 'none';
+    clearDirtyForm('profile');
   }
   // Puebla los campos al entrar a "Mi perfil" (2026-09-08) — antes solo
   // pasaba por aquí un único llamador (openMiPerfil, desde "Editar" en el
@@ -3137,13 +3138,13 @@
   // Alias de compatibilidad para el link "Editar" que aún llama a esta
   // función por su nombre viejo.
   window.openMiPerfil = function () {
-    loadMiPerfilScreen();
     go('mi-perfil');
   };
   window.pickPfCat = function (btn) {
     pfSelectedCat = btn.dataset.cat;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
+    markDirty('profile');
   };
   window.saveProfile = async function () {
     const slug = proSlug();
@@ -3169,9 +3170,10 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar tu perfil');
+      clearDirtyForm('profile');
       btn.textContent = '¡Guardado!';
       btn.classList.add('success');
-      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); loadPanel(); }, 900);
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); }, 900);
       return;
     } catch (err) {
       errEl.textContent = err.message;
@@ -3801,8 +3803,12 @@
   // sesión, solo cambia de modo, ver setMode). Conserva el nombre de la
   // función para no tocar sus otros dos llamadores (loadPanel, cuando el
   // negocio ya no existe o el token dejó de servir para él).
-  function logoutPro() {
-    setMode('client');
+  function logoutPro(forced) {
+    // forced=true (loadPanel: negocio ya no existe o token dejó de servir
+    // para él) salta el diálogo de cambios sin guardar — si el negocio ya
+    // no es accesible, no hay nada que guardar y cancelar el diálogo dejaba
+    // al dueño atrapado en modo negocio sin salida (revisión 2026-09-09).
+    setMode('client', forced ? { skipGuard: true } : undefined);
   }
 
   /* ===== Mis citas (leídas del servidor por sesión — antes vivían solo en
@@ -4533,7 +4539,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-social', data.error || 'No se pudo iniciar sesión');
-      enterApp(data, method);
+      await enterApp(data, method);
     } catch (err) {
       wError('w-error-social', 'No se pudo conectar. Revisa tu internet.');
     }
@@ -4711,7 +4717,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-pin', data.error || 'Intenta de nuevo');
-      enterApp(data, 'phone');
+      await enterApp(data, 'phone');
     } catch (err) {
       wError('w-error-pin', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4736,7 +4742,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-new', data.error || 'Intenta de nuevo');
-      enterApp(data, 'sign_up');
+      await enterApp(data, 'sign_up');
     } catch (err) {
       wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4787,7 +4793,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-reset', data.error || 'Intenta de nuevo');
-      enterApp(data, 'phone_reset');
+      await enterApp(data, 'phone_reset');
     } catch (err) {
       wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4842,7 +4848,7 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-otpverify', data.error || 'Intenta de nuevo');
       if (!data.exists) return wError('w-error-otpverify', 'Esa cuenta no existe todavía. Usa "Usar otro número" para crearla');
-      enterApp(data, 'phone_otp');
+      await enterApp(data, 'phone_otp');
     } catch (err) {
       wError('w-error-otpverify', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4992,7 +4998,7 @@
       };
       if (row.dataset.id) out.id = Number(row.dataset.id);
       return out;
-    }).filter(s => s.name && s.durationMin > 0 && s.priceCents > 0);
+    }).filter(s => s.name && s.durationMin > 0 && s.priceCents >= 0);
 
     if (services.length === 0) {
       const e = document.getElementById('biz-svc-error');
@@ -5083,7 +5089,7 @@
       URL.revokeObjectURL(preview);
       loadBizImages();
     } catch (err) {
-      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      statusEl.textContent = 'Error: ' + err.message + '. Vuelve a intentar.';
       console.error(err);
     } finally {
       input.value = '';
@@ -5110,7 +5116,7 @@
       statusEl.textContent = 'Guardada.';
       loadBizImages();
     } catch (err) {
-      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      statusEl.textContent = 'Error: ' + err.message + '. Vuelve a intentar.';
       console.error(err);
     } finally {
       input.value = '';
@@ -5151,7 +5157,7 @@
     document.getElementById('biz-lat').value = profile.lat || '';
     document.getElementById('biz-lng').value = profile.lng || '';
     document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
-      ? 'Pin confirmado por ti.' : 'Aproximado por sector — ajústalo y guarda para confirmarlo.';
+      ? 'Pin confirmado por ti.' : 'Aproximado por sector. Ajústalo y guarda para confirmarlo.';
     if (!bizMap) {
       bizMap = L.map('biz-map').setView([lat, lng], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(bizMap);
@@ -5330,6 +5336,8 @@
     if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
     if (message.length > 3000) { errEl.textContent = 'El mensaje no puede pasar de 3.000 caracteres.'; errEl.style.display = 'block'; return; }
     const clientKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
+    const btn = document.getElementById('biz-chat-send-btn');
+    btn.disabled = true;
     try {
       const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/messages', {
         method: 'POST',
@@ -5342,8 +5350,10 @@
       textarea.value = '';
       loadChatApp();
     } catch (err) {
-      errEl.textContent = err.message + ' — el borrador se conserva, intenta de nuevo.';
+      errEl.textContent = err.message + '. El borrador se conserva, intenta de nuevo.';
       errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
     }
   };
   window.startChatPolling = function () {

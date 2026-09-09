@@ -842,7 +842,7 @@ ${ICON_SPRITE}
         <p id="ticket-error" class="auth-error" style="display:none"></p>
         <div class="chat-composer">
           <textarea id="ticket-message" placeholder="Cuéntanos qué necesitas…"></textarea>
-          <button class="btn btn-primary btn-sm" onclick="sendChatMessage()"><svg class="icon" style="width:16px;height:16px"><use href="#n-message"/></svg></button>
+          <button class="btn btn-primary btn-sm" id="ticket-send-btn" onclick="sendChatMessage()"><svg class="icon" style="width:16px;height:16px"><use href="#n-message"/></svg></button>
         </div>
       </div>
     </div>
@@ -2236,14 +2236,20 @@ ${ICON_SPRITE}
     var message = textarea.value.trim();
     if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
     var clientKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
-    var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/messages', {
-      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-      body: JSON.stringify({ message: message, clientKey: clientKey }),
-    });
-    var data = await res.json().catch(function () { return {}; });
-    if (!res.ok) { errEl.textContent = data.error || 'No se pudo enviar. Intenta de nuevo.'; errEl.style.display = 'block'; return; }
-    textarea.value = '';
-    loadChat();
+    var btn = document.getElementById('ticket-send-btn');
+    btn.disabled = true;
+    try {
+      var res = await fetch(BASE + '/api/professionals/' + proSlug() + '/messages', {
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ message: message, clientKey: clientKey }),
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) { errEl.textContent = data.error || 'No se pudo enviar. Intenta de nuevo.'; errEl.style.display = 'block'; return; }
+      textarea.value = '';
+      loadChat();
+    } finally {
+      btn.disabled = false;
+    }
   };
 
   /* ---------- Horario ---------- */

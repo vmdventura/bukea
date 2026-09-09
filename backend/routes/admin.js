@@ -19,6 +19,7 @@ const oauth = require('../lib/oauth');
 const { getSettings, updateSettings } = require('../lib/settings');
 const rateLimit = require('../lib/rate-limit');
 const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
+const { wrapAsyncRouter } = require('../lib/async-router');
 
 // Comprobantes (revisión externa 2026-09-08): el panel de admin ya no usa
 // receiptUrl() de lib/uploads.js (esa apunta a la ruta autenticada de la
@@ -44,7 +45,7 @@ function issueAdminToken(userId) {
   ).then(() => token);
 }
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // CSV simple para exportar tablas — cubre las comas y comillas de nombres y
 // direcciones reales, no pretende ser una librería completa.

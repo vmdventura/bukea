@@ -6,11 +6,12 @@ const { receiptUpload, receiptUrl, RECEIPTS_DIR, sniffFileType, ALLOWED_MIME } =
 const fs = require('fs');
 const { getSettings } = require('../lib/settings');
 const push = require('../lib/push');
+const { wrapAsyncRouter } = require('../lib/async-router');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes, computeFreeSlots,
 } = require('../lib/availability');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // Reservar ahora exige sesión (el frontend ya la pide en el paso de
 // confirmar) — permite guardar quién reservó y que "Mis citas" se lea del

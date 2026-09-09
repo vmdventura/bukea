@@ -8,8 +8,9 @@ const { PHONE_RE, normalizePhone, hashPin } = require('../lib/credentials');
 const rateLimit = require('../lib/rate-limit');
 const { requireAuth } = require('../lib/auth-middleware');
 const { buildSessionPayload } = require('../lib/session-payload');
+const { wrapAsyncRouter } = require('../lib/async-router');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // Claves de bloqueo del login: por teléfono (frena la fuerza bruta sobre
 // una cuenta concreta) y por IP (frena un barrido sobre muchas cuentas).

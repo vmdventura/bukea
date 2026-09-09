@@ -17,8 +17,9 @@ const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
   timeToMinutes, minutesToHHMM, formatTime12h, computeFreeSlots,
 } = require('../lib/availability');
+const { wrapAsyncRouter } = require('../lib/async-router');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // Requisito de verificación (2026-09-08) para aparecer en las listas del
 // marketplace (este endpoint, y las páginas públicas en routes/pages.js) —
@@ -163,7 +164,7 @@ router.post('/', requireAuth, async (req, res) => {
     await conn.query('SELECT id FROM users WHERE id = ? FOR UPDATE', [req.user.id]);
 
     const [already] = await conn.query(
-      'SELECT id, slug FROM professionals WHERE owner_user_id = ? ORDER BY id LIMIT 1',
+      'SELECT id, slug, neighborhood, lat FROM professionals WHERE owner_user_id = ? ORDER BY id LIMIT 1',
       [req.user.id]
     );
     if (already[0]) {
@@ -175,6 +176,11 @@ router.post('/', requireAuth, async (req, res) => {
       slug = already[0].slug;
       existing = true;
       await conn.commit();
+      // Si el alta original falló al geocodificar (Nominatim caído/rate
+      // limit), este reintento es la única oportunidad de sanarlo — antes
+      // el negocio se quedaba sin pin para siempre hasta el backfill de
+      // arranque (revisión 2026-09-09).
+      if (already[0].lat === null) neighborhoodToGeocode = already[0].neighborhood;
     } else {
       slug = slugify(name) || 'profesional';
       const [taken] = await conn.query('SELECT slug FROM professionals WHERE slug LIKE ?', [slug + '%']);

@@ -136,6 +136,19 @@ app.get(BASE, (req, res) => {
   sendTemplated(res, path.join(__dirname, 'public', 'index.html'), 'text/html');
 });
 
+// Middleware de error centralizado (revisión externa 2026-09-08): antes un
+// error sin capturar en un handler async colgaba la petición hasta el
+// timeout del cliente en vez de responder — lib/async-router.js ahora
+// atrapa el rechazo y llama a next(err), y este middleware (debe ir el
+// último, Express lo reconoce por sus 4 argumentos) responde un 500 limpio
+// en vez de dejar la conexión abierta. unhandledRejection en línea 25 queda
+// como última red de seguridad, no como el mecanismo principal.
+app.use((err, req, res, next) => {
+  console.error('[error]', req.method, req.originalUrl, err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
+
 const PORT = process.env.PORT || 3000;
 ensureReady()
   .then(() => {
