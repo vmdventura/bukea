@@ -564,6 +564,20 @@
   .reg-cat-card .icon { font-size: 1.3rem; color: var(--teal-700); flex: none; }
   .reg-cat-card .lbl { font-size: 0.72rem; font-weight: 700; line-height: 1.2; }
 
+  /* Soy cliente / Tengo un negocio (2026-09-09, a pedido de Víctor): solo dos
+     opciones en vez de una grilla de categorías, así que el borde tenue
+     compartido con .reg-cat-card no se notaba a simple vista — relleno
+     sólido + check en la elegida, para que quede claro cuál está activa. */
+  #w-account-type .reg-cat-card.sel { border-color: var(--teal-600); background: var(--teal-600); }
+  #w-account-type .reg-cat-card.sel .icon,
+  #w-account-type .reg-cat-card.sel .lbl { color: #fff; }
+  #w-account-type .reg-cat-card.sel::after {
+    content: '✓'; position: absolute; top: 6px; right: 8px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; color: var(--teal-600);
+    font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+  }
+
   .reg-success { text-align: center; padding: 1.4rem 0 0.6rem; }
   .reg-success .app-h1, .reg-success .app-sub { text-align: center; }
   .reg-success-check {
