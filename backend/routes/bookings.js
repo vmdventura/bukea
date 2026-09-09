@@ -95,80 +95,96 @@ router.post('/', requireAuth, async (req, res) => {
   // citas del día del negocio, serializa a cualquier otra reserva del mismo
   // profesional que intente correr en paralelo — la segunda espera a que la
   // primera confirme (o falle) antes de leer "libre".
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
+  //
+  // Reintento en deadlock (2026-09-09): un SELECT ... FOR UPDATE con BETWEEN
+  // sobre un rango sin filas toma un gap lock de InnoDB en todo el rango
+  // buscado; dos transacciones concurrentes pidiendo horarios distintos del
+  // MISMO negocio pueden tomar gap locks que se cruzan y terminar en un
+  // deadlock real (ER_LOCK_DEADLOCK) en vez de simplemente esperarse una a
+  // la otra. Antes esto quedaba como una promesa rechazada sin capturar —
+  // colgaba la petición hasta el timeout del cliente en silencio. Ahora se
+  // reintenta la transacción completa unas pocas veces (patrón estándar
+  // para deadlocks de InnoDB: la única forma correcta de resolverlos es
+  // reiniciar la transacción perdedora, MySQL ya abortó una de las dos).
+  const RETRYABLE = new Set(['ER_LOCK_DEADLOCK', 'ER_LOCK_WAIT_TIMEOUT']);
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    const [busyRows] = await conn.query(
-      `SELECT appointment_at, duration_min FROM bookings
-       WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?
-       FOR UPDATE`,
-      [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
-    );
-    const busyRanges = busyRows.map(b => {
-      const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
-      return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
-    });
+      const [busyRows] = await conn.query(
+        `SELECT appointment_at, duration_min FROM bookings
+         WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?
+         FOR UPDATE`,
+        [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
+      );
+      const busyRanges = busyRows.map(b => {
+        const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
+        return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
+      });
 
-    const freeSlots = computeFreeSlots({
-      hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
-      slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
-    });
-    if (!freeSlots.includes(startMin)) {
+      const freeSlots = computeFreeSlots({
+        hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
+        slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
+      });
+      if (!freeSlots.includes(startMin)) {
+        await conn.rollback();
+        return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
+      }
+
+      // service_name/price_cents (revisión externa 2026-09-08): foto del
+      // servicio al momento de reservar, para que "Mi Cuadre" y el historial
+      // no cambien de valor si el negocio edita el precio después. Ver
+      // db/init.js (migración) y GET /:slug/bookings, GET /:slug/stats.
+      const [result] = await conn.query(
+        `INSERT INTO bookings
+           (professional_id, service_id, collaborator_id, client_user_id, client_name, day_label, time_label,
+            appointment_at, duration_min, service_name, price_cents, payment_method)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          professionalId, serviceId, collaboratorId || null, req.user.id, clientName,
+          dayLabel(date), formatTime12h(time),
+          appointmentAt, service.duration_min, service.name, service.price_cents, paymentMethod,
+        ]
+      );
+
+      await conn.commit();
+
+      // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
+      // propósito: si el envío de la notificación falla o tarda, la reserva
+      // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
+      // lanza, pero por si acaso el .catch() es la última red de seguridad.
+      push.sendToUser(professional.owner_user_id, {
+        title: 'Nueva reserva',
+        body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
+        data: { type: 'booking_created', bookingId: result.insertId },
+      }).catch(err => console.error('Error notificando la reserva:', err.message));
+
+      return res.status(201).json({
+        id: result.insertId,
+        professionalName: professional.name,
+        businessName: professional.business_name,
+        neighborhood: professional.neighborhood,
+        lat: professional.lat !== null ? Number(professional.lat) : null,
+        lng: professional.lng !== null ? Number(professional.lng) : null,
+        serviceName: service.name,
+        priceCents: service.price_cents,
+        dayLabel: dayLabel(date),
+        timeLabel: formatTime12h(time),
+        paymentMethod,
+        collaboratorName,
+      });
+    } catch (err) {
       await conn.rollback();
-      return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
+      }
+      if (RETRYABLE.has(err.code) && attempt < MAX_ATTEMPTS) continue;
+      throw err;
+    } finally {
+      conn.release();
     }
-
-    // service_name/price_cents (revisión externa 2026-09-08): foto del
-    // servicio al momento de reservar, para que "Mi Cuadre" y el historial
-    // no cambien de valor si el negocio edita el precio después. Ver
-    // db/init.js (migración) y GET /:slug/bookings, GET /:slug/stats.
-    const [result] = await conn.query(
-      `INSERT INTO bookings
-         (professional_id, service_id, collaborator_id, client_user_id, client_name, day_label, time_label,
-          appointment_at, duration_min, service_name, price_cents, payment_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        professionalId, serviceId, collaboratorId || null, req.user.id, clientName,
-        dayLabel(date), formatTime12h(time),
-        appointmentAt, service.duration_min, service.name, service.price_cents, paymentMethod,
-      ]
-    );
-
-    await conn.commit();
-
-    // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
-    // propósito: si el envío de la notificación falla o tarda, la reserva
-    // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
-    // lanza, pero por si acaso el .catch() es la última red de seguridad.
-    push.sendToUser(professional.owner_user_id, {
-      title: 'Nueva reserva',
-      body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
-      data: { type: 'booking_created', bookingId: result.insertId },
-    }).catch(err => console.error('Error notificando la reserva:', err.message));
-
-    res.status(201).json({
-      id: result.insertId,
-      professionalName: professional.name,
-      businessName: professional.business_name,
-      neighborhood: professional.neighborhood,
-      lat: professional.lat !== null ? Number(professional.lat) : null,
-      lng: professional.lng !== null ? Number(professional.lng) : null,
-      serviceName: service.name,
-      priceCents: service.price_cents,
-      dayLabel: dayLabel(date),
-      timeLabel: formatTime12h(time),
-      paymentMethod,
-      collaboratorName,
-    });
-  } catch (err) {
-    await conn.rollback();
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
-    }
-    throw err;
-  } finally {
-    conn.release();
   }
 });
 
