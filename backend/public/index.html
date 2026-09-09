@@ -1146,7 +1146,7 @@
 
       <div class="phone-group">
         <span class="flag">🇩🇴</span><span class="prefix">+1</span>
-        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
+        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="809 000 0000" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)">
       </div>
       <p class="w-error" id="w-error-phone"></p>
       <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
@@ -4599,7 +4599,7 @@
 
   async function welcomeContinue() {
     wError('w-error-phone');
-    welcomePhone = document.getElementById('w-phone').value;
+    welcomePhone = document.getElementById('w-phone').value.replace(/\D/g, '').slice(0, 11);
     const btn = document.getElementById('w-continue');
     btn.disabled = true;
     try {
