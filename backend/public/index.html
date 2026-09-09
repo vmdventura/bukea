@@ -1799,6 +1799,11 @@
     <h1 class="app-h1">Bukea tu cita</h1>
     <p class="app-sub"><span id="reserva-prof-name">—</span> · <span id="svc-label">Selecciona un servicio</span></p>
 
+    <div class="option-group" id="reserva-svc-group" style="display:none">
+      <span class="option-label">Servicio</span>
+      <div class="pills" id="svc-pills"></div>
+    </div>
+
     <div class="option-group">
       <span class="option-label">Día</span>
       <div class="pills" id="dia-pills"><p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p></div>
@@ -1914,7 +1919,7 @@
     <div id="cuenta-logged-in" style="display:none">
       <p class="app-sub" id="account-who"></p>
 
-      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
+      <button class="add-svc primary" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
         <svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
       </button>
 
@@ -2448,8 +2453,42 @@
     }
   }
 
+  // Selección de servicio en la propia pantalla de Reserva (2026-09-09):
+  // "Bukear cita" en el perfil manda aquí SIN servicio elegido (a
+  // diferencia de tocar un servicio específico en la lista, que sí llama
+  // selectService() con uno ya puesto) — antes eso dejaba "Cargando
+  // disponibilidad…" colgado para siempre, porque loadAvailabilityDays()
+  // no hace nada sin state.serviceId y nadie más lo rellenaba. Ahora, sin
+  // servicio, se muestra la lista aquí mismo en vez de un callejón sin
+  // salida.
+  function pickReservaService(service) {
+    state.serviceId = service.id;
+    state.serviceName = service.name;
+    state.priceCents = service.priceCents;
+    document.getElementById('svc-label').textContent = service.name + ' · ' + formatPrice(service.priceCents);
+    document.getElementById('reserva-svc-group').style.display = 'none';
+    loadAvailabilityDays();
+  }
   async function loadAvailabilityDays() {
-    if (!state.professional || !state.serviceId) return;
+    if (!state.professional) return;
+    if (!state.serviceId) {
+      const services = state.professional.services || [];
+      const svcGroup = document.getElementById('reserva-svc-group');
+      const svcEl = document.getElementById('svc-pills');
+      svcGroup.style.display = 'block';
+      svcEl.innerHTML = '';
+      services.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn';
+        btn.textContent = s.name + ' · ' + formatPrice(s.priceCents);
+        btn.addEventListener('click', () => pickReservaService(s));
+        svcEl.appendChild(btn);
+      });
+      document.getElementById('dia-pills').innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un servicio arriba.</p>';
+      document.getElementById('hora-pills').innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
+      return;
+    }
+    document.getElementById('reserva-svc-group').style.display = 'none';
     state.date = null; state.time = null;
     updateConfirmButton();
     const diaEl = document.getElementById('dia-pills');
@@ -3979,6 +4018,12 @@
     if (!getSession()) {
       container.innerHTML =
         '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
+      const btn = document.createElement('button');
+      btn.className = 'cta';
+      btn.style.position = 'static';
+      btn.innerHTML = '<svg class="icon"><use href="#i-user"/></svg>Iniciar sesión';
+      btn.addEventListener('click', () => requireAccount(function () { go('miscitas'); }, 'Inicia sesión para ver tus citas'));
+      container.appendChild(btn);
       return;
     }
     container.innerHTML = '';
