@@ -498,6 +498,23 @@
     padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
   }
   .field input:focus { outline: none; border-color: var(--teal-600); }
+  /* Selector elegante (2026-09-09): reemplaza el <select> nativo de
+     Provincia/Sector en Ubicación — en iOS, un <select> nativo dentro de un
+     contenedor con -webkit-overflow-scrolling:touch podía dejar el scroll
+     de la pantalla trabado tras abrir el picker del sistema. Este botón
+     abre una hoja propia (mismo patrón que "Cómo llegar"), sin ese riesgo. */
+  .field-picker {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
+    padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
+    text-align: left; cursor: pointer; transition: border-color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .field-picker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .field-picker .icon { flex: none; width: 18px; height: 18px; color: var(--soft); }
+  .field-picker.placeholder span { color: var(--soft); }
+  .field-picker:active { transform: scale(0.99); }
+  .field-picker:disabled { opacity: 0.55; cursor: not-allowed; }
+  .field-picker:focus-visible { outline: none; border-color: var(--teal-600); }
   /* Buscador de sector (2026-09-06): sugerencias de sectores reales bajo
      el campo — sigue siendo texto libre, solo ayuda a escribirlo bien. */
   .sector-list {
@@ -1157,6 +1174,7 @@
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></symbol>
 <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
 <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
 <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
@@ -1590,22 +1608,22 @@
          antes era un <select> nativo sin filtro) y sector después, cada
          uno agrupado con más espacio entre pasos para que se lea como
          dos pasos, no como tres campos sueltos. -->
-    <div class="field" style="margin-bottom:0.4rem">
-      <label for="biz-province-search">Buscar tu provincia</label>
-      <input id="biz-province-search" type="text" placeholder="Escribe para filtrar…" oninput="filterBizProvinces()">
-    </div>
-    <div class="field" style="margin-bottom:1.1rem">
-      <label for="biz-province">Provincia</label>
-      <select id="biz-province" onchange="onBizProvinceChange()"></select>
+    <div class="field" style="margin-bottom:0.6rem">
+      <label for="biz-province-btn">Provincia</label>
+      <button type="button" class="field-picker placeholder" id="biz-province-btn" onclick="openBizPicker('province')">
+        <span id="biz-province-label">Selecciona tu provincia</span>
+        <svg class="icon"><use href="#i-chevron-down"/></svg>
+      </button>
+      <input id="biz-province" type="hidden">
     </div>
 
-    <div class="field" style="margin-bottom:0.4rem">
-      <label for="biz-sector-search">Buscar tu sector</label>
-      <input id="biz-sector-search" type="text" placeholder="Escribe para filtrar…" oninput="filterBizSectors()" disabled>
-    </div>
     <div class="field" style="margin-bottom:0.5rem">
-      <label for="biz-sector">Sector</label>
-      <select id="biz-sector" onchange="onBizSectorChange()" disabled></select>
+      <label for="biz-sector-btn">Sector</label>
+      <button type="button" class="field-picker placeholder" id="biz-sector-btn" onclick="openBizPicker('sector')" disabled>
+        <span id="biz-sector-label">Primero selecciona tu provincia</span>
+        <svg class="icon"><use href="#i-chevron-down"/></svg>
+      </button>
+      <input id="biz-sector" type="hidden">
     </div>
     <div class="field" id="biz-sector-other-field" style="margin-bottom:0.5rem;display:none">
       <label for="biz-sector-other">¿Cuál sector?</label>
@@ -2015,6 +2033,18 @@
       <p class="s-sub" id="directions-sub">—</p>
       <div id="directions-links" style="display:flex;flex-direction:column;gap:0.55rem"></div>
       <button class="sheet-skip" onclick="closeDirectionsSheet()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ============ HOJA: SELECTOR DE PROVINCIA/SECTOR (2026-09-09) ============ -->
+  <div class="sheet-backdrop" id="biz-picker-sheet" onclick="if(event.target===this) closeBizPicker()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2 id="biz-picker-title">Selecciona</h2>
+      <input id="biz-picker-search" type="text" placeholder="Escribe para buscar…" oninput="filterBizPickerList()"
+        style="width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:0.7rem 0.9rem;font-size:0.9rem;font-family:inherit;color:var(--ink);margin-bottom:0.8rem">
+      <div id="biz-picker-list" style="display:flex;flex-direction:column;gap:0.5rem;max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:0.2rem"></div>
+      <button class="sheet-skip" onclick="closeBizPicker()">Cerrar</button>
     </div>
   </div>
 
@@ -3816,29 +3846,6 @@
     'Santo Domingo': ['Santo Domingo Este', 'Santo Domingo Norte', 'Santo Domingo Oeste', 'Boca Chica', 'Los Alcarrizos', 'Pedro Brand', 'San Antonio de Guerra'],
     'Valverde': ['Mao', 'Esperanza', 'Laguna Salada'],
   };
-  function provinceOptionsHtml(selected, query) {
-    const q = (query || '').trim().toLowerCase();
-    let names = Object.keys(PROVINCES);
-    if (q) names = names.filter(name => name.toLowerCase().includes(q));
-    const placeholder = q && names.length === 0
-      ? '<option value="">Sin resultados para "' + esc(query.trim()) + '"</option>'
-      : '<option value="">Selecciona tu provincia</option>';
-    return placeholder + names.map(name =>
-      '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>'
-    ).join('');
-  }
-  function sectorOptionsHtml(province, selected, query) {
-    const q = (query || '').trim().toLowerCase();
-    let sectors = PROVINCES[province] || [];
-    if (q) sectors = sectors.filter(name => name.toLowerCase().includes(q));
-    const known = sectors.includes(selected);
-    const placeholder = q && sectors.length === 0
-      ? '<option value="">Sin resultados para "' + esc(query.trim()) + '"</option>'
-      : '<option value="">Selecciona tu sector</option>';
-    return placeholder +
-      sectors.map(name => '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>').join('') +
-      '<option value="__otro"' + (!known && selected ? ' selected' : '') + '>Otro (escribir)</option>';
-  }
 
   /* ===== Cuentas bancarias (2026-08-22/23) — para que el cliente que paga
      por transferencia copie el número sin llamar. Banco y tipo de cuenta
@@ -5448,13 +5455,15 @@
     document.getElementById('biz-lng').value = profile.lng || '';
     document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
       ? 'Pin confirmado por ti.' : 'Aproximado por sector. Ajústalo y guarda para confirmarlo.';
-    document.getElementById('biz-province').innerHTML = provinceOptionsHtml('');
-    document.getElementById('biz-province-search').value = '';
-    document.getElementById('biz-sector').innerHTML = '';
-    document.getElementById('biz-sector').disabled = true;
-    document.getElementById('biz-sector-search').value = '';
-    document.getElementById('biz-sector-search').disabled = true;
+    document.getElementById('biz-province').value = '';
+    document.getElementById('biz-province-label').textContent = 'Selecciona tu provincia';
+    document.getElementById('biz-province-btn').classList.add('placeholder');
+    document.getElementById('biz-sector').value = '';
+    document.getElementById('biz-sector-label').textContent = 'Primero selecciona tu provincia';
+    document.getElementById('biz-sector-btn').classList.add('placeholder');
+    document.getElementById('biz-sector-btn').disabled = true;
     document.getElementById('biz-sector-other-field').style.display = 'none';
+    document.getElementById('biz-sector-other').value = '';
     document.getElementById('biz-loc-error').style.display = 'none';
     if (!bizMap) {
       bizMap = L.map('biz-map').setView([lat, lng], 15);
@@ -5488,39 +5497,68 @@
       () => alert('No pudimos acceder a tu ubicación. Ajusta el pin a mano o escribe las coordenadas.')
     );
   };
-  window.onBizProvinceChange = function () {
-    const province = document.getElementById('biz-province').value;
-    const sectorSel = document.getElementById('biz-sector');
-    const searchEl = document.getElementById('biz-sector-search');
-    sectorSel.disabled = !province;
-    searchEl.disabled = !province;
-    searchEl.value = '';
-    sectorSel.innerHTML = province ? sectorOptionsHtml(province, '') : '';
+  // Selector de provincia/sector (2026-09-09, a pedido de Víctor): hoja
+  // propia con buscador en vez de un <select> nativo — el Distrito Nacional
+  // solo tiene 71 barrios reales, sin filtro encontrar el propio en un
+  // <select> tan largo es incómodo, y el <select> nativo además dejaba el
+  // scroll de la pantalla trabado en iOS tras abrirlo.
+  let bizPickerType = null;
+  window.openBizPicker = function (type) {
+    bizPickerType = type;
+    document.getElementById('biz-picker-title').textContent =
+      type === 'province' ? 'Selecciona tu provincia' : 'Selecciona tu sector';
+    document.getElementById('biz-picker-search').value = '';
+    renderBizPickerList('');
+    document.getElementById('biz-picker-sheet').classList.add('show');
+    setTimeout(() => document.getElementById('biz-picker-search').focus(), 260);
+  };
+  window.closeBizPicker = function () {
+    document.getElementById('biz-picker-sheet').classList.remove('show');
+  };
+  window.filterBizPickerList = function () {
+    renderBizPickerList(document.getElementById('biz-picker-search').value);
+  };
+  function renderBizPickerList(query) {
+    const q = (query || '').trim().toLowerCase();
+    const list = document.getElementById('biz-picker-list');
+    let names, isSector = bizPickerType === 'sector';
+    if (isSector) {
+      const province = document.getElementById('biz-province').value;
+      names = (PROVINCES[province] || []).filter(name => !q || name.toLowerCase().includes(q));
+    } else {
+      names = Object.keys(PROVINCES).filter(name => !q || name.toLowerCase().includes(q));
+    }
+    let html = names.map(name =>
+      '<button type="button" class="sheet-item" data-value="' + esc(name) + '">' + esc(name) + '</button>'
+    ).join('');
+    if (isSector && !q) html += '<button type="button" class="sheet-item" data-value="__otro">Otro (escribir)</button>';
+    list.innerHTML = html || '<p style="text-align:center;color:var(--soft);font-size:0.85rem;padding:1rem 0">Sin resultados para "' + esc(query.trim()) + '"</p>';
+    list.querySelectorAll('[data-value]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isSector) selectBizSector(btn.dataset.value);
+        else selectBizProvince(btn.dataset.value);
+      });
+    });
+  }
+  window.selectBizProvince = function (name) {
+    document.getElementById('biz-province').value = name;
+    document.getElementById('biz-province-label').textContent = name;
+    document.getElementById('biz-province-btn').classList.remove('placeholder');
+    const sectorBtn = document.getElementById('biz-sector-btn');
+    sectorBtn.disabled = false;
+    sectorBtn.classList.add('placeholder');
+    document.getElementById('biz-sector').value = '';
+    document.getElementById('biz-sector-label').textContent = 'Selecciona tu sector';
     document.getElementById('biz-sector-other-field').style.display = 'none';
+    closeBizPicker();
   };
-  // Buscador de provincia y de sector (2026-09-09, a pedido de Víctor):
-  // mismo tratamiento en los dos — el Distrito Nacional solo tiene 71
-  // barrios reales, sin filtro encontrar el propio en un <select> tan
-  // largo es incómodo, y antes provincia no tenía buscador aunque son 32
-  // opciones. Reconstruye las opciones del <select> en cada tecla en vez
-  // de esconder <option> sueltas: más confiable entre navegadores/SO que
-  // ocultar opciones de un <select> nativo.
-  window.filterBizProvinces = function () {
-    const query = document.getElementById('biz-province-search').value;
-    const provinceSel = document.getElementById('biz-province');
-    const current = provinceSel.value;
-    provinceSel.innerHTML = provinceOptionsHtml(current, query);
-  };
-  window.filterBizSectors = function () {
-    const province = document.getElementById('biz-province').value;
-    const query = document.getElementById('biz-sector-search').value;
-    const sectorSel = document.getElementById('biz-sector');
-    const current = sectorSel.value;
-    sectorSel.innerHTML = sectorOptionsHtml(province, current, query);
-  };
-  window.onBizSectorChange = function () {
-    const isOther = document.getElementById('biz-sector').value === '__otro';
+  window.selectBizSector = function (name) {
+    const isOther = name === '__otro';
+    document.getElementById('biz-sector').value = name;
+    document.getElementById('biz-sector-label').textContent = isOther ? 'Otro (escribir)' : name;
+    document.getElementById('biz-sector-btn').classList.remove('placeholder');
     document.getElementById('biz-sector-other-field').style.display = isOther ? 'block' : 'none';
+    closeBizPicker();
   };
   window.centerBizMapBySector = async function () {
     const province = document.getElementById('biz-province').value;
