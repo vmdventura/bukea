@@ -431,6 +431,13 @@
   }
   .welcome h1 { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
   .welcome .w-sub { font-size: 0.9rem; opacity: 0.85; margin: 0 0 1.6rem; }
+  /* Saludo personalizado al volver a iniciar sesión (2026-09-09, a pedido
+     de Víctor): el nombre iba en texto plano dentro del subtítulo tenue,
+     perdido entre el resto de la frase. DESIGN.md ya reserva Fraunces
+     para "nombre del profesional, saludo de inicio" — esto es
+     literalmente eso, solo que nunca se le había aplicado. */
+  #w-pin-greeting { opacity: 1; }
+  #w-pin-greeting .w-pin-name { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.08em; }
   .phone-group {
     display: flex; align-items: center; justify-content: center; gap: 0.55rem;
     background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25);
@@ -491,6 +498,23 @@
     padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
   }
   .field input:focus { outline: none; border-color: var(--teal-600); }
+  /* Selector elegante (2026-09-09): reemplaza el <select> nativo de
+     Provincia/Sector en Ubicación — en iOS, un <select> nativo dentro de un
+     contenedor con -webkit-overflow-scrolling:touch podía dejar el scroll
+     de la pantalla trabado tras abrir el picker del sistema. Este botón
+     abre una hoja propia (mismo patrón que "Cómo llegar"), sin ese riesgo. */
+  .field-picker {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 13px;
+    padding: 0.72rem 0.95rem; font-size: 0.9rem; font-family: inherit; color: var(--ink);
+    text-align: left; cursor: pointer; transition: border-color 160ms var(--ease), transform 120ms var(--ease);
+  }
+  .field-picker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .field-picker .icon { flex: none; width: 18px; height: 18px; color: var(--soft); }
+  .field-picker.placeholder span { color: var(--soft); }
+  .field-picker:active { transform: scale(0.99); }
+  .field-picker:disabled { opacity: 0.55; cursor: not-allowed; }
+  .field-picker:focus-visible { outline: none; border-color: var(--teal-600); }
   /* Buscador de sector (2026-09-06): sugerencias de sectores reales bajo
      el campo — sigue siendo texto libre, solo ayuda a escribirlo bien. */
   .sector-list {
@@ -517,16 +541,33 @@
   }
   .svc-row .svc-price { flex: 1.1; text-align: center; }
   .svc-row .svc-del { background: none; border: none; color: var(--soft); cursor: pointer; font-size: 1rem; padding: 0.2rem; flex: none; }
+  /* Botón secundario (2026-09-09: el borde punteado leía "campo vacío /
+     placeholder" en vez de "acción lista para usar", sobre todo en los
+     "Guardar…" que también usaban esta clase — el botón que confirma el
+     cambio no debe verse menos terminado que el que solo agrega una fila.
+     .add-svc ahora es la acción secundaria (agregar fila, navegar, acción
+     neutral); .add-svc.primary es la acción principal de cada pantalla
+     (Guardar…, Enviar, Verificar…) con relleno sólido. Mismo radio/alto
+     que antes, para no romper el layout de ningún llamador. */
   .add-svc {
-    background: none; border: 1.5px dashed var(--line); border-radius: 12px; width: 100%;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; width: 100%;
     padding: 0.6rem; font-family: inherit; font-size: 0.8rem; font-weight: 600; color: var(--teal-700);
     cursor: pointer; margin-bottom: 1.1rem;
-    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+    transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease), box-shadow 160ms var(--ease);
   }
-  .add-svc:hover { border-color: var(--teal-500); }
+  .add-svc:hover { border-color: var(--teal-500); background: var(--teal-50); }
+  .add-svc:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--teal-100); border-color: var(--teal-500); }
   .add-svc:active { transform: scale(0.98); }
-  .add-svc:disabled { cursor: default; opacity: 0.75; }
-  .add-svc.success { border-style: solid; border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+  .add-svc:disabled { cursor: default; opacity: 0.6; }
+  .add-svc.success { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); }
+  .add-svc.primary {
+    background: var(--teal-600); border-color: var(--teal-600); color: #fff;
+    box-shadow: var(--sh-1);
+  }
+  .add-svc.primary:hover { background: var(--teal-700); border-color: var(--teal-700); box-shadow: var(--sh-2); }
+  .add-svc.primary:focus-visible { box-shadow: 0 0 0 3px var(--teal-100), var(--sh-1); }
+  .add-svc.primary:disabled { background: var(--teal-600); border-color: var(--teal-600); }
+  .add-svc.primary.success { background: var(--teal-50); border-color: var(--teal-600); color: var(--teal-700); box-shadow: none; }
 
   /* Wizard de registro de negocio ("Únete a Bukea") */
   .reg-topbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.3rem; }
@@ -564,6 +605,20 @@
   .reg-cat-card .icon { font-size: 1.3rem; color: var(--teal-700); flex: none; }
   .reg-cat-card .lbl { font-size: 0.72rem; font-weight: 700; line-height: 1.2; }
 
+  /* Soy cliente / Tengo un negocio (2026-09-09, a pedido de Víctor): solo dos
+     opciones en vez de una grilla de categorías, así que el borde tenue
+     compartido con .reg-cat-card no se notaba a simple vista — relleno
+     sólido + check en la elegida, para que quede claro cuál está activa. */
+  #w-account-type .reg-cat-card.sel { border-color: var(--teal-600); background: var(--teal-600); }
+  #w-account-type .reg-cat-card.sel .icon,
+  #w-account-type .reg-cat-card.sel .lbl { color: #fff; }
+  #w-account-type .reg-cat-card.sel::after {
+    content: '✓'; position: absolute; top: 6px; right: 8px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; color: var(--teal-600);
+    font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+  }
+
   .reg-success { text-align: center; padding: 1.4rem 0 0.6rem; }
   .reg-success .app-h1, .reg-success .app-sub { text-align: center; }
   .reg-success-check {
@@ -592,6 +647,17 @@
   .collab-row input:focus { outline: none; border-color: var(--teal-600); }
   .collab-row .collab-del { grid-column: 1 / -1; justify-self: end; background: none; border: none; color: var(--soft); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 0.2rem; }
 
+  /* Estado vacío de listas editables (2026-09-09) — sin esto, "Mi equipo"
+     y "Cuentas para transferencia" mostraban un vacío total entre el
+     texto de arriba y el botón "+ Agregar…", como si la pantalla no
+     hubiera cargado. Puramente CSS (:empty), desaparece solo en cuanto
+     se agrega la primera fila — nada que sincronizar desde el JS. */
+  #bank-rows:empty::before, #collab-rows:empty::before {
+    content: attr(data-empty); display: block; text-align: center; padding: 1.5rem 1.1rem;
+    border: 1.5px dashed var(--line); border-radius: 14px;
+    color: var(--soft); font-size: 0.82rem; line-height: 1.5; margin-bottom: 0.9rem;
+  }
+
   .panel-stat {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 0.9rem 1.05rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;
@@ -602,14 +668,21 @@
   /* ===== Negocio: hub y pantallas nuevas (2026-09-08) ===== */
   .negocio-hub { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
   .negocio-row {
-    display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left;
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 0.85rem 0.9rem; font-family: inherit; font-size: 0.88rem; font-weight: 600;
-    color: var(--ink); cursor: pointer;
+    padding: 0.75rem 0.9rem; font-family: inherit; font-size: 0.88rem; font-weight: 600;
+    color: var(--ink); cursor: pointer; box-shadow: var(--sh-1);
+    transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease), transform 120ms var(--ease);
   }
+  .negocio-row:hover { border-color: var(--teal-500); box-shadow: var(--sh-2); }
+  .negocio-row:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--teal-100), var(--sh-1); }
+  .negocio-row:active { transform: scale(0.99); }
   .negocio-row span { flex: 1; }
   .negocio-row .chev { transform: rotate(180deg); color: var(--soft); font-size: 0.9rem; flex: none; }
-  .negocio-row .icon:first-child { color: var(--teal-600); flex: none; }
+  .negocio-row .icon:first-child {
+    color: var(--teal-600); flex: none; box-sizing: content-box;
+    width: 1.1em; height: 1.1em; padding: 0.5rem; border-radius: 10px; background: var(--teal-50);
+  }
 
   .verify-banner {
     background: #fff7e6; border: 1px solid #f0d38a; border-radius: 14px;
@@ -880,6 +953,14 @@
   .acct-form.open { display: block; }
   .share-link-row { display: flex; gap: 0.5rem; margin: 0.6rem 0 1.3rem; }
   .share-link-row input { flex: 1; min-width: 0; font-family: inherit; font-size: 0.82rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.75rem; }
+
+  /* Plantillas para WhatsApp como caja (2026-09-09, a pedido de Víctor):
+     antes era un <input> de una sola línea — el mensaje completo no se
+     veía sin hacer scroll horizontal dentro del campito. Ahora es una
+     tarjeta con el texto entero visible (con salto de línea si hace
+     falta) y el botón Copiar debajo, no al lado. */
+  .wa-template-box { border: 1px solid var(--line); border-radius: 14px; padding: 0.85rem; margin-bottom: 0.7rem; background: var(--card); }
+  .wa-template-box p { margin: 0 0 0.7rem; font-size: 0.85rem; color: var(--ink); line-height: 1.45; white-space: pre-wrap; }
   .acct-btn {
     background: none; border: 1.5px solid var(--teal-600); border-radius: 999px; color: var(--teal-700);
     font-family: inherit; font-size: 0.76rem; font-weight: 700; padding: 0.4rem 0.85rem; cursor: pointer; flex: none;
@@ -1093,8 +1174,12 @@
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></symbol>
 <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
 <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
 <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+<symbol id="i-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
 <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
 <symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/></symbol>
 <!-- Íconos premium de categoría (glifos nuevos, estilo círculo teal) -->
@@ -1146,7 +1231,7 @@
 
       <div class="phone-group">
         <span class="flag">🇩🇴</span><span class="prefix">+1</span>
-        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="809 000 0000">
+        <input id="w-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="809 000 0000" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)">
       </div>
       <p class="w-error" id="w-error-phone"></p>
       <button class="cta" id="w-continue" onclick="welcomeContinue()">Continuar</button>
@@ -1360,7 +1445,8 @@
   <!-- ============ PANEL PROFESIONAL (B2B) ============ -->
   <div class="screen" id="pro-panel">
     <h1 class="app-h1" id="panel-business">Mi negocio</h1>
-    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span> · <a href="#" style="color:var(--teal-600);font-weight:700;text-decoration:none" onclick="go('pro-negocio'); return false;">Ver todo</a></p>
+    <p class="app-sub"><span id="panel-name"></span> · <span id="panel-cat"></span></p>
+    <button class="pill-btn" style="margin-bottom:1rem" onclick="go('pro-negocio')">Editar mi negocio</button>
 
     <div id="pro-verify-banner"></div>
 
@@ -1405,8 +1491,7 @@
       <p style="color:var(--soft);font-size:0.85rem">Cargando citas…</p>
     </div>
 
-    <button class="add-svc" style="margin-top:1.1rem" onclick="go('pro-negocio')">Ir a Negocio (servicios, horario, imágenes, ubicación, redes, soporte)</button>
-    <button class="logout-btn mode-switch" style="display:none" onclick="logoutPro()">Cambiar a modo Cliente</button>
+    <button class="logout-btn mode-switch" style="display:none;margin-top:1.1rem" onclick="logoutPro()">Cambiar a modo Cliente</button>
   </div>
 
   <!-- ============ NEGOCIO (hub, 2026-09-08) =====
@@ -1425,12 +1510,12 @@
       <button class="negocio-row" onclick="go('mi-perfil')"><svg class="icon"><use href="#i-user"/></svg><span>Identidad del negocio</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
       <button class="negocio-row" onclick="go('pro-servicios')"><svg class="icon"><use href="#i-scissors"/></svg><span>Servicios</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
       <button class="negocio-row" onclick="go('pro-horario')"><svg class="icon"><use href="#i-calendar"/></svg><span>Horario semanal</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-equipo')"><svg class="icon"><use href="#i-user"/></svg><span>Equipo</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-bancos')"><svg class="icon"><use href="#i-store"/></svg><span>Cuentas bancarias</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-imagenes')"><svg class="icon"><use href="#i-store"/></svg><span>Logo y fotos</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-ubicacion')"><svg class="icon"><use href="#i-search"/></svg><span>Ubicación en el mapa</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-redes')"><svg class="icon"><use href="#i-store"/></svg><span>Redes y compartir</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
-      <button class="negocio-row" onclick="go('pro-soporte')"><svg class="icon"><use href="#i-user"/></svg><span>Soporte</span><span class="badge pending" id="soporte-unread-badge" style="display:none"></span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-equipo')"><svg class="icon"><use href="#i-users"/></svg><span>Equipo</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-bancos')"><svg class="icon"><use href="#i-bank"/></svg><span>Cuentas bancarias</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-imagenes')"><svg class="icon"><use href="#i-camera"/></svg><span>Logo y fotos</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-ubicacion')"><svg class="icon"><use href="#i-map-pin"/></svg><span>Ubicación en el mapa</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-redes')"><svg class="icon"><use href="#i-share"/></svg><span>Redes y compartir</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="negocio-row" onclick="go('pro-soporte')"><svg class="icon"><use href="#i-message"/></svg><span>Soporte</span><span class="badge pending" id="soporte-unread-badge" style="display:none"></span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
     </div>
   </div>
 
@@ -1442,7 +1527,7 @@
     <div id="biz-svc-rows"></div>
     <button class="add-svc" onclick="addBizServiceRow()">+ Agregar servicio</button>
     <p id="biz-svc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="biz-svc-save-btn" onclick="saveBizServices()">Guardar cambios</button>
+    <button class="add-svc primary" id="biz-svc-save-btn" onclick="saveBizServices()">Guardar cambios</button>
   </div>
 
   <!-- ============ HORARIO (extraído de pro-panel) ============ -->
@@ -1452,7 +1537,7 @@
     <p class="app-sub">Cuándo estás disponible para reservas.</p>
     <div id="panel-horario"></div>
     <p id="horario-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
+    <button class="add-svc primary" id="horario-save-btn" onclick="saveHours()">Guardar horario</button>
   </div>
 
   <!-- ============ CUENTAS BANCARIAS (extraído de pro-panel) ============ -->
@@ -1460,10 +1545,10 @@
     <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Cuentas para transferencia</h1>
     <p class="app-sub">Tus clientes las verán al elegir "Transferencia" para pagar. Solo copian el número.</p>
-    <div id="bank-rows"></div>
+    <div id="bank-rows" data-empty="Todavía no agregas una cuenta. Tus clientes la verán al pagar por transferencia."></div>
     <button class="add-svc" onclick="addBankRow()">+ Agregar cuenta</button>
     <p id="bank-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
+    <button class="add-svc primary" id="bank-save-btn" onclick="saveBankAccounts()">Guardar cuentas</button>
   </div>
 
   <!-- ============ EQUIPO (extraído de pro-panel) ============ -->
@@ -1471,10 +1556,10 @@
     <button class="back-btn" onclick="go('pro-negocio')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Mi equipo</h1>
     <p class="app-sub">Agrega a las personas de tu negocio que también atienden citas. Tú (el titular) siempre apareces primero, sin necesidad de agregarte.</p>
-    <div id="collab-rows"></div>
+    <div id="collab-rows" data-empty="Todavía no agregas a nadie más. Si trabajas solo, no hace falta: tú ya apareces como titular."></div>
     <button class="add-svc" onclick="addCollabRow()">+ Agregar colaborador</button>
     <p id="collab-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
+    <button class="add-svc primary" id="collab-save-btn" onclick="saveCollaborators()">Guardar equipo</button>
   </div>
 
   <!-- ============ IMÁGENES: logo y galería (2026-09-08) ============ -->
@@ -1510,12 +1595,43 @@
     <p class="app-sub" id="biz-loc-status">Ajusta el pin arrastrándolo hasta la ubicación exacta.</p>
     <div id="biz-map" style="height:260px;border-radius:16px;overflow:hidden;margin-bottom:0.8rem;background:var(--panel)"></div>
     <button class="add-svc" onclick="useMyLocationForBiz()">Usar mi ubicación</button>
-    <p class="sec-title" style="margin-top:1rem">O ingresa las coordenadas</p>
-    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lat">Latitud</label><input id="biz-lat" type="text" inputmode="decimal" placeholder="18.4655"></div>
-    <div class="field" style="margin-bottom:0.5rem"><label for="biz-lng">Longitud</label><input id="biz-lng" type="text" inputmode="decimal" placeholder="-69.9313"></div>
-    <button class="add-svc" onclick="centerBizMapManual()">Centrar en estas coordenadas</button>
+    <input id="biz-lat" type="hidden">
+    <input id="biz-lng" type="hidden">
+
+    <!-- Provincia + sector (2026-09-09) reemplaza "ingresa las coordenadas":
+         más fácil para ubicar el mapa que escribir latitud/longitud a mano,
+         y sirve para cualquier parte del país, no solo Santo Domingo. -->
+    <p class="sec-title" style="margin-top:1rem">O selecciona tu sector</p>
+
+    <!-- Orden jerárquico (2026-09-09, a pedido de Víctor): provincia
+         primero (con su propio buscador, igual tratamiento que sector,
+         antes era un <select> nativo sin filtro) y sector después, cada
+         uno agrupado con más espacio entre pasos para que se lea como
+         dos pasos, no como tres campos sueltos. -->
+    <div class="field" style="margin-bottom:0.6rem">
+      <label for="biz-province-btn">Provincia</label>
+      <button type="button" class="field-picker placeholder" id="biz-province-btn" onclick="openBizPicker('province')">
+        <span id="biz-province-label">Selecciona tu provincia</span>
+        <svg class="icon"><use href="#i-chevron-down"/></svg>
+      </button>
+      <input id="biz-province" type="hidden">
+    </div>
+
+    <div class="field" style="margin-bottom:0.5rem">
+      <label for="biz-sector-btn">Sector</label>
+      <button type="button" class="field-picker placeholder" id="biz-sector-btn" onclick="openBizPicker('sector')" disabled>
+        <span id="biz-sector-label">Primero selecciona tu provincia</span>
+        <svg class="icon"><use href="#i-chevron-down"/></svg>
+      </button>
+      <input id="biz-sector" type="hidden">
+    </div>
+    <div class="field" id="biz-sector-other-field" style="margin-bottom:0.5rem;display:none">
+      <label for="biz-sector-other">¿Cuál sector?</label>
+      <input id="biz-sector-other" type="text" placeholder="Escribe el nombre de tu sector">
+    </div>
+    <button class="add-svc" id="biz-sector-center-btn" onclick="centerBizMapBySector()">Centrar en este sector</button>
     <p id="biz-loc-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.6rem 0"></p>
-    <button class="add-svc" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
+    <button class="add-svc primary" id="biz-loc-save-btn" onclick="saveBizLocation()">Guardar ubicación</button>
   </div>
 
   <!-- ============ REDES y compartir (2026-09-08) ============ -->
@@ -1524,12 +1640,12 @@
     <h1 class="app-h1">Redes y compartir</h1>
     <p class="app-sub">Cómo te encuentran fuera de Bukea.</p>
 
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-ig">Instagram</label><input id="biz-ig" type="text" placeholder="@tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-fb">Facebook</label><input id="biz-fb" type="text" placeholder="facebook.com/tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio"></div>
-    <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-ig">Instagram</label><input id="biz-ig" type="text" placeholder="@tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-fb">Facebook</label><input id="biz-fb" type="text" placeholder="facebook.com/tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-tk">TikTok</label><input id="biz-tk" type="text" placeholder="@tunegocio" oninput="markDirty('social')"></div>
+    <div class="field" style="margin-bottom:0.6rem"><label for="biz-web">Sitio web</label><input id="biz-web" type="text" placeholder="tunegocio.com" oninput="markDirty('social')"></div>
     <p id="biz-social-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0 0 0.6rem"></p>
-    <button class="add-svc" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
+    <button class="add-svc primary" id="biz-social-save-btn" onclick="saveBizSocial()">Guardar cambios</button>
 
     <p class="sec-title" style="margin-top:1.3rem">Link para tu biografía</p>
     <p style="color:var(--soft);font-size:0.78rem;margin:-0.4rem 0 0">Pégalo en tu bio de Instagram o mándalo por WhatsApp para que te reserven directo.</p>
@@ -1550,7 +1666,7 @@
     <p id="biz-chat-error" style="display:none; color:#b3261e; font-size:0.8rem; margin:0.4rem 0"></p>
     <div class="biz-chat-input-row">
       <textarea id="biz-chat-input" rows="2" maxlength="3000" placeholder="Escribe tu mensaje…" oninput="markDirty('chat')"></textarea>
-      <button class="add-svc" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
+      <button class="add-svc primary" id="biz-chat-send-btn" style="margin:0" onclick="sendBizChatMessage()">Enviar</button>
     </div>
   </div>
 
@@ -1563,12 +1679,24 @@
     <p id="pf-error" class="pf-error"></p>
     <div class="field">
       <label for="pf-name">Tu nombre</label>
-      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      <input id="pf-name" type="text" placeholder='Ej: Joel "El Fino" Batista' oninput="markDirty('profile')">
     </div>
     <div class="field">
       <label for="pf-business">Nombre del negocio</label>
-      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido">
+      <input id="pf-business" type="text" placeholder="Ej: Barbería El Nítido" oninput="markDirty('profile')">
     </div>
+
+    <!-- Link del perfil público (2026-09-09, a pedido de Víctor): antes solo
+         vivía en "Redes y compartir" — se agrega también aquí, justo debajo
+         del nombre del negocio, para no tener que salir a otra pantalla a
+         buscarlo. Mismo valor, mismo botón Copiar, solo con id propio
+         (#pf-share-link) porque el id no se puede repetir en la página. -->
+    <p class="sec-title" style="margin-top:0.2rem">Link de tu perfil</p>
+    <div class="share-link-row" style="margin-bottom:1rem">
+      <input id="pf-share-link" type="text" readonly>
+      <button class="acct-btn" onclick="copyBioLink(this,'pf-share-link')">Copiar</button>
+    </div>
+
     <p class="field-label-standalone" style="font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--soft);margin-bottom:0.4rem">¿A qué te dedicas?</p>
     <div class="reg-cat-grid" id="pf-cats">
       <button class="reg-cat-card" data-cat="barberia" onclick="pickPfCat(this)"><svg class="icon"><use href="#c-barberia"/></svg><span class="lbl">Barbería</span></button>
@@ -1586,9 +1714,9 @@
     </div>
     <div class="field">
       <label for="pf-neighborhood">Sector</label>
-      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo">
+      <input id="pf-neighborhood" type="text" placeholder="Ej: Villa Consuelo" oninput="markDirty('profile')">
     </div>
-    <button class="add-svc" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
+    <button class="add-svc primary" id="pf-save-btn" onclick="saveProfile()">Guardar perfil</button>
 
     <!-- Mi cuenta + link de biografía (2026-09-08) — nativos aquí, no en el
          panel de escritorio. El link es el mismo que antes solo vivía en
@@ -1607,7 +1735,7 @@
       <div class="field" style="margin-bottom:0.6rem">
         <input id="acct-email-input" type="email" placeholder="nuevo@correo.com">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="saveAcctEmail()">Guardar y verificar</button>
     </div>
 
     <div class="acct-line">
@@ -1623,7 +1751,7 @@
       <div class="field" style="margin-bottom:0.6rem">
         <input id="acct-phone-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="confirmPhoneVerify()">Verificar código</button>
     </div>
 
     <div class="acct-line">
@@ -1643,8 +1771,20 @@
         <label for="acct-pin-new">PIN nuevo</label>
         <input id="acct-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
       </div>
-      <button class="add-svc" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
+      <button class="add-svc primary" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
     </div>
+
+    <!-- Cerrar sesión (2026-09-09): faltaba del todo en el lado de negocio
+         — "Cambiar a modo Cliente" (logoutPro) no cierra la sesión, solo
+         cambia la vista, así que un dueño no tenía forma de salir de su
+         cuenta desde aquí. Mismo clientLogout() que usa el lado cliente:
+         cierra la sesión completa sin importar en qué modo estaba. -->
+    <button class="add-svc" style="width:100%;margin-top:1.1rem" onclick="clientLogout()">Cerrar sesión</button>
+    <!-- "Eliminar mi cuenta" es requisito del App Store (regla 5.1.1) para
+         toda app con registro — antes solo vivía en el lado cliente
+         (#cuenta), un dueño de negocio no tenía forma de eliminar su
+         cuenta. Mismo deleteMyAccount() (doble confirmación, limpia sesión). -->
+    <button id="pf-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
   </div>
 
   <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
@@ -1706,6 +1846,11 @@
     <button class="back-btn" onclick="go('perfil')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
     <h1 class="app-h1">Bukea tu cita</h1>
     <p class="app-sub"><span id="reserva-prof-name">—</span> · <span id="svc-label">Selecciona un servicio</span></p>
+
+    <div class="option-group" id="reserva-svc-group" style="display:none">
+      <span class="option-label">Servicio</span>
+      <div class="pills" id="svc-pills"></div>
+    </div>
 
     <div class="option-group">
       <span class="option-label">Día</span>
@@ -1822,7 +1967,7 @@
     <div id="cuenta-logged-in" style="display:none">
       <p class="app-sub" id="account-who"></p>
 
-      <button class="add-svc" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
+      <button class="add-svc primary" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
         <svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
       </button>
 
@@ -1903,6 +2048,18 @@
     </div>
   </div>
 
+  <!-- ============ HOJA: SELECTOR DE PROVINCIA/SECTOR (2026-09-09) ============ -->
+  <div class="sheet-backdrop" id="biz-picker-sheet" onclick="if(event.target===this) closeBizPicker()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2 id="biz-picker-title">Selecciona</h2>
+      <input id="biz-picker-search" type="text" placeholder="Escribe para buscar…" oninput="filterBizPickerList()"
+        style="width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:0.7rem 0.9rem;font-size:0.9rem;font-family:inherit;color:var(--ink);margin-bottom:0.8rem">
+      <div id="biz-picker-list" style="display:flex;flex-direction:column;gap:0.5rem;max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:0.2rem"></div>
+      <button class="sheet-skip" onclick="closeBizPicker()">Cerrar</button>
+    </div>
+  </div>
+
   <!-- ============ HOJA: DETALLE DE CITA (panel de negocio) ============ -->
   <div class="sheet-backdrop" id="booking-sheet" onclick="if(event.target===this) closeBookingSheet()">
     <div class="sheet">
@@ -1932,6 +2089,27 @@
       <div class="v-actions">
         <button class="v-logout" onclick="verifyGateLogout()">Cerrar sesión</button>
         <button class="v-resend" id="verify-resend-btn" onclick="verifyGateResend()">Reenviar correo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRMACIÓN genérica (2026-09-09) ============
+       Reemplaza confirm() nativo: reportado por Víctor que la pantalla
+       "Negocio" se quedaba congelada sin permitir nada — root cause más
+       probable es window.confirm() fallando en silencio dentro del
+       WebView de iOS (Safari puede suprimir diálogos nativos repetidos
+       sin avisar), y como go()/setMode() dependían de su valor de
+       retorno para navegar, un confirm() que nunca aparece deja la app
+       sin poder avanzar, sin ningún error visible. Mismo look que
+       verify-backdrop (.sheet-backdrop/.verify-card ya existentes),
+       pero genérico y con Promise en vez de bloquear el hilo. -->
+  <div class="sheet-backdrop center" id="confirm-backdrop">
+    <div class="verify-card">
+      <h2 id="confirm-title">Confirmar</h2>
+      <p id="confirm-message"></p>
+      <div class="v-actions">
+        <button class="v-logout" id="confirm-cancel-btn" onclick="resolveCustomConfirm(false)">Cancelar</button>
+        <button class="v-resend" id="confirm-ok-btn" onclick="resolveCustomConfirm(true)">Confirmar</button>
       </div>
     </div>
   </div>
@@ -2301,7 +2479,8 @@
     'mi-perfil': 'cuenta',
   };
 
-  function go(id) {
+  function go(id, opts) {
+    opts = opts || {};
     // Pantallas de negocio requieren modo negocio activo y sesión válida
     // (spec: cambiar de modo no navega directo, exige la misma puerta que
     // el selector). No aplica a pro-registro, que es el asistente de alta.
@@ -2309,7 +2488,7 @@
       guardBusiness(function () { go(id); });
       return;
     }
-    if (!confirmDiscardIfDirty()) return;
+    if (!opts.skipDirtyCheck && !guardDirtyForms(function () { go(id, { skipDirtyCheck: true }); })) return;
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     el.classList.add('active');
@@ -2340,7 +2519,7 @@
     if (id === 'pro-ubicacion') openBizMap();
     if (id === 'pro-redes') loadBizSocial();
     if (id === 'pro-soporte') { loadChatApp(); startChatPolling(); } else { stopChatPolling(); }
-    if (id === 'pro-negocio') renderVerifyChecklist();
+    if (id === 'pro-negocio') { renderVerifyChecklist(); updateSoporteBadge(); }
   }
 
   /* ===== Disponibilidad real: días y horas libres del profesional ===== */
@@ -2356,8 +2535,42 @@
     }
   }
 
+  // Selección de servicio en la propia pantalla de Reserva (2026-09-09):
+  // "Bukear cita" en el perfil manda aquí SIN servicio elegido (a
+  // diferencia de tocar un servicio específico en la lista, que sí llama
+  // selectService() con uno ya puesto) — antes eso dejaba "Cargando
+  // disponibilidad…" colgado para siempre, porque loadAvailabilityDays()
+  // no hace nada sin state.serviceId y nadie más lo rellenaba. Ahora, sin
+  // servicio, se muestra la lista aquí mismo en vez de un callejón sin
+  // salida.
+  function pickReservaService(service) {
+    state.serviceId = service.id;
+    state.serviceName = service.name;
+    state.priceCents = service.priceCents;
+    document.getElementById('svc-label').textContent = service.name + ' · ' + formatPrice(service.priceCents);
+    document.getElementById('reserva-svc-group').style.display = 'none';
+    loadAvailabilityDays();
+  }
   async function loadAvailabilityDays() {
-    if (!state.professional || !state.serviceId) return;
+    if (!state.professional) return;
+    if (!state.serviceId) {
+      const services = state.professional.services || [];
+      const svcGroup = document.getElementById('reserva-svc-group');
+      const svcEl = document.getElementById('svc-pills');
+      svcGroup.style.display = 'block';
+      svcEl.innerHTML = '';
+      services.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'pill-btn';
+        btn.textContent = s.name + ' · ' + formatPrice(s.priceCents);
+        btn.addEventListener('click', () => pickReservaService(s));
+        svcEl.appendChild(btn);
+      });
+      document.getElementById('dia-pills').innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un servicio arriba.</p>';
+      document.getElementById('hora-pills').innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
+      return;
+    }
+    document.getElementById('reserva-svc-group').style.display = 'none';
     state.date = null; state.time = null;
     updateConfirmButton();
     const diaEl = document.getElementById('dia-pills');
@@ -2892,8 +3105,8 @@
         fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/bookings', { headers: authHeaders() }),
         fetch(API_BASE + '/api/professionals/' + encodeURIComponent(slug) + '/stats', { headers: authHeaders() }),
       ]);
-      if (profRes.status === 404) { logoutPro(); return; }
-      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(); return; }
+      if (profRes.status === 404) { logoutPro(true); return; }
+      if (citasRes.status === 401 || citasRes.status === 403) { logoutPro(true); return; }
       if (!profRes.ok || !citasRes.ok) throw new Error('Error cargando el panel');
       const prof = await profRes.json();
       const citas = await citasRes.json();
@@ -3110,10 +3323,12 @@
   function fillMiPerfilFields(p) {
     document.getElementById('pf-name').value = p.name || '';
     document.getElementById('pf-business').value = p.businessName || '';
+    document.getElementById('pf-share-link').value = p.publicUrl || '';
     document.getElementById('pf-neighborhood').value = p.neighborhood || '';
     pfSelectedCat = p.category;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.toggle('sel', b.dataset.cat === pfSelectedCat));
     document.getElementById('pf-error').style.display = 'none';
+    clearDirtyForm('profile');
   }
   // Puebla los campos al entrar a "Mi perfil" (2026-09-08) — antes solo
   // pasaba por aquí un único llamador (openMiPerfil, desde "Editar" en el
@@ -3137,13 +3352,13 @@
   // Alias de compatibilidad para el link "Editar" que aún llama a esta
   // función por su nombre viejo.
   window.openMiPerfil = function () {
-    loadMiPerfilScreen();
     go('mi-perfil');
   };
   window.pickPfCat = function (btn) {
     pfSelectedCat = btn.dataset.cat;
     document.querySelectorAll('#pf-cats .reg-cat-card').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
+    markDirty('profile');
   };
   window.saveProfile = async function () {
     const slug = proSlug();
@@ -3169,9 +3384,10 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar tu perfil');
+      clearDirtyForm('profile');
       btn.textContent = '¡Guardado!';
       btn.classList.add('success');
-      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); loadPanel(); }, 900);
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); btn.disabled = false; go('pro-panel'); }, 900);
       return;
     } catch (err) {
       errEl.textContent = err.message;
@@ -3308,8 +3524,8 @@
       errEl.style.display = 'block';
     }
   };
-  window.copyBioLink = function (btn) {
-    const el = document.getElementById('acct-share-link');
+  window.copyBioLink = function (btn, inputId) {
+    const el = document.getElementById(inputId || 'acct-share-link');
     const done = () => { const t = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = t; }, 1500); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(el.value).then(done).catch(() => { el.select(); });
@@ -3495,7 +3711,7 @@
   };
 
   async function cancelBookingFromPanel(id) {
-    if (!confirm('¿Cancelar esta cita?')) return;
+    if (!(await customConfirm('¿Cancelar esta cita?', { okLabel: 'Sí, cancelar', cancelLabel: 'No' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
         method: 'POST', headers: authHeaders(),
@@ -3584,7 +3800,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar el horario');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('horario-error');
       errEl.textContent = err.message;
@@ -3595,6 +3812,52 @@
       btn.disabled = false;
     }
   }
+
+  /* ===== Provincia + sector (2026-09-09, a pedido de Víctor) — reemplaza
+     "ingresa las coordenadas" en Ubicación: escribir latitud/longitud a
+     mano no es claro para público no técnico, y para un negocio fuera de
+     Santo Domingo (Punta Cana, San Francisco de Macorís...) no había ni
+     esa opción cómoda. 32 divisiones (31 provincias + Distrito Nacional);
+     "sector" es la lista real de barrios del Distrito Nacional (fuente:
+     Wikipedia, Anexo:Barrios del Distrito Nacional) y, para el resto del
+     país, sus municipios (fuente: mipais.jmarcano.com) — la subdivisión
+     real más chica que cubre el país completo sin una base de datos de
+     miles de parajes rurales. "Otro" al final de cada lista deja escribir
+     el sector a mano si no aparece (barrio nuevo, paraje rural, etc.). ===== */
+  const PROVINCES = {
+    'Distrito Nacional': ['24 de Abril', '30 de Mayo', 'Altos de Arroyo Hondo', 'Arroyo Manzano', 'Atala', 'Bella Vista', 'Buenos Aires', 'El Cacique', 'Centro de los Héroes', 'Centro Olímpico', 'Cerros de Arroyo Hondo', 'Ciudad Colonial', 'Ciudad Nueva', 'Ciudad Universitaria', 'Cristo Rey', 'Domingo Savio', 'El Millón', 'Ensanche Capotillo', 'Ensanche Espaillat', 'Ensanche La Fe', 'Ensanche Luperón', 'Ensanche Naco', 'Ensanche Quisqueya', 'Gazcue', 'General Antonio Duvergé', 'Gualey', 'Honduras del Norte', 'Honduras del Oeste', 'Jardín Botánico', 'Jardín Zoológico', 'Jardines del Sur', 'Julieta Morales', 'La Agustina', 'La Castellana', 'La Esperilla', 'La Hondonada', 'La Isabela', 'La Julia', 'Las Praderas', 'La Zurza', 'Los Cacicazgos', 'Los Jardines', 'Los Peralejos', 'Los Prados', 'Los Restauradores', 'Los Ríos', 'María Auxiliadora', 'Mata Hambre', 'Mejoramiento Social', 'Mirador Norte', 'Mirador Sur', 'Miraflores', 'Miramar', 'Nuestra Señora de la Paz', 'Nuevo Arroyo Hondo', 'Palma Real', 'Paraíso', 'Paseo de los Indios', 'Piantini', 'Los Próceres', 'Renacimiento', 'San Carlos', 'San Diego', 'San Gerónimo', 'San Juan Bosco', 'Simón Bolívar', 'Viejo Arroyo Hondo', 'Villas Agrícolas', 'Villa Consuelo', 'Villa Francisca', 'Villa Juana'],
+    'Azua': ['Azua de Compostela', 'Estebanía', 'Guayabal', 'Las Charcas', 'Las Yayas de Viajama', 'Padre Las Casas', 'Peralta', 'Pueblo Viejo', 'Sabana Yegua', 'Tábara Arriba'],
+    'Bahoruco': ['Neiba', 'Galván', 'Los Ríos', 'Tamayo', 'Villa Jaragua'],
+    'Barahona': ['Barahona', 'Cabral', 'El Peñón', 'Enriquillo', 'Fundación', 'Jaquimeyes', 'La Ciénaga', 'Las Salinas', 'Paraíso', 'Polo', 'Vicente Noble'],
+    'Dajabón': ['Dajabón', 'El Pino', 'Loma de Cabrera', 'Partido', 'Restauración'],
+    'Duarte': ['San Francisco de Macorís', 'Arenoso', 'Castillo', 'Eugenio María de Hostos', 'Las Guáranas', 'Pimentel', 'Villa Riva'],
+    'El Seibo': ['El Seibo', 'Miches'],
+    'Elías Piña': ['Comendador', 'Bánica', 'El Llano', 'Hondo Valle', 'Juan Santiago', 'Pedro Santana'],
+    'Espaillat': ['Moca', 'Cayetano Germosén', 'Gaspar Hernández', 'Jamao al Norte'],
+    'Hato Mayor': ['Hato Mayor del Rey', 'El Valle', 'Sabana de la Mar'],
+    'Hermanas Mirabal': ['Salcedo', 'Tenares', 'Villa Tapia'],
+    'Independencia': ['Jimaní', 'Cristóbal', 'Duvergé', 'La Descubierta', 'Mella', 'Postrer Río'],
+    'La Altagracia': ['Higüey', 'San Rafael del Yuma', 'Punta Cana', 'Bávaro'],
+    'La Romana': ['La Romana', 'Guaymate', 'Villa Hermosa'],
+    'La Vega': ['La Vega', 'Constanza', 'Jarabacoa', 'Jima Abajo'],
+    'María Trinidad Sánchez': ['Nagua', 'Cabrera', 'El Factor', 'Río San Juan'],
+    'Monseñor Nouel': ['Bonao', 'Maimón', 'Piedra Blanca'],
+    'Montecristi': ['Montecristi', 'Castañuela', 'Guayubín', 'Las Matas de Santa Cruz', 'Pepillo Salcedo', 'Villa Vásquez'],
+    'Monte Plata': ['Monte Plata', 'Bayaguana', 'Peralvillo', 'Sabana Grande de Boyá', 'Yamasá'],
+    'Pedernales': ['Pedernales', 'Oviedo'],
+    'Peravia': ['Baní', 'Nizao'],
+    'Puerto Plata': ['Puerto Plata', 'Altamira', 'Guananico', 'Imbert', 'Los Hidalgos', 'Luperón', 'Sosúa', 'Villa Isabela', 'Villa Montellano'],
+    'Samaná': ['Samaná', 'Las Terrenas', 'Sánchez'],
+    'San Cristóbal': ['San Cristóbal', 'Bajos de Haina', 'Cambita Garabito', 'Los Cacaos', 'Sabana Grande de Palenque', 'San Gregorio de Nigua', 'Villa Altagracia', 'Yaguate'],
+    'San José de Ocoa': ['San José de Ocoa', 'Rancho Arriba', 'Sabana Larga'],
+    'San Juan': ['San Juan de la Maguana', 'Bohechío', 'El Cercado', 'Juan de Herrera', 'Las Matas de Farfán', 'Vallejuelo'],
+    'San Pedro de Macorís': ['San Pedro de Macorís', 'Consuelo', 'Guayacanes', 'Quisqueya', 'Ramón Santana', 'San José de Los Llanos'],
+    'Sánchez Ramírez': ['Cotuí', 'Cevicos', 'Fantino', 'La Mata'],
+    'Santiago': ['Santiago', 'Bisonó', 'Jánico', 'Licey al Medio', 'Puñal', 'Sabana Iglesia', 'San José de las Matas', 'Tamboril', 'Villa González'],
+    'Santiago Rodríguez': ['San Ignacio de Sabaneta', 'Los Almácigos', 'Monción'],
+    'Santo Domingo': ['Santo Domingo Este', 'Santo Domingo Norte', 'Santo Domingo Oeste', 'Boca Chica', 'Los Alcarrizos', 'Pedro Brand', 'San Antonio de Guerra'],
+    'Valverde': ['Mao', 'Esperanza', 'Laguna Salada'],
+  };
 
   /* ===== Cuentas bancarias (2026-08-22/23) — para que el cliente que paga
      por transferencia copie el número sin llamar. Banco y tipo de cuenta
@@ -3710,7 +3973,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('bank-error');
       errEl.textContent = err.message;
@@ -3785,7 +4049,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1500);
     } catch (err) {
       const errEl = document.getElementById('collab-error');
       errEl.textContent = err.message;
@@ -3801,8 +4066,12 @@
   // sesión, solo cambia de modo, ver setMode). Conserva el nombre de la
   // función para no tocar sus otros dos llamadores (loadPanel, cuando el
   // negocio ya no existe o el token dejó de servir para él).
-  function logoutPro() {
-    setMode('client');
+  function logoutPro(forced) {
+    // forced=true (loadPanel: negocio ya no existe o token dejó de servir
+    // para él) salta el diálogo de cambios sin guardar — si el negocio ya
+    // no es accesible, no hay nada que guardar y cancelar el diálogo dejaba
+    // al dueño atrapado en modo negocio sin salida (revisión 2026-09-09).
+    setMode('client', forced ? { skipGuard: true } : undefined);
   }
 
   /* ===== Mis citas (leídas del servidor por sesión — antes vivían solo en
@@ -3814,6 +4083,12 @@
     if (!getSession()) {
       container.innerHTML =
         '<p style="color:var(--soft);font-size:0.87rem;line-height:1.5;margin:0 0 1rem">Inicia sesión para ver tus citas.</p>';
+      const btn = document.createElement('button');
+      btn.className = 'cta';
+      btn.style.position = 'static';
+      btn.innerHTML = '<svg class="icon"><use href="#i-user"/></svg>Iniciar sesión';
+      btn.addEventListener('click', () => requireAccount(function () { go('miscitas'); }, 'Inicia sesión para ver tus citas'));
+      container.appendChild(btn);
       return;
     }
     container.innerHTML = '';
@@ -3912,7 +4187,7 @@
   }
 
   async function cancelBooking(id) {
-    if (!confirm('¿Cancelar esta cita?')) return;
+    if (!(await customConfirm('¿Cancelar esta cita?', { okLabel: 'Sí, cancelar', cancelLabel: 'No' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/bookings/' + id + '/cancel', {
         method: 'POST', headers: authHeaders(),
@@ -4030,14 +4305,46 @@
     setMode(saved === 'client' ? 'client' : 'business', { silent: true, skipGuard: true });
   }
 
+  // Confirmación propia en vez de confirm()/alert() nativos (2026-09-09):
+  // Safari en iOS puede suprimir diálogos nativos repetidos sin avisar
+  // (protección propia contra abuso de popups) — si eso pasa dentro de
+  // confirm(), la llamada devuelve false en el acto, sin mostrar nada, y
+  // cualquier código que dependa de su valor de retorno para continuar
+  // (go(), cancelar cita, eliminar cuenta...) queda sin poder avanzar,
+  // sin ningún error visible: exactamente el síntoma reportado ("Negocio
+  // se queda congelada"). Esta hoja corre dentro de la propia página, no
+  // depende de la API de diálogos del navegador.
+  let customConfirmResolve = null;
+  function customConfirm(message, opts) {
+    opts = opts || {};
+    document.getElementById('confirm-title').textContent = opts.title || 'Confirmar';
+    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-cancel-btn').textContent = opts.cancelLabel || 'Cancelar';
+    document.getElementById('confirm-ok-btn').textContent = opts.okLabel || 'Confirmar';
+    document.getElementById('confirm-backdrop').classList.add('show');
+    return new Promise(resolve => { customConfirmResolve = resolve; });
+  }
+  window.resolveCustomConfirm = function (result) {
+    document.getElementById('confirm-backdrop').classList.remove('show');
+    const resolve = customConfirmResolve;
+    customConfirmResolve = null;
+    if (resolve) resolve(result);
+  };
+
   // Formularios sucios (UI-02): antes de cambiar de modo o navegar fuera de
   // una pantalla con cambios sin guardar, se pregunta. Cada pantalla marca
   // su propio id en state.dirtyForms al escribir, y lo limpia al guardar.
-  function confirmDiscardIfDirty() {
+  // No bloquea (a diferencia del confirm() nativo que reemplaza): si hay
+  // cambios sin guardar, abre el diálogo propio y devuelve false de una
+  // vez — retryFn() es lo que hay que volver a intentar si el dueño elige
+  // "Descartar". Nunca hace `await` aquí para no tener que volver async
+  // a go()/setMode(), que muchos onclick="..." del HTML llaman sin await.
+  function guardDirtyForms(retryFn) {
     if (state.dirtyForms.size === 0) return true;
-    const ok = confirm('Tienes cambios sin guardar. ¿Quieres descartarlos?');
-    if (ok) state.dirtyForms.clear();
-    return ok;
+    customConfirm('Tienes cambios sin guardar. ¿Quieres descartarlos?', {
+      title: 'Cambios sin guardar', okLabel: 'Descartar', cancelLabel: 'Seguir editando',
+    }).then(ok => { if (ok) { state.dirtyForms.clear(); retryFn(); } });
+    return false;
   }
 
   // Cambia entre modo Cliente y Mi negocio SIN volver a autenticar (spec).
@@ -4046,7 +4353,7 @@
   function setMode(mode, opts) {
     opts = opts || {};
     if (mode === 'business' && !state.capabilities.manageBusiness) mode = 'client';
-    if (!opts.skipGuard && !confirmDiscardIfDirty()) return;
+    if (!opts.skipGuard && !guardDirtyForms(function () { setMode(mode, Object.assign({}, opts, { skipGuard: true })); })) return;
     state.activeMode = mode;
     state.activeBusiness = state.businesses[0] || null;
     const key = modeStorageKey();
@@ -4121,23 +4428,23 @@
 
   // Botón "Perfil" del nav (2026-09-06): sin sesión no tiene sentido mostrar
   // la pantalla de cuenta con un único botón "Iniciar sesión" — vamos
-  // directo al login. Con sesión sí muestra la cuenta normal. Si quien
-  // inicia sesión aquí resulta ser una cuenta de dueño, la manda directo a
-  // su panel de negocio (mismo criterio que enterApp() usa cuando el login
-  // no viene de un callback pendiente) en vez de la pantalla de Perfil —
-  // no tiene sentido pasar por "Mi cuenta" primero si ya sabemos a dónde va.
-  // Botón "Perfil" del nav de cliente (2026-09-08): ya no redirige a dueños
-  // a su panel de negocio — esa pestaña solo existe en modo Cliente (el nav
-  // de negocio no tiene "Perfil", tiene "Cuenta"), así que siempre es la
-  // cuenta personal del cliente. Cambiar a Mi negocio es un botón explícito
-  // dentro de esta misma pantalla (ver #cuenta-negocio-label), no un salto
-  // automático.
+  // directo al login. Con sesión sí muestra la cuenta normal.
+  // Vuelto a cambiar (2026-09-09, a pedido de Víctor): el 8-sep se quitó el
+  // salto directo al panel de negocio para no meter a clientes puros en el
+  // asistente de "crear negocio" al tocar Perfil — pero para una cuenta que
+  // YA tiene negocio, pasar primero por "Perfil" (con un solo botón
+  // "Administrar mi negocio") es un tap de más sin ningún propósito. Ahora
+  // una cuenta con negocio va directo a su panel; una cuenta sin negocio
+  // sigue viendo "Perfil" con "Crear mi negocio" como antes.
   window.openPerfil = function () {
+    const dest = state.capabilities.manageBusiness ? 'pro-panel' : 'cuenta';
     if (!getSession()) {
-      requireAccount(function () { go('cuenta'); }, 'Inicia sesión para ver tu perfil');
+      requireAccount(function () {
+        go(state.capabilities.manageBusiness ? 'pro-panel' : 'cuenta');
+      }, 'Inicia sesión para ver tu perfil');
       return;
     }
-    go('cuenta');
+    go(dest);
   };
 
   window.clientLogout = async function () {
@@ -4161,9 +4468,15 @@
   };
 
   window.deleteMyAccount = async function () {
-    const ok = confirm('¿Seguro que quieres eliminar tu cuenta de Bukea?\n\nSe borran tus datos de acceso y tu cuenta queda desactivada. Esta acción no se puede deshacer.');
+    const ok = await customConfirm(
+      '¿Seguro que quieres eliminar tu cuenta de Bukea? Se borran tus datos de acceso y tu cuenta queda desactivada. Esta acción no se puede deshacer.',
+      { title: 'Eliminar cuenta', okLabel: 'Eliminar', cancelLabel: 'Cancelar' }
+    );
     if (!ok) return;
-    const ok2 = confirm('Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?');
+    const ok2 = await customConfirm(
+      'Última confirmación: tu cuenta se eliminará de forma permanente. ¿Continuar?',
+      { title: 'Eliminar cuenta', okLabel: 'Sí, eliminar', cancelLabel: 'Cancelar' }
+    );
     if (!ok2) return;
     try {
       await unregisterPushToken();
@@ -4533,7 +4846,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-social', data.error || 'No se pudo iniciar sesión');
-      enterApp(data, method);
+      await enterApp(data, method);
     } catch (err) {
       wError('w-error-social', 'No se pudo conectar. Revisa tu internet.');
     }
@@ -4593,7 +4906,7 @@
 
   async function welcomeContinue() {
     wError('w-error-phone');
-    welcomePhone = document.getElementById('w-phone').value;
+    welcomePhone = document.getElementById('w-phone').value.replace(/\D/g, '').slice(0, 11);
     const btn = document.getElementById('w-continue');
     btn.disabled = true;
     try {
@@ -4604,7 +4917,8 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-phone', data.error || 'Intenta de nuevo');
       if (data.exists) {
-        document.getElementById('w-pin-greeting').textContent = 'Hola de nuevo, ' + firstName(data.name) + ' 👋, ingresa tu PIN';
+        document.getElementById('w-pin-greeting').innerHTML =
+          'Hola de nuevo, <span class="w-pin-name">' + esc(firstName(data.name)) + '</span> 👋, ingresa tu PIN';
         welcomeStep('pin');
         document.getElementById('w-pin').focus();
       } else {
@@ -4711,7 +5025,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-pin', data.error || 'Intenta de nuevo');
-      enterApp(data, 'phone');
+      await enterApp(data, 'phone');
     } catch (err) {
       wError('w-error-pin', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4736,7 +5050,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-new', data.error || 'Intenta de nuevo');
-      enterApp(data, 'sign_up');
+      await enterApp(data, 'sign_up');
     } catch (err) {
       wError('w-error-new', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4787,7 +5101,7 @@
       });
       const data = await res.json();
       if (!res.ok) return wError('w-error-reset', data.error || 'Intenta de nuevo');
-      enterApp(data, 'phone_reset');
+      await enterApp(data, 'phone_reset');
     } catch (err) {
       wError('w-error-reset', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4804,7 +5118,7 @@
       const res = await fetch(API_BASE + '/api/auth/otp/status');
       const data = await res.json();
       const link = document.getElementById('w-otp-link');
-      if (link) link.style.display = data.enabled ? 'block' : 'none';
+      if (link) link.style.display = data.enabled ? 'inline-block' : 'none';
     } catch (err) { /* si falla, el enlace se queda oculto */ }
   }
   window.addEventListener('load', checkOtpStatus);
@@ -4842,7 +5156,7 @@
       const data = await res.json();
       if (!res.ok) return wError('w-error-otpverify', data.error || 'Intenta de nuevo');
       if (!data.exists) return wError('w-error-otpverify', 'Esa cuenta no existe todavía. Usa "Usar otro número" para crearla');
-      enterApp(data, 'phone_otp');
+      await enterApp(data, 'phone_otp');
     } catch (err) {
       wError('w-error-otpverify', 'No se pudo conectar. Revisa tu internet.');
     } finally {
@@ -4992,7 +5306,7 @@
       };
       if (row.dataset.id) out.id = Number(row.dataset.id);
       return out;
-    }).filter(s => s.name && s.durationMin > 0 && s.priceCents > 0);
+    }).filter(s => s.name && s.durationMin > 0 && s.priceCents >= 0);
 
     if (services.length === 0) {
       const e = document.getElementById('biz-svc-error');
@@ -5014,7 +5328,8 @@
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       clearDirtyForm('services');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; loadBizServices(); }, 900);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); loadBizServices(); }, 900);
     } catch (err) {
       const e = document.getElementById('biz-svc-error');
       e.textContent = err.message;
@@ -5083,7 +5398,7 @@
       URL.revokeObjectURL(preview);
       loadBizImages();
     } catch (err) {
-      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      statusEl.textContent = 'Error: ' + err.message + '. Vuelve a intentar.';
       console.error(err);
     } finally {
       input.value = '';
@@ -5110,14 +5425,14 @@
       statusEl.textContent = 'Guardada.';
       loadBizImages();
     } catch (err) {
-      statusEl.textContent = 'Error: ' + err.message + ' — vuelve a intentar.';
+      statusEl.textContent = 'Error: ' + err.message + '. Vuelve a intentar.';
       console.error(err);
     } finally {
       input.value = '';
     }
   };
   window.deleteBizPhoto = async function (photoId) {
-    if (!confirm('¿Quitar esta foto?')) return;
+    if (!(await customConfirm('¿Quitar esta foto?', { okLabel: 'Quitar', cancelLabel: 'Cancelar' }))) return;
     try {
       const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/photos/' + photoId, {
         method: 'DELETE', headers: authHeaders(),
@@ -5151,7 +5466,17 @@
     document.getElementById('biz-lat').value = profile.lat || '';
     document.getElementById('biz-lng').value = profile.lng || '';
     document.getElementById('biz-loc-status').textContent = profile.locationConfirmed
-      ? 'Pin confirmado por ti.' : 'Aproximado por sector — ajústalo y guarda para confirmarlo.';
+      ? 'Pin confirmado por ti.' : 'Aproximado por sector. Ajústalo y guarda para confirmarlo.';
+    document.getElementById('biz-province').value = '';
+    document.getElementById('biz-province-label').textContent = 'Selecciona tu provincia';
+    document.getElementById('biz-province-btn').classList.add('placeholder');
+    document.getElementById('biz-sector').value = '';
+    document.getElementById('biz-sector-label').textContent = 'Primero selecciona tu provincia';
+    document.getElementById('biz-sector-btn').classList.add('placeholder');
+    document.getElementById('biz-sector-btn').disabled = true;
+    document.getElementById('biz-sector-other-field').style.display = 'none';
+    document.getElementById('biz-sector-other').value = '';
+    document.getElementById('biz-loc-error').style.display = 'none';
     if (!bizMap) {
       bizMap = L.map('biz-map').setView([lat, lng], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(bizMap);
@@ -5184,12 +5509,103 @@
       () => alert('No pudimos acceder a tu ubicación. Ajusta el pin a mano o escribe las coordenadas.')
     );
   };
-  window.centerBizMapManual = function () {
-    const lat = Number(document.getElementById('biz-lat').value);
-    const lng = Number(document.getElementById('biz-lng').value);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) { alert('Coordenadas inválidas.'); return; }
-    if (bizMap && bizMarker) { bizMap.setView([lat, lng], 16); bizMarker.setLatLng([lat, lng]); }
-    markDirty('location');
+  // Selector de provincia/sector (2026-09-09, a pedido de Víctor): hoja
+  // propia con buscador en vez de un <select> nativo — el Distrito Nacional
+  // solo tiene 71 barrios reales, sin filtro encontrar el propio en un
+  // <select> tan largo es incómodo, y el <select> nativo además dejaba el
+  // scroll de la pantalla trabado en iOS tras abrirlo.
+  let bizPickerType = null;
+  window.openBizPicker = function (type) {
+    bizPickerType = type;
+    document.getElementById('biz-picker-title').textContent =
+      type === 'province' ? 'Selecciona tu provincia' : 'Selecciona tu sector';
+    document.getElementById('biz-picker-search').value = '';
+    renderBizPickerList('');
+    document.getElementById('biz-picker-sheet').classList.add('show');
+    setTimeout(() => document.getElementById('biz-picker-search').focus(), 260);
+  };
+  window.closeBizPicker = function () {
+    document.getElementById('biz-picker-sheet').classList.remove('show');
+  };
+  window.filterBizPickerList = function () {
+    renderBizPickerList(document.getElementById('biz-picker-search').value);
+  };
+  function renderBizPickerList(query) {
+    const q = (query || '').trim().toLowerCase();
+    const list = document.getElementById('biz-picker-list');
+    let names, isSector = bizPickerType === 'sector';
+    if (isSector) {
+      const province = document.getElementById('biz-province').value;
+      names = (PROVINCES[province] || []).filter(name => !q || name.toLowerCase().includes(q));
+    } else {
+      names = Object.keys(PROVINCES).filter(name => !q || name.toLowerCase().includes(q));
+    }
+    let html = names.map(name =>
+      '<button type="button" class="sheet-item" data-value="' + esc(name) + '">' + esc(name) + '</button>'
+    ).join('');
+    if (isSector && !q) html += '<button type="button" class="sheet-item" data-value="__otro">Otro (escribir)</button>';
+    list.innerHTML = html || '<p style="text-align:center;color:var(--soft);font-size:0.85rem;padding:1rem 0">Sin resultados para "' + esc(query.trim()) + '"</p>';
+    list.querySelectorAll('[data-value]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isSector) selectBizSector(btn.dataset.value);
+        else selectBizProvince(btn.dataset.value);
+      });
+    });
+  }
+  window.selectBizProvince = function (name) {
+    document.getElementById('biz-province').value = name;
+    document.getElementById('biz-province-label').textContent = name;
+    document.getElementById('biz-province-btn').classList.remove('placeholder');
+    const sectorBtn = document.getElementById('biz-sector-btn');
+    sectorBtn.disabled = false;
+    sectorBtn.classList.add('placeholder');
+    document.getElementById('biz-sector').value = '';
+    document.getElementById('biz-sector-label').textContent = 'Selecciona tu sector';
+    document.getElementById('biz-sector-other-field').style.display = 'none';
+    closeBizPicker();
+  };
+  window.selectBizSector = function (name) {
+    const isOther = name === '__otro';
+    document.getElementById('biz-sector').value = name;
+    document.getElementById('biz-sector-label').textContent = isOther ? 'Otro (escribir)' : name;
+    document.getElementById('biz-sector-btn').classList.remove('placeholder');
+    document.getElementById('biz-sector-other-field').style.display = isOther ? 'block' : 'none';
+    closeBizPicker();
+  };
+  window.centerBizMapBySector = async function () {
+    const province = document.getElementById('biz-province').value;
+    const sectorSel = document.getElementById('biz-sector');
+    const sector = sectorSel.value === '__otro'
+      ? document.getElementById('biz-sector-other').value.trim()
+      : sectorSel.value;
+    const errEl = document.getElementById('biz-loc-error');
+    errEl.style.display = 'none';
+    if (!province || !sector) {
+      errEl.textContent = 'Selecciona tu provincia y tu sector.';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('biz-sector-center-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Buscando…'; btn.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/geocode-preview', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ province, sector }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || 'No se pudo ubicar ese sector.'; errEl.style.display = 'block'; return; }
+      document.getElementById('biz-lat').value = data.lat.toFixed(7);
+      document.getElementById('biz-lng').value = data.lng.toFixed(7);
+      if (bizMap && bizMarker) { bizMap.setView([data.lat, data.lng], 15); bizMarker.setLatLng([data.lat, data.lng]); }
+      markDirty('location');
+    } catch (err) {
+      errEl.textContent = 'No se pudo conectar. Revisa tu internet.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.textContent = original; btn.disabled = false;
+    }
   };
   window.saveBizLocation = async function () {
     const lat = Number(document.getElementById('biz-lat').value);
@@ -5216,7 +5632,8 @@
       clearDirtyForm('location');
       document.getElementById('biz-loc-status').textContent = 'Pin confirmado por ti.';
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; }, 1200);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); }, 1200);
     } catch (err) {
       errEl.textContent = err.message;
       errEl.style.display = 'block';
@@ -5241,7 +5658,7 @@
       document.getElementById('acct-share-link').value = data.publicUrl || '';
       const templates = bizShareTemplates(data);
       document.getElementById('biz-share-templates').innerHTML = templates.map((t, i) =>
-        '<div class="share-link-row" style="margin-bottom:0.5rem"><input type="text" readonly value="' + esc(t) + '"><button class="acct-btn" onclick="copyShareTemplate(this,' + i + ')">Copiar</button></div>'
+        '<div class="wa-template-box"><p>' + esc(t) + '</p><button class="acct-btn" onclick="copyShareTemplate(this,' + i + ')">Copiar</button></div>'
       ).join('');
       Biz._shareTemplates = templates;
       clearDirtyForm('social');
@@ -5285,7 +5702,8 @@
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
       clearDirtyForm('social');
       btn.textContent = '¡Guardado!';
-      setTimeout(() => { btn.textContent = original; loadBizSocial(); }, 900);
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('success'); loadBizSocial(); }, 900);
     } catch (err) {
       errEl.textContent = err.message;
       errEl.style.display = 'block';
@@ -5330,6 +5748,8 @@
     if (!message) { errEl.textContent = 'Escribe tu mensaje.'; errEl.style.display = 'block'; return; }
     if (message.length > 3000) { errEl.textContent = 'El mensaje no puede pasar de 3.000 caracteres.'; errEl.style.display = 'block'; return; }
     const clientKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random();
+    const btn = document.getElementById('biz-chat-send-btn');
+    btn.disabled = true;
     try {
       const res = await fetch(API_BASE + '/api/professionals/' + encodeURIComponent(proSlug()) + '/messages', {
         method: 'POST',
@@ -5342,8 +5762,10 @@
       textarea.value = '';
       loadChatApp();
     } catch (err) {
-      errEl.textContent = err.message + ' — el borrador se conserva, intenta de nuevo.';
+      errEl.textContent = err.message + '. El borrador se conserva, intenta de nuevo.';
       errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
     }
   };
   window.startChatPolling = function () {
