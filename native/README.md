@@ -250,12 +250,48 @@ WKWebView); `backend/lib/oauth.js` acepta el token nativo con audience
 - **Historial de builds subidos**:
   - Build 1 (2026-08-27, ~21:04) — **rechazado**, `ITMS-91061` (ver
     arriba). Envío cancelado en App Store Connect.
-  - Build 2 (2026-08-27/28, madrugada) — aceptado por Apple, **enviado a
-    revisión**. Solo trae una advertencia no bloqueante:
+  - Build 2 (2026-08-27/28, madrugada) — aceptado por Apple, enviado a
+    revisión y **aprobado**: versión 1.0 quedó publicada en la App
+    Store. El tren de versión 1.0 quedó cerrado para builds nuevos
+    (Apple exige subir `MARKETING_VERSION` para poder subir otro build).
+  - Build 4, versión 1.1 (2026-09-09, ~22:13) — subido a App Store
+    Connect vía `xcodebuild -exportArchive ... -exportOptionsPlist
+    (destination: upload)` en vez del flujo manual de Xcode (Organizer
+    tuvo problemas de accesibilidad al automatizar clics en el navegador
+    de proyecto). **Solo subido, no enviado a revisión todavía** — falta
+    entrar a App Store Connect, asignar el build a la versión 1.1 y
+    tocar "Enviar a revisión" una vez Apple termine de procesarlo
+    (unos minutos). Trae el selector de Provincia/Sector con hoja +
+    buscador, "Cerrar sesión" y "Eliminar mi cuenta" en el panel de
+    negocio, y el resto de los cambios acumulados desde el build 2.
+    Misma advertencia no bloqueante de siempre:
     `ITMS-90068: MinimumOSVersion too low` — el proyecto declara iOS 13.0
     como mínimo, y Apple exigirá 15.0+ a partir de primavera de 2027
     para poder subir builds nuevos. No urgente todavía, pero hay que
     subir `Minimum Deployments` en Xcode antes de esa fecha.
+
+**Nota sobre el flujo de subida (2026-09-09):** automatizar el
+Organizer de Xcode por clics resultó frágil (el navegador de proyecto
+de Xcode no expone sus filas como elementos de accesibilidad normales;
+un clic en la fila raíz "App" la ponía en modo renombrar en vez de
+seleccionarla). Se usó en su lugar `xcodebuild archive` +
+`xcodebuild -exportArchive` con un `ExportOptions.plist` con
+`<key>destination</key><string>upload</string>` — sube directo a App
+Store Connect sin pasar por el Organizer, usando la firma automática y
+la cuenta de Apple Developer ya logueada en Xcode. Comandos:
+
+```bash
+cd native/ios/App
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+  -destination "generic/platform=iOS" -archivePath build-archive/Bukea.xcarchive \
+  -allowProvisioningUpdates archive
+xcodebuild -exportArchive -archivePath build-archive/Bukea.xcarchive \
+  -exportOptionsPlist build-archive/ExportOptions.plist \
+  -exportPath build-archive/export -allowProvisioningUpdates
+```
+`build-archive/` queda gitignored (es un artefacto de build, como
+`build/`).
 - **Supported Destinations** en Xcode incluye iPhone, iPad, Mac
   (Designed for iPad) y Apple Vision (Designed for iPad) — configuración
   por defecto de Capacitor, nunca se decidió explícitamente soportar
