@@ -1773,6 +1773,13 @@
       </div>
       <button class="add-svc primary" style="margin-bottom:0" onclick="saveAcctPin()">Guardar</button>
     </div>
+
+    <!-- Cerrar sesión (2026-09-09): faltaba del todo en el lado de negocio
+         — "Cambiar a modo Cliente" (logoutPro) no cierra la sesión, solo
+         cambia la vista, así que un dueño no tenía forma de salir de su
+         cuenta desde aquí. Mismo clientLogout() que usa el lado cliente:
+         cierra la sesión completa sin importar en qué modo estaba. -->
+    <button class="add-svc" style="width:100%;margin-top:1.1rem" onclick="clientLogout()">Cerrar sesión</button>
   </div>
 
   <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
