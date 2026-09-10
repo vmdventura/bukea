@@ -4,6 +4,7 @@ const path = require('path');
 const express = require('express');
 
 const { ensureReady } = require('./db/init');
+const { startReminderScheduler } = require('./lib/reminders');
 const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
@@ -153,6 +154,7 @@ const PORT = process.env.PORT || 3000;
 ensureReady()
   .then(() => {
     app.listen(PORT, () => console.log(`Bukea backend escuchando en el puerto ${PORT}`));
+    startReminderScheduler();
   })
   .catch(err => {
     console.error('No se pudo preparar la base de datos:', err);

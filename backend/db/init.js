@@ -360,6 +360,11 @@ async function migrate() {
   //    manda el admin (esos no necesitan clave).
   await safeAlter('ALTER TABLE support_messages ADD COLUMN client_key VARCHAR(64)');
   await safeAlter('ALTER TABLE support_messages ADD UNIQUE INDEX uq_support_client_key (user_id, client_key)');
+
+  // Recordatorio de cita por WhatsApp, 1 hora antes (2026-09-10, a pedido de
+  // Víctor). Marca cuándo se mandó para no repetirlo si el job de
+  // lib/reminders.js corre de nuevo dentro de la misma ventana.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN reminder_sent_at DATETIME');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

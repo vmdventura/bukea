@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   payment_method VARCHAR(30) NOT NULL,
   receipt_path VARCHAR(255),
   receipt_uploaded_at DATETIME,
+  reminder_sent_at DATETIME,
   created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
   FOREIGN KEY (professional_id) REFERENCES professionals(id),
   FOREIGN KEY (service_id) REFERENCES services(id),
