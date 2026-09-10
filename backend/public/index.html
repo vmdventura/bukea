@@ -1780,6 +1780,11 @@
          cuenta desde aquí. Mismo clientLogout() que usa el lado cliente:
          cierra la sesión completa sin importar en qué modo estaba. -->
     <button class="add-svc" style="width:100%;margin-top:1.1rem" onclick="clientLogout()">Cerrar sesión</button>
+    <!-- "Eliminar mi cuenta" es requisito del App Store (regla 5.1.1) para
+         toda app con registro — antes solo vivía en el lado cliente
+         (#cuenta), un dueño de negocio no tenía forma de eliminar su
+         cuenta. Mismo deleteMyAccount() (doble confirmación, limpia sesión). -->
+    <button id="pf-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
   </div>
 
   <!-- ============ CALENDARIO (Hoy / Semana / Mes) ============ -->
