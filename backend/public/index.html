@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700;6..96,800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700;6..96,800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9P6W5CRECN"></script>
@@ -1034,8 +1034,11 @@
   }
   @keyframes pop-in { from { transform: scale(0); } to { transform: scale(1); } }
 
+  .pay-option.disabled { opacity: 0.55; cursor: not-allowed; }
+  .pay-option.disabled:hover { border-color: var(--line); }
+
   .photo-attach {
-    border: 1.5px dashed var(--line); border-radius: 15px; padding: 0.9rem 1rem;
+    border: 1.5px dashed var(--line); border-radius: 8px; padding: 0.9rem 1rem;
     text-align: center; color: var(--soft); font-size: 0.82rem; cursor: pointer; margin-bottom: 1.2rem;
     background: var(--card); display: flex; align-items: center; justify-content: center; gap: 0.5rem;
     transition: border-color 160ms var(--ease);
@@ -1044,6 +1047,86 @@
   .btn-copy { flex: none; background: var(--teal-100); color: var(--teal-700); border: none; border-radius: 999px; padding: 0.5rem 0.9rem; font-size: 0.78rem; font-weight: 700; font-family: inherit; cursor: pointer; }
   .btn-copy:hover { background: var(--teal-600); color: #fff; }
   .photo-attach .icon { font-size: 1.1rem; color: var(--teal-600); }
+
+  /* ===== Selector de día en tarjetas + lista de horas (2026-09-11) =====
+     Reemplaza los pill-btn de "Día"/"Hora" en Reserva por un patrón más
+     legible: tarjetas de día en fila horizontal con scroll (día de la
+     semana, número, mes) y filas de hora a ancho completo con el precio
+     del servicio elegido a la derecha (mismo precio en todas, como en
+     Fresha, porque hoy no hay tarifas por franja horaria). */
+  .day-grid {
+    display: flex; gap: 0.55rem; overflow-x: auto; padding-bottom: 0.2rem;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .day-grid::-webkit-scrollbar { display: none; }
+  .day-card {
+    flex: none; width: 64px; padding: 0.6rem 0.3rem; text-align: center;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    cursor: pointer; font-family: inherit; transition: all 160ms var(--ease);
+  }
+  .day-card .d-dow { display: block; font-size: 0.68rem; font-weight: 600; color: var(--soft); text-transform: capitalize; }
+  .day-card .d-num { display: block; font-size: 1.15rem; font-weight: 800; color: var(--ink); margin: 0.1rem 0; }
+  .day-card .d-mon { display: block; font-size: 0.66rem; color: var(--soft); text-transform: uppercase; letter-spacing: 0.03em; }
+  .day-card.sel { background: var(--brand-teal); border-color: var(--brand-teal); box-shadow: var(--sh-teal); }
+  .day-card.sel .d-dow, .day-card.sel .d-num, .day-card.sel .d-mon { color: #fff; }
+  .day-card:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .time-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .time-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 0.8rem 1.05rem; cursor: pointer; font-family: inherit; width: 100%;
+    font-size: 0.88rem; font-weight: 700; color: var(--ink); transition: all 160ms var(--ease);
+  }
+  .time-row .t-price { font-weight: 600; color: var(--soft); font-size: 0.8rem; }
+  .time-row.sel { border-color: var(--teal-600); background: var(--teal-100); }
+  .time-row.sel .t-price { color: var(--teal-700); }
+
+  /* ===== Revisa y confirma (2026-09-11) =====
+     Pantalla intermedia entre Reserva y la creación real de la cita:
+     resumen tipo ticket del profesional + fecha/hora + servicio/total,
+     más avisos (política de cancelación, información importante) antes
+     de tocar Confirmar. */
+  .review-pro { display: flex; align-items: center; gap: 0.7rem; padding-bottom: 0.85rem; margin-bottom: 0.75rem; border-bottom: 1px dashed var(--line); }
+  .review-pro .avatar { width: 46px; height: 46px; font-size: 0.9rem; }
+  .review-pro .r-name { font-weight: 700; color: var(--ink); font-size: 0.92rem; }
+  .review-pro .r-meta { font-size: 0.78rem; color: var(--soft); display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+  .review-pro .r-meta .rating { display: inline-flex; align-items: center; gap: 0.15rem; color: var(--teal-700); font-weight: 700; }
+  .review-pro .r-meta .rating .icon { color: var(--gold-600); font-size: 0.85rem; }
+
+  .info-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 15px;
+    padding: 0.85rem 1.05rem; margin-bottom: 0.7rem;
+  }
+  .info-card h3 { font-size: 0.85rem; font-weight: 700; color: var(--ink); margin: 0 0 0.3rem; }
+  .info-card p { font-size: 0.8rem; color: var(--soft); margin: 0; line-height: 1.4; }
+  .review-total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 0; margin-bottom: 0.9rem; font-weight: 800; color: var(--teal-700); font-size: 1rem;
+  }
+
+  /* ===== Perfil del cliente (2026-09-11): tarjeta de identidad arriba +
+     lista de filas, en vez del bloque plano de botones que había. ===== */
+  .account-card {
+    background: linear-gradient(135deg, var(--teal-700), var(--teal-900));
+    border-radius: 18px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem;
+    display: flex; align-items: center; gap: 0.8rem; color: #fff; box-shadow: var(--sh-teal);
+  }
+  .account-card .avatar { width: 52px; height: 52px; font-size: 1.05rem; background: rgba(255,255,255,0.18); }
+  .account-card .ac-name { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.05rem; }
+  .account-card .ac-sub { font-size: 0.78rem; opacity: 0.85; }
+  .list-row {
+    display: flex; align-items: center; gap: 0.75rem; width: 100%;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 1.05rem; margin-bottom: 0.55rem; cursor: pointer; font-family: inherit;
+    font-size: 0.87rem; font-weight: 700; color: var(--ink); text-align: left;
+    transition: border-color 160ms var(--ease);
+  }
+  .list-row:hover { border-color: var(--teal-500); }
+  .list-row .icon:first-child { color: var(--teal-600); font-size: 1.1rem; flex: none; }
+  .list-row .chev { margin-left: auto; color: var(--soft); font-size: 0.9rem; transform: rotate(180deg); }
+  .list-row.danger { color: #b3423a; }
+  .list-row.danger .icon:first-child { color: #b3423a; }
 
   /* Fila virtual */
   .live-badge {
@@ -1879,15 +1962,9 @@
         <div><span class="p-name">Transferencia</span><span class="p-desc">Popular, Banreservas, BHD</span></div>
         <span class="radio"></span>
       </div>
-      <div class="pay-option" onclick="pickPay(this,'i-tpago')">
-        <svg class="icon p-ico"><use href="#i-tpago"/></svg>
-        <div><span class="p-name">tPago</span><span class="p-desc">Desde tu celular</span></div>
-        <span class="radio"></span>
-      </div>
-      <div class="pay-option" onclick="pickPay(this,'i-card')">
+      <div class="pay-option disabled">
         <svg class="icon p-ico"><use href="#i-card"/></svg>
-        <div><span class="p-name">Tarjeta</span><span class="p-desc">Azul / CardNET</span></div>
-        <span class="radio"></span>
+        <div><span class="p-name">Tarjetas de crédito</span><span class="p-desc">Muy pronto</span></div>
       </div>
     </div>
 
@@ -1900,9 +1977,49 @@
       <input type="file" id="receipt-input" accept="image/*,application/pdf" style="display:none" onchange="onReceiptChosen()">
     </div>
 
+    <button class="cta" id="confirm-btn" onclick="goRevisar()" disabled><svg class="icon"><use href="#i-chevron-right"/></svg>Continuar <span id="confirm-btn-when"></span></button>
+  </div>
+
+  <!-- ============ REVISA Y CONFIRMA (2026-09-11) =====
+       Resumen final antes de crear la cita de verdad — separa "armar la
+       cita" (pantalla Reserva) de "confirmarla" (aquí), como pidió Víctor
+       viendo el patrón de Fresha. La reserva real (POST /bookings) sigue
+       ocurriendo en confirmBooking(), llamado desde el botón de aquí. ==== -->
+  <div class="screen" id="revisar">
+    <button class="back-btn" onclick="go('reserva')"><svg class="icon"><use href="#i-chevron-left"/></svg>Volver</button>
+    <h1 class="app-h1">Revisa y confirma</h1>
+
+    <div class="ticket">
+      <div class="review-pro">
+        <div class="avatar" id="review-avatar"></div>
+        <div>
+          <div class="r-name" id="review-prof-name">—</div>
+          <div class="r-meta">
+            <span class="rating"><svg class="icon"><use href="#i-star"/></svg><span id="review-rating">—</span></span>
+            <span id="review-neighborhood">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-calendar"/></svg>Fecha</span><span class="v" id="review-date">—</span></div>
+      <div class="ticket-row" id="review-quien-row" style="display:none"><span class="k"><svg class="icon"><use href="#i-user"/></svg>Te atiende</span><span class="v" id="review-quien">—</span></div>
+      <div class="ticket-row"><span class="k"><svg class="icon"><use href="#i-scissors"/></svg>Servicio</span><span class="v" id="review-svc">—</span></div>
+      <div class="ticket-row"><span class="k" id="review-pay-icon-k"><svg class="icon"><use href="#i-cash"/></svg>Pago</span><span class="v" id="review-pay">—</span></div>
+      <div class="ticket-row total"><span class="k">Total</span><span class="v" id="review-total">—</span></div>
+    </div>
+
+    <p class="sec-title">Más detalles</p>
+    <div class="info-card">
+      <h3>Política de cancelación</h3>
+      <p>Puedes cancelar cuando quieras desde "Mis citas". Por respeto al negocio, avisa con tiempo si ya no vas a poder llegar.</p>
+    </div>
+    <div class="info-card" id="review-pay-info" style="display:none">
+      <h3>Información importante</h3>
+      <p id="review-pay-info-text">—</p>
+    </div>
+
     <div class="photo-attach"><svg class="icon"><use href="#i-camera"/></svg>Adjunta una foto del estilo que quieres <small>(opcional)</small></div>
 
-    <button class="cta" id="confirm-btn" onclick="confirmBooking()" disabled><svg class="icon"><use href="#i-check"/></svg>Confirmar <span id="confirm-btn-when"></span></button>
+    <button class="cta" id="review-confirm-btn" onclick="confirmBooking()"><svg class="icon"><use href="#i-check"/></svg>Confirmar cita</button>
   </div>
 
   <!-- ============ CONFIRMACIÓN ============ -->
@@ -1965,16 +2082,21 @@
     </div>
 
     <div id="cuenta-logged-in" style="display:none">
-      <p class="app-sub" id="account-who"></p>
+      <div class="account-card">
+        <div class="avatar" id="account-avatar"></div>
+        <div>
+          <div class="ac-name" id="account-name">—</div>
+          <div class="ac-sub" id="account-phone"></div>
+        </div>
+      </div>
 
-      <button class="add-svc primary" style="width:100%;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.4rem" onclick="guardBusiness()">
-        <svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span>
-      </button>
+      <button class="list-row" onclick="go('miscitas')"><svg class="icon"><use href="#i-calendar"/></svg><span>Mis citas</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
+      <button class="list-row" onclick="guardBusiness()"><svg class="icon"><use href="#i-store"/></svg><span id="cuenta-negocio-label">Administrar mi negocio</span><svg class="icon chev"><use href="#i-chevron-left"/></svg></button>
 
       <!-- Mi cuenta: "Eliminar mi cuenta" es requisito del App Store (regla 5.1.1) para toda app con registro. -->
       <p class="sec-title">Mi cuenta</p>
-      <button class="add-svc" style="width:100%" onclick="clientLogout()">Cerrar sesión</button>
-      <button id="btn-delete-account" style="width:100%;margin-top:0.6rem;background:none;border:none;color:#b3423a;font-size:0.82rem;font-weight:600;padding:0.6rem;cursor:pointer" onclick="deleteMyAccount()">Eliminar mi cuenta</button>
+      <button class="list-row" onclick="clientLogout()"><span>Cerrar sesión</span></button>
+      <button class="list-row danger" id="btn-delete-account" onclick="deleteMyAccount()"><span>Eliminar mi cuenta</span></button>
     </div>
   </div>
 
@@ -2575,8 +2697,8 @@
     updateConfirmButton();
     const diaEl = document.getElementById('dia-pills');
     const horaEl = document.getElementById('hora-pills');
-    diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p>';
-    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
+    diaEl.className = ''; diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando disponibilidad…</p>';
+    horaEl.className = ''; horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Elige un día</p>';
     try {
       const res = await fetch(
         API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
@@ -2584,12 +2706,17 @@
       );
       if (!res.ok) throw new Error('No se pudo cargar la disponibilidad');
       const days = await res.json();
+      diaEl.className = 'day-grid';
       diaEl.innerHTML = '';
       let firstWithSlots = null;
       days.forEach(d => {
+        const parts = dayParts(d.date);
         const btn = document.createElement('button');
-        btn.className = 'pill-btn';
-        btn.textContent = d.label;
+        btn.className = 'day-card';
+        btn.innerHTML =
+          '<span class="d-dow">' + parts.dow + '</span>' +
+          '<span class="d-num">' + parts.num + '</span>' +
+          '<span class="d-mon">' + parts.mon + '</span>';
         btn.disabled = !d.hasSlots;
         btn.addEventListener('click', () => pickDay(d, btn));
         diaEl.appendChild(btn);
@@ -2598,16 +2725,28 @@
       if (firstWithSlots) {
         pickDay(firstWithSlots.day, firstWithSlots.btn);
       } else {
-        horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días. Vuelve a intentar más tarde.</p>';
+        horaEl.className = ''; horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Sin horas libres en los próximos días. Vuelve a intentar más tarde.</p>';
       }
     } catch (err) {
-      diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar la disponibilidad.</p>';
+      diaEl.className = ''; diaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar la disponibilidad.</p>';
       console.error(err);
     }
   }
 
+  // Partes de fecha para la tarjeta de día (2026-09-11): día de semana,
+  // número y mes abreviados en español, calculados del 'YYYY-MM-DD' que
+  // manda el servidor (mediodía fijo para no cruzar de día por huso horario).
+  function dayParts(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return {
+      dow: d.toLocaleDateString('es-DO', { weekday: 'short' }).replace('.', ''),
+      num: d.getDate(),
+      mon: d.toLocaleDateString('es-DO', { month: 'short' }).replace('.', ''),
+    };
+  }
+
   function pickDay(day, btn) {
-    document.querySelectorAll('#dia-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelectorAll('#dia-pills .day-card').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
     state.date = day.date;
     state.dateLabel = day.label;
@@ -2618,7 +2757,7 @@
 
   async function loadAvailabilityTimes() {
     const horaEl = document.getElementById('hora-pills');
-    horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando horas…</p>';
+    horaEl.className = ''; horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Cargando horas…</p>';
     try {
       const res = await fetch(
         API_BASE + '/api/professionals/' + encodeURIComponent(state.professional.slug) +
@@ -2626,34 +2765,38 @@
       );
       if (!res.ok) throw new Error('No se pudo cargar las horas');
       const data = await res.json();
+      horaEl.className = 'time-list';
       horaEl.innerHTML = '';
       if (data.times.length === 0) {
+        horaEl.className = '';
         horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">Ese día no tiene horas libres.</p>';
         return;
       }
+      const priceLabel = formatPrice(state.priceCents || 0);
       data.times.forEach((t, i) => {
         const btn = document.createElement('button');
-        btn.className = 'pill-btn' + (i === 0 ? ' sel' : '');
-        btn.textContent = t.label;
+        btn.className = 'time-row' + (i === 0 ? ' sel' : '');
+        btn.innerHTML = '<span>' + t.label + '</span><span class="t-price">' + priceLabel + '</span>';
         btn.addEventListener('click', () => pickTime(t, btn));
         horaEl.appendChild(btn);
       });
       pickTime(data.times[0], horaEl.firstChild);
     } catch (err) {
+      horaEl.className = '';
       horaEl.innerHTML = '<p style="color:var(--soft);font-size:0.85rem">No se pudo cargar las horas.</p>';
       console.error(err);
     }
   }
 
   function pickTime(t, btn) {
-    document.querySelectorAll('#hora-pills .pill-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelectorAll('#hora-pills .time-row').forEach(b => b.classList.remove('sel'));
     btn.classList.add('sel');
     state.time = t.time;
     state.timeLabel = t.label;
     updateConfirmButton();
   }
 
-  const payIcons = { 'i-cash': ['cash', 'Efectivo'], 'i-bank': ['bank', 'Transferencia'], 'i-tpago': ['tpago', 'tPago'], 'i-card': ['card', 'Tarjeta'] };
+  const payIcons = { 'i-cash': ['cash', 'Efectivo'], 'i-bank': ['bank', 'Transferencia'] };
 
   function pickPay(el, iconId) {
     el.parentElement.querySelectorAll('.pay-option').forEach(o => o.classList.remove('sel'));
@@ -2829,6 +2972,57 @@
     }
   }
 
+  // Pantalla "Revisa y confirma" (2026-09-11): separa armar la cita de
+  // confirmarla de verdad. El registro just-in-time sigue pasando aquí
+  // (antes de entrar a revisar, no en el botón final) — así el resumen que
+  // ve el cliente ya es sobre una cuenta real.
+  function goRevisar() {
+    if (!state.professional || !state.serviceId || !state.date || !state.time) return;
+    if (!getSession()) {
+      requireAccount(goRevisar, 'Crea tu cuenta o inicia sesión para continuar');
+      return;
+    }
+    const prof = state.professional;
+    const avatar = document.getElementById('review-avatar');
+    if (prof.logoUrl) {
+      avatar.style.background = 'none';
+      avatar.innerHTML = '<img src="' + prof.logoUrl + '" alt="" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+      avatar.style.background = avatarGradient(prof.slug);
+      avatar.innerHTML = '';
+      avatar.textContent = initials(prof.name);
+    }
+    document.getElementById('review-prof-name').textContent = prof.name;
+    document.getElementById('review-rating').textContent = prof.rating.toFixed(1);
+    document.getElementById('review-neighborhood').textContent = prof.neighborhood;
+    document.getElementById('review-date').textContent = state.dateLabel + ' · ' + state.timeLabel;
+    document.getElementById('review-svc').textContent = state.serviceName + ' · ' + formatPrice(state.priceCents);
+    document.getElementById('review-pay').textContent = state.paymentLabel;
+    document.getElementById('review-total').textContent = formatPrice(state.priceCents);
+
+    const quienRow = document.getElementById('review-quien-row');
+    if (state.collaboratorName) {
+      document.getElementById('review-quien').textContent = state.collaboratorName;
+      quienRow.style.display = 'flex';
+    } else {
+      quienRow.style.display = 'none';
+    }
+
+    const payInfoBox = document.getElementById('review-pay-info');
+    const payInfoText = document.getElementById('review-pay-info-text');
+    if (state.paymentMethod === 'bank') {
+      payInfoBox.style.display = 'block';
+      payInfoText.textContent = 'Elegiste transferencia. Comparte tu comprobante de pago por WhatsApp con el negocio para que confirme más rápido.';
+    } else if (state.paymentMethod === 'cash') {
+      payInfoBox.style.display = 'block';
+      payInfoText.textContent = 'Pagas en efectivo directamente en el negocio, al momento de tu cita.';
+    } else {
+      payInfoBox.style.display = 'none';
+    }
+
+    go('revisar');
+  }
+
   async function confirmBooking() {
     if (!state.professional || !state.serviceId || !state.date || !state.time) return;
 
@@ -2838,7 +3032,7 @@
       return;
     }
 
-    const btn = document.getElementById('confirm-btn');
+    const btn = document.getElementById('review-confirm-btn');
     const originalText = btn.innerHTML;
     btn.innerHTML = 'Confirmando…';
     btn.disabled = true;
@@ -4419,8 +4613,9 @@
     loggedOut.style.display = s ? 'none' : 'block';
     loggedIn.style.display = s ? 'block' : 'none';
     if (s) {
-      document.getElementById('account-who').textContent =
-        s.name ? 'Sesión de ' + s.name + (s.phone ? ' · ' + s.phone : '') : '';
+      document.getElementById('account-avatar').textContent = initials(s.name || '?');
+      document.getElementById('account-name').textContent = s.name || 'Tu cuenta';
+      document.getElementById('account-phone').textContent = s.phone || '';
       document.getElementById('cuenta-negocio-label').textContent =
         state.capabilities.manageBusiness ? 'Administrar mi negocio' : 'Crear mi negocio';
     }

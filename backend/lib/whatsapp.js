@@ -88,15 +88,19 @@ async function sendTextMessage(phone, text) {
 // escribió a Bukea en las últimas 24 horas, y no hay garantía de que lo haya
 // hecho justo antes de su cita. La plantilla necesita existir y estar
 // aprobada en Meta Business (categoría Utilidad, no Marketing, para que
-// pueda mandarse en frío) — nombre en WHATSAPP_REMINDER_TEMPLATE, variables
-// del body en el mismo orden que aquí: {{1}} profesional, {{2}} negocio,
-// {{3}} hora. Sin esa variable configurada, isReminderConfigured() da false
-// y el job de lib/reminders.js no intenta nada.
+// pueda mandarse en frío) — nombre en WHATSAPP_REMINDER_TEMPLATE.
+//
+// Texto de la plantilla "recordatorio_cita" (actualizada 2026-09-10 al
+// estilo más completo de Fresha, a pedido de Víctor), variables del body en
+// el mismo orden que aquí: {{1}} nombre del cliente, {{2}} negocio,
+// {{3}} fecha y hora, {{4}} servicio. Sin esa variable configurada,
+// isReminderConfigured() da false y el job de lib/reminders.js no intenta
+// nada.
 function isReminderConfigured() {
   return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID && process.env.WHATSAPP_REMINDER_TEMPLATE);
 }
 
-async function sendAppointmentReminder(phone, { professionalName, businessName, time }) {
+async function sendAppointmentReminder(phone, { clientName, businessName, dateTime, serviceName }) {
   if (!isReminderConfigured()) {
     throw new Error('Plantilla de recordatorio no configurada (falta WHATSAPP_REMINDER_TEMPLATE)');
   }
@@ -111,9 +115,10 @@ async function sendAppointmentReminder(phone, { professionalName, businessName, 
       language: { code: 'es_DO' },
       components: [
         { type: 'body', parameters: [
-          { type: 'text', text: professionalName },
+          { type: 'text', text: clientName },
           { type: 'text', text: businessName },
-          { type: 'text', text: time },
+          { type: 'text', text: dateTime },
+          { type: 'text', text: serviceName },
         ] },
       ],
     },

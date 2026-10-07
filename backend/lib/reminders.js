@@ -15,7 +15,7 @@
 
 const pool = require('../db/pool');
 const whatsapp = require('./whatsapp');
-const { RD_TZ, formatTime12h } = require('./availability');
+const { RD_TZ, formatTime12h, dayLabel } = require('./availability');
 
 const REMINDER_LEAD_MIN = 60; // cuánto antes de la cita debe llegar
 const WINDOW_MIN = 10; // ancho de la ventana, debe ser >= POLL_INTERVAL_MS/60000
@@ -41,8 +41,8 @@ async function checkAndSendReminders() {
   let rows;
   try {
     [rows] = await pool.query(
-      `SELECT b.id, b.appointment_at, u.phone AS client_phone,
-              p.name AS professional_name, p.business_name
+      `SELECT b.id, b.appointment_at, b.client_name, b.service_name, u.phone AS client_phone,
+              p.business_name
        FROM bookings b
        JOIN users u ON u.id = b.client_user_id
        JOIN professionals p ON p.id = b.professional_id
@@ -58,10 +58,13 @@ async function checkAndSendReminders() {
 
   for (const row of rows) {
     try {
+      const datePart = row.appointment_at.slice(0, 10);
+      const timePart = row.appointment_at.slice(11, 16);
       await whatsapp.sendAppointmentReminder(row.client_phone, {
-        professionalName: row.professional_name,
+        clientName: row.client_name,
         businessName: row.business_name,
-        time: formatTime12h(row.appointment_at.slice(11, 16)),
+        dateTime: `${dayLabel(datePart)} ${formatTime12h(timePart)}`,
+        serviceName: row.service_name,
       });
       await pool.query('UPDATE bookings SET reminder_sent_at = NOW(3) WHERE id = ?', [row.id]);
     } catch (err) {
