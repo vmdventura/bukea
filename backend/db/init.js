@@ -136,6 +136,32 @@ async function migrate() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Prospectos (2026-10-12): negocios de barbería y uñas encontrados con la API
+  // de Google Places para invitarlos a Bukea por mensaje directo. Los mensajes
+  // los envía una persona, esta tabla solo guarda la lista y el seguimiento.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS prospects (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      place_id VARCHAR(120) NOT NULL UNIQUE,
+      name VARCHAR(190) NOT NULL,
+      category VARCHAR(30) NOT NULL,
+      sector VARCHAR(120) NOT NULL DEFAULT '',
+      address VARCHAR(255),
+      phone VARCHAR(40),
+      website VARCHAR(255),
+      instagram VARCHAR(60),
+      maps_url VARCHAR(255),
+      rating DECIMAL(2,1),
+      reviews_count INT NOT NULL DEFAULT 0,
+      status VARCHAR(20) NOT NULL DEFAULT 'nuevo',
+      notes VARCHAR(500),
+      contacted_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_prospects_status (status),
+      INDEX idx_prospects_category (category)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Configuración: una sola fila (id=1) con los parámetros que hoy estaban
   // fijos en el código — banner del marketplace, colchón mínimo de
   // antelación y tamaño de slot de la disponibilidad. Categorías y listas

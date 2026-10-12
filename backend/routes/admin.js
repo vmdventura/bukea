@@ -15,6 +15,7 @@ const { geocodeNeighborhood } = require('../lib/geocode');
 const { RECEIPTS_DIR } = require('../lib/uploads');
 const whatsapp = require('../lib/whatsapp');
 const mailer = require('../lib/mailer');
+const places = require('../lib/places');
 const oauth = require('../lib/oauth');
 const { getSettings, updateSettings } = require('../lib/settings');
 const rateLimit = require('../lib/rate-limit');
@@ -957,6 +958,102 @@ router.patch('/settings', async (req, res) => {
     patch.bookingSlotMin = v;
   }
   res.json(await updateSettings(patch));
+});
+
+// Prospectos (2026-10-12): lista de barberías y salones de uñas encontrados con
+// Google Places para invitarlos a Bukea. Los mensajes por Instagram los manda
+// una persona desde el panel; aquí solo se busca, se guarda y se da seguimiento.
+const PROSPECT_STATUSES = ['nuevo', 'contactado', 'respondio', 'registrado', 'descartado'];
+const PROSPECT_CATEGORIES = ['barberia', 'unas'];
+
+router.get('/prospects', async (req, res) => {
+  const where = [];
+  const params = [];
+  if (PROSPECT_STATUSES.includes(req.query.status)) { where.push('status = ?'); params.push(req.query.status); }
+  if (PROSPECT_CATEGORIES.includes(req.query.category)) { where.push('category = ?'); params.push(req.query.category); }
+  if (req.query.sector) { where.push('sector = ?'); params.push(String(req.query.sector)); }
+  if (req.query.noInstagram === '1') where.push("(instagram IS NULL OR instagram = '')");
+  const q = String(req.query.q || '').trim();
+  if (q) { where.push('(name LIKE ? OR address LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+  const [rows] = await pool.query(
+    `SELECT * FROM prospects ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+     ORDER BY (instagram IS NULL OR instagram = ''), reviews_count DESC, id DESC LIMIT 500`,
+    params
+  );
+  const [counts] = await pool.query('SELECT status, COUNT(*) AS n FROM prospects GROUP BY status');
+  const [sectors] = await pool.query("SELECT DISTINCT sector FROM prospects WHERE sector != '' ORDER BY sector");
+  res.json({
+    configured: places.isConfigured(),
+    counts: Object.fromEntries(counts.map(c => [c.status, c.n])),
+    sectors: sectors.map(s => s.sector),
+    prospects: rows.map(p => ({
+      id: p.id, name: p.name, category: p.category, sector: p.sector, address: p.address, phone: p.phone,
+      website: p.website, instagram: p.instagram, mapsUrl: p.maps_url,
+      rating: p.rating !== null ? Number(p.rating) : null, reviewsCount: p.reviews_count,
+      status: p.status, notes: p.notes, contactedAt: p.contacted_at, createdAt: p.created_at,
+    })),
+  });
+});
+
+router.post('/prospects/search', async (req, res) => {
+  if (!places.isConfigured()) {
+    return res.status(503).json({ error: 'Falta la variable GOOGLE_PLACES_API_KEY en el servidor' });
+  }
+  const sector = String(req.body.sector || '').trim();
+  const categories = req.body.category === 'ambas' ? PROSPECT_CATEGORIES : [req.body.category];
+  if (!sector || sector.length > 120) return res.status(400).json({ error: 'Escribe el sector donde buscar' });
+  if (!categories.every(c => PROSPECT_CATEGORIES.includes(c))) return res.status(400).json({ error: 'Categoría no válida' });
+
+  // Tope de búsquedas por hora: cada una gasta crédito de Google.
+  const wait = rateLimit.hit([{ key: 'prospect-search', max: 20, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  let found = 0;
+  let added = 0;
+  let withInstagram = 0;
+  try {
+    for (const category of categories) {
+      const results = await places.searchProspects({ category, sector });
+      found += results.length;
+      for (const r of results) {
+        if (!r.placeId || !r.name) continue;
+        const [ins] = await pool.query(
+          `INSERT INTO prospects (place_id, name, category, sector, address, phone, website, instagram, maps_url, rating, reviews_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE
+             instagram = COALESCE(prospects.instagram, VALUES(instagram)),
+             phone = COALESCE(prospects.phone, VALUES(phone)),
+             rating = VALUES(rating), reviews_count = VALUES(reviews_count)`,
+          [r.placeId, r.name.slice(0, 190), category, sector, r.address && r.address.slice(0, 255), r.phone, r.website && r.website.slice(0, 255), r.instagram || null, r.mapsUrl && r.mapsUrl.slice(0, 255), r.rating, r.reviewsCount]
+        );
+        if (ins.affectedRows === 1) added++;
+        if (r.instagram) withInstagram++;
+      }
+    }
+  } catch (err) {
+    console.error('Error buscando prospectos:', err.message);
+    return res.status(502).json({ error: 'Google no pudo responder: ' + err.message });
+  }
+  res.json({ found, added, withInstagram });
+});
+
+router.post('/prospects/:id', async (req, res) => {
+  const sets = [];
+  const params = [];
+  if (req.body.status !== undefined) {
+    if (!PROSPECT_STATUSES.includes(req.body.status)) return res.status(400).json({ error: 'Estado no válido' });
+    sets.push('status = ?'); params.push(req.body.status);
+    if (req.body.status === 'contactado') sets.push('contacted_at = COALESCE(contacted_at, NOW())');
+  }
+  if (req.body.instagram !== undefined) {
+    const handle = places.instagramHandle('instagram.com/' + String(req.body.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').split(/[/?#]/)[0]);
+    sets.push('instagram = ?'); params.push(handle);
+  }
+  if (req.body.notes !== undefined) { sets.push('notes = ?'); params.push(String(req.body.notes).slice(0, 500) || null); }
+  if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' });
+  const [upd] = await pool.query(`UPDATE prospects SET ${sets.join(', ')} WHERE id = ?`, [...params, req.params.id]);
+  if (!upd.affectedRows) return res.status(404).json({ error: 'Prospecto no encontrado' });
+  res.json({ ok: true });
 });
 
 // Soporte (2026-08-27) — hilos de chat con dueños de negocio, ver
