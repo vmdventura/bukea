@@ -7,9 +7,10 @@ const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
 
 const IGNORABLE_ALTER_ERRORS = new Set([
-  'ER_DUP_FIELDNAME', // la columna ya existe
-  'ER_DUP_KEYNAME',   // el índice/UNIQUE ya existe
-  'ER_FK_DUP_NAME',   // la llave foránea ya existe
+  'ER_DUP_FIELDNAME',           // la columna ya existe
+  'ER_DUP_KEYNAME',             // el índice/UNIQUE ya existe
+  'ER_FK_DUP_NAME',             // la llave foránea ya existe
+  'ER_CANT_DROP_FIELD_OR_KEY',  // el índice/columna a borrar ya no existe
 ]);
 
 // Algunas versiones de MySQL/MariaDB (visto en producción, 2026-08-23) no
@@ -135,6 +136,32 @@ async function migrate() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Prospectos (2026-10-12): negocios de barbería y uñas encontrados con la API
+  // de Google Places para invitarlos a Bukea por mensaje directo. Los mensajes
+  // los envía una persona, esta tabla solo guarda la lista y el seguimiento.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS prospects (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      place_id VARCHAR(120) NOT NULL UNIQUE,
+      name VARCHAR(190) NOT NULL,
+      category VARCHAR(30) NOT NULL,
+      sector VARCHAR(120) NOT NULL DEFAULT '',
+      address VARCHAR(255),
+      phone VARCHAR(40),
+      website VARCHAR(255),
+      instagram VARCHAR(60),
+      maps_url VARCHAR(255),
+      rating DECIMAL(2,1),
+      reviews_count INT NOT NULL DEFAULT 0,
+      status VARCHAR(20) NOT NULL DEFAULT 'nuevo',
+      notes VARCHAR(500),
+      contacted_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_prospects_status (status),
+      INDEX idx_prospects_category (category)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Configuración: una sola fila (id=1) con los parámetros que hoy estaban
   // fijos en el código — banner del marketplace, colchón mínimo de
   // antelación y tamaño de slot de la disponibilidad. Categorías y listas
@@ -189,6 +216,18 @@ async function migrate() {
   await pool.query(
     "UPDATE users SET email_verified_at = created_at WHERE email_verified_at IS NULL AND created_at < '2026-08-27 12:00:00'"
   );
+  // Pase de registro por correo (2026-10-11): se emite al verificar el código
+  // de un correo sin cuenta y permite crearla sin PIN. Un solo uso, 30 min.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS signup_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      token_hash VARCHAR(64) NOT NULL,
+      email VARCHAR(190) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE INDEX idx_signup_tokens_hash (token_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS email_verifications (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -282,6 +321,88 @@ async function migrate() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Revisión externa de seguridad/confiabilidad (2026-09-08):
+  //
+  // 1) Cancelar una cita liberaba el horario solo en la UI: la fila
+  //    cancelada seguía ocupando (professional_id, appointment_at) en el
+  //    UNIQUE viejo, así que nadie más podía reservar exactamente esa hora
+  //    otra vez. active_appointment_at es NULL en canceladas (columna
+  //    generada) — MySQL no cuenta NULL como duplicado en un índice UNIQUE,
+  //    así que el nuevo índice solo compite entre citas 'confirmed'.
+  // Orden importa: uq_bookings_slot es hoy el único índice que empieza en
+  // professional_id, así que las FK sin nombre hacia professionals/services
+  // lo necesitan como soporte — borrarlo primero falla con ER_DROP_INDEX_FK
+  // (visto en local, MySQL 9.6). El nuevo índice también arranca en
+  // professional_id, así que se crea antes de soltar el viejo para que
+  // nunca haya un momento sin índice de soporte para esas FK.
+  await safeAlter(
+    "ALTER TABLE bookings ADD COLUMN active_appointment_at DATETIME " +
+    "GENERATED ALWAYS AS (CASE WHEN status = 'confirmed' THEN appointment_at END) VIRTUAL"
+  );
+  await safeAlter('ALTER TABLE bookings ADD UNIQUE INDEX uq_bookings_active_slot (professional_id, active_appointment_at)');
+  await safeAlter('ALTER TABLE bookings DROP INDEX uq_bookings_slot');
+
+  // 2) "Mi Cuadre" sumaba el precio VIGENTE del servicio (JOIN services),
+  //    no el que pagó el cliente al reservar — si el negocio sube un precio,
+  //    las citas viejas cambiaban de valor solas en las estadísticas.
+  //    service_name/price_cents guardan la foto del servicio al reservar.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN service_name VARCHAR(120)');
+  await safeAlter('ALTER TABLE bookings ADD COLUMN price_cents INT');
+  await pool.query(`
+    UPDATE bookings b JOIN services s ON s.id = b.service_id
+    SET b.service_name = s.name, b.price_cents = s.price_cents
+    WHERE b.service_name IS NULL
+  `);
+
+  // 3) "Guardar servicios" borraba y reinsertaba todos los servicios del
+  //    negocio — con reservas ya asociadas a un servicio borrado, el UPDATE
+  //    de arriba (y cualquier lectura futura que necesite el servicio
+  //    original) se queda sin fila. archived_at deja el historial intacto:
+  //    PUT /:slug/services ahora archiva en vez de borrar, ver professionals.js.
+  await safeAlter('ALTER TABLE services ADD COLUMN archived_at TIMESTAMP NULL DEFAULT NULL');
+
+  // 4) Requisitos obligatorios para negocios nuevos (2026-09-08, a pedido de
+  //    Víctor): foto + correo/teléfono verificados del dueño para aparecer
+  //    en el marketplace. DEFAULT 0 deja exentos a los negocios ya
+  //    existentes — no se ocultan retroactivamente. Ver schema.sql.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN verification_required TINYINT(1) NOT NULL DEFAULT 0');
+
+  // 5) Pin manual del dueño (2026-09-08): antes, cualquier cambio de sector
+  //    en "Mi perfil" volvía a geocodificar y pisaba el pin exacto que el
+  //    dueño ya había arrastrado en el mapa. Esta columna marca cuándo el
+  //    dueño confirmó el pin a mano — PUT /:slug/profile solo re-geocodifica
+  //    si sigue NULL. Ver routes/professionals.js.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN location_set_by_owner_at DATETIME');
+
+  // 6) Badge del ícono de la app (2026-09-09, a pedido de Víctor): marca
+  //    hasta cuándo el dueño ya revisó su agenda. El número que se manda en
+  //    cada push (apns badge) cuenta las reservas confirmadas creadas
+  //    después de esta marca; al abrir Resumen/Agenda se actualiza a NOW()
+  //    y se manda un push silencioso con badge:0 para limpiar el ícono. Ver
+  //    lib/push.js y GET /:slug/bookings en routes/professionals.js.
+  await safeAlter('ALTER TABLE professionals ADD COLUMN bookings_seen_at DATETIME');
+
+  // Precisión de milisegundos en bookings_seen_at y bookings.created_at
+  // (2026-09-09): ambas eran de resolución de 1 segundo. countPendingBookings
+  // compara created_at > bookings_seen_at con `>` estricto — si el dueño
+  // abre la agenda y llega una reserva nueva dentro del mismo segundo, los
+  // dos truncaban al mismo valor y la reserva nueva no subía el badge
+  // (encontrado por tests/api/badge.test.js fallando de forma reproducible).
+  await pool.query('ALTER TABLE professionals MODIFY bookings_seen_at DATETIME(3)');
+  await pool.query('ALTER TABLE bookings MODIFY created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3)');
+
+  // 6) Deduplicación del chat de soporte (2026-09-08): un envío con la misma
+  //    clave de cliente (doble toque, reintento tras respuesta perdida) no
+  //    crea un segundo mensaje. NULL para mensajes viejos y para los que
+  //    manda el admin (esos no necesitan clave).
+  await safeAlter('ALTER TABLE support_messages ADD COLUMN client_key VARCHAR(64)');
+  await safeAlter('ALTER TABLE support_messages ADD UNIQUE INDEX uq_support_client_key (user_id, client_key)');
+
+  // Recordatorio de cita por WhatsApp, 1 hora antes (2026-09-10, a pedido de
+  // Víctor). Marca cuándo se mandó para no repetirlo si el job de
+  // lib/reminders.js corre de nuevo dentro de la misma ventana.
+  await safeAlter('ALTER TABLE bookings ADD COLUMN reminder_sent_at DATETIME');
 }
 
 // Correo fijo del super administrador (lib/super-admin.js): si ya existe una

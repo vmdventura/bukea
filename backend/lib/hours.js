@@ -10,9 +10,12 @@ const DEFAULT_WEEKLY_HOURS = [2, 3, 4, 5, 6].map(weekday => ({
   endTime: '18:00:00',
 }));
 
-async function insertDefaultHours(professionalId) {
+// `db` opcional: la creación de negocio (routes/professionals.js) pasa la
+// conexión de su propia transacción para que las horas por defecto entren
+// o salgan junto con el negocio y sus servicios, no como escrituras sueltas.
+async function insertDefaultHours(professionalId, db = pool) {
   for (const h of DEFAULT_WEEKLY_HOURS) {
-    await pool.query(
+    await db.query(
       'INSERT INTO professional_hours (professional_id, weekday, start_time, end_time) VALUES (?, ?, ?, ?)',
       [professionalId, h.weekday, h.startTime, h.endTime]
     );

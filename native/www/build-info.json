@@ -1,0 +1,6 @@
+{
+  "env": "production",
+  "apiBase": "https://www.bukeard.com/app",
+  "commit": "a53604c",
+  "builtAt": "2026-10-07T04:33:33.264Z"
+}

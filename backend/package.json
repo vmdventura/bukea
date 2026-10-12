@@ -6,7 +6,9 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "seed": "node db/seed.js"
+    "seed": "node db/seed.js",
+    "start:staging": "NODE_ENV=staging RATE_LIMIT_DISABLED=1 node app.js",
+    "test:api": "node tests/api/run-all.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

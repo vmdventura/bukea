@@ -12,13 +12,25 @@ const { requireAdmin } = require('../lib/auth-middleware');
 const { normalizePhone, hashPin } = require('../lib/credentials');
 const { insertDefaultHours } = require('../lib/hours');
 const { geocodeNeighborhood } = require('../lib/geocode');
-const { receiptUrl, RECEIPTS_DIR } = require('../lib/uploads');
+const { RECEIPTS_DIR } = require('../lib/uploads');
 const whatsapp = require('../lib/whatsapp');
 const mailer = require('../lib/mailer');
+const places = require('../lib/places');
 const oauth = require('../lib/oauth');
 const { getSettings, updateSettings } = require('../lib/settings');
 const rateLimit = require('../lib/rate-limit');
 const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
+const { wrapAsyncRouter } = require('../lib/async-router');
+
+// Comprobantes (revisión externa 2026-09-08): el panel de admin ya no usa
+// receiptUrl() de lib/uploads.js (esa apunta a la ruta autenticada de la
+// app normal, protegida por requireAuth/token de usuario) — el admin entra
+// con su propio admin_token, así que necesita su propia ruta protegida por
+// requireAdmin (ver GET /bookings/:id/receipt-file más abajo).
+function adminReceiptUrl(req, bookingId, storedPath) {
+  if (!storedPath) return null;
+  return `${req.protocol}://${req.get('host')}/api/admin/bookings/${bookingId}/receipt-file`;
+}
 
 // Cuánto dura una sesión del panel antes de tener que volver a entrar —
 // mucho más corto que el de la app normal (que no vence): es la puerta más
@@ -34,7 +46,7 @@ function issueAdminToken(userId) {
   ).then(() => token);
 }
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // CSV simple para exportar tablas — cubre las comas y comillas de nombres y
 // direcciones reales, no pretende ser una librería completa.
@@ -52,7 +64,7 @@ function sendCsv(res, filename, csv) {
   res.type('text/csv').attachment(filename).send(csv);
 }
 
-const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa'];
+const VALID_CATEGORIES = ['barberia', 'unas', 'salon', 'maquillaje', 'cejas-mua', 'pilates', 'entrenador', 'peluqueria-canina', 'spa', 'trenzas', 'tatuadores', 'servicios-profesionales'];
 
 function slugify(text) {
   return String(text)
@@ -156,7 +168,7 @@ router.get('/dashboard', async (req, res) => {
   const [[bookingStats]] = await pool.query(
     `SELECT
        COUNT(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS monthCount,
-       COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN s.price_cents END), 0) AS monthCents
+       COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS monthCents
      FROM bookings b JOIN services s ON s.id = b.service_id`
   );
   const [dailyRows] = await pool.query(
@@ -173,13 +185,13 @@ router.get('/dashboard', async (req, res) => {
     `SELECT id, name, business_name FROM professionals WHERE (lat IS NULL OR lng IS NULL) AND hidden_at IS NULL`
   );
   const [recentReceipts] = await pool.query(
-    `SELECT b.id, b.client_name, p.name AS professional_name, b.receipt_uploaded_at
+    `SELECT b.id, b.client_name, p.id AS professional_id, p.name AS professional_name, b.receipt_uploaded_at
      FROM bookings b JOIN professionals p ON p.id = b.professional_id
      WHERE b.receipt_uploaded_at >= NOW() - INTERVAL 24 HOUR
      ORDER BY b.receipt_uploaded_at DESC LIMIT 10`
   );
   const [recentBookings] = await pool.query(
-    `SELECT b.id, b.client_name, b.status, b.created_at, p.name AS professional_name, s.name AS service_name
+    `SELECT b.id, b.client_name, b.client_user_id, b.status, b.created_at, p.id AS professional_id, p.name AS professional_name, s.name AS service_name
      FROM bookings b JOIN professionals p ON p.id = b.professional_id JOIN services s ON s.id = b.service_id
      ORDER BY b.created_at DESC LIMIT 8`
   );
@@ -199,12 +211,12 @@ router.get('/dashboard', async (req, res) => {
       noHours: noHours.map(p => ({ id: p.id, name: p.name, businessName: p.business_name })),
       noCoords: noCoords.map(p => ({ id: p.id, name: p.name, businessName: p.business_name })),
       recentReceipts: recentReceipts.map(r => ({
-        bookingId: r.id, clientName: r.client_name, professionalName: r.professional_name, uploadedAt: r.receipt_uploaded_at,
+        bookingId: r.id, professionalId: r.professional_id, clientName: r.client_name, professionalName: r.professional_name, uploadedAt: r.receipt_uploaded_at,
       })),
     },
     recentActivity: {
       bookings: recentBookings.map(b => ({
-        id: b.id, clientName: b.client_name, professionalName: b.professional_name,
+        id: b.id, clientUserId: b.client_user_id, professionalId: b.professional_id, clientName: b.client_name, professionalName: b.professional_name,
         serviceName: b.service_name, status: b.status, createdAt: b.created_at,
       })),
       users: recentUsers.map(u => ({ id: u.id, name: u.name, createdAt: u.created_at })),
@@ -227,6 +239,7 @@ router.get('/users', async (req, res) => {
     const like = `%${q}%`;
     params.push(like, like, like);
   }
+  if (req.query.recent) sql += ' AND u.created_at >= (NOW() - INTERVAL 7 DAY)';
   if (provider === 'google') sql += ' AND u.google_sub IS NOT NULL';
   else if (provider === 'apple') sql += ' AND u.apple_sub IS NOT NULL';
   else if (provider === 'phone') sql += ' AND u.pin_hash IS NOT NULL';
@@ -356,11 +369,11 @@ router.get('/businesses', async (req, res) => {
   const filter = req.query.filter;
 
   let sql = `SELECT p.id, p.slug, p.name, p.business_name, p.category, p.neighborhood, p.rating, p.reviews_count,
-                    p.owner_user_id, p.lat, p.lng, p.hidden_at, p.created_at,
+                    p.owner_user_id, p.lat, p.lng, p.hidden_at, p.created_at, ou.phone AS owner_phone, ou.name AS owner_name,
                     (SELECT COUNT(*) FROM professional_hours h WHERE h.professional_id = p.id) AS hours_count,
                     (SELECT COUNT(*) FROM bookings b WHERE b.professional_id = p.id AND b.status = 'confirmed'
                        AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01')) AS bookings_this_month
-             FROM professionals p WHERE 1=1`;
+             FROM professionals p LEFT JOIN users ou ON ou.id = p.owner_user_id WHERE 1=1`;
   const params = [];
   if (q) {
     sql += ' AND (p.name LIKE ? OR p.business_name LIKE ? OR p.neighborhood LIKE ?)';
@@ -372,6 +385,7 @@ router.get('/businesses', async (req, res) => {
   else if (filter === 'no-hours') sql += ' AND NOT EXISTS (SELECT 1 FROM professional_hours h WHERE h.professional_id = p.id)';
   else if (filter === 'no-coords') sql += ' AND (p.lat IS NULL OR p.lng IS NULL)';
   else if (filter === 'hidden') sql += ' AND p.hidden_at IS NOT NULL';
+  else if (filter === 'new') sql += ' AND p.created_at >= (NOW() - INTERVAL 7 DAY)';
   sql += ' ORDER BY p.created_at DESC LIMIT 200';
 
   const [rows] = await pool.query(sql, params);
@@ -385,6 +399,8 @@ router.get('/businesses', async (req, res) => {
     rating: Number(p.rating),
     reviewsCount: p.reviews_count,
     hasOwner: p.owner_user_id !== null,
+    ownerPhone: p.owner_phone,
+    ownerName: p.owner_name,
     hasHours: p.hours_count > 0,
     hasCoords: p.lat !== null && p.lng !== null,
     hidden: Boolean(p.hidden_at),
@@ -585,8 +601,8 @@ router.get('/bookings', async (req, res) => {
   const status = req.query.status;
   const range = req.query.range;
 
-  let sql = `SELECT b.id, b.client_name, b.status, b.payment_method, b.appointment_at, b.created_at, b.receipt_path,
-                    p.name AS professional_name, p.slug, s.name AS service_name, s.price_cents, c.name AS collaborator_name
+  let sql = `SELECT b.id, b.client_name, b.client_user_id, b.status, b.payment_method, b.appointment_at, b.created_at, b.receipt_path,
+                    p.id AS professional_id, p.name AS professional_name, p.slug, COALESCE(b.service_name, s.name) AS service_name, COALESCE(b.price_cents, s.price_cents) AS price_cents, c.name AS collaborator_name
              FROM bookings b
              JOIN professionals p ON p.id = b.professional_id
              JOIN services s ON s.id = b.service_id
@@ -607,11 +623,13 @@ router.get('/bookings', async (req, res) => {
   const bookings = rows.map(b => ({
     id: b.id,
     clientName: b.client_name,
+    clientUserId: b.client_user_id,
+    professionalId: b.professional_id,
     status: b.status,
     paymentMethod: b.payment_method,
     appointmentAt: b.appointment_at,
     createdAt: b.created_at,
-    receiptUrl: receiptUrl(req, b.receipt_path),
+    receiptUrl: adminReceiptUrl(req, b.id, b.receipt_path),
     professionalName: b.professional_name,
     professionalSlug: b.slug,
     serviceName: b.service_name,
@@ -692,7 +710,7 @@ router.get('/moderation/receipts', async (req, res) => {
     professionalBusinessName: r.professional_business_name,
     uploadedAt: r.receipt_uploaded_at,
     status: r.status,
-    receiptUrl: receiptUrl(req, r.receipt_path),
+    receiptUrl: adminReceiptUrl(req, r.bookingId, r.receipt_path),
   })));
 });
 
@@ -711,6 +729,17 @@ router.delete('/bookings/:id/receipt', async (req, res) => {
   });
   await pool.query('UPDATE bookings SET receipt_path = NULL, receipt_uploaded_at = NULL WHERE id = ?', [req.params.id]);
   res.json({ saved: true });
+});
+
+// Servir el archivo del comprobante para el admin (revisión externa
+// 2026-09-08) — misma protección que la ruta equivalente de la app normal
+// (routes/bookings.js): ya no vive bajo public/uploads, requireAdmin (ver
+// router.use arriba) es quien exige la sesión aquí.
+router.get('/bookings/:id/receipt-file', async (req, res) => {
+  const [rows] = await pool.query('SELECT receipt_path FROM bookings WHERE id = ?', [req.params.id]);
+  const booking = rows[0];
+  if (!booking || !booking.receipt_path) return res.status(404).json({ error: 'Comprobante no encontrado' });
+  res.sendFile(path.join(RECEIPTS_DIR, booking.receipt_path));
 });
 
 // ===== Métricas (Fase 2) =====
@@ -764,8 +793,8 @@ router.get('/metrics', async (req, res) => {
   );
 
   const [topBusinesses] = await pool.query(
-    `SELECT p.business_name,
-            COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN s.price_cents END), 0) AS volumeCents,
+    `SELECT p.id, p.business_name,
+            COALESCE(SUM(CASE WHEN b.status = 'confirmed' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN COALESCE(b.price_cents, s.price_cents) END), 0) AS volumeCents,
             COUNT(CASE WHEN b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS totalThisMonth,
             COUNT(CASE WHEN b.status = 'cancelled' AND b.appointment_at >= DATE_FORMAT(NOW(), '%Y-%m-01') THEN 1 END) AS cancelledThisMonth
      FROM professionals p LEFT JOIN bookings b ON b.professional_id = p.id
@@ -793,6 +822,7 @@ router.get('/metrics', async (req, res) => {
     byCategory: byCategory.map(r => ({ category: r.category, businesses: r.businesses, bookings: r.bookings })),
     bySector: bySector.map(r => ({ neighborhood: r.neighborhood, bookings: r.bookings })),
     topBusinesses: topBusinesses.map(r => ({
+      id: r.id,
       businessName: r.business_name,
       volumeCents: Number(r.volumeCents),
       cancellationPct: r.totalThisMonth > 0 ? Math.round((r.cancelledThisMonth / r.totalThisMonth) * 100) : 0,
@@ -835,6 +865,35 @@ router.post('/communication/test', async (req, res) => {
   }
 });
 
+// Mensaje a varios usuarios a la vez (2026-10-11), solo por correo: el
+// WhatsApp de texto libre solo entrega dentro de la ventana de 24 h, no sirve
+// para escribirle en frío a cuentas nuevas. Máximo 50 por envío.
+router.post('/users/bulk-message', async (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
+  const text = String(req.body.text || '').trim();
+  const subject = String(req.body.subject || '').trim() || 'Un mensaje del equipo de Bukea';
+  if (!text) return res.status(400).json({ error: 'Escribe un mensaje' });
+  if (!ids.length) return res.status(400).json({ error: 'Elige al menos un usuario' });
+  if (ids.length > 50) return res.status(400).json({ error: 'Máximo 50 usuarios por envío' });
+
+  const [users] = await pool.query('SELECT id, name, email FROM users WHERE id IN (?) AND role != \'admin\' AND disabled_at IS NULL', [ids]);
+  let sent = 0, failed = 0;
+  const skipped = ids.length - users.length;
+  for (const u of users) {
+    if (!u.email) { await logMessage({ userId: u.id, channel: 'email', body: text, status: 'failed', errorMessage: 'Sin correo', adminId: req.admin.id }); failed++; continue; }
+    try {
+      const first = String(u.name || '').split(' ')[0];
+      await mailer.sendCustomMessage(u.email, subject, text.replace(/\{nombre\}/g, first));
+      await logMessage({ userId: u.id, channel: 'email', subject, body: text, status: 'sent', adminId: req.admin.id });
+      sent++;
+    } catch (err) {
+      await logMessage({ userId: u.id, channel: 'email', subject, body: text, status: 'failed', errorMessage: err.message, adminId: req.admin.id });
+      failed++;
+    }
+  }
+  res.json({ sent, failed, skipped });
+});
+
 router.post('/users/:id/message', async (req, res) => {
   const channel = req.body.channel;
   const text = String(req.body.text || '').trim();
@@ -863,7 +922,7 @@ router.post('/users/:id/message', async (req, res) => {
 
 router.get('/communication/log', async (req, res) => {
   const [rows] = await pool.query(
-    `SELECT m.id, m.channel, m.body, m.status, m.error_message, m.created_at, u.name AS user_name
+    `SELECT m.id, m.user_id, m.channel, m.body, m.status, m.error_message, m.created_at, u.name AS user_name
      FROM message_log m LEFT JOIN users u ON u.id = m.user_id
      ORDER BY m.created_at DESC LIMIT 50`
   );
@@ -875,6 +934,7 @@ router.get('/communication/log', async (req, res) => {
     errorMessage: m.error_message,
     createdAt: m.created_at,
     userName: m.user_name,
+    userId: m.user_id,
   })));
 });
 
@@ -898,6 +958,102 @@ router.patch('/settings', async (req, res) => {
     patch.bookingSlotMin = v;
   }
   res.json(await updateSettings(patch));
+});
+
+// Prospectos (2026-10-12): lista de barberías y salones de uñas encontrados con
+// Google Places para invitarlos a Bukea. Los mensajes por Instagram los manda
+// una persona desde el panel; aquí solo se busca, se guarda y se da seguimiento.
+const PROSPECT_STATUSES = ['nuevo', 'contactado', 'respondio', 'registrado', 'descartado'];
+const PROSPECT_CATEGORIES = ['barberia', 'unas'];
+
+router.get('/prospects', async (req, res) => {
+  const where = [];
+  const params = [];
+  if (PROSPECT_STATUSES.includes(req.query.status)) { where.push('status = ?'); params.push(req.query.status); }
+  if (PROSPECT_CATEGORIES.includes(req.query.category)) { where.push('category = ?'); params.push(req.query.category); }
+  if (req.query.sector) { where.push('sector = ?'); params.push(String(req.query.sector)); }
+  if (req.query.noInstagram === '1') where.push("(instagram IS NULL OR instagram = '')");
+  const q = String(req.query.q || '').trim();
+  if (q) { where.push('(name LIKE ? OR address LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+  const [rows] = await pool.query(
+    `SELECT * FROM prospects ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+     ORDER BY (instagram IS NULL OR instagram = ''), reviews_count DESC, id DESC LIMIT 500`,
+    params
+  );
+  const [counts] = await pool.query('SELECT status, COUNT(*) AS n FROM prospects GROUP BY status');
+  const [sectors] = await pool.query("SELECT DISTINCT sector FROM prospects WHERE sector != '' ORDER BY sector");
+  res.json({
+    configured: places.isConfigured(),
+    counts: Object.fromEntries(counts.map(c => [c.status, c.n])),
+    sectors: sectors.map(s => s.sector),
+    prospects: rows.map(p => ({
+      id: p.id, name: p.name, category: p.category, sector: p.sector, address: p.address, phone: p.phone,
+      website: p.website, instagram: p.instagram, mapsUrl: p.maps_url,
+      rating: p.rating !== null ? Number(p.rating) : null, reviewsCount: p.reviews_count,
+      status: p.status, notes: p.notes, contactedAt: p.contacted_at, createdAt: p.created_at,
+    })),
+  });
+});
+
+router.post('/prospects/search', async (req, res) => {
+  if (!places.isConfigured()) {
+    return res.status(503).json({ error: 'Falta la variable GOOGLE_PLACES_API_KEY en el servidor' });
+  }
+  const sector = String(req.body.sector || '').trim();
+  const categories = req.body.category === 'ambas' ? PROSPECT_CATEGORIES : [req.body.category];
+  if (!sector || sector.length > 120) return res.status(400).json({ error: 'Escribe el sector donde buscar' });
+  if (!categories.every(c => PROSPECT_CATEGORIES.includes(c))) return res.status(400).json({ error: 'Categoría no válida' });
+
+  // Tope de búsquedas por hora: cada una gasta crédito de Google.
+  const wait = rateLimit.hit([{ key: 'prospect-search', max: 20, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  let found = 0;
+  let added = 0;
+  let withInstagram = 0;
+  try {
+    for (const category of categories) {
+      const results = await places.searchProspects({ category, sector });
+      found += results.length;
+      for (const r of results) {
+        if (!r.placeId || !r.name) continue;
+        const [ins] = await pool.query(
+          `INSERT INTO prospects (place_id, name, category, sector, address, phone, website, instagram, maps_url, rating, reviews_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE
+             instagram = COALESCE(prospects.instagram, VALUES(instagram)),
+             phone = COALESCE(prospects.phone, VALUES(phone)),
+             rating = VALUES(rating), reviews_count = VALUES(reviews_count)`,
+          [r.placeId, r.name.slice(0, 190), category, sector, r.address && r.address.slice(0, 255), r.phone, r.website && r.website.slice(0, 255), r.instagram || null, r.mapsUrl && r.mapsUrl.slice(0, 255), r.rating, r.reviewsCount]
+        );
+        if (ins.affectedRows === 1) added++;
+        if (r.instagram) withInstagram++;
+      }
+    }
+  } catch (err) {
+    console.error('Error buscando prospectos:', err.message);
+    return res.status(502).json({ error: 'Google no pudo responder: ' + err.message });
+  }
+  res.json({ found, added, withInstagram });
+});
+
+router.post('/prospects/:id', async (req, res) => {
+  const sets = [];
+  const params = [];
+  if (req.body.status !== undefined) {
+    if (!PROSPECT_STATUSES.includes(req.body.status)) return res.status(400).json({ error: 'Estado no válido' });
+    sets.push('status = ?'); params.push(req.body.status);
+    if (req.body.status === 'contactado') sets.push('contacted_at = COALESCE(contacted_at, NOW())');
+  }
+  if (req.body.instagram !== undefined) {
+    const handle = places.instagramHandle('instagram.com/' + String(req.body.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').split(/[/?#]/)[0]);
+    sets.push('instagram = ?'); params.push(handle);
+  }
+  if (req.body.notes !== undefined) { sets.push('notes = ?'); params.push(String(req.body.notes).slice(0, 500) || null); }
+  if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' });
+  const [upd] = await pool.query(`UPDATE prospects SET ${sets.join(', ')} WHERE id = ?`, [...params, req.params.id]);
+  if (!upd.affectedRows) return res.status(404).json({ error: 'Prospecto no encontrado' });
+  res.json({ ok: true });
 });
 
 // Soporte (2026-08-27) — hilos de chat con dueños de negocio, ver
@@ -947,6 +1103,72 @@ router.post('/support/threads/:userId', async (req, res) => {
     try { await whatsapp.sendTextMessage(user.phone, body); } catch (err) { console.error(err); }
   }
   res.json({ sent: true });
+});
+
+// Escribir primero a los dueños (2026-10-11): saludo y preguntas de cómo se
+// sienten usando Bukea. El mensaje entra en su hilo de Soporte (lo ven en la
+// app y en el panel web, sin límite de 24 h como WhatsApp) y además se avisa
+// por correo, o por WhatsApp si no dio correo.
+router.get('/support/owners', async (req, res) => {
+  const [rows] = await pool.query(`
+    SELECT u.id AS userId, u.name, u.phone, u.email, p.business_name AS businessName, p.slug,
+      EXISTS (SELECT 1 FROM support_messages sm WHERE sm.user_id = u.id) AS hasThread
+    FROM professionals p JOIN users u ON u.id = p.owner_user_id
+    WHERE u.disabled_at IS NULL
+    ORDER BY p.id DESC
+  `);
+  const seen = new Set();
+  const owners = [];
+  for (const r of rows) {
+    if (seen.has(r.userId)) continue;
+    seen.add(r.userId);
+    owners.push({ ...r, hasThread: Boolean(r.hasThread) });
+  }
+  res.json(owners);
+});
+
+router.post('/support/broadcast', async (req, res) => {
+  const userIds = Array.isArray(req.body.userIds) ? [...new Set(req.body.userIds.map(Number))].filter(Number.isInteger) : [];
+  const template = String(req.body.message || '').trim().slice(0, 3000);
+  if (!template) return res.status(400).json({ error: 'Escribe el mensaje' });
+  if (userIds.length === 0) return res.status(400).json({ error: 'Elige al menos un dueño' });
+  if (userIds.length > 100) return res.status(400).json({ error: 'Máximo 100 dueños por envío' });
+
+  const [owners] = await pool.query(
+    `SELECT u.id, u.name, u.phone, u.email, MAX(p.business_name) AS businessName
+     FROM users u JOIN professionals p ON p.owner_user_id = u.id
+     WHERE u.id IN (?) AND u.disabled_at IS NULL GROUP BY u.id`,
+    [userIds]
+  );
+
+  const result = { sent: 0, emailed: 0, whatsapped: 0, notNotified: 0, skipped: userIds.length - owners.length };
+  for (const o of owners) {
+    const firstName = String(o.name || '').trim().split(/\s+/)[0] || 'hola';
+    const body = template
+      .replace(/\{nombre\}/gi, firstName)
+      .replace(/\{negocio\}/gi, o.businessName || 'tu negocio');
+    await pool.query("INSERT INTO support_messages (user_id, sender, body, read_at) VALUES (?, 'admin', ?, NULL)", [o.id, body]);
+    result.sent++;
+
+    let channel = null;
+    let failure = null;
+    try {
+      if (o.email && mailer.isConfigured()) {
+        await mailer.sendCustomMessage(o.email, 'Un saludo del equipo de Bukea', body + '\n\nPuedes responder desde Mi Negocio, en la sección Soporte.');
+        channel = 'email'; result.emailed++;
+      } else if (o.phone && whatsapp.isConfigured && whatsapp.isConfigured()) {
+        await whatsapp.sendTextMessage(o.phone, body);
+        channel = 'whatsapp'; result.whatsapped++;
+      } else {
+        result.notNotified++;
+      }
+    } catch (err) {
+      failure = err.message;
+      result.notNotified++;
+    }
+    await logMessage({ userId: o.id, channel: channel || (o.email ? 'email' : 'whatsapp'), subject: 'Saludo a dueños', body, status: failure ? 'failed' : 'sent', errorMessage: failure, adminId: req.admin.id });
+  }
+  res.json(result);
 });
 
 module.exports = router;

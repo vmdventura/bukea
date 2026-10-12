@@ -4,12 +4,31 @@ const path = require('path');
 const express = require('express');
 
 const { ensureReady } = require('./db/init');
+const { startReminderScheduler } = require('./lib/reminders');
 const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
 const pagesRouter = require('./routes/pages');
+const entrarRouter = require('./routes/entrar');
+const reservarRouter = require('./routes/reservar');
 const adminApiRouter = require('./routes/admin');
 const { adminShell } = require('./views/admin');
+const { negocioShell } = require('./views/negocio');
+
+// Red de seguridad de proceso (2026-09-08, encontrada corriendo la suite de
+// pruebas: una promesa rechazada sin capturar en una ruta async — ej. un
+// INSERT que choca con una llave única en una carrera real entre dos
+// peticiones — tumba TODO el proceso de Node en Express 4, cortando a
+// cualquier usuario conectado, no solo a quien disparó el error. La causa
+// puntual que se encontró (POST /register) ya tiene su propio try/catch
+// arriba; esto es la malla de respaldo para cualquier otra que aparezca:
+// evita que el servidor entero muera, aunque la petición que causó el
+// error puede quedar sin respuesta (el cliente eventualmente hace timeout)
+// en vez de recibir un 500 limpio — cubrir eso de verdad requeriría
+// envolver cada handler async, fuera de alcance de este cambio puntual.
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection] petición sin capturar, el servidor sigue vivo:', err);
+});
 
 const app = express();
 
@@ -20,13 +39,19 @@ app.set('trust proxy', 1);
 app.use(express.json());
 
 // Cabeceras de seguridad básicas en todas las respuestas.
+//
+// La excepción de frame-ancestors para /negocio era para el iframe que la
+// app nativa usaba para embeber el panel a pantalla completa — retirado el
+// 2026-09-08 (el panel ahora navega de verdad, sin iframe). El build nuevo
+// no lo necesita, pero el build 2 (en revisión de Apple al momento de este
+// cambio) sí lo usa. ALLOW_LEGACY_PANEL_EMBED (default apagado) es el
+// interruptor para reabrirlo en producción, acotado y documentado, mientras
+// ese build viejo siga circulando. El build nuevo nunca la enciende.
+const ALLOW_LEGACY_PANEL_EMBED = process.env.ALLOW_LEGACY_PANEL_EMBED === '1';
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');   // no adivinar tipos MIME
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // Clickjacking: nadie puede meter Bukea en un iframe ajeno. La única
-  // excepción es /negocio, que la app nativa (Capacitor) embebe a pantalla
-  // completa; frame-ancestors sustituye a X-Frame-Options en ese caso.
-  if (req.path === '/negocio' || req.path.endsWith('/negocio')) {
+  if (ALLOW_LEGACY_PANEL_EMBED && (req.path === '/negocio' || req.path.endsWith('/negocio'))) {
     res.setHeader('Content-Security-Policy', "frame-ancestors 'self' capacitor://localhost https://localhost ionic://localhost");
   } else {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -37,17 +62,30 @@ app.use((req, res, next) => {
 // La app empacada (Capacitor) sirve el frontend desde un origen propio
 // (capacitor://localhost o https://localhost), distinto al de bukeard.com,
 // así que sus peticiones a la API son cross-origin y necesitan CORS.
+// CORS_EXTRA_ORIGINS (2026-09-08): orígenes adicionales para pruebas de
+// staging (ej. un runner de Playwright en http://127.0.0.1:xxxx), separados
+// por coma. Vacío en producción — no se toca el allow-list real del build.
 const ALLOWED_ORIGINS = new Set([
   'capacitor://localhost',
   'https://localhost',
   'ionic://localhost',
+  ...(process.env.CORS_EXTRA_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
 ]);
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  // Vary: Origin siempre, exista o no match — la respuesta a esta misma
+  // ruta cambia según el Origin de quien pregunta (cabeceras CORS puestas
+  // o no), así que un caché intermedio no debe servir la respuesta de un
+  // origen a otro distinto.
+  res.setHeader('Vary', 'Origin');
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    // PATCH agregado (2026-09-08): PATCH /api/auth/name existe desde el
+    // 6 de septiembre pero nunca se sumó aquí — un preflight real desde el
+    // origen nativo lo habría rechazado (SEC-06).
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Max-Age', '600');
   }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -64,6 +102,23 @@ const BASE = process.env.BASE_PATH || '/bukea';
 // reservar o unirse. req.baseUrlPrefix es cómo esas páginas arman esos
 // enlaces sin hardcodear el prefijo.
 app.use((req, res, next) => { req.baseUrlPrefix = BASE; next(); });
+
+// Portal de negocios en su propio subdominio (2026-10-11): negocio.bukeard.com
+// sirve el login/panel de dueños en su raíz, separado del marketplace de
+// clientes. El localStorage es por origen, así que una sesión de cliente en
+// bukeard.com nunca se mezcla con la de negocio. Mismo Express, misma base.
+app.get('/', (req, res, next) => {
+  if (!/^negocio\./i.test(req.hostname || '')) return next();
+  res.type('html').send(negocioShell({
+    base: BASE,
+    siteUrl: process.env.SITE_URL || 'https://www.bukeard.com/',
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    appleClientId: process.env.APPLE_CLIENT_ID || '',
+  }));
+});
+
+app.use('/', entrarRouter);
+app.use('/', reservarRouter);
 app.use('/', pagesRouter);
 
 app.use(BASE + '/api/auth', authRouter);
@@ -102,10 +157,24 @@ app.get(BASE, (req, res) => {
   sendTemplated(res, path.join(__dirname, 'public', 'index.html'), 'text/html');
 });
 
+// Middleware de error centralizado (revisión externa 2026-09-08): antes un
+// error sin capturar en un handler async colgaba la petición hasta el
+// timeout del cliente en vez de responder — lib/async-router.js ahora
+// atrapa el rechazo y llama a next(err), y este middleware (debe ir el
+// último, Express lo reconoce por sus 4 argumentos) responde un 500 limpio
+// en vez de dejar la conexión abierta. unhandledRejection en línea 25 queda
+// como última red de seguridad, no como el mecanismo principal.
+app.use((err, req, res, next) => {
+  console.error('[error]', req.method, req.originalUrl, err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
+
 const PORT = process.env.PORT || 3000;
 ensureReady()
   .then(() => {
     app.listen(PORT, () => console.log(`Bukea backend escuchando en el puerto ${PORT}`));
+    startReminderScheduler();
   })
   .catch(err => {
     console.error('No se pudo preparar la base de datos:', err);

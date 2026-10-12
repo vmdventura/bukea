@@ -3,7 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 
-const RECEIPTS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'receipts');
+// Fuera de public/ a propósito (revisión externa 2026-09-08): un comprobante
+// de pago es información sensible y no debe quedar alcanzable por
+// express.static sin autenticación. Se sirve solo vía GET
+// /api/bookings/:id/receipt-file (ver routes/bookings.js), que exige sesión
+// y valida que quien pide sea el cliente dueño de la cita o el negocio.
+const RECEIPTS_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
 const LOGOS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'logos');
 const PHOTOS_DIR = path.join(__dirname, '..', 'public', 'uploads', 'business-photos');
 // Carpetas nuevas (logos, business-photos) no vienen con .gitkeep en cada
@@ -64,10 +69,11 @@ const photoUpload = multer({
 
 // Absoluta (no solo el path) — la app empaquetada de iOS no comparte
 // origen con bukeard.com, así que un link relativo abriría en el sitio
-// equivocado (o en ninguno).
-function receiptUrl(req, storedPath) {
+// equivocado (o en ninguno). Apunta a la ruta autenticada, no a un archivo
+// estático — ver receipt-file en routes/bookings.js.
+function receiptUrl(req, bookingId, storedPath) {
   if (!storedPath) return null;
-  return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/uploads/receipts/${storedPath.split('/').pop()}`;
+  return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/api/bookings/${bookingId}/receipt-file`;
 }
 
 function logoUrl(req, storedPath) {
@@ -80,8 +86,32 @@ function photoUrl(req, storedPath) {
   return `${req.protocol}://${req.get('host')}${req.baseUrlPrefix}/uploads/business-photos/${storedPath.split('/').pop()}`;
 }
 
+// Comprueba el contenido real del archivo, no solo el `mimetype` que
+// declaró el cliente (2026-09-08) — multer's `fileFilter` solo mira la
+// cabecera `Content-Type` del multipart, que cualquier cliente puede
+// falsear (ej. subir un .exe renombrado a foto.jpg con
+// Content-Type: image/jpeg). Lee los primeros bytes y compara contra la
+// firma real de cada formato admitido. Devuelve el mimetype detectado o
+// null si no coincide con ninguno.
+async function sniffFileType(filePath) {
+  const fd = await fs.promises.open(filePath, 'r');
+  try {
+    const buf = Buffer.alloc(12);
+    const { bytesRead } = await fd.read(buf, 0, 12, 0);
+    if (bytesRead < 4) return null;
+    if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+    if (bytesRead >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+    if (buf.toString('ascii', 0, 4) === '%PDF') return 'application/pdf';
+    return null;
+  } finally {
+    await fd.close();
+  }
+}
+
 module.exports = {
   receiptUpload, receiptUrl, RECEIPTS_DIR,
   logoUpload, logoUrl, LOGOS_DIR,
   photoUpload, photoUrl, PHOTOS_DIR,
+  sniffFileType, IMAGE_MIME, ALLOWED_MIME,
 };

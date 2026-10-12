@@ -76,3 +76,7 @@ Cada control interactivo define: default, hover, active/selected, disabled cuand
 ## Assets
 
 Sin fotografía real disponible para el prototipo. Los avatares y el portafolio usan tratamientos degradados con textura sutil (ruido/grano ligero) y monograma tipográfico — nunca emoji suelto como sustituto de imagen. Esto es un placeholder consciente, no el estado final (el copy del footer lo aclara).
+
+## Renovación web pública (2026-10-11)
+
+Dirección aprobada por Víctor: **A "Aire", estilo Fresha**. Home de bukeard.com con hero claro de borde a borde (manchas suaves teal y durazno sobre `oklch(97.5% 0.012 195)`), titular en Plus Jakarta Sans 800 con acento teal, buscador en píldora blanca, chips de categoría claros. El botón "Mi Negocio" del header es una píldora con borde (patrón "Para negocios" de Fresha) y apunta a `PORTAL_URL` (`views/shared.js`). Producción: `PORTAL_URL=https://negocio.bukeard.com`, portal solo para dueños, separado de clientes por origen. La app iOS y Android no cambia. Prototipo de las 3 direcciones: `prototype/renovacion-web.html`.

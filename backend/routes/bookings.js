@@ -1,14 +1,19 @@
 const express = require('express');
+const path = require('path');
 const pool = require('../db/pool');
 const { requireAuth } = require('../lib/auth-middleware');
-const { receiptUpload, receiptUrl } = require('../lib/uploads');
+const { receiptUpload, receiptUrl, RECEIPTS_DIR, sniffFileType, ALLOWED_MIME } = require('../lib/uploads');
+const fs = require('fs');
 const { getSettings } = require('../lib/settings');
 const push = require('../lib/push');
+const mailer = require('../lib/mailer');
+const { directionLinks } = require('../lib/geocode');
+const { wrapAsyncRouter } = require('../lib/async-router');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes, computeFreeSlots,
 } = require('../lib/availability');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // Reservar ahora exige sesión (el frontend ya la pide en el paso de
 // confirmar) — permite guardar quién reservó y que "Mis citas" se lea del
@@ -25,7 +30,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [services] = await pool.query(
-    'SELECT id, name, price_cents, duration_min FROM services WHERE id = ? AND professional_id = ?',
+    'SELECT id, name, price_cents, duration_min FROM services WHERE id = ? AND professional_id = ? AND archived_at IS NULL',
     [serviceId, professionalId]
   );
   const service = services[0];
@@ -49,7 +54,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [professionals] = await pool.query(
-    'SELECT name, business_name, neighborhood, lat, lng, owner_user_id FROM professionals WHERE id = ?',
+    'SELECT name, slug, business_name, neighborhood, lat, lng, owner_user_id FROM professionals WHERE id = ?',
     [professionalId]
   );
   const professional = professionals[0];
@@ -81,68 +86,135 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const { bookingSlotMin, bookingBufferMin } = await getSettings();
-  const [busyRows] = await pool.query(
-    `SELECT appointment_at, duration_min FROM bookings
-     WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?`,
-    [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
-  );
-  const busyRanges = busyRows.map(b => {
-    const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
-    return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
-  });
-
-  const freeSlots = computeFreeSlots({
-    hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
-    slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
-  });
-  if (!freeSlots.includes(startMin)) {
-    return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
-  }
-
   const appointmentAt = `${date} ${time}:00`;
 
-  try {
-    const [result] = await pool.query(
-      `INSERT INTO bookings
-         (professional_id, service_id, collaborator_id, client_user_id, client_name, day_label, time_label,
-          appointment_at, duration_min, payment_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        professionalId, serviceId, collaboratorId || null, req.user.id, clientName,
-        dayLabel(date), formatTime12h(time),
-        appointmentAt, service.duration_min, paymentMethod,
-      ]
-    );
+  // Reserva atómica (revisión externa 2026-09-08): antes se leía la
+  // disponibilidad y se insertaba en dos pasos sueltos del pool — dos
+  // clientes pidiendo horarios distintos que se solapan (ej. 45 min a las
+  // 9:00 y 30 min a las 9:15) podían pasar los dos la comprobación al mismo
+  // tiempo, porque el UNIQUE solo bloquea el mismo minuto exacto, no el
+  // solape. Una sola conexión, en transacción, con FOR UPDATE sobre las
+  // citas del día del negocio, serializa a cualquier otra reserva del mismo
+  // profesional que intente correr en paralelo — la segunda espera a que la
+  // primera confirme (o falle) antes de leer "libre".
+  //
+  // Reintento en deadlock (2026-09-09): un SELECT ... FOR UPDATE con BETWEEN
+  // sobre un rango sin filas toma un gap lock de InnoDB en todo el rango
+  // buscado; dos transacciones concurrentes pidiendo horarios distintos del
+  // MISMO negocio pueden tomar gap locks que se cruzan y terminar en un
+  // deadlock real (ER_LOCK_DEADLOCK) en vez de simplemente esperarse una a
+  // la otra. Antes esto quedaba como una promesa rechazada sin capturar —
+  // colgaba la petición hasta el timeout del cliente en silencio. Ahora se
+  // reintenta la transacción completa unas pocas veces (patrón estándar
+  // para deadlocks de InnoDB: la única forma correcta de resolverlos es
+  // reiniciar la transacción perdedora, MySQL ya abortó una de las dos).
+  const RETRYABLE = new Set(['ER_LOCK_DEADLOCK', 'ER_LOCK_WAIT_TIMEOUT']);
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
-    // propósito: si el envío de la notificación falla o tarda, la reserva
-    // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
-    // lanza, pero por si acaso el .catch() es la última red de seguridad.
-    push.sendToUser(professional.owner_user_id, {
-      title: 'Nueva reserva',
-      body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
-      data: { type: 'booking_created', bookingId: result.insertId },
-    }).catch(err => console.error('Error notificando la reserva:', err.message));
+      const [busyRows] = await conn.query(
+        `SELECT appointment_at, duration_min FROM bookings
+         WHERE professional_id = ? AND status = 'confirmed' AND appointment_at BETWEEN ? AND ?
+         FOR UPDATE`,
+        [professionalId, `${date} 00:00:00`, `${date} 23:59:59`]
+      );
+      const busyRanges = busyRows.map(b => {
+        const busyStart = timeToMinutes(b.appointment_at.slice(11, 16));
+        return { startMin: busyStart, endMin: busyStart + (b.duration_min || 30) };
+      });
 
-    res.status(201).json({
-      id: result.insertId,
-      professionalName: professional.name,
-      businessName: professional.business_name,
-      neighborhood: professional.neighborhood,
-      lat: professional.lat !== null ? Number(professional.lat) : null,
-      lng: professional.lng !== null ? Number(professional.lng) : null,
-      serviceName: service.name,
-      priceCents: service.price_cents,
-      dayLabel: dayLabel(date),
-      timeLabel: formatTime12h(time),
-      paymentMethod,
-      collaboratorName,
-    });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
+      const freeSlots = computeFreeSlots({
+        hoursRows, durationMin: service.duration_min, busyRanges, isToday, nowMinutes,
+        slotMin: bookingSlotMin, bufferMin: bookingBufferMin,
+      });
+      if (!freeSlots.includes(startMin)) {
+        await conn.rollback();
+        return res.status(409).json({ error: 'Ese horario ya no está disponible, elige otro' });
+      }
+
+      // service_name/price_cents (revisión externa 2026-09-08): foto del
+      // servicio al momento de reservar, para que "Mi Cuadre" y el historial
+      // no cambien de valor si el negocio edita el precio después. Ver
+      // db/init.js (migración) y GET /:slug/bookings, GET /:slug/stats.
+      const [result] = await conn.query(
+        `INSERT INTO bookings
+           (professional_id, service_id, collaborator_id, client_user_id, client_name, day_label, time_label,
+            appointment_at, duration_min, service_name, price_cents, payment_method)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          professionalId, serviceId, collaboratorId || null, req.user.id, clientName,
+          dayLabel(date), formatTime12h(time),
+          appointmentAt, service.duration_min, service.name, service.price_cents, paymentMethod,
+        ]
+      );
+
+      await conn.commit();
+
+      // Avisa al dueño del negocio (2026-09-06). No se espera (await) a
+      // propósito: si el envío de la notificación falla o tarda, la reserva
+      // ya quedó guardada y el cliente no debe notarlo — sendToUser() nunca
+      // lanza, pero por si acaso el .catch() es la última red de seguridad.
+      // El badge del ícono (2026-09-09) cuenta las reservas confirmadas que
+      // el dueño no ha visto todavía, incluida esta — se calcula aparte
+      // porque la transacción ya cerró (conn.commit()) y no vale la pena
+      // mantener el lock solo para este conteo.
+      push.countPendingBookings(professionalId)
+        .then(badge => push.sendToUser(professional.owner_user_id, {
+          title: 'Nueva reserva',
+          body: `${clientName} reservó ${service.name} el ${dayLabel(date)} a las ${formatTime12h(time)}`,
+          data: { type: 'booking_created', bookingId: result.insertId },
+          badge,
+        }))
+        .catch(err => console.error('Error notificando la reserva:', err.message));
+
+      // Correo de confirmación al cliente, sin esperar (2026-10-12).
+      if (req.user.email) {
+        const links = directionLinks(professional.name, professional.neighborhood,
+          professional.lat !== null ? Number(professional.lat) : null,
+          professional.lng !== null ? Number(professional.lng) : null);
+        mailer.sendBookingConfirmation(req.user.email, {
+          clientName: clientName,
+          serviceName: service.name,
+          priceCents: service.price_cents,
+          dayLabel: dayLabel(date),
+          timeLabel: formatTime12h(time),
+          businessName: professional.business_name,
+          professionalName: professional.name,
+          neighborhood: professional.neighborhood,
+          collaboratorName,
+          paymentMethod,
+          directionsUrl: links.google,
+          profileUrl: `https://www.bukeard.com/${professional.slug}`,
+        }).catch(err => console.error('Error enviando la confirmación de la cita:', err.message));
+      }
+
+      return res.status(201).json({
+        id: result.insertId,
+        professionalName: professional.name,
+        businessName: professional.business_name,
+        neighborhood: professional.neighborhood,
+        lat: professional.lat !== null ? Number(professional.lat) : null,
+        lng: professional.lng !== null ? Number(professional.lng) : null,
+        serviceName: service.name,
+        priceCents: service.price_cents,
+        dayLabel: dayLabel(date),
+        timeLabel: formatTime12h(time),
+        paymentMethod,
+        collaboratorName,
+      });
+    } catch (err) {
+      await conn.rollback();
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Alguien acaba de tomar ese horario, elige otro' });
+      }
+      if (RETRYABLE.has(err.code) && attempt < MAX_ATTEMPTS) continue;
+      throw err;
+    } finally {
+      conn.release();
     }
-    throw err;
   }
 });
 
@@ -153,7 +225,7 @@ router.get('/me', requireAuth, async (req, res) => {
     `SELECT b.id, b.status, b.payment_method, b.appointment_at, b.day_label, b.time_label, b.receipt_path,
             p.name AS professional_name, p.business_name, p.slug AS professional_slug,
             p.neighborhood, p.lat, p.lng,
-            s.name AS service_name, s.price_cents,
+            COALESCE(b.service_name, s.name) AS service_name, COALESCE(b.price_cents, s.price_cents) AS price_cents,
             c.name AS collaborator_name
      FROM bookings b
      JOIN professionals p ON p.id = b.professional_id
@@ -180,7 +252,7 @@ router.get('/me', requireAuth, async (req, res) => {
       dayLabel: b.appointment_at ? dayLabel(b.appointment_at.slice(0, 10)) : b.day_label,
       timeLabel: b.appointment_at ? formatTime12h(b.appointment_at.slice(11, 16)) : b.time_label,
       isPast: b.appointment_at ? b.appointment_at < nowInSantoDomingo().date + ' 00:00:00' : false,
-      receiptUrl: receiptUrl(req, b.receipt_path),
+      receiptUrl: receiptUrl(req, b.id, b.receipt_path),
       collaboratorName: b.collaborator_name || null,
     }))
   );
@@ -213,24 +285,56 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
 // transferencia adjunta la foto/PDF del comprobante, en el momento de
 // reservar o después desde "Mis citas". Solo el cliente dueño de la cita
 // puede subirlo (no el negocio — el negocio solo lo ve).
-router.post('/:id/receipt', requireAuth, (req, res) => {
+// Autorización antes de multer (2026-09-08): antes multer escribía el
+// archivo en disco antes de comprobar que quien sube es el cliente dueño de
+// la cita — una petición ajena dejaba el archivo persistido aunque la
+// respuesta terminara en 403. Ahora la cita y su dueño se comprueban primero.
+router.post('/:id/receipt', requireAuth, async (req, res, next) => {
+  const [rows] = await pool.query('SELECT client_user_id FROM bookings WHERE id = ?', [req.params.id]);
+  const booking = rows[0];
+  if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
+  if (booking.client_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No puedes adjuntar un comprobante a esta cita' });
+  }
   receiptUpload.single('receipt')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
-
-    const [rows] = await pool.query('SELECT client_user_id FROM bookings WHERE id = ?', [req.params.id]);
-    const booking = rows[0];
-    if (!booking) return res.status(404).json({ error: 'Cita no encontrada' });
-    if (booking.client_user_id !== req.user.id) {
-      return res.status(403).json({ error: 'No puedes adjuntar un comprobante a esta cita' });
-    }
     if (!req.file) return res.status(400).json({ error: 'Falta el archivo del comprobante' });
+
+    const realType = await sniffFileType(req.file.path);
+    if (!realType || !ALLOWED_MIME.has(realType)) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ error: 'El archivo no es una imagen (JPG, PNG, WEBP) o PDF válido' });
+    }
 
     await pool.query(
       'UPDATE bookings SET receipt_path = ?, receipt_uploaded_at = NOW() WHERE id = ?',
       [req.file.filename, req.params.id]
     );
-    res.json({ id: Number(req.params.id), receiptUrl: receiptUrl(req, req.file.filename) });
+    res.json({ id: Number(req.params.id), receiptUrl: receiptUrl(req, req.params.id, req.file.filename) });
   });
+});
+
+// Servir el archivo del comprobante (revisión externa 2026-09-08): antes
+// vivía bajo public/uploads/receipts, servido por express.static sin
+// autenticación — cualquiera con la URL (nombre de archivo difícil de
+// adivinar, pero no imposible, y URLs quedan en logs/historial) podía verlo.
+// Un comprobante de pago es información sensible; ahora exige sesión y solo
+// se sirve al cliente dueño de la cita o al dueño del negocio. RECEIPTS_DIR
+// vive fuera de public/ (ver lib/uploads.js), así que ya no hay ruta pública
+// que lo alcance sin pasar por aquí.
+router.get('/:id/receipt-file', requireAuth, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT b.receipt_path, b.client_user_id, p.owner_user_id
+     FROM bookings b JOIN professionals p ON p.id = b.professional_id
+     WHERE b.id = ?`,
+    [req.params.id]
+  );
+  const booking = rows[0];
+  if (!booking || !booking.receipt_path) return res.status(404).json({ error: 'Comprobante no encontrado' });
+  if (booking.client_user_id !== req.user.id && booking.owner_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes acceso a este comprobante' });
+  }
+  res.sendFile(path.join(RECEIPTS_DIR, booking.receipt_path));
 });
 
 module.exports = router;

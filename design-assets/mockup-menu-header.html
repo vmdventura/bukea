@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup menú Bukea</title>
+<style>
+:root{--teal-600:#0f6462;--teal-700:#0b504e;--teal-50:#eaf5f4;--ink:#12302f;--soft:#46615f;--line:#d6e3e2;--card:#fff;--bg:#f2f8f8;--deep:#06302e;--gold:#e8c27a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Helvetica Neue",sans-serif;background:#e9f1f1;color:var(--ink);padding:32px;display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
+h3{margin:0 0 12px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+.frame{background:linear-gradient(160deg,#06302e,#0b504e);border-radius:20px;padding:14px 16px 330px;width:860px;position:relative;overflow:hidden}
+.hdr{background:#f6fbfb;border-radius:999px;padding:8px 12px 8px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 10px 30px -12px rgba(0,0,0,.4);position:relative}
+.brand{display:flex;align-items:center;gap:9px;font-family:Georgia,serif;font-weight:700;font-size:21px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--teal-600);color:#fff;display:flex;align-items:center;justify-content:center;font-style:italic}
+.nav{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:700}
+.login{padding:8px 10px}
+.pill{border:1.5px solid var(--line);background:#fff;border-radius:999px;min-height:40px;padding:0 18px;display:inline-flex;align-items:center;gap:10px}
+.pill.on{border-color:#2aa39f;color:var(--teal-700)}
+.menu{position:absolute;right:16px;top:74px;width:330px;background:#fff;border-radius:24px;padding:10px;box-shadow:0 28px 60px -18px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
+.grp{background:var(--bg);border-radius:18px;padding:6px}
+.ttl{margin:0;padding:9px 12px 4px;font-size:12px;font-weight:800;color:var(--soft)}
+.row{display:flex;justify-content:space-between;align-items:center;min-height:42px;padding:8px 12px;border-radius:12px;font-size:14.5px;font-weight:600}
+.row:hover{background:var(--teal-50);color:var(--teal-700)}
+.row i{font-style:normal;color:var(--soft)}
+.theme{display:flex;justify-content:space-between;align-items:center;padding:2px 12px;font-size:13.5px;font-weight:600;color:var(--soft)}
+.tog{width:40px;height:22px;border-radius:99px;background:var(--line);position:relative}.tog:after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.biz{background:var(--deep);color:#fff;border-radius:18px;padding:15px 16px;display:flex;justify-content:space-between;align-items:center}
+.biz b{display:block;font-size:16px}.biz small{opacity:.92;font-size:12.5px}.biz i{font-style:normal;color:var(--gold);font-size:18px}
+.join{color:var(--teal-700);font-weight:800;display:flex;justify-content:space-between;padding:8px 14px 6px;font-size:14.5px}
+.badge{background:#f3e6c4;color:#8a6420;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:8px}
+.hero{color:#fff;padding:40px 30px;font-size:46px;font-weight:800;line-height:1.05;max-width:520px}.hero b{color:#f6e3bb}
+/* móvil */
+.phone{width:340px;background:linear-gradient(160deg,#06302e,#0b504e);border-radius:34px;padding:12px 12px 20px;min-height:640px;position:relative;border:6px solid #111}
+.phone .hdr{padding:7px 8px 7px 12px}
+.phone .menu{position:absolute;left:12px;right:12px;top:68px;width:auto}
+.burger{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.acc{background:#f3fafa;border-radius:12px}
+.note{width:100%;font-size:13px;color:var(--soft);max-width:900px}
+</style></head><body>
+<div>
+<h3>Escritorio · menú abierto</h3>
+<div class="frame">
+  <div class="hdr">
+    <div class="brand"><span class="mark">b</span>Bukea</div>
+    <div class="nav"><span class="login">Iniciar sesión</span><span class="pill">Mi negocio</span><span class="pill on">Nosotros ☰</span></div>
+  </div>
+  <div class="menu">
+    <div class="grp"><p class="ttl">Bukea</p>
+      <div class="row">Inicio<i>›</i></div><div class="row">Nosotros<i>›</i></div><div class="row">Descargar la app<i>›</i></div><div class="row">Blog<i>›</i></div><div class="row">Ayuda y contacto<i>›</i></div></div>
+    <div class="grp"><p class="ttl">Legal</p>
+      <div class="row">Términos de servicio<i>›</i></div><div class="row">Política de privacidad<i>›</i></div></div>
+    <div class="biz"><span><b>¿Tienes un negocio?</b><small>Únete a Bukea <span class="badge">30 cupos gratis</span></small></span><i>↗</i></div>
+    <div class="theme"><span>Tema oscuro</span><span class="tog"></span></div>
+  </div>
+  <div class="hero">Bukea tu cita en <b>60 segundos</b></div>
+</div>
+</div>
+<div>
+<h3>Móvil · menú abierto</h3>
+<div class="phone">
+  <div class="hdr"><div class="brand"><span class="mark">b</span>Bukea</div><span class="burger">✕</span></div>
+  <div class="menu">
+    <div class="grp"><p class="ttl">Tu cuenta</p>
+      <div class="row acc" style="color:#0b504e;font-weight:800">Iniciar sesión o registrarte<i>›</i></div>
+      <div class="row">Mi negocio<i>›</i></div></div>
+    <div class="grp"><p class="ttl">Bukea</p>
+      <div class="row">Inicio<i>›</i></div><div class="row">Nosotros<i>›</i></div><div class="row">Descargar la app<i>›</i></div><div class="row">Blog<i>›</i></div><div class="row">Ayuda y contacto<i>›</i></div></div>
+    <div class="grp"><p class="ttl">Legal</p>
+      <div class="row">Términos de servicio<i>›</i></div><div class="row">Política de privacidad<i>›</i></div></div>
+    <div class="biz"><span><b>¿Tienes un negocio?</b><small>Únete a Bukea <span class="badge">30 cupos gratis</span></small></span><i>↗</i></div>
+    <div class="theme"><span>Tema oscuro</span><span class="tog"></span></div>
+  </div>
+</div>
+</div>
+<p class="note">Header: tres elementos a la derecha. Iniciar sesión (clientes), Mi negocio (negocios ya registrados) y Nosotros, que guarda todo lo demás, como Fresha y Booksy. Todo lo demás vive dentro del menú, agrupado por tipo.</p>
+</body></html>

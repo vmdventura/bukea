@@ -7,8 +7,10 @@ const oauth = require('../lib/oauth');
 const { PHONE_RE, normalizePhone, hashPin } = require('../lib/credentials');
 const rateLimit = require('../lib/rate-limit');
 const { requireAuth } = require('../lib/auth-middleware');
+const { buildSessionPayload } = require('../lib/session-payload');
+const { wrapAsyncRouter } = require('../lib/async-router');
 
-const router = express.Router();
+const router = wrapAsyncRouter(express.Router());
 
 // Claves de bloqueo del login: por teléfono (frena la fuerza bruta sobre
 // una cuenta concreta) y por IP (frena un barrido sobre muchas cuentas).
@@ -36,7 +38,7 @@ async function issueToken(userId) {
 // Busca una cuenta por proveedor social (o por email, para no duplicar la
 // cuenta de alguien que ya se había registrado con teléfono+PIN) y la crea
 // si no existe. Devuelve la misma forma de sesión que login/register.
-async function upsertSocialUser({ column, sub, email, name, accountType }) {
+async function upsertSocialUser({ column, sub, email, name, accountType, loginOnly }) {
   let [rows] = await pool.query(`SELECT * FROM users WHERE ${column} = ?`, [sub]);
   let user = rows[0];
 
@@ -48,6 +50,9 @@ async function upsertSocialUser({ column, sub, email, name, accountType }) {
   if (user && user.disabled_at) {
     throw new Error('disabled');
   }
+
+  // Acceso del portal (Mi Negocio): solo cuentas ya registradas, no crear.
+  if (!user && loginOnly) throw new Error('not_registered');
 
   if (user) {
     // El correo que da Google/Apple ya viene verificado por ellos — si la
@@ -67,13 +72,15 @@ async function upsertSocialUser({ column, sub, email, name, accountType }) {
       [name || 'Cliente Bukea', email, type, sub]
     );
     user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email, account_type: type };
+    sendWelcomeEmail(email, user.name, type);
   }
 
   const token = await issueToken(user.id);
-  return {
-    token, name: user.name, phone: user.phone, email: user.email || email || null, emailVerified: true,
-    accountType: user.account_type || 'client',
-  };
+  // Refetch: la fila `user` de la rama existente es anterior al UPDATE
+  // (email_verified_at pudo cambiar recién), y la rama nueva es un objeto
+  // armado a mano sin ese campo — buildSessionPayload necesita la fila real.
+  const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+  return buildSessionPayload(fresh[0], { token });
 }
 
 router.post('/check', async (req, res) => {
@@ -123,12 +130,29 @@ router.post('/register', async (req, res) => {
 
   const salt = crypto.randomBytes(16).toString('hex');
   const token = crypto.randomBytes(24).toString('hex');
-  const [result] = await pool.query(
-    'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token, account_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [phone, name, email, salt, hashPin(pin, salt), token, accountType]
-  );
+  let result;
+  try {
+    [result] = await pool.query(
+      'INSERT INTO users (phone, name, email, pin_salt, pin_hash, token, account_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [phone, name, email, salt, hashPin(pin, salt), token, accountType]
+    );
+  } catch (err) {
+    // Carrera real (2026-09-08, encontrada corriendo la suite de pruebas en
+    // paralelo): dos registros con el mismo teléfono entre el SELECT de
+    // arriba y este INSERT. Antes esto tumbaba el proceso entero (una
+    // promesa rechazada sin capturar en una ruta async revienta a Express 4
+    // completo, cortando a TODOS los usuarios conectados, no solo a este).
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ese número ya tiene cuenta, inicia sesión con tu PIN' });
+    }
+    throw err;
+  }
   await sendVerificationEmail(req, result.insertId, email, name);
-  res.status(201).json({ token, name, phone, email, emailVerified: false, accountType });
+  const payload = await buildSessionPayload(
+    { id: result.insertId, name, phone, email, email_verified_at: null, phone_verified_at: null, account_type: accountType },
+    { token }
+  );
+  res.status(201).json(payload);
 });
 
 // Enlace de verificación (2026-08-27): token de un solo uso, vence en 24h.
@@ -149,6 +173,11 @@ async function sendVerificationEmail(req, userId, email, name) {
   } catch (err) {
     console.error('No se pudo enviar el correo de verificación:', err.message);
   }
+}
+
+function sendWelcomeEmail(email, name, accountType) {
+  if (!email) return;
+  mailer.sendWelcome(email, name, accountType).catch(err => console.error('No se pudo enviar la bienvenida:', err.message));
 }
 
 const VERIFY_PAGE_STYLE = `<style>
@@ -310,12 +339,8 @@ router.delete('/push-token', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/session', requireAuth, (req, res) => {
-  res.json({
-    id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email,
-    emailVerified: Boolean(req.user.email_verified_at), accountType: req.user.account_type,
-    phoneVerified: Boolean(req.user.phone_verified_at),
-  });
+router.get('/session', requireAuth, async (req, res) => {
+  res.json(await buildSessionPayload(req.user));
 });
 
 router.post('/login', async (req, res) => {
@@ -345,10 +370,7 @@ router.post('/login', async (req, res) => {
 
   const token = crypto.randomBytes(24).toString('hex');
   await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
-  res.json({
-    token, name: user.name, phone: user.phone, email: user.email,
-    emailVerified: Boolean(user.email_verified_at), accountType: user.account_type,
-  });
+  res.json(await buildSessionPayload(user, { token }));
 });
 
 /* ===== Verificación por WhatsApp (OTP) =====
@@ -423,12 +445,169 @@ router.post('/otp/verify', async (req, res) => {
   if (users.length > 0) {
     const token = crypto.randomBytes(24).toString('hex');
     await pool.query('UPDATE users SET token = ? WHERE id = ?', [token, users[0].id]);
-    return res.json({
-      verified: true, exists: true, token, name: users[0].name, phone, email: users[0].email,
-      emailVerified: Boolean(users[0].email_verified_at), accountType: users[0].account_type,
-    });
+    const payload = await buildSessionPayload(users[0], { token });
+    return res.json({ verified: true, exists: true, ...payload });
   }
   res.json({ verified: true, exists: false, phone });
+});
+
+/* ===== Entrar o crear cuenta con el correo (2026-10-11) =====
+   Igual que Fresha: una sola pantalla. Se pide el correo, llega un código de
+   6 dígitos y, al verificarlo, si la cuenta existe se entra; si no, se emite
+   un pase de un solo uso para crearla (nombre y, opcional, teléfono). Sin PIN. */
+function emailCodeDebug() {
+  return process.env.NODE_ENV !== 'production' && process.env.EMAIL_CODE_DEBUG === '1' && !mailer.isConfigured();
+}
+
+const RESEND_WAIT_SECONDS = 30;
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+async function findUserByEmail(email) {
+  const [rows] = await pool.query('SELECT * FROM users WHERE LOWER(email) = ? ORDER BY id ASC LIMIT 1', [email]);
+  return rows[0] || null;
+}
+
+router.post('/email/send', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo válido' });
+
+  const wait = rateLimit.hit([{ key: 'email-code-ip:' + req.ip, max: 15, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  const debug = emailCodeDebug();
+  if (!debug && !mailer.isConfigured()) {
+    return res.status(503).json({ error: 'El envío de correos aún no está activo' });
+  }
+
+  const [recent] = await pool.query(
+    `SELECT COUNT(*) AS n, TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) AS since
+     FROM auth_codes WHERE email = ? AND created_at > NOW() - INTERVAL 10 MINUTE`,
+    [email]
+  );
+  if (recent[0].n >= 3) return res.status(429).json({ error: 'Demasiados intentos, espera unos minutos' });
+  // Espera mínima entre reenvíos (2026-10-12): evita que un doble toque mande dos
+  // correos y acompaña al contador de "Reenviar código" de la pantalla.
+  if (recent[0].n > 0 && recent[0].since !== null && recent[0].since < RESEND_WAIT_SECONDS) {
+    const left = RESEND_WAIT_SECONDS - recent[0].since;
+    return res.status(429).json({ error: `Espera ${left} segundos para pedir otro código`, retryAfter: left });
+  }
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  const salt = crypto.randomBytes(16).toString('hex');
+  const codeHash = hashPin(code, salt);
+  await pool.query(
+    'INSERT INTO auth_codes (email, code_hash, code_salt, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL 15 MINUTE)',
+    [email, codeHash, salt]
+  );
+
+  if (debug) {
+    console.log(`[email-code] ${email}: ${code}`);
+    return res.json({ sent: true, devCode: code, resendIn: RESEND_WAIT_SECONDS });
+  }
+  // Se responde de inmediato y el correo sale en segundo plano (2026-10-12): la
+  // pantalla pasa al paso del código sin esperar al servidor de correo. Si el
+  // envío falla, se borra ese código para no gastar uno de los 3 intentos.
+  res.json({ sent: true, resendIn: RESEND_WAIT_SECONDS });
+  mailer.sendLoginCode(email, code).catch(err => {
+    console.error('Error enviando código por correo:', err.message);
+    pool.query('DELETE FROM auth_codes WHERE email = ? AND code_hash = ?', [email, codeHash]).catch(() => {});
+  });
+});
+
+router.post('/email/verify', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const code = String(req.body.code || '').trim();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo válido' });
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'El código es de 6 dígitos' });
+
+  const [rows] = await pool.query(
+    'SELECT * FROM auth_codes WHERE email = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+    [email]
+  );
+  const record = rows[0];
+  if (!record) return res.status(404).json({ error: 'El código venció, pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos, pide un código nuevo' });
+  if (hashPin(code, record.code_salt) !== record.code_hash) {
+    await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
+    return res.status(401).json({ error: 'Código incorrecto' });
+  }
+  await pool.query('DELETE FROM auth_codes WHERE email = ?', [email]);
+
+  const user = await findUserByEmail(email);
+  if (user && user.disabled_at) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
+  }
+  if (user) {
+    if (!user.email_verified_at) await pool.query('UPDATE users SET email_verified_at = NOW() WHERE id = ?', [user.id]);
+    const token = await issueToken(user.id);
+    const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+    const payload = await buildSessionPayload(fresh[0], { token });
+    return res.json({ verified: true, exists: true, ...payload });
+  }
+
+  const signupToken = crypto.randomBytes(24).toString('hex');
+  await pool.query('DELETE FROM signup_tokens WHERE email = ?', [email]);
+  await pool.query(
+    'INSERT INTO signup_tokens (token_hash, email, expires_at) VALUES (?, ?, NOW() + INTERVAL 30 MINUTE)',
+    [sha256(signupToken), email]
+  );
+  res.json({ verified: true, exists: false, email, signupToken });
+});
+
+router.post('/email/register', async (req, res) => {
+  const wait = rateLimit.hit([{ key: 'reg-ip:' + req.ip, max: 10, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  const signupToken = String(req.body.signupToken || '');
+  const name = String(req.body.name || '').trim();
+  const rawPhone = String(req.body.phone || '').trim();
+  const accountType = normalizeAccountType(req.body.accountType);
+  if (!signupToken) return res.status(400).json({ error: 'Falta verificar tu correo' });
+  if (!name) return res.status(400).json({ error: 'Dinos tu nombre' });
+
+  let phone = null;
+  if (rawPhone) {
+    phone = normalizePhone(rawPhone);
+    if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'Ingresa un número dominicano válido (809, 829 u 849)' });
+  }
+  if (accountType === 'owner' && !phone) {
+    return res.status(400).json({ error: 'Escribe el teléfono de tu negocio' });
+  }
+
+  const [tokens] = await pool.query(
+    'SELECT * FROM signup_tokens WHERE token_hash = ? AND expires_at > NOW() LIMIT 1',
+    [sha256(signupToken)]
+  );
+  const pass = tokens[0];
+  if (!pass) return res.status(400).json({ error: 'La verificación venció, vuelve a pedir el código' });
+
+  if (await findUserByEmail(pass.email)) {
+    await pool.query('DELETE FROM signup_tokens WHERE id = ?', [pass.id]);
+    return res.status(409).json({ error: 'Ese correo ya tiene cuenta, entra con tu código' });
+  }
+  if (phone) {
+    const [dup] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
+    if (dup.length) return res.status(409).json({ error: 'Ese teléfono ya tiene cuenta. Entra con tu correo o tu PIN' });
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  let result;
+  try {
+    [result] = await pool.query(
+      'INSERT INTO users (phone, name, email, email_verified_at, token, account_type) VALUES (?, ?, ?, NOW(), ?, ?)',
+      [phone, name, pass.email, token, accountType]
+    );
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ese teléfono ya tiene cuenta' });
+    throw err;
+  }
+  await pool.query('DELETE FROM signup_tokens WHERE id = ?', [pass.id]);
+  sendWelcomeEmail(pass.email, name, accountType);
+  const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+  res.status(201).json(await buildSessionPayload(fresh[0], { token }));
 });
 
 /* ===== Olvidé mi PIN (2026-08-23) =====
@@ -499,7 +678,7 @@ router.post('/reset-pin', async (req, res) => {
     return res.status(401).json({ error: 'Código incorrecto' });
   }
 
-  const [users] = await pool.query('SELECT id, name, phone, account_type FROM users WHERE email = ?', [email]);
+  const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   const user = users[0];
   if (!user) return res.status(404).json({ error: 'No encontramos esa cuenta' });
 
@@ -511,7 +690,7 @@ router.post('/reset-pin', async (req, res) => {
     'UPDATE users SET pin_salt = ?, pin_hash = ?, token = ? WHERE id = ?',
     [salt, hashPin(newPin, salt), token, user.id]
   );
-  res.json({ token, name: user.name, phone: user.phone, accountType: user.account_type });
+  res.json(await buildSessionPayload(user, { token }));
 });
 
 /* ===== Login con Google y Apple =====
@@ -530,9 +709,12 @@ router.post('/google', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Google' });
   try {
     const payload = await oauth.verifyGoogleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'google_sub', ...payload, accountType: req.body.accountType });
+    const session = await upsertSocialUser({ column: 'google_sub', ...payload, accountType: req.body.accountType, loginOnly: req.body.loginOnly === true });
     res.json(session);
   } catch (err) {
+    if (err.message === 'not_registered') {
+      return res.status(404).json({ error: 'Esta cuenta no está registrada. Únete a Bukea para registrar tu negocio' });
+    }
     if (err.message === 'disabled') {
       return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
     }
@@ -546,9 +728,12 @@ router.post('/apple', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Apple' });
   try {
     const payload = await oauth.verifyAppleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name, accountType: req.body.accountType });
+    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name, accountType: req.body.accountType, loginOnly: req.body.loginOnly === true });
     res.json(session);
   } catch (err) {
+    if (err.message === 'not_registered') {
+      return res.status(404).json({ error: 'Esta cuenta no está registrada. Únete a Bukea para registrar tu negocio' });
+    }
     if (err.message === 'disabled') {
       return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
     }

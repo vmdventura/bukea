@@ -82,4 +82,62 @@ async function sendTextMessage(phone, text) {
   return res.json();
 }
 
-module.exports = { isConfigured, sendAuthCode, sendTextMessage };
+// Recordatorio de cita, 1 hora antes (2026-09-10, a pedido de Víctor). Como
+// sendAuthCode (y a diferencia de sendTextMessage), usa una plantilla
+// aprobada de Meta: un mensaje type:"text" solo entrega si el cliente le
+// escribió a Bukea en las últimas 24 horas, y no hay garantía de que lo haya
+// hecho justo antes de su cita. La plantilla necesita existir y estar
+// aprobada en Meta Business (categoría Utilidad, no Marketing, para que
+// pueda mandarse en frío) — nombre en WHATSAPP_REMINDER_TEMPLATE.
+//
+// Texto de la plantilla "recordatorio_cita" (actualizada 2026-09-10 al
+// estilo más completo de Fresha, a pedido de Víctor), variables del body en
+// el mismo orden que aquí: {{1}} nombre del cliente, {{2}} negocio,
+// {{3}} fecha y hora, {{4}} servicio. Sin esa variable configurada,
+// isReminderConfigured() da false y el job de lib/reminders.js no intenta
+// nada.
+function isReminderConfigured() {
+  return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID && process.env.WHATSAPP_REMINDER_TEMPLATE);
+}
+
+async function sendAppointmentReminder(phone, { clientName, businessName, dateTime, serviceName }) {
+  if (!isReminderConfigured()) {
+    throw new Error('Plantilla de recordatorio no configurada (falta WHATSAPP_REMINDER_TEMPLATE)');
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${process.env.WHATSAPP_PHONE_ID}/messages`;
+  const body = {
+    messaging_product: 'whatsapp',
+    to: '1' + phone,
+    type: 'template',
+    template: {
+      name: process.env.WHATSAPP_REMINDER_TEMPLATE,
+      language: { code: 'es_DO' },
+      components: [
+        { type: 'body', parameters: [
+          { type: 'text', text: clientName },
+          { type: 'text', text: businessName },
+          { type: 'text', text: dateTime },
+          { type: 'text', text: serviceName },
+        ] },
+      ],
+    },
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + process.env.WHATSAPP_TOKEN,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`WhatsApp API respondió ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+module.exports = { isConfigured, sendAuthCode, sendTextMessage, isReminderConfigured, sendAppointmentReminder };
