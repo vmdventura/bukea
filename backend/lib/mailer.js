@@ -21,6 +21,13 @@ function getTransporter() {
       port: Number(process.env.SMTP_PORT),
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
+      // Conexión reutilizada y tiempos límite (2026-10-12): sin esto cada correo
+      // abría una conexión TLS nueva y un servidor lento dejaba el envío colgado.
+      pool: true,
+      maxConnections: 3,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
     });
   }
   return transporter;

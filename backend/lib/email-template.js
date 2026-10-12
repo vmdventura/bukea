@@ -140,7 +140,7 @@ function layout({ preheader, eyebrow, heading, bodyHtml, footNote, whyHtml, alig
           <a href="${SITE}/privacidad" style="color:${C.teal};text-decoration:none;font-weight:600">Privacidad</a>
         </div>
         ${footNote ? `<div style="font:400 12px ${SANS};color:${C.faint};line-height:1.6;margin-top:12px">${footNote}</div>` : ''}
-        <div style="font:400 12px ${SANS};color:${C.faint};line-height:1.6;margin-top:12px">Bukea · República Dominicana<br>Cero comisión por cliente nuevo</div>
+        <div style="font:400 12px ${SANS};color:${C.faint};line-height:1.6;margin-top:12px">Bukea · República Dominicana</div>
       </td></tr>
 
     </table>

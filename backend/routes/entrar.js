@@ -139,10 +139,26 @@ router.get('/entrar/cliente', async (req, res) => {
     var next = new URLSearchParams(location.search).get('next');
     location.href = next && next.charAt(0) === '/' && next.charAt(1) !== '/' ? next : '/cuenta';
   }
+  /* Contador de "Reenviar código" (2026-10-12): el servidor responde al instante y
+     fija la espera mínima entre envíos; aquí se muestra como cuenta regresiva. */
+  var resendTimer = null;
+  function startResend(seconds) {
+    var b = $('b-resend'); clearInterval(resendTimer);
+    var left = Math.max(0, Math.round(seconds || 0));
+    function tick() {
+      if (left <= 0) { clearInterval(resendTimer); b.disabled = false; b.textContent = 'Reenviar código'; return; }
+      b.disabled = true; b.textContent = 'Reenviar código (' + left + ' s)'; left -= 1;
+    }
+    tick(); if (left > 0) resendTimer = setInterval(tick, 1000);
+  }
   async function sendCode(errId) {
     var r = await post('/email/send', { email: email });
-    if (!r.ok) { err(errId, r.data.error || 'No se pudo enviar el código.'); return false; }
+    if (!r.ok) {
+      if (r.data.retryAfter) startResend(r.data.retryAfter);
+      err(errId, r.data.error || 'No se pudo enviar el código.'); return false;
+    }
     if (r.data.devCode) console.info('[dev] código:', r.data.devCode);
+    startResend(r.data.resendIn || 30);
     return true;
   }
   $('b-email').onclick = async function () {
@@ -201,7 +217,7 @@ router.get('/entrar/cliente', async (req, res) => {
       await social('/apple', { idToken: res.authorization.id_token, name: name });
     } catch (e) { if (!e || e.error !== 'popup_closed_by_user') err('e-email', 'No se pudo iniciar sesión con Apple.'); }
   };
-  $('b-resend').onclick = async function () { clear(); var b = this; b.disabled = true; if (await sendCode('e-code')) err('e-code', 'Te enviamos un código nuevo.', true); setTimeout(function () { b.disabled = false; }, 10000); };
+  $('b-resend').onclick = async function () { clear(); var b = this; b.disabled = true; try { if (await sendCode('e-code')) err('e-code', 'Te enviamos un código nuevo.', true); } catch (e) { b.disabled = false; err('e-code', 'No se pudo conectar con el servidor.'); } };
   $('b-change').onclick = function () { clear(); show('s-email'); $('i-email').focus(); };
   $('i-email').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('b-email').click(); });
   $('i-code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('b-code').click(); });

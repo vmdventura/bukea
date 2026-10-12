@@ -1226,10 +1226,27 @@ ${ICON_SPRITE}
     return { ok: res.ok, status: res.status, data: data };
   }
 
+  /* Contador de "Reenviar código" (2026-10-12): el servidor responde al instante y
+     fija la espera mínima entre envíos; aquí se muestra como cuenta regresiva. */
+  var resendTimer = null;
+  function startResend(seconds) {
+    var b = document.getElementById('a-resend-btn'); clearInterval(resendTimer);
+    var left = Math.max(0, Math.round(seconds || 0));
+    function tick() {
+      if (left <= 0) { clearInterval(resendTimer); b.disabled = false; b.textContent = 'Reenviar código'; return; }
+      b.disabled = true; b.textContent = 'Reenviar código (' + left + ' s)'; left -= 1;
+    }
+    tick(); if (left > 0) resendTimer = setInterval(tick, 1000);
+  }
+
   async function authEmailRequest(errId) {
     var r = await postAuth('/email/send', { email: pendingEmail });
-    if (!r.ok) { showAuthError(errId, r.data.error || 'No se pudo enviar el código.'); return false; }
+    if (!r.ok) {
+      if (r.data.retryAfter) startResend(r.data.retryAfter);
+      showAuthError(errId, r.data.error || 'No se pudo enviar el código.'); return false;
+    }
     if (r.data.devCode) console.info('[dev] código:', r.data.devCode);
+    startResend(r.data.resendIn || 30);
     return true;
   }
 
@@ -1258,8 +1275,9 @@ ${ICON_SPRITE}
     try {
       if (await authEmailRequest('auth-error-code')) showAuthError('auth-error-code', 'Te enviamos un código nuevo.');
     } catch (err) {
+      btn.disabled = false;
       showAuthError('auth-error-code', 'No se pudo conectar con el servidor.');
-    } finally { setTimeout(function () { btn.disabled = false; }, 10000); }
+    }
   };
 
   window.authEmailVerify = async function () {

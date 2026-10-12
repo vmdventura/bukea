@@ -528,7 +528,7 @@ ${bodyHtml}
   <div class="wrap footer-grid">
     <div class="footer-brand">
       <a class="brand" href="/"><span class="mark">b</span>Bukea</a>
-      <p>Reserva tu próxima cita en República Dominicana. Cero comisión, gratis para siempre para el cliente.</p>
+      <p>Reserva tu próxima cita en República Dominicana.</p>
       ${storeButtons('footer-stores')}
       <div class="footer-social-row">
         <a href="https://www.facebook.com/bukeard" target="_blank" rel="noopener" aria-label="Facebook"><svg class="icon"><use href="#i-facebook"/></svg></a>
@@ -562,7 +562,6 @@ ${bodyHtml}
   </div>
   <div class="wrap footer-bottom">
     <span>© ${new Date().getFullYear()} Bukea · República Dominicana</span>
-    <span>Cero comisión, para siempre</span>
   </div>
 </footer>
 <script>

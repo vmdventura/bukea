@@ -459,6 +459,8 @@ function emailCodeDebug() {
   return process.env.NODE_ENV !== 'production' && process.env.EMAIL_CODE_DEBUG === '1' && !mailer.isConfigured();
 }
 
+const RESEND_WAIT_SECONDS = 30;
+
 function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
@@ -481,29 +483,38 @@ router.post('/email/send', async (req, res) => {
   }
 
   const [recent] = await pool.query(
-    'SELECT COUNT(*) AS n FROM auth_codes WHERE email = ? AND created_at > NOW() - INTERVAL 10 MINUTE',
+    `SELECT COUNT(*) AS n, TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) AS since
+     FROM auth_codes WHERE email = ? AND created_at > NOW() - INTERVAL 10 MINUTE`,
     [email]
   );
   if (recent[0].n >= 3) return res.status(429).json({ error: 'Demasiados intentos, espera unos minutos' });
+  // Espera mínima entre reenvíos (2026-10-12): evita que un doble toque mande dos
+  // correos y acompaña al contador de "Reenviar código" de la pantalla.
+  if (recent[0].n > 0 && recent[0].since !== null && recent[0].since < RESEND_WAIT_SECONDS) {
+    const left = RESEND_WAIT_SECONDS - recent[0].since;
+    return res.status(429).json({ error: `Espera ${left} segundos para pedir otro código`, retryAfter: left });
+  }
 
   const code = String(crypto.randomInt(100000, 1000000));
   const salt = crypto.randomBytes(16).toString('hex');
+  const codeHash = hashPin(code, salt);
   await pool.query(
     'INSERT INTO auth_codes (email, code_hash, code_salt, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL 15 MINUTE)',
-    [email, hashPin(code, salt), salt]
+    [email, codeHash, salt]
   );
 
   if (debug) {
     console.log(`[email-code] ${email}: ${code}`);
-    return res.json({ sent: true, devCode: code });
+    return res.json({ sent: true, devCode: code, resendIn: RESEND_WAIT_SECONDS });
   }
-  try {
-    await mailer.sendLoginCode(email, code);
-  } catch (err) {
+  // Se responde de inmediato y el correo sale en segundo plano (2026-10-12): la
+  // pantalla pasa al paso del código sin esperar al servidor de correo. Si el
+  // envío falla, se borra ese código para no gastar uno de los 3 intentos.
+  res.json({ sent: true, resendIn: RESEND_WAIT_SECONDS });
+  mailer.sendLoginCode(email, code).catch(err => {
     console.error('Error enviando código por correo:', err.message);
-    return res.status(502).json({ error: 'No se pudo enviar el correo, intenta de nuevo' });
-  }
-  res.json({ sent: true });
+    pool.query('DELETE FROM auth_codes WHERE email = ? AND code_hash = ?', [email, codeHash]).catch(() => {});
+  });
 });
 
 router.post('/email/verify', async (req, res) => {

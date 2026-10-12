@@ -63,9 +63,10 @@ function check(name, ok, extra) {
   check('GET /session con el token nuevo funciona', !!s && (s.email === email || (s.user && s.user.email === email)), s);
 
   const email4 = `limite.${stamp}@example.com`;
-  for (let i = 0; i < 3; i++) await call('/email/send', { email: email4 });
   r = await call('/email/send', { email: email4 });
-  check('cuarto código sin verificar en 10 min responde 429', r.status === 429, r);
+  check('send responde de inmediato con resendIn', r.status === 200 && r.data.resendIn === 30, r);
+  r = await call('/email/send', { email: email4 });
+  check('reenviar antes de 30 s responde 429 con retryAfter', r.status === 429 && r.data.retryAfter > 0 && r.data.retryAfter <= 30, r);
 
   console.log('Dueño ' + email2);
   r = await call('/email/send', { email: email2 });
