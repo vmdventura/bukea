@@ -33,7 +33,7 @@ Cuatro bloques:
 1. **Logo del negocio** — mismo mecanismo que el paso 6 del wizard, pero editable en cualquier momento (`POST /:slug/logo`).
 2. **Fotos del negocio** — galería tipo grid, subir de una en una (`POST /:slug/photos`), borrar individualmente (`DELETE /:slug/photos/:photoId`). Tabla nueva `business_photos` (id, professional_id, path, created_at).
 3. **Ubicación en el mapa** — Leaflet + OpenStreetMap (mismo stack que `/mapa` en el sitio público), pin arrastrable inicializado en las coordenadas actuales del negocio (`lat`/`lng`, ya existían de la geocodificación por sector). Botón "Guardar ubicación" → `PUT /:slug/location`. Resuelve la limitación conocida de que el registro solo geocodifica el sector, no la dirección exacta.
-4. **¿Necesitas ayuda?** — textarea + botón "Abrir ticket". Envía un correo directo a `hola@bukeard.com` con el contexto del negocio (nombre, slug, quién escribe). Sin tabla de tickets ni estado (abierto/cerrado) — decisión explícita de Víctor de mantenerlo simple por ahora. `POST /:slug/ticket`.
+4. **¿Necesitas ayuda?** — textarea + botón "Abrir ticket". Envía un correo directo a `contacto@bukeard.com` con el contexto del negocio (nombre, slug, quién escribe). Sin tabla de tickets ni estado (abierto/cerrado) — decisión explícita de Víctor de mantenerlo simple por ahora. `POST /:slug/ticket`.
 
 ## Cambios de base de datos
 

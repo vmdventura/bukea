@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup perfil de negocio</title>
+<style>
+:root{--teal-600:#0f6462;--teal-700:#0b504e;--teal-50:#eaf5f4;--teal-100:#d3ebe9;--ink:#12302f;--soft:#46615f;--line:#d6e3e2;--card:#fff;--bg:#f2f8f8;--deep:#06302e;--gold:#8a6420;--gold-bg:#f3e6c4}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Helvetica Neue",sans-serif;background:#e4eded;color:var(--ink);padding:28px 28px 28px 52px;display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start}
+h3{margin:0 0 10px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+.note{width:100%;max-width:1000px;font-size:13px;color:var(--soft);line-height:1.5;margin:0}
+.note b{color:var(--ink)}
+a{color:inherit;text-decoration:none}
+
+/* ---------- pantalla escritorio ---------- */
+.desk{width:980px;background:var(--bg);border-radius:18px;overflow:hidden;box-shadow:0 20px 50px -20px rgba(0,0,0,.35)}
+.hdr{margin:12px 14px 0;background:#f6fbfb;border-radius:999px;padding:7px 12px 7px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 24px -12px rgba(0,0,0,.25)}
+.brand{display:flex;align-items:center;gap:8px;font-family:Georgia,serif;font-weight:700;font-size:20px}
+.mark{width:32px;height:32px;border-radius:10px;background:var(--teal-600);color:#fff;display:flex;align-items:center;justify-content:center;font-style:italic}
+.nav{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+.pill{border:1.5px solid var(--line);background:#fff;border-radius:999px;min-height:36px;padding:0 15px;display:inline-flex;align-items:center}
+
+.top{display:grid;grid-template-columns:1fr 290px;gap:26px;padding:22px 26px 6px;align-items:center}
+.id{display:flex;gap:20px;align-items:center}
+.logo{width:96px;height:96px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px #fff,0 10px 22px -8px rgba(15,60,58,.45);flex:none}
+.id-text{min-width:0}
+.name-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.id h1{margin:0;font-family:Georgia,serif;font-size:32px;line-height:1.08;letter-spacing:-.01em;text-wrap:balance}
+.badge-new{font-size:11.5px;font-weight:800;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--gold-bg);color:var(--gold);white-space:nowrap}
+.tagline{margin:6px 0 0;font-family:Georgia,serif;font-style:italic;font-size:17.5px;line-height:1.3;color:var(--teal-700)}
+.byline{margin:3px 0 0;color:var(--soft);font-size:13.5px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--line);list-style:none}
+.facts li{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink)}
+.facts svg{width:17px;height:17px;flex:none;stroke:var(--teal-600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.book-card{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 0 0 1px rgba(15,100,98,.08),0 18px 40px -22px rgba(15,60,58,.4);display:flex;flex-direction:column;gap:10px;align-self:start}
+.book-card .row{display:flex;justify-content:space-between;font-size:13.5px;color:var(--soft)}
+.book-card .row b{color:var(--ink)}
+.cta{background:var(--teal-700);color:#fff;border-radius:999px;min-height:48px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.link{font-size:12.5px;text-align:center;color:var(--teal-700);font-weight:700}
+
+.gal{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:150px 150px;gap:8px;padding:12px 26px}
+.gal img{width:100%;height:100%;object-fit:cover;border-radius:14px;display:block}
+.gal .big{grid-row:1/3}
+.gal .more{position:relative}
+.gal .more span{position:absolute;inset:0;border-radius:14px;background:rgba(6,48,46,.62);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+
+.main{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;padding:6px 26px 26px}
+.sec{margin-bottom:20px}
+.sec h2{font-family:Georgia,serif;font-size:21px;margin:0 0 10px}
+.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:10px}
+.tab{white-space:nowrap;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--line)}
+.tab.on{background:var(--ink);color:#fff;box-shadow:none}
+.group{background:#fff;border-radius:18px;padding:4px 0;box-shadow:0 0 0 1px rgba(15,100,98,.07);margin-bottom:12px}
+.gt{margin:0;padding:12px 16px 4px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+.svc{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid #edf3f3}
+.svc:first-of-type{border-top:0}
+.svc b{display:block;font-size:14.5px}.svc small{color:var(--soft);font-size:12.5px}
+.svc .r{display:flex;align-items:center;gap:12px}
+.price{font-weight:800;font-size:14.5px;white-space:nowrap}
+.rb{font-size:12.5px;font-weight:800;border-radius:999px;padding:7px 14px;box-shadow:inset 0 0 0 1.5px var(--teal-600);color:var(--teal-700)}
+.side .card{background:#fff;border-radius:18px;padding:14px 16px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(15,100,98,.07)}
+.side h2{font-family:Georgia,serif;font-size:19px;margin:0 0 8px}
+.hrs div{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0}
+.hrs .today{font-weight:800;color:var(--teal-700)}
+.acc{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14.5px}
+.acc small{display:block;color:var(--soft);font-weight:500;font-size:12.5px;margin-top:2px}
+.map{height:110px;border-radius:12px;background:linear-gradient(135deg,#dbeceb,#c6e0de);display:flex;align-items:center;justify-content:center;color:var(--teal-700);font-weight:800;font-size:13px;margin-bottom:10px}
+.dirs{display:flex;gap:6px;flex-wrap:wrap}.dirs span{font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--teal-50)}
+
+
+/* ---------- hero v3: asimétrico, foto protagonista ---------- */
+.hero3{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;padding:34px 34px 22px;align-items:center}
+.hero3 .copy{min-width:0}
+.badge-new{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--gold-bg);color:var(--gold)}
+.hero3 h1{margin:12px 0 0;font-family:Georgia,serif;font-size:46px;line-height:1.02;letter-spacing:-.025em;text-wrap:balance}
+.lock{margin:14px 0 0;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px}
+.lock .l1{font-family:Georgia,serif;font-style:italic;font-size:27px;line-height:1.1;color:var(--teal-700)}
+.lock .l2{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--teal-700);background:var(--teal-100);padding:7px 12px 7px 10px;border-radius:999px}
+.lock .l2 svg{width:15px;height:15px;stroke:var(--teal-700);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.byline{margin:12px 0 0;color:var(--soft);font-size:14.5px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 20px;margin:16px 0 0;padding:0;list-style:none}
+.facts li{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600}
+.facts svg{width:17px;height:17px;flex:none;stroke:var(--teal-600);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.actions{display:flex;align-items:center;gap:12px;margin-top:22px;flex-wrap:wrap}
+.cta{background:var(--teal-700);color:#fff;border-radius:999px;min-height:50px;padding:0 28px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;box-shadow:0 14px 26px -14px rgba(11,80,78,.8)}
+.ghost{min-height:50px;padding:0 20px;border-radius:999px;display:inline-flex;align-items:center;font-weight:700;font-size:14px;box-shadow:inset 0 0 0 1.5px var(--line);background:#fff}
+.meta-line{margin:12px 0 0;font-size:12.5px;color:var(--soft)}
+.meta-line b{color:var(--ink)}
+.collage{position:relative;display:grid;grid-template-columns:1.35fr 1fr;grid-template-rows:200px 200px;gap:10px}
+.collage img{width:100%;height:100%;object-fit:cover;display:block}
+.collage .a{grid-row:1/3;border-radius:28px 12px 12px 28px}
+.collage .b{border-radius:12px 28px 12px 12px}
+.collage .c{border-radius:12px 12px 28px 12px}
+.collage .logo{position:absolute;left:-26px;bottom:26px;width:92px;height:92px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--bg),0 12px 24px -8px rgba(15,60,58,.5)}
+.seeall{position:absolute;right:14px;bottom:14px;display:inline-flex;align-items:center;gap:7px;background:rgba(246,251,251,.94);color:var(--ink);font-weight:800;font-size:12.5px;padding:8px 13px;border-radius:999px;box-shadow:0 8px 18px -8px rgba(0,0,0,.45)}
+.seeall svg{width:16px;height:16px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- móvil ---------- */
+.phone{width:350px;background:var(--bg);border-radius:34px;border:6px solid #111;overflow:hidden;position:relative;height:1080px}
+.phone .hdr{margin:10px 10px 0}
+.phone .pgal img{width:240px;height:200px}
+.pscroll{height:100%;overflow:hidden;padding-bottom:90px}
+.pgal{display:flex;gap:6px;overflow:hidden;padding:10px 10px 0}
+.pgal img{width:230px;height:170px;object-fit:cover;border-radius:16px;flex:none}
+.pid{padding:14px 16px 4px;text-align:left;display:flex;gap:12px;align-items:center}
+.pid .logo{width:68px;height:68px}
+.pid h1{font-size:23px}
+.pbody{padding:8px 12px}
+.sticky{position:absolute;left:0;right:0;bottom:0;padding:10px 14px 16px;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.sticky .cta{box-shadow:0 12px 26px -10px rgba(11,80,78,.7)}
+.tag{display:inline-block;font-size:11px;font-weight:800;background:#fff;border-radius:99px;padding:3px 9px;color:var(--soft);margin-right:6px}
+</style></head><body>
+
+<div>
+<h3>Escritorio</h3>
+<div class="desk">
+  <div class="hdr"><div class="brand"><span class="mark">b</span>Bukea</div>
+    <div class="nav"><span>Iniciar sesión</span><span class="pill">Para negocios</span><span class="pill">Menú ☰</span></div></div>
+
+  <div class="hero3">
+    <div class="copy">
+      <span class="badge-new">Nuevo en Bukea</span>
+      <h1>SthephannyNails</h1>
+      <p class="lock"><span class="l1">Quita sueño</span><span class="l2"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Haina</span></p>
+      <p class="byline">Sthephanny Corniel, especialista en uñas</p>
+      <ul class="facts"><li><svg viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Responde por WhatsApp</li><li><svg viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>Efectivo y transferencia</li></ul>
+      <div class="actions"><a class="cta">Bukear cita</a><a class="ghost">Escribir por WhatsApp</a></div>
+      <p class="meta-line">Desde <b>RD$ 200</b>. Próximo horario <b>mañana, 9:00 AM</b></p>
+    </div>
+    <div class="collage">
+      <img class="a" src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603687633-e9976e47.jpeg" alt="">
+      <img class="b" src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603702518-e0c52d78.jpeg" alt="">
+      <img class="c" src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603712865-c486cf66.jpeg" alt="">
+      <img class="logo" src="https://www.bukeard.com/app/uploads/logos/sthephanny-corniel-1791603680371-4e767249.png" alt="">
+      <span class="seeall"><svg viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>Ver las 8 fotos</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div>
+      <div class="sec"><h2>Servicios</h2>
+        <div class="tabs"><span class="tab on">Todos</span><span class="tab">Acrílicas</span><span class="tab">Gel</span><span class="tab">Pedicura y manicura</span><span class="tab">Extras</span></div>
+        <div class="group"><p class="gt">Acrílicas</p>
+          <div class="svc"><div><b>Uñas acrílicas acrílico cristal</b><small>75 min</small></div><div class="r"><span class="price">RD$ 900</span><span class="rb">Reservar</span></div></div>
+          <div class="svc"><div><b>Cover liso</b><small>90 min</small></div><div class="r"><span class="price">RD$ 1,000</span><span class="rb">Reservar</span></div></div>
+          <div class="svc"><div><b>Baby boomer</b><small>90 min</small></div><div class="r"><span class="price">RD$ 1,100</span><span class="rb">Reservar</span></div></div>
+          <div class="svc"><div><b>Acripie</b><small>120 min</small></div><div class="r"><span class="price">RD$ 1,100</span><span class="rb">Reservar</span></div></div>
+        </div>
+        <div class="group"><p class="gt">Gel</p>
+          <div class="svc"><div><b>Pintura en gel</b><small>60 min</small></div><div class="r"><span class="price">RD$ 500</span><span class="rb">Reservar</span></div></div>
+          <div class="svc"><div><b>Pintura más nivelación en Rubber</b><small>90 min</small></div><div class="r"><span class="price">RD$ 800</span><span class="rb">Reservar</span></div></div>
+        </div>
+        <div class="group"><p class="gt">Pedicura y manicura</p>
+          <div class="svc"><div><b>Manicura</b><small>60 min</small></div><div class="r"><span class="price">RD$ 800</span><span class="rb">Reservar</span></div></div>
+          <div class="svc"><div><b>Pedicura + gel</b><small>90 min</small></div><div class="r"><span class="price">RD$ 1,200</span><span class="rb">Reservar</span></div></div>
+        </div>
+        <p class="link" style="text-align:left">Ver los 15 servicios</p>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card hrs"><h2>Horario</h2>
+        <div><span>Lunes</span><span>Cerrado</span></div>
+        <div class="today"><span>Martes · hoy</span><span>9:00 AM a 6:00 PM</span></div>
+        <div><span>Miércoles a sábado</span><span>9:00 AM a 6:00 PM</span></div>
+        <div><span>Domingo</span><span>Cerrado</span></div></div>
+      <div class="card"><h2>Cómo llegar</h2><div class="map">Mapa · Santo Domingo</div><div class="dirs"><span>Google Maps</span><span>Apple Maps</span><span>Waze</span></div></div>
+      <div class="card"><div class="acc"><span>Cuentas para transferir<small>2 cuentas verificadas al reservar</small></span><span>▾</span></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+<h3>Móvil</h3>
+<div class="phone">
+  <div class="hdr"><div class="brand"><span class="mark">b</span>Bukea</div><div class="nav"><span style="font-size:20px;padding:0 8px">☰</span></div></div>
+  <div class="pscroll">
+    <div class="pgal">
+      <img src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603687633-e9976e47.jpeg" alt="">
+      <img src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603702518-e0c52d78.jpeg" alt="">
+      <img src="https://www.bukeard.com/app/uploads/business-photos/sthephanny-corniel-1791603712865-c486cf66.jpeg" alt="">
+    </div>
+    <div style="padding:16px 18px 6px;position:relative">
+      <img class="logo" src="https://www.bukeard.com/app/uploads/logos/sthephanny-corniel-1791603680371-4e767249.png" alt="" style="position:absolute;right:18px;top:-38px;width:64px;height:64px;box-shadow:0 0 0 4px var(--bg),0 8px 16px -6px rgba(15,60,58,.45)">
+      <span class="badge-new">Nuevo en Bukea</span>
+      <h1 style="margin:9px 0 0;font-family:Georgia,serif;font-size:31px;line-height:1.04;letter-spacing:-.02em">SthephannyNails</h1>
+      <p class="lock" style="margin-top:10px"><span class="l1" style="font-size:21px">Quita sueño</span><span class="l2" style="font-size:11px"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Haina</span></p>
+      <ul class="facts" style="margin-top:12px;gap:6px 14px"><li><svg viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>WhatsApp</li><li><svg viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>Efectivo y transferencia</li></ul>
+    </div>
+    <div class="pbody">
+      <div class="tabs"><span class="tab on">Todos</span><span class="tab">Acrílicas</span><span class="tab">Gel</span><span class="tab">Pedicura</span></div>
+      <div class="group"><p class="gt">Acrílicas</p>
+        <div class="svc"><div><b>Uñas acrílicas cristal</b><small>75 min</small></div><span class="price">RD$ 900</span></div>
+        <div class="svc"><div><b>Cover liso</b><small>90 min</small></div><span class="price">RD$ 1,000</span></div>
+        <div class="svc"><div><b>Baby boomer</b><small>90 min</small></div><span class="price">RD$ 1,100</span></div>
+      </div>
+      <div class="group"><p class="gt">Gel</p>
+        <div class="svc"><div><b>Pintura en gel</b><small>60 min</small></div><span class="price">RD$ 500</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky"><a class="cta">Bukear cita · desde RD$ 200</a></div>
+</div>
+</div>
+
+<p class="note"><b>Qué cambia.</b> 1) Servicios agrupados por tipo con pestañas y botón de reservar por fila. 2) Galería de fotos justo debajo del encabezado, no escondida más abajo. 3) Encabezado resumido: nombre del negocio, categoría y zona, con estado de hoy y próximo horario en etiquetas. 4) Tarjeta de reserva a la derecha en escritorio y botón fijo abajo en móvil. 5) Cuentas para transferir plegadas, sin mostrar cédula ni números en la página pública; se despliegan al elegir transferencia en la reserva. Horario resalta el día de hoy. El mapa y "Cómo llegar" pasan a la columna lateral.</p>
+</body></html>

@@ -2370,8 +2370,23 @@
         '<div class="pro-info"><b></b><span class="meta"><svg class="icon"><use href="#i-map-pin"/></svg><span class="meta-text"></span></span><span class="tags"></span></div>' +
         '<div class="rating"><svg class="icon"><use href="#i-star"/></svg><span class="rating-num"></span> <small></small></div>';
       const avatar = card.querySelector('.avatar');
-      avatar.style.background = avatarGradient(prof.slug);
-      avatar.textContent = initials(prof.name);
+      const imgSrc = prof.logoUrl || prof.photoUrl;
+      if (imgSrc) {
+        avatar.style.background = 'none';
+        const im = document.createElement('img');
+        im.alt = '';
+        im.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        im.onerror = function () {
+          im.remove();
+          avatar.style.background = avatarGradient(prof.slug);
+          avatar.textContent = initials(prof.name);
+        };
+        im.src = imgSrc;
+        avatar.appendChild(im);
+      } else {
+        avatar.style.background = avatarGradient(prof.slug);
+        avatar.textContent = initials(prof.name);
+      }
       card.querySelector('.pro-info b').textContent = prof.name;
       card.querySelector('.meta-text').textContent = prof.businessName + ' · ' + prof.neighborhood;
       card.querySelector('.tags').textContent = prof.tags.join(' · ');

@@ -213,7 +213,7 @@ Convención de estado: ✅ en producción · 🟡 construido con limitación con
 | `/nosotros` | Historia: "El problema que no se hablaba", "Cómo Bukea ayuda a vender más", "Lo que no vamos a cambiar" (el profesional es la estrella, efectivo y transferencia primero, cero comisión para empezar) | ✅ |
 | `/descargar` | Botones App Store / Google Play (hoy decorativos: `TODO(publicación app stores)` en `pages.js`), "Para reservar tu cita" / "Para tu negocio" | 🟡 activar badges reales al aprobarse las apps |
 | `/blog` | Estructura del blog (sin artículos todavía) | 🟡 |
-| `/contacto` (GET/POST) | Formulario de contacto a `hola@bukeard.com`, canales, tiempo de respuesta | ✅ |
+| `/contacto` (GET/POST) | Formulario de contacto a `contacto@bukeard.com`, canales, tiempo de respuesta | ✅ |
 | `/privacidad`, `/terminos` | Política y términos en español llano (requisito de App Store y Play Console) | ✅ |
 | `/:categoria/:zona` | Landings SEO por categoría × zona | ⬜ cuando haya ≥ 5 negocios por categoría |
 
@@ -278,7 +278,7 @@ Deep links del sitio hacia la app: `/app/?pro=slug` abre ese perfil dentro de la
 | Equipo | Colaboradores reservables (nombre, rol) además del titular | 🟡 disponibilidad se calcula por negocio, no por colaborador (decisión consciente) |
 | Cuentas bancarias | Banco (lista de 15 bancos RD + Otro), tipo (Ahorros/Corriente), número, titular, cédula/RNC. Visibles en perfil público y en el paso de pago | ✅ |
 | Redes sociales | Instagram, Facebook, TikTok, sitio web | ✅ |
-| Negocio | Logo, galería de fotos (subir/borrar), ubicación exacta con pin arrastrable (Leaflet), "¿Necesitas ayuda?" (ticket por correo a `hola@bukeard.com`) | ✅ (sin límite de fotos; ticket sin historial) |
+| Negocio | Logo, galería de fotos (subir/borrar), ubicación exacta con pin arrastrable (Leaflet), "¿Necesitas ayuda?" (ticket por correo a `contacto@bukeard.com`) | ✅ (sin límite de fotos; ticket sin historial) |
 | Mi perfil | Cuenta del usuario (nombre, correo, PIN, teléfono) separada de la identidad del negocio | ✅ |
 | Mensajes | Hilo de soporte negocio ↔ administración (`support_messages`) | ✅ |
 
@@ -555,7 +555,7 @@ Reducir dependencia de íconos lineales en `/negocios` y secciones públicas a f
 - **Fundador:** uno de los primeros 50 negocios con Básico gratis de por vida.
 
 ### 18.2 Cuentas y accesos de referencia
-- Correo maestro: `vmdventura@gmail.com`. Contacto público: `hola@bukeard.com`. Transaccional: `no-reply@bukeard.com`.
+- Correo maestro: `vmdventura@gmail.com`. Contacto público: `contacto@bukeard.com`. Transaccional: `no-reply@bukeard.com`.
 - Redes: `@bukeard` en Instagram, Facebook y TikTok.
 - WhatsApp Business: +1 809 466 5692 "Bukea". Meta Business ID `1691207015507833`, Phone Number ID `1252026111331717`.
 - Google Cloud proyecto `bukea-506417`. Apple Team ID `5N43U79UG4`. Play Console cuenta `7036363227179558088`.

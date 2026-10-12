@@ -15,29 +15,32 @@ const { normalizeSocial } = require('../lib/social');
 const { FOUNDING_FREE_LIMIT } = require('../views/shared');
 const mailer = require('../lib/mailer');
 const push = require('../lib/push');
+const { SUPER_ADMIN_EMAIL } = require('../lib/super-admin');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, addDays,
   timeToMinutes, minutesToHHMM, formatTime12h, computeFreeSlots,
 } = require('../lib/availability');
 const { wrapAsyncRouter } = require('../lib/async-router');
 
+const { isReservedSlug } = require('../lib/reserved-slugs');
 const router = wrapAsyncRouter(express.Router());
 
-// Requisito de verificación (2026-09-08) para aparecer en las listas del
+// Requisito (2026-09-08; relajado 2026-10-12 a pedido de Víctor: basta logo o
+// al menos una foto, ya no se exige correo/teléfono verificados)  para aparecer en las listas del
 // marketplace (este endpoint, y las páginas públicas en routes/pages.js) —
 // nunca en GET /:slug (el perfil directo sigue vivo aunque falte algo).
 // Duplicado a propósito en los dos archivos (mismo criterio que
 // directionLinks en lib/geocode.js): son consultas SQL independientes, no
 // vale la pena una capa de indirección para una condición de una línea.
+// Los 6 negocios demo sembrados (db/init.js) no salen en el marketplace
+// (2026-10-12); su perfil directo /p/:slug sigue vivo. No se filtra por
+// owner_user_id: Olivercut es real y tampoco tiene dueño asignado.
 const VISIBLE_IN_MARKETPLACE_SQL = `(
-  verification_required = 0
-  OR (
-    logo_path IS NOT NULL
-    AND owner_user_id IS NOT NULL
-    AND EXISTS (
-      SELECT 1 FROM users u WHERE u.id = professionals.owner_user_id
-        AND u.email_verified_at IS NOT NULL AND u.phone_verified_at IS NOT NULL
-    )
+  slug NOT IN ('joel-el-fino','yesenia-rodriguez','carmen-la-estilista','massiel-nails','estilo-total-rosa','spa-sereno')
+  AND (
+    verification_required = 0
+    OR logo_path IS NOT NULL
+    OR EXISTS (SELECT 1 FROM business_photos bp WHERE bp.professional_id = professionals.id)
   )
 )`;
 
@@ -185,6 +188,8 @@ router.post('/', requireAuth, async (req, res) => {
       if (already[0].lat === null) neighborhoodToGeocode = already[0].neighborhood;
     } else {
       slug = slugify(name) || 'profesional';
+      // Un nombre reservado (admin, mapa, negocio…) chocaría con una ruta del sitio.
+      if (isReservedSlug(slug)) slug = slug + '-bukea';
       const [taken] = await conn.query('SELECT slug FROM professionals WHERE slug LIKE ?', [slug + '%']);
       if (taken.some(r => r.slug === slug)) {
         let n = 2;
@@ -242,8 +247,41 @@ router.post('/', requireAuth, async (req, res) => {
     });
   }
 
+  if (!existing && mailer.isConfigured()) {
+    // Aviso al súper administrador. Después del commit y sin esperar la
+    // respuesta: si el correo falla, el alta del negocio no se afecta.
+    notifyNewBusiness({ userId: req.user.id, slug, name, businessName, neighborhood, category, services, referral })
+      .catch(err => console.error('No se pudo enviar el aviso de negocio nuevo:', err.message));
+  }
+
   res.status(existing ? 200 : 201).json({ slug, existing });
 });
+
+const CATEGORY_LABELS = {
+  barberia: 'Barbería', unas: 'Uñas', salon: 'Salón', maquillaje: 'Maquillaje', 'cejas-mua': 'Cejas y MUA',
+  pilates: 'Pilates', entrenador: 'Entrenador personal', 'peluqueria-canina': 'Peluquería canina', spa: 'Spa y masajes',
+  trenzas: 'Trenzas y rastas', tatuadores: 'Tatuadores', 'servicios-profesionales': 'Servicios profesionales',
+};
+const REFERRAL_LABELS = { instagram: 'Instagram', tiktok: 'TikTok', amigo: 'Un amigo', google: 'Google', visita: 'Una visita', otro: 'Otro' };
+
+async function notifyNewBusiness(d) {
+  const [[owner]] = await pool.query('SELECT name, phone, email FROM users WHERE id = ?', [d.userId]);
+  const [[row]] = await pool.query('SELECT founding_free FROM professionals WHERE slug = ?', [d.slug]);
+  await mailer.sendNewBusinessAlert(SUPER_ADMIN_EMAIL, {
+    businessName: d.businessName,
+    name: d.name,
+    category: CATEGORY_LABELS[d.category] || d.category,
+    neighborhood: d.neighborhood,
+    servicesCount: d.services.length,
+    ownerName: owner && owner.name,
+    ownerPhone: owner && owner.phone,
+    ownerEmail: owner && owner.email,
+    referral: d.referral ? REFERRAL_LABELS[d.referral] : null,
+    foundingFree: Boolean(row && row.founding_free),
+    profileUrl: `https://www.bukeard.com/${encodeURIComponent(d.slug)}`,
+    adminUrl: 'https://www.bukeard.com/admin',
+  });
+}
 
 router.get('/:slug', async (req, res) => {
   const [professionals] = await pool.query(
@@ -302,7 +340,7 @@ router.get('/:slug', async (req, res) => {
     // dentro de la app empaquetada (capacitor://localhost) o embebido en un
     // iframe de la SPA, ninguno de los dos tiene el dominio público en
     // window.location.origin. Mismo criterio que logoUrl/receiptUrl arriba.
-    publicUrl: `${req.protocol}://${req.get('host')}/p/${professional.slug}`,
+    publicUrl: `${req.protocol}://${req.get('host')}/${professional.slug}`,
     // Solo dice si la regla APLICA a este negocio, no si ya la cumple (eso
     // depende de la verificación de correo/teléfono del dueño, que es
     // privada — el panel de negocio ya la tiene en GET /api/auth/session,

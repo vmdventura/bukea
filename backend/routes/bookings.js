@@ -6,6 +6,8 @@ const { receiptUpload, receiptUrl, RECEIPTS_DIR, sniffFileType, ALLOWED_MIME } =
 const fs = require('fs');
 const { getSettings } = require('../lib/settings');
 const push = require('../lib/push');
+const mailer = require('../lib/mailer');
+const { directionLinks } = require('../lib/geocode');
 const { wrapAsyncRouter } = require('../lib/async-router');
 const {
   nowInSantoDomingo, weekdayOf, dayLabel, formatTime12h, timeToMinutes, computeFreeSlots,
@@ -52,7 +54,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const [professionals] = await pool.query(
-    'SELECT name, business_name, neighborhood, lat, lng, owner_user_id FROM professionals WHERE id = ?',
+    'SELECT name, slug, business_name, neighborhood, lat, lng, owner_user_id FROM professionals WHERE id = ?',
     [professionalId]
   );
   const professional = professionals[0];
@@ -167,6 +169,27 @@ router.post('/', requireAuth, async (req, res) => {
           badge,
         }))
         .catch(err => console.error('Error notificando la reserva:', err.message));
+
+      // Correo de confirmación al cliente, sin esperar (2026-10-12).
+      if (req.user.email) {
+        const links = directionLinks(professional.name, professional.neighborhood,
+          professional.lat !== null ? Number(professional.lat) : null,
+          professional.lng !== null ? Number(professional.lng) : null);
+        mailer.sendBookingConfirmation(req.user.email, {
+          clientName: clientName,
+          serviceName: service.name,
+          priceCents: service.price_cents,
+          dayLabel: dayLabel(date),
+          timeLabel: formatTime12h(time),
+          businessName: professional.business_name,
+          professionalName: professional.name,
+          neighborhood: professional.neighborhood,
+          collaboratorName,
+          paymentMethod,
+          directionsUrl: links.google,
+          profileUrl: `https://www.bukeard.com/${professional.slug}`,
+        }).catch(err => console.error('Error enviando la confirmación de la cita:', err.message));
+      }
 
       return res.status(201).json({
         id: result.insertId,

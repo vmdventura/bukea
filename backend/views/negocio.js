@@ -6,7 +6,7 @@
 // en el panel de Fresha, ver docs de la sesión que lo diseñó).
 const { CAT_LABELS, ICON_SPRITE } = require('./shared');
 
-function negocioShell({ base, googleClientId, appleClientId }) {
+function negocioShell({ base, googleClientId, appleClientId, siteUrl = '/' }) {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -89,6 +89,16 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .auth-side-perks li { display: flex; align-items: center; gap: 0.8rem; font-size: 0.92rem; }
   .auth-side-perks .icon-badge { width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,0.12); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
   .auth-side-foot { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+  /* Panel alineado a la derecha, con una línea dorada fina que lo separa del
+     formulario (2026-10-11, a pedido de Víctor). */
+  .auth-side { text-align: right; align-items: flex-end; }
+  .auth-side h2, .auth-side-sub { margin-left: auto; }
+  .auth-side-perks li { flex-direction: row-reverse; text-align: right; }
+  .auth-side::after {
+    content: ""; position: absolute; top: 6%; bottom: 6%; right: 0; width: 2px;
+    background: linear-gradient(to bottom, transparent, oklch(80% 0.12 78) 30%, oklch(80% 0.12 78) 70%, transparent);
+    box-shadow: 0 0 14px oklch(80% 0.12 78 / 0.45);
+  }
   @media (min-width: 900px) { .auth-side { display: flex; } }
   .auth-main { flex: 1 1 58%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 2rem 1rem; gap: 1rem; }
   .auth-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sh-3); padding: 2.2rem 2rem; text-align: center; }
@@ -119,6 +129,13 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .auth-switch button { background: none; border: none; color: var(--teal-700); font-weight: 700; cursor: pointer; font-size: inherit; text-decoration: underline; }
   .auth-back { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--soft); font-size: 0.82rem; text-decoration: none; margin-bottom: 1.2rem; }
   .auth-back:hover { color: var(--teal-700); }
+  .auth-card .btn { justify-content: center; text-align: center; }
+  .auth-home { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--teal-700); font-size: 0.84rem; font-weight: 700; text-decoration: none; padding: 0.55rem 0.9rem 0.55rem 0.7rem; margin: 0 0 1rem; border-radius: 999px; background: var(--teal-50, rgba(15,133,131,0.08)); min-height: 40px; transition: background 200ms; }
+  .auth-home:hover { background: var(--teal-100, rgba(15,133,131,0.16)); }
+  .auth-home .icon { width: 16px; height: 16px; }
+  .auth-pro-only { display: flex; gap: 0.6rem; align-items: flex-start; text-align: left; font-size: 0.85rem; line-height: 1.45; color: var(--ink); margin: 0 0 1.1rem; cursor: pointer; }
+  .auth-pro-only input { width: 20px; height: 20px; margin-top: 0.1rem; flex: none; accent-color: var(--teal-600); }
+  .auth-pro-note { background: var(--teal-50, rgba(15,133,131,0.08)); border-radius: 14px; padding: 0.8rem 1rem; font-size: 0.85rem; line-height: 1.5; color: var(--ink); margin: 0 0 1.2rem; text-align: left; }
 
   .social-divider { display: flex; align-items: center; gap: 0.8rem; margin: 1.1rem 0; font-size: 0.76rem; color: var(--soft); }
   .social-divider::before, .social-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -174,6 +191,13 @@ function negocioShell({ base, googleClientId, appleClientId }) {
   .stat-card .lbl { font-size: 0.78rem; color: var(--soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
   .stat-card .val { font-family: "Fraunces", serif; font-size: 1.7rem; font-weight: 600; color: var(--teal-900); margin-top: 0.3rem; }
   .stat-card .sub { font-size: 0.78rem; color: var(--soft); margin-top: 0.15rem; }
+  @media (max-width: 640px) {
+    .stat-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1.4rem; }
+    .stat-card { padding: 0.8rem 0.7rem; border-radius: 14px; }
+    .stat-card .lbl { font-size: 0.66rem; letter-spacing: 0.02em; line-height: 1.25; }
+    .stat-card .val { font-size: 1.45rem; margin-top: 0.2rem; }
+    .stat-card .sub { font-size: 0.68rem; line-height: 1.25; }
+  }
 
   /* ===== Dashboard (Resumen) ===== */
   .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
@@ -404,42 +428,93 @@ ${ICON_SPRITE}
   <div class="auth-side">
     <a href="/" class="auth-side-brand"><span class="mark">b</span>Bukea negocios</a>
     <div>
-      <h2>Tu agenda y tu clientela, sin pagar comisión</h2>
-      <p class="auth-side-sub">Todo lo que necesitas para tu negocio de belleza, centralizado en un solo lugar.</p>
+      <h2 id="auth-side-h">Tu agenda y tu clientela, sin pagar comisión</h2>
+      <p class="auth-side-sub" id="auth-side-sub">Todo lo que necesitas para tu negocio de belleza, centralizado en un solo lugar.</p>
       <ul class="auth-side-perks">
         <li><span class="icon-badge"><svg class="icon"><use href="#i-calendar"/></svg></span>Agenda real, con disponibilidad de verdad</li>
         <li><span class="icon-badge"><svg class="icon"><use href="#i-chart"/></svg></span>"Mi Cuadre": cuánto vendiste, sin hoja de cálculo</li>
         <li><span class="icon-badge"><svg class="icon"><use href="#i-whatsapp"/></svg></span>Confirmaciones y recordatorios por WhatsApp</li>
-        <li><span class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></span>Cero comisión, cero suscripción</li>
+        <li><span class="icon-badge"><svg class="icon"><use href="#i-percent"/></svg></span>Cero comisión por cliente nuevo</li>
       </ul>
     </div>
-    <p class="auth-side-foot">Gratis para siempre, sin tarjeta de crédito.</p>
+    <p class="auth-side-foot" id="auth-side-foot">Tu panel de negocio, siempre a mano.</p>
   </div>
   <div class="auth-main">
   <div class="auth-card" id="auth-login-card">
+    <a href="${siteUrl}" class="auth-home"><svg class="icon"><use href="#n-chev-l"/></svg>Volver al inicio de Bukea</a>
     <a href="/" class="auth-brand"><span class="mark">b</span>Bukea negocios</a>
 
     <div id="auth-step-phone">
-      <h1>Entra a tu cuenta</h1>
-      <p class="auth-sub">Gestiona tu calendario, servicios y equipo desde aquí.</p>
+      <h1 id="auth-start-h">Crea una cuenta o inicia sesión</h1>
+      <p class="auth-sub" id="auth-start-sub">Gestiona tu negocio en Bukea. Te enviaremos un código de verificación.</p>
       <p id="auth-error" class="auth-error"></p>
+      <div class="field">
+        <label for="a-email-start">Correo</label>
+        <input id="a-email-start" type="email" inputmode="email" placeholder="tu@correo.com" autocomplete="email" onkeydown="if(event.key==='Enter')authEmailSend()">
+      </div>
+      <button class="btn btn-primary" id="a-email-btn" style="width:100%" onclick="authEmailSend()">Continuar</button>
+
+      <div class="social-divider">o</div>
+      <button class="social-btn s-google" id="s-google-btn" onclick="loginWithGoogle()">
+        <svg class="social-icon" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        <span class="social-label">Continuar con Google</span>
+      </button>
+      <button class="social-btn s-apple" id="s-apple-btn" onclick="loginWithApple()">
+        <svg class="social-icon" viewBox="0 0 17 20" fill="currentColor"><path d="M13.998 10.63c-.024-2.415 1.973-3.573 2.063-3.63-1.126-1.646-2.877-1.872-3.502-1.897-1.49-.152-2.91.877-3.665.877-.755 0-1.923-.856-3.16-.833-1.627.024-3.128.946-3.965 2.402-1.692 2.933-.432 7.28 1.216 9.66.806 1.166 1.767 2.474 3.028 2.427 1.216-.048 1.674-.786 3.144-.786 1.47 0 1.883.786 3.17.762 1.31-.024 2.14-1.19 2.94-2.36.926-1.354 1.307-2.665 1.33-2.734-.03-.012-2.552-.98-2.576-3.888h-.023z"/><path d="M11.578 3.508c.668-.81 1.121-1.937.997-3.06-.964.04-2.13.643-2.822 1.452-.618.719-1.16 1.87-1.014 2.976 1.076.083 2.17-.55 2.839-1.368z"/></svg>
+        <span class="social-label">Continuar con Apple</span>
+      </button>
+      <p id="auth-error-social" class="auth-error"></p>
+      <div class="auth-switch"><button type="button" onclick="authShowLegacy()">Entrar con teléfono y PIN</button></div>
+      <div class="auth-switch">¿Eres cliente y quieres reservar una cita? <a href="${siteUrl}entrar/cliente" style="color:var(--teal-700);font-weight:700;text-decoration:underline">Ir a Bukea para clientes</a></div>
+    </div>
+
+    <div id="auth-step-legacy" style="display:none">
+      <a href="#" class="auth-back" onclick="authBackToPhone();return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
+      <h1>Entra con tu PIN</h1>
+      <p class="auth-sub">Para cuentas creadas con teléfono y PIN.</p>
+      <p id="auth-error-legacy" class="auth-error"></p>
+      <p id="auth-notfound" class="auth-pro-note" style="display:none">No encontramos una cuenta con ese teléfono. Vuelve atrás y entra con tu correo para crear una.</p>
       <div class="field">
         <label for="a-phone">Teléfono</label>
         <input id="a-phone" type="tel" placeholder="809 000 0000" autocomplete="tel">
       </div>
       <button class="btn btn-primary" id="a-check-btn" style="width:100%" onclick="authCheck()">Continuar</button>
+    </div>
 
-      <div class="social-divider">o usa tus redes</div>
-      <button class="social-btn" id="s-google-btn" onclick="loginWithGoogle()">
-        <svg class="social-icon" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-        <span class="social-label">Continuar con Google</span>
-      </button>
-      <button class="social-btn" id="s-apple-btn" onclick="loginWithApple()">
-        <svg class="social-icon" viewBox="0 0 17 20" fill="currentColor"><path d="M13.998 10.63c-.024-2.415 1.973-3.573 2.063-3.63-1.126-1.646-2.877-1.872-3.502-1.897-1.49-.152-2.91.877-3.665.877-.755 0-1.923-.856-3.16-.833-1.627.024-3.128.946-3.965 2.402-1.692 2.933-.432 7.28 1.216 9.66.806 1.166 1.767 2.474 3.028 2.427 1.216-.048 1.674-.786 3.144-.786 1.47 0 1.883.786 3.17.762 1.31-.024 2.14-1.19 2.94-2.36.926-1.354 1.307-2.665 1.33-2.734-.03-.012-2.552-.98-2.576-3.888h-.023z"/><path d="M11.578 3.508c.668-.81 1.121-1.937.997-3.06-.964.04-2.13.643-2.822 1.452-.618.719-1.16 1.87-1.014 2.976 1.076.083 2.17-.55 2.839-1.368z"/></svg>
-        <span class="social-label">Continuar con Apple</span>
-      </button>
-      <p id="auth-error-social" class="auth-error"></p>
-      <div class="auth-switch">¿Buscas reservar una cita? <a href="${base}/" style="color:var(--teal-700);font-weight:700;text-decoration:underline">Ve a Bukea para clientes</a></div>
+    <div id="auth-step-code" style="display:none">
+      <a href="#" class="auth-back" onclick="authBackToPhone();return false"><svg class="icon"><use href="#n-chev-l"/></svg>Cambiar correo</a>
+      <h1>Revisa tu correo</h1>
+      <p class="auth-sub" id="auth-code-sub">Escribe el código de 6 dígitos que te enviamos.</p>
+      <p id="auth-error-code" class="auth-error"></p>
+      <div class="field">
+        <label for="a-code">Código</label>
+        <input id="a-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')authEmailVerify()">
+      </div>
+      <button class="btn btn-primary" id="a-code-btn" style="width:100%" onclick="authEmailVerify()">Verificar</button>
+      <div class="auth-switch"><button type="button" id="a-resend-btn" onclick="authEmailResend()">Reenviar código</button></div>
+    </div>
+
+    <div id="auth-step-complete" style="display:none">
+      <h1>Completa tu cuenta</h1>
+      <p class="auth-pro-note">Correo verificado. Este registro es solo para profesionales y dueños de negocio. Si buscas reservar una cita, <a href="${siteUrl}entrar/cliente" style="color:var(--teal-700);font-weight:700">ve a Bukea para clientes</a>.</p>
+      <p id="auth-error-complete" class="auth-error"></p>
+      <div class="field">
+        <label for="a-name">Tu nombre</label>
+        <input id="a-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
+      </div>
+      <div class="field">
+        <label for="a-reg-phone">Teléfono del negocio</label>
+        <input id="a-reg-phone" type="tel" placeholder="809 000 0000" autocomplete="tel">
+      </div>
+      <label class="auth-pro-only"><input type="checkbox" id="a-pro-confirm"><span>Soy profesional o dueño de un negocio de belleza.</span></label>
+      <button class="btn btn-primary" id="a-register-btn" style="width:100%" onclick="authEmailComplete()">Crear cuenta y continuar</button>
+    </div>
+
+    <div id="auth-step-client" style="display:none">
+      <h1>Esta cuenta es de cliente</h1>
+      <p class="auth-sub">Este portal es para dueños y equipos de negocio. Para reservar citas entra a Bukea para clientes. Si tienes un negocio, puedes registrarlo con esta misma cuenta.</p>
+      <a class="btn btn-primary" style="width:100%;justify-content:center" href="${base}/" onclick="clientNoticeLeave();return false">Ir a Bukea para clientes</a>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:.6rem" onclick="clientNoticeCreate()">Registrar mi negocio</button>
     </div>
 
     <div id="auth-step-pin" style="display:none">
@@ -454,30 +529,16 @@ ${ICON_SPRITE}
       <button class="btn btn-primary" id="a-login-btn" style="width:100%" onclick="authLogin()">Entrar</button>
     </div>
 
-    <div id="auth-step-new" style="display:none">
-      <a href="#" class="auth-back" onclick="authBackToPhone();return false"><svg class="icon"><use href="#n-chev-l"/></svg>Atrás</a>
-      <h1>Crea tu cuenta</h1>
-      <p class="auth-sub">Es la misma cuenta que usas en la app de Bukea.</p>
-      <p id="auth-error-3" class="auth-error"></p>
-      <div class="field">
-        <label for="a-name">Tu nombre</label>
-        <input id="a-name" type="text" placeholder='Ej: Joel "El Fino" Batista'>
-      </div>
-      <div class="field">
-        <label for="a-newpin">Crea un PIN de 4 dígitos</label>
-        <input id="a-newpin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
-      </div>
-      <button class="btn btn-primary" id="a-register-btn" style="width:100%" onclick="authRegister()">Crear cuenta y continuar</button>
-    </div>
   </div>
 
   <div class="auth-card wide" id="auth-step-newbiz" style="display:none">
+    <a href="${siteUrl}" class="auth-home"><svg class="icon"><use href="#n-chev-l"/></svg>Volver al inicio de Bukea</a>
     <a href="/" class="auth-brand"><span class="mark">b</span>Bukea negocios</a>
     <div class="nb-progress"><div class="nb-progress-fill" id="nb-progress-fill"></div></div>
 
     <div class="nb-step" id="nb-step-1">
       <h1>¿Cómo te llamas?</h1>
-      <p class="auth-sub">Es gratis para siempre, cero comisión. Toma un minuto.</p>
+      <p class="auth-sub">Cero comisión por cliente nuevo. Toma un minuto.</p>
       <p id="nb-error-1" class="auth-error"></p>
       <div class="field">
         <label for="nb-name">Tu nombre</label>
@@ -554,7 +615,7 @@ ${ICON_SPRITE}
       <div class="auth-switch"><button type="button" onclick="nbSkipLogo()">Omitir por ahora</button></div>
     </div>
 
-    <div class="auth-switch"><button type="button" onclick="nbSkip()">Omitir por ahora</button> · <button onclick="logout()">Cerrar sesión</button></div>
+    <div class="auth-switch"><button onclick="logout()">Cerrar sesión</button></div>
   </div>
   </div>
 </div>
@@ -599,9 +660,9 @@ ${ICON_SPRITE}
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat-card"><div class="lbl">Hoy</div><div class="val" id="st-today-count">—</div><div class="sub" id="st-today-cents"></div></div>
-        <div class="stat-card"><div class="lbl">Últimos 7 días</div><div class="val" id="st-week-count">—</div><div class="sub" id="st-week-cents"></div></div>
-        <div class="stat-card"><div class="lbl">Este mes</div><div class="val" id="st-month-count">—</div><div class="sub" id="st-month-cents"></div></div>
+        <div class="stat-card"><div class="lbl">Citas hoy</div><div class="val" id="st-today-count">—</div><div class="sub" id="st-today-cents"></div></div>
+        <div class="stat-card"><div class="lbl">Citas en 7 días</div><div class="val" id="st-week-count">—</div><div class="sub" id="st-week-cents"></div></div>
+        <div class="stat-card"><div class="lbl">Citas este mes</div><div class="val" id="st-month-count">—</div><div class="sub" id="st-month-cents"></div></div>
       </div>
 
       <div class="dash-grid">
@@ -1027,8 +1088,12 @@ ${ICON_SPRITE}
   }
   window.toast = toast;
 
-  /* ---------- Login: teléfono → PIN (existente) o crear cuenta ---------- */
+  /* ---------- Acceso: correo + código (una sola pantalla, estilo Fresha) ---------- */
   var pendingPhone = '';
+  var pendingEmail = '';
+  var signupToken = '';
+  // /unete manda aquí con ?registro=1: solo cambia el texto del panel izquierdo; la pantalla es la misma.
+  var REGISTER_MODE = /[?&]registro=1/.test(location.search);
 
   function showAuthError(id, msg) {
     var el = document.getElementById(id);
@@ -1036,29 +1101,36 @@ ${ICON_SPRITE}
     el.style.display = 'block';
   }
   function hideAuthErrors() {
-    ['auth-error', 'auth-error-2', 'auth-error-3', 'auth-error-4', 'auth-error-social'].forEach(function (id) {
-      document.getElementById(id).style.display = 'none';
+    ['auth-error', 'auth-error-2', 'auth-error-4', 'auth-error-legacy', 'auth-error-code', 'auth-error-complete', 'auth-error-social', 'auth-notfound'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.style.display = 'none';
     });
   }
 
   /* ---------- Login social: Google / Apple ---------- */
+  function showSocialError(msg) {
+    showAuthError('auth-error-social', msg);
+  }
   function initSocialLogin() {
-    var gBtn = document.getElementById('s-google-btn');
-    var aBtn = document.getElementById('s-apple-btn');
+    var gBtns = document.querySelectorAll('.s-google');
+    var aBtns = document.querySelectorAll('.s-apple');
     if (GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential, ux_mode: 'popup' });
-    } else if (gBtn) {
-      gBtn.disabled = true;
-      gBtn.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
+    } else {
+      gBtns.forEach(function (b) {
+        b.disabled = true;
+        b.querySelector('.social-label').innerHTML = 'Continuar con Google <span class="soon">Próximamente</span>';
+      });
     }
     if (APPLE_CLIENT_ID && window.AppleID) {
       AppleID.auth.init({
         clientId: APPLE_CLIENT_ID, scope: 'name email',
         redirectURI: window.location.origin + '/negocio', usePopup: true,
       });
-    } else if (aBtn) {
-      aBtn.disabled = true;
-      aBtn.querySelector('.social-label').innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
+    } else {
+      aBtns.forEach(function (b) {
+        b.disabled = true;
+        b.querySelector('.social-label').innerHTML = 'Continuar con Apple <span class="soon">Próximamente</span>';
+      });
     }
   }
   window.addEventListener('load', initSocialLogin);
@@ -1081,7 +1153,7 @@ ${ICON_SPRITE}
       await socialLogin('/api/auth/apple', { idToken: result.authorization.id_token, name: fullName });
     } catch (err) {
       if (err && err.error === 'popup_closed_by_user') return;
-      showAuthError('auth-error-social', 'No se pudo iniciar sesión con Apple.');
+      showSocialError( 'No se pudo iniciar sesión con Apple.');
     }
   };
 
@@ -1090,21 +1162,21 @@ ${ICON_SPRITE}
     try {
       var res = await fetch(BASE + path, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(Object.assign({ accountType: 'owner' }, body)),
       });
       var data = await res.json().catch(function () { return {}; });
-      if (!res.ok) return showAuthError('auth-error-social', data.error || 'No se pudo iniciar sesión.');
+      if (!res.ok) return showSocialError( data.error || 'No se pudo iniciar sesión.');
       setSession(data);
       await afterLogin();
     } catch (err) {
-      showAuthError('auth-error-social', 'No se pudo conectar con el servidor.');
+      showSocialError( 'No se pudo conectar con el servidor.');
     }
   }
 
   window.authCheck = async function () {
     hideAuthErrors();
     var phone = document.getElementById('a-phone').value.trim();
-    if (!phone) return showAuthError('auth-error', 'Escribe tu número de teléfono.');
+    if (!phone) return showAuthError('auth-error-legacy', 'Escribe tu número de teléfono.');
     var btn = document.getElementById('a-check-btn');
     btn.disabled = true;
     try {
@@ -1113,20 +1185,18 @@ ${ICON_SPRITE}
         body: JSON.stringify({ phone: phone }),
       });
       var data = await res.json().catch(function () { return {}; });
-      if (!res.ok) return showAuthError('auth-error', data.error || 'No se pudo verificar el número.');
+      if (!res.ok) return showAuthError('auth-error-legacy', data.error || 'No se pudo verificar el número.');
       pendingPhone = phone;
       if (data.exists) {
-        document.getElementById('auth-step-phone').style.display = 'none';
+        document.getElementById('auth-step-legacy').style.display = 'none';
         document.getElementById('auth-pin-sub').textContent = 'Hola ' + (data.name || '') + ', ingresa tu PIN.';
         document.getElementById('auth-step-pin').style.display = 'block';
         document.getElementById('a-pin').focus();
       } else {
-        document.getElementById('auth-step-phone').style.display = 'none';
-        document.getElementById('auth-step-new').style.display = 'block';
-        document.getElementById('a-name').focus();
+        document.getElementById('auth-notfound').style.display = 'block';
       }
     } catch (err) {
-      showAuthError('auth-error', 'No se pudo conectar con el servidor.');
+      showAuthError('auth-error-legacy', 'No se pudo conectar con el servidor.');
     } finally {
       btn.disabled = false;
     }
@@ -1134,9 +1204,103 @@ ${ICON_SPRITE}
 
   window.authBackToPhone = function () {
     hideAuthErrors();
-    document.getElementById('auth-step-pin').style.display = 'none';
-    document.getElementById('auth-step-new').style.display = 'none';
+    ['auth-step-pin', 'auth-step-legacy', 'auth-step-code', 'auth-step-complete'].forEach(function (id) {
+      document.getElementById(id).style.display = 'none';
+    });
     document.getElementById('auth-step-phone').style.display = 'block';
+  };
+
+  function authShowStep(id) {
+    ['auth-step-phone', 'auth-step-legacy', 'auth-step-pin', 'auth-step-code', 'auth-step-complete'].forEach(function (sid) {
+      document.getElementById(sid).style.display = sid === id ? 'block' : 'none';
+    });
+  }
+  window.authShowLegacy = function () { hideAuthErrors(); authShowStep('auth-step-legacy'); document.getElementById('a-phone').focus(); };
+
+  var EMAIL_RE_UI = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+  async function postAuth(path, body) {
+    var res = await fetch(BASE + '/api/auth' + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    var data = await res.json().catch(function () { return {}; });
+    return { ok: res.ok, status: res.status, data: data };
+  }
+
+  async function authEmailRequest(errId) {
+    var r = await postAuth('/email/send', { email: pendingEmail });
+    if (!r.ok) { showAuthError(errId, r.data.error || 'No se pudo enviar el código.'); return false; }
+    if (r.data.devCode) console.info('[dev] código:', r.data.devCode);
+    return true;
+  }
+
+  window.authEmailSend = async function () {
+    hideAuthErrors();
+    var email = document.getElementById('a-email-start').value.trim().toLowerCase();
+    if (!EMAIL_RE_UI.test(email)) return showAuthError('auth-error', 'Ingresa un correo válido.');
+    var btn = document.getElementById('a-email-btn');
+    btn.disabled = true;
+    try {
+      pendingEmail = email;
+      if (!(await authEmailRequest('auth-error'))) return;
+      document.getElementById('auth-code-sub').textContent = 'Escribe el código de 6 dígitos que enviamos a ' + email + '.';
+      document.getElementById('a-code').value = '';
+      authShowStep('auth-step-code');
+      document.getElementById('a-code').focus();
+    } catch (err) {
+      showAuthError('auth-error', 'No se pudo conectar con el servidor.');
+    } finally { btn.disabled = false; }
+  };
+
+  window.authEmailResend = async function () {
+    hideAuthErrors();
+    var btn = document.getElementById('a-resend-btn');
+    btn.disabled = true;
+    try {
+      if (await authEmailRequest('auth-error-code')) showAuthError('auth-error-code', 'Te enviamos un código nuevo.');
+    } catch (err) {
+      showAuthError('auth-error-code', 'No se pudo conectar con el servidor.');
+    } finally { setTimeout(function () { btn.disabled = false; }, 10000); }
+  };
+
+  window.authEmailVerify = async function () {
+    hideAuthErrors();
+    var code = document.getElementById('a-code').value.trim();
+    if (!/^\\d{6}$/.test(code)) return showAuthError('auth-error-code', 'El código es de 6 dígitos.');
+    var btn = document.getElementById('a-code-btn');
+    btn.disabled = true;
+    try {
+      var r = await postAuth('/email/verify', { email: pendingEmail, code: code });
+      if (!r.ok) return showAuthError('auth-error-code', r.data.error || 'No se pudo verificar el código.');
+      if (r.data.exists) {
+        setSession(r.data);
+        await afterLogin();
+      } else {
+        signupToken = r.data.signupToken;
+        authShowStep('auth-step-complete');
+        document.getElementById('a-name').focus();
+      }
+    } catch (err) {
+      showAuthError('auth-error-code', 'No se pudo conectar con el servidor.');
+    } finally { btn.disabled = false; }
+  };
+
+  window.authEmailComplete = async function () {
+    hideAuthErrors();
+    var name = document.getElementById('a-name').value.trim();
+    var phone = document.getElementById('a-reg-phone').value.trim();
+    if (!name) return showAuthError('auth-error-complete', 'Dinos tu nombre.');
+    if (!phone) return showAuthError('auth-error-complete', 'Escribe el teléfono de tu negocio.');
+    if (!document.getElementById('a-pro-confirm').checked) return showAuthError('auth-error-complete', 'Este registro es solo para profesionales y dueños de negocio. Marca la casilla para continuar.');
+    var btn = document.getElementById('a-register-btn');
+    btn.disabled = true;
+    try {
+      var r = await postAuth('/email/register', { signupToken: signupToken, name: name, phone: phone, accountType: 'owner' });
+      if (!r.ok) return showAuthError('auth-error-complete', r.data.error || 'No se pudo crear la cuenta.');
+      setSession(r.data);
+      await afterLogin();
+    } catch (err) {
+      showAuthError('auth-error-complete', 'No se pudo conectar con el servidor.');
+    } finally { btn.disabled = false; }
   };
 
   window.authLogin = async function () {
@@ -1161,29 +1325,6 @@ ${ICON_SPRITE}
     }
   };
 
-  window.authRegister = async function () {
-    hideAuthErrors();
-    var name = document.getElementById('a-name').value.trim();
-    var pin = document.getElementById('a-newpin').value.trim();
-    if (!name) return showAuthError('auth-error-3', 'Dinos tu nombre.');
-    if (!/^\\d{4}$/.test(pin)) return showAuthError('auth-error-3', 'El PIN debe ser de 4 dígitos.');
-    var btn = document.getElementById('a-register-btn');
-    btn.disabled = true;
-    try {
-      var res = await fetch(BASE + '/api/auth/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: pendingPhone, name: name, pin: pin }),
-      });
-      var data = await res.json().catch(function () { return {}; });
-      if (!res.ok) return showAuthError('auth-error-3', data.error || 'No se pudo crear la cuenta.');
-      setSession(data);
-      await afterLogin();
-    } catch (err) {
-      showAuthError('auth-error-3', 'No se pudo conectar con el servidor.');
-    } finally {
-      btn.disabled = false;
-    }
-  };
 
   window.logout = function () {
     localStorage.removeItem('bukea_session');
@@ -1233,6 +1374,10 @@ ${ICON_SPRITE}
     }
 
     if (!slug) {
+      // Portal solo para negocios (2026-10-11): una cuenta de cliente sin
+      // negocio no cae directo al asistente, primero se le avisa y elige.
+      var sess = getSession() || {};
+      if (sess.accountType === 'client') { showClientNotice(); return; }
       showNewBizStep();
       return;
     }
@@ -1365,6 +1510,23 @@ ${ICON_SPRITE}
       errEl.textContent = 'Dinos en qué sector estás.'; errEl.style.display = 'block'; return;
     }
     nbGoStep(fromStep + 1);
+  };
+
+  function showClientNotice() {
+    document.getElementById('auth').style.display = '';
+    ['auth-step-phone', 'auth-step-legacy', 'auth-step-pin', 'auth-step-code', 'auth-step-complete'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    document.getElementById('auth-login-card').style.display = 'block';
+    document.getElementById('auth-step-client').style.display = 'block';
+  }
+  window.clientNoticeCreate = function () {
+    document.getElementById('auth-step-client').style.display = 'none';
+    showNewBizStep();
+  };
+  window.clientNoticeLeave = function () {
+    localStorage.removeItem('bukea_session');
+    location.href = '${base}/';
   };
 
   function showNewBizStep() {
@@ -2549,6 +2711,20 @@ ${ICON_SPRITE}
   });
 
   /* ---------- Arranque ---------- */
+  (function initAuthMode() {
+    if (REGISTER_MODE) {
+      document.getElementById('auth-start-h').textContent = 'Registra tu negocio';
+      document.getElementById('auth-start-sub').textContent = 'Escribe tu correo y te enviamos un código. Si ya tienes cuenta, entras directo.';
+      document.getElementById('auth-side-h').textContent = 'Registra tu negocio y llena tu agenda';
+      document.getElementById('auth-side-sub').textContent = 'Crea tu cuenta en minutos y empieza a recibir reservas.';
+      document.getElementById('auth-side-foot').textContent = 'Cupos gratis de por vida para los primeros negocios en registrarse.';
+      document.title = 'Registra tu negocio. Bukea';
+    } else {
+      document.getElementById('auth-side-h').textContent = 'Bienvenido de vuelta';
+      document.getElementById('auth-side-sub').textContent = 'Entra a tu panel para ver tu agenda, tus cobros y tu equipo.';
+    }
+  })();
+
   (async function boot() {
     // "Ver panel del negocio" desde el panel de administración (2026-08-25)
     // — llega con un token de sesión ya emitido para el dueño real y el

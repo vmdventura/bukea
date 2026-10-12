@@ -103,7 +103,8 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   .adminfoot { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
   .adminfoot .dot { width: 30px; height: 30px; border-radius: 100px; background: var(--gold-100); color: var(--gold-700); display: grid; place-items: center; font-weight: 800; font-size: 12px; flex: none; }
   .adminfoot b { color: #fff; font-size: 12.5px; display: block; line-height: 1.2; }
-  .adminfoot button { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 11px; cursor: pointer; padding: 0; text-decoration: underline; }
+  .adminfoot button { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.28); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; padding: 5px 12px; margin-top: 5px; border-radius: 100px; min-height: 30px; }
+  .adminfoot button:hover { background: rgba(255,255,255,0.2); }
 
   .main { flex: 1; min-width: 0; padding: 26px 30px 60px; }
   .topbar { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
@@ -120,6 +121,14 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--sh-2); }
   .kpi .klabel { font-size: 11.5px; font-weight: 700; color: var(--faint); letter-spacing: 0.03em; text-transform: uppercase; }
   .kpi b { display: block; font-family: "Fraunces", serif; font-size: 28px; font-weight: 600; margin: 4px 0 2px; font-variant-numeric: tabular-nums; color: var(--teal-800); }
+  [data-open-user], [data-open-biz], tr[data-go], .alert[data-go] { cursor: pointer; }
+  tr[data-open-user]:hover td, tr[data-open-biz]:hover td, tr[data-go]:hover td { background: var(--teal-100); }
+  td[data-open-user]:hover, td[data-open-biz]:hover { text-decoration: underline; }
+  .alert[data-open-biz], .alert[data-go] { transition: filter 150ms ease; }
+  .alert[data-open-biz]:hover, .alert[data-go]:hover { filter: brightness(0.96); }
+  .kpi-link { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease; }
+  .kpi-link:hover { transform: translateY(-2px); border-color: var(--teal-600); box-shadow: var(--sh-3, var(--sh-2)); }
+  .kpi-link:focus-visible { outline: 2px solid var(--teal-600); outline-offset: 2px; }
   .kpi span.d { font-size: 12px; color: var(--faint); }
 
   .grid2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; margin-bottom: 20px; }
@@ -159,6 +168,17 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   .support-reply { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); flex: none; }
   .support-reply textarea { flex: 1; resize: none; min-height: 40px; max-height: 100px; border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 13px; }
   .support-reply textarea:focus { outline: none; border-color: var(--teal-500); }
+  .owner-pick { max-height: 240px; overflow-y: auto; border: 1.5px solid var(--line); border-radius: 12px; padding: 4px; }
+  .owner-pick label { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .owner-pick label:hover { background: var(--teal-50); }
+  .owner-pick input { width: auto; flex: none; }
+  .owner-pick small { color: var(--faint); font-size: 11.5px; }
+  .owner-pick .own-meta { flex: 1; min-width: 0; }
+  .owner-pick .own-meta b { display: block; }
+  .compose-actions { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .compose-actions small { color: var(--faint); flex: 1; }
+  .compose-text { width: 100%; min-height: 190px; resize: vertical; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 13px; line-height: 1.5; background: var(--bg); color: var(--ink); }
+  .compose-text:focus { outline: none; border-color: var(--teal-500); }
 
   .tablewrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -215,7 +235,10 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     aside { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; padding: 12px 14px; overflow-x: auto; }
     .logo small { display: none; }
     nav { margin: 0 0 0 10px; flex-direction: row; }
-    .navlabel, .adminfoot { display: none; }
+    .navlabel { display: none; }
+    .adminfoot { margin: 0 0 0 auto; padding: 0 0 0 10px; border-top: 0; flex: none; position: sticky; right: 0; background: var(--teal-900); box-shadow: -10px 0 10px -4px var(--teal-900); }
+    .adminfoot .dot, .adminfoot b { display: none; }
+    .adminfoot button { margin-top: 0; white-space: nowrap; }
     nav button .tag { display: none; }
     nav button { padding: 8px 10px; white-space: nowrap; }
     .main { padding: 18px 16px 50px; }
@@ -321,10 +344,12 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
         <div><h1>Usuarios</h1><div class="sub" id="users-count"></div></div>
         <div class="spacer"></div>
         <label class="search"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="users-search" placeholder="Nombre, teléfono o email"></label>
+        <button class="btn btn-primary" id="users-bulk-btn" disabled>Escribir a seleccionados</button>
         <button class="btn btn-ghost" id="users-export-btn">Exportar CSV</button>
       </div>
       <div class="filters" id="users-filters">
         <button class="f on" data-provider="">Todos</button>
+        <button class="f" data-recent="1">Nuevos (7 días)</button>
         <button class="f" data-provider="phone">Teléfono y PIN</button>
         <button class="f" data-provider="google">Google</button>
         <button class="f" data-provider="apple">Apple</button>
@@ -343,6 +368,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
       </div>
       <div class="filters" id="biz-filters">
         <button class="f on" data-filter="">Todos</button>
+        <button class="f" data-filter="new">Nuevos (7 días)</button>
         <button class="f" data-filter="no-owner">Sin dueño real</button>
         <button class="f" data-filter="no-hours">Sin horario</button>
         <button class="f" data-filter="no-coords">Sin ubicación</button>
@@ -439,7 +465,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
 
     <!-- Soporte -->
     <section class="view" id="view-support">
-      <div class="topbar"><div><h1>Soporte</h1><div class="sub">Chats con dueños de negocio que escriben desde "Mi negocio"</div></div></div>
+      <div class="topbar"><div><h1>Soporte</h1><div class="sub">Chats con dueños de negocio. También puedes escribirles tú primero</div></div><button class="btn btn-primary btn-sm" id="support-compose-btn" style="margin-left:auto">Escribir a dueños</button></div>
       <div class="support-layout">
         <div class="panel support-threadlist" id="support-threads"><div class="empty-state">Cargando…</div></div>
         <div class="panel support-thread" id="support-thread">
@@ -498,6 +524,30 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     return words.length === 1 ? words[0][0].toUpperCase() : (words[0][0] + words[words.length - 1][0]).toUpperCase();
   }
   function money(cents) { return 'RD$ ' + Math.round((cents || 0) / 100).toLocaleString('es-DO'); }
+  // Enlace a WhatsApp (wa.me) para escribirle a alguien desde tu propio
+  // WhatsApp. Teléfonos dominicanos de 10 dígitos llevan el 1 delante.
+  function waLink(phone, name) {
+    var d = String(phone || '').replace(/\\D/g, '');
+    if (!d) return null;
+    if (d.length === 10) d = '1' + d;
+    var first = String(name || '').trim().split(/\\s+/)[0];
+    var text = 'Hola' + (first ? ' ' + first : '') + ', soy Víctor, de Bukea.';
+    return 'https://wa.me/' + d + '?text=' + encodeURIComponent(text);
+  }
+  function waButton(phone, name, extraClass) {
+    var url = waLink(phone, name);
+    return url ? '<a class="btn btn-ghost btn-sm ' + (extraClass || '') + '" href="' + esc(url) + '" target="_blank" rel="noopener">Abrir WhatsApp</a>' : '';
+  }
+  // WhatsApp directo al dueño de un negocio (wa.me, desde tu propio
+  // WhatsApp): saludo de bienvenida con el nombre del negocio ya escrito.
+  function bizWaButton(p) {
+    var d = String(p.ownerPhone || '').replace(/\D/g, '');
+    if (!d) return p.hasOwner ? '<span class="chip off" title="El dueño se registró solo con correo">Sin teléfono</span>' : '';
+    if (d.length === 10) d = '1' + d;
+    var first = String(p.ownerName || p.name || '').trim().split(/\s+/)[0];
+    var text = DEFAULT_GREETING.replace('{nombre}', first).replace('{negocio}', p.businessName);
+    return '<a class="btn btn-ghost btn-sm" href="' + esc('https://wa.me/' + d + '?text=' + encodeURIComponent(text)) + '" target="_blank" rel="noopener">WhatsApp</a>';
+  }
   function fmtDateTime(v) {
     if (!v) return '—';
     var d = new Date(v.replace(' ', 'T'));
@@ -642,6 +692,29 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     });
   });
 
+  /* Tarjetas de estadísticas clicables: llevan a la sección de detalle. */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('button, a, input, select, textarea, label')) { if (!e.target.closest('.kpi-link')) return; }
+    var ou = e.target.closest('[data-open-user]');
+    if (ou) return openUserModal(ou.dataset.openUser);
+    var ob = e.target.closest('[data-open-biz]');
+    if (ob) return openBusinessModal(ob.dataset.openBiz);
+    var card = e.target.closest('[data-go]');
+    if (!card) return;
+    var view = card.dataset.go;
+    if (view === 'users') {
+      usersFilter.provider = ''; usersFilter.recent = Boolean(card.dataset.recent);
+      document.querySelectorAll('#users-filters .f').forEach(function (b) {
+        b.classList.toggle('on', card.dataset.recent ? Boolean(b.dataset.recent) : (!b.dataset.recent && !b.dataset.provider));
+      });
+    }
+    document.querySelector('.navbtn[data-view="' + view + '"]').click();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.alert[role="button"]')) { e.preventDefault(); e.target.click(); }
+  });
+
   /* ===== Dashboard ===== */
   function renderChart(daily) {
     var byDate = {};
@@ -677,30 +750,30 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     document.getElementById('dash-date').textContent = new Date().toLocaleDateString('es-DO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     api('/dashboard').then(function (d) {
       document.getElementById('dash-kpis').innerHTML =
-        '<div class="kpi"><span class="klabel">Usuarios</span><b>' + d.kpis.users.total + '</b><span class="d">+' + d.kpis.users.thisWeek + ' esta semana</span></div>' +
-        '<div class="kpi"><span class="klabel">Negocios activos</span><b>' + d.kpis.businesses.total + '</b><span class="d">+' + d.kpis.businesses.thisWeek + ' esta semana</span></div>' +
-        '<div class="kpi"><span class="klabel">Reservas del mes</span><b>' + d.kpis.bookingsThisMonth + '</b><span class="d">mes en curso</span></div>' +
-        '<div class="kpi"><span class="klabel">Volumen agendado</span><b>' + money(d.kpis.volumeCentsThisMonth) + '</b><span class="d">mes a la fecha</span></div>';
+        '<button type="button" class="kpi kpi-link" data-go="users" data-recent="1" title="Ver usuarios nuevos"><span class="klabel">Usuarios</span><b>' + d.kpis.users.total + '</b><span class="d">+' + d.kpis.users.thisWeek + ' esta semana</span></button>' +
+        '<button type="button" class="kpi kpi-link" data-go="biz"><span class="klabel">Negocios activos</span><b>' + d.kpis.businesses.total + '</b><span class="d">+' + d.kpis.businesses.thisWeek + ' esta semana</span></button>' +
+        '<button type="button" class="kpi kpi-link" data-go="bookings"><span class="klabel">Reservas del mes</span><b>' + d.kpis.bookingsThisMonth + '</b><span class="d">mes en curso</span></button>' +
+        '<button type="button" class="kpi kpi-link" data-go="bookings"><span class="klabel">Volumen agendado</span><b>' + money(d.kpis.volumeCentsThisMonth) + '</b><span class="d">mes a la fecha</span></button>';
 
       renderChart(d.dailyBookings);
 
       var alerts = [];
       d.alerts.noHours.forEach(function (p) {
-        alerts.push('<div class="alert"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><div><b>' + esc(p.businessName) + '</b><span>Sin horario configurado, todavía no reservable</span></div></div>');
+        alerts.push('<div class="alert" data-open-biz="' + p.id + '" role="button" tabindex="0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><div><b>' + esc(p.businessName) + '</b><span>Sin horario configurado, todavía no reservable</span></div></div>');
       });
       d.alerts.noCoords.forEach(function (p) {
-        alerts.push('<div class="alert"><svg viewBox="0 0 24 24"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.55 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><div><b>' + esc(p.businessName) + '</b><span>Sin ubicación en el mapa</span></div></div>');
+        alerts.push('<div class="alert" data-open-biz="' + p.id + '" role="button" tabindex="0"><svg viewBox="0 0 24 24"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.55 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><div><b>' + esc(p.businessName) + '</b><span>Sin ubicación en el mapa</span></div></div>');
       });
       d.alerts.recentReceipts.forEach(function (r) {
-        alerts.push('<div class="alert"><svg viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><div><b>' + esc(r.clientName) + '</b><span>Comprobante para ' + esc(r.professionalName) + ', ' + fmtDateTime(r.uploadedAt) + '</span></div></div>');
+        alerts.push('<div class="alert" data-go="moderation" role="button" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><div><b>' + esc(r.clientName) + '</b><span>Comprobante para ' + esc(r.professionalName) + ', ' + fmtDateTime(r.uploadedAt) + '</span></div></div>');
       });
       document.getElementById('dash-alerts').innerHTML = alerts.length ? alerts.join('') : '<div class="alert empty">Todo en orden. Sin alertas por ahora.</div>';
 
       var rows = d.recentActivity.bookings.map(function (b) {
         var chip = b.status === 'cancelled' ? '<span class="chip off">Cancelada</span>' : '<span class="chip teal">Reserva</span>';
-        return '<tr><td>' + chip + '</td><td>' + esc(b.clientName) + ' · ' + esc(b.serviceName) + ' con ' + esc(b.professionalName) + '</td><td>' + fmtDateTime(b.createdAt) + '</td></tr>';
+        return '<tr data-go="bookings"><td>' + chip + '</td><td>' + esc(b.clientName) + ' · ' + esc(b.serviceName) + ' con ' + esc(b.professionalName) + '</td><td>' + fmtDateTime(b.createdAt) + '</td></tr>';
       }).concat(d.recentActivity.users.map(function (u) {
-        return '<tr><td><span class="chip ok">Registro</span></td><td>Nueva cuenta: ' + esc(u.name) + '</td><td>' + fmtDateTime(u.createdAt) + '</td></tr>';
+        return '<tr data-open-user="' + u.id + '"><td><span class="chip ok">Registro</span></td><td>Nueva cuenta: ' + esc(u.name) + '</td><td>' + fmtDateTime(u.createdAt) + '</td></tr>';
       }));
       document.getElementById('dash-activity').innerHTML = rows.length
         ? '<table><thead><tr><th>Evento</th><th>Detalle</th><th>Cuándo</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>'
@@ -710,17 +783,21 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   loaders.dash = loadDashboard;
 
   /* ===== Usuarios ===== */
-  var usersFilter = { q: '', provider: '' };
+  var usersFilter = { q: '', provider: '', recent: false };
+  var usersCache = [];
   function loadUsers() {
     var qs = new URLSearchParams();
     if (usersFilter.q) qs.set('q', usersFilter.q);
     if (usersFilter.provider) qs.set('provider', usersFilter.provider);
+    if (usersFilter.recent) qs.set('recent', '1');
     api('/users?' + qs.toString()).then(function (rows) {
+      usersCache = rows; updateBulkBtn();
       document.getElementById('users-count').textContent = rows.length + ' cuenta' + (rows.length === 1 ? '' : 's');
       if (!rows.length) { document.getElementById('users-table').innerHTML = '<div class="empty-state">No encontramos usuarios con ese filtro.</div>'; return; }
       var providerLabel = { phone: 'Teléfono', google: 'Google', apple: 'Apple' };
       var body = rows.map(function (u) {
-        return '<tr>' +
+        return '<tr data-open-user="' + u.id + '">' +
+          '<td><input type="checkbox" class="u-sel" data-uid="' + u.id + '"' + (u.email ? '' : ' disabled title="Sin correo"') + ' aria-label="Elegir ' + esc(u.name) + '"></td>' +
           '<td><div class="who"><div class="dot">' + esc(initials(u.name)) + '</div><div><b>' + esc(u.name) + '</b>' + (u.ownsBusinessSlug ? '<small>Dueño de negocio</small>' : '<small>Cliente</small>') + '</div></div></td>' +
           '<td>' + esc(u.phone || u.email || '—') + '</td>' +
           '<td><span class="chip teal">' + providerLabel[u.provider] + '</span></td>' +
@@ -731,10 +808,15 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
             '<button class="iconbtn" data-user-view="' + u.id + '" title="Ver ficha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>' +
           '</div></td></tr>';
       }).join('');
-      document.getElementById('users-table').innerHTML = '<table><thead><tr><th>Usuario</th><th>Contacto</th><th>Login</th><th>Reservas</th><th>Registro</th><th>Estado</th><th></th></tr></thead><tbody>' + body + '</tbody></table>';
+      document.getElementById('users-table').innerHTML = '<table><thead><tr><th><input type="checkbox" id="u-sel-all" aria-label="Elegir todos"></th><th>Usuario</th><th>Contacto</th><th>Login</th><th>Reservas</th><th>Registro</th><th>Estado</th><th></th></tr></thead><tbody>' + body + '</tbody></table>';
       document.querySelectorAll('[data-user-view]').forEach(function (btn) {
         btn.addEventListener('click', function () { openUserModal(btn.dataset.userView); });
       });
+      document.getElementById('u-sel-all').addEventListener('change', function (e) {
+        document.querySelectorAll('.u-sel:not(:disabled)').forEach(function (c) { c.checked = e.target.checked; });
+        updateBulkBtn();
+      });
+      document.querySelectorAll('.u-sel').forEach(function (c) { c.addEventListener('change', updateBulkBtn); });
     }).catch(function (err) { document.getElementById('users-table').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
   }
   loaders.users = loadUsers;
@@ -744,13 +826,45 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     if (!btn) return;
     document.querySelectorAll('#users-filters .f').forEach(function (b) { b.classList.remove('on'); });
     btn.classList.add('on');
-    usersFilter.provider = btn.dataset.provider;
+    usersFilter.provider = btn.dataset.provider || '';
+    usersFilter.recent = Boolean(btn.dataset.recent);
     loadUsers();
+  });
+  function selectedIds() {
+    return Array.prototype.map.call(document.querySelectorAll('.u-sel:checked'), function (c) { return Number(c.dataset.uid); });
+  }
+  function updateBulkBtn() {
+    var n = selectedIds().length, b = document.getElementById('users-bulk-btn');
+    b.disabled = n === 0;
+    b.textContent = n ? 'Escribir a ' + n + ' seleccionado' + (n === 1 ? '' : 's') : 'Escribir a seleccionados';
+  }
+  document.getElementById('users-bulk-btn').addEventListener('click', function () {
+    var ids = selectedIds();
+    if (!ids.length) return;
+    openModal(
+      '<div class="modal-head"><h2>Escribir a ' + ids.length + ' usuario' + (ids.length === 1 ? '' : 's') + '</h2><button class="btn btn-ghost btn-sm" data-close>Cerrar</button></div>' +
+      '<div class="modal-section"><div class="field"><label>Asunto</label><input type="text" id="bulk-subject" value="Bienvenido a Bukea"></div>' +
+      '<div class="field"><label>Mensaje (usa {nombre} para el nombre)</label><textarea id="bulk-text" rows="6" style="width:100%;box-sizing:border-box">Hola {nombre},\\n\\nGracias por unirte a Bukea. Si necesitas ayuda con algo, responde este correo.</textarea></div>' +
+      '<p class="sub">Se envía por correo. Máximo 50 por envío. Cada envío queda registrado en Comunicación.</p>' +
+      '<div class="modal-msg"></div>' +
+      '<button class="btn btn-primary" id="bulk-send-btn">Enviar</button></div>'
+    );
+    modalEl.querySelector('[data-close]').addEventListener('click', closeModal);
+    modalEl.querySelector('#bulk-send-btn').addEventListener('click', function () {
+      var btn = this, text = document.getElementById('bulk-text').value.trim();
+      if (!text) return modalMsg('Escribe el mensaje.', false);
+      if (!confirm('¿Enviar este correo a ' + ids.length + ' usuario(s)?')) return;
+      btn.disabled = true;
+      api('/users/bulk-message', { method: 'POST', body: { ids: ids, subject: document.getElementById('bulk-subject').value, text: text } })
+        .then(function (r) { modalMsg('Enviados: ' + r.sent + '. Fallidos: ' + r.failed + (r.skipped ? '. Omitidos: ' + r.skipped : '') + '.', r.failed === 0); })
+        .catch(function (err) { modalMsg(err.message, false); btn.disabled = false; });
+    });
   });
   document.getElementById('users-export-btn').addEventListener('click', function () {
     var qs = new URLSearchParams({ format: 'csv' });
     if (usersFilter.q) qs.set('q', usersFilter.q);
     if (usersFilter.provider) qs.set('provider', usersFilter.provider);
+    if (usersFilter.recent) qs.set('recent', '1');
     downloadCsv('/users?' + qs.toString(), 'usuarios-bukea.csv');
   });
 
@@ -788,6 +902,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
         '<div class="modal-actions">' +
           '<button class="btn btn-ghost btn-sm" id="reset-pin-btn">Resetear PIN</button>' +
           '<button class="btn ' + (u.disabled ? 'btn-primary' : 'btn-danger') + ' btn-sm" id="toggle-disabled-btn">' + (u.disabled ? 'Reactivar cuenta' : 'Desactivar cuenta') + '</button>' +
+          waButton(u.phone, u.name) +
         '</div>' +
         '<div class="modal-section"><h3>Enviar mensaje</h3>' +
         '<div class="inline-form" style="align-items:stretch">' +
@@ -844,17 +959,18 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
           : !p.hasOwner ? '<span class="chip mid">Sin reclamar</span>'
           : !p.hasHours ? '<span class="chip mid">Sin horario</span>'
           : '<span class="chip ok">Publicado</span>';
-        return '<tr>' +
+        return '<tr data-open-biz="' + p.id + '">' +
           '<td><div class="who"><div class="dot">' + esc(initials(p.name)) + '</div><div><b>' + esc(p.businessName) + '</b><small>' + esc(p.name) + '</small></div></div></td>' +
           '<td>' + esc(CATS[p.category] || p.category) + '</td>' +
           '<td>' + esc(p.neighborhood) + '</td>' +
           '<td class="num">' + p.bookingsThisMonth + '</td>' +
           '<td class="num">' + (p.reviewsCount > 0 ? p.rating.toFixed(1) : '—') + '</td>' +
           '<td>' + status + '</td>' +
+          '<td>' + bizWaButton(p) + '</td>' +
           '<td><div class="rowactions"><button class="iconbtn" data-biz-view="' + p.id + '" title="Ver ficha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>' +
           '</tr>';
       }).join('');
-      document.getElementById('biz-table').innerHTML = '<table><thead><tr><th>Negocio</th><th>Categoría</th><th>Sector</th><th>Reservas del mes</th><th>Rating</th><th>Estado</th><th></th></tr></thead><tbody>' + body + '</tbody></table>';
+      document.getElementById('biz-table').innerHTML = '<table><thead><tr><th>Negocio</th><th>Categoría</th><th>Sector</th><th>Reservas del mes</th><th>Rating</th><th>Estado</th><th>Contacto</th><th></th></tr></thead><tbody>' + body + '</tbody></table>';
       document.querySelectorAll('[data-biz-view]').forEach(function (btn) {
         btn.addEventListener('click', function () { openBusinessModal(btn.dataset.bizView); });
       });
@@ -917,8 +1033,9 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
         '<div class="modal-section"><h3>Servicios</h3><div style="font-size:12.5px">' + servicesHtml + '</div></div>' +
         '<div class="modal-section"><h3>Horario</h3><p style="font-size:12.5px;margin:0">' + hoursHtml + teamHtml + '</p></div>' +
         '<div class="modal-actions">' +
-          '<a class="btn btn-ghost btn-sm" href="/p/' + esc(p.slug) + '" target="_blank" rel="noopener">Ver perfil público</a>' +
+          '<a class="btn btn-ghost btn-sm" href="/' + esc(p.slug) + '" target="_blank" rel="noopener">Ver perfil público</a>' +
           (p.owner ? '<button class="btn btn-ghost btn-sm" id="impersonate-btn">Ver panel del negocio</button>' : '') +
+          (p.owner ? waButton(p.owner.phone, p.owner.name) : '') +
           '<button class="btn ' + (p.hidden ? 'btn-primary' : 'btn-danger') + ' btn-sm" id="toggle-hidden-btn">' + (p.hidden ? 'Publicar de nuevo' : 'Ocultar del marketplace') + '</button>' +
         '</div>'
       );
@@ -1004,8 +1121,8 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
         // completo en el navegador. &quot; sobrevive las dos capas.
         var payChip = '<span class="chip mid">' + esc(payLabel[b.paymentMethod] || b.paymentMethod) + '</span>' + (b.receiptUrl ? ' <a class="chip teal" href="#" onclick="openAuthedFile(&quot;' + esc(b.receiptUrl) + '&quot;);return false;" style="text-decoration:none">Comprobante</a>' : '');
         return '<tr>' +
-          '<td><div class="who"><div class="dot">' + esc(initials(b.clientName)) + '</div><b>' + esc(b.clientName) + '</b></div></td>' +
-          '<td>' + esc(b.professionalName) + (b.collaboratorName ? '<br><small style="color:var(--faint)">Atiende: ' + esc(b.collaboratorName) + '</small>' : '') + '</td>' +
+          '<td' + (b.clientUserId ? ' data-open-user="' + b.clientUserId + '"' : '') + '><div class="who"><div class="dot">' + esc(initials(b.clientName)) + '</div><b>' + esc(b.clientName) + '</b></div></td>' +
+          '<td data-open-biz="' + b.professionalId + '">' + esc(b.professionalName) + (b.collaboratorName ? '<br><small style="color:var(--faint)">Atiende: ' + esc(b.collaboratorName) + '</small>' : '') + '</td>' +
           '<td>' + esc(b.serviceName) + ' · ' + money(b.priceCents) + '</td>' +
           '<td>' + fmtDateTime(b.appointmentAt || b.createdAt) + '</td>' +
           '<td>' + payChip + '</td>' +
@@ -1133,15 +1250,15 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   function loadMetrics() {
     api('/metrics').then(function (m) {
       document.getElementById('metrics-kpis').innerHTML =
-        '<div class="kpi"><span class="klabel">Negocios registrados</span><b>' + m.funnel.registered + '</b><span class="d">con al menos 1 servicio: ' + m.funnel.withServices + '</span></div>' +
-        '<div class="kpi"><span class="klabel">Alguna vez reservados</span><b>' + m.funnel.everBooked + '</b><span class="d">con reserva este mes: ' + m.funnel.bookedThisMonth + '</span></div>' +
-        '<div class="kpi"><span class="klabel">Clientes que repiten</span><b>' + m.retention.repeatPct + '%</b><span class="d">' + m.retention.repeatClients + ' de ' + m.retention.totalClients + ' clientes</span></div>';
+        '<button type="button" class="kpi kpi-link" data-go="biz"><span class="klabel">Negocios registrados</span><b>' + m.funnel.registered + '</b><span class="d">con al menos 1 servicio: ' + m.funnel.withServices + '</span></button>' +
+        '<button type="button" class="kpi kpi-link" data-go="bookings"><span class="klabel">Alguna vez reservados</span><b>' + m.funnel.everBooked + '</b><span class="d">con reserva este mes: ' + m.funnel.bookedThisMonth + '</span></button>' +
+        '<button type="button" class="kpi kpi-link" data-go="users"><span class="klabel">Clientes que repiten</span><b>' + m.retention.repeatPct + '%</b><span class="d">' + m.retention.repeatClients + ' de ' + m.retention.totalClients + ' clientes</span></button>';
 
       renderDualChart('metrics-chart', m.growth.users, m.growth.businesses);
 
       document.getElementById('metrics-category').innerHTML = m.byCategory.length
         ? '<table><thead><tr><th>Categoría</th><th>Negocios</th><th>Reservas</th></tr></thead><tbody>' +
-          m.byCategory.map(function (r) { return '<tr><td>' + esc(CATS[r.category] || r.category) + '</td><td class="num">' + r.businesses + '</td><td class="num">' + r.bookings + '</td></tr>'; }).join('') +
+          m.byCategory.map(function (r) { return '<tr data-go="biz"><td>' + esc(CATS[r.category] || r.category) + '</td><td class="num">' + r.businesses + '</td><td class="num">' + r.bookings + '</td></tr>'; }).join('') +
           '</tbody></table>'
         : '<div class="empty-state">Sin datos todavía.</div>';
 
@@ -1153,7 +1270,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
 
       document.getElementById('metrics-top-businesses').innerHTML = m.topBusinesses.length
         ? '<table><thead><tr><th>Negocio</th><th>Volumen</th><th>Cancelación</th></tr></thead><tbody>' +
-          m.topBusinesses.map(function (r) { return '<tr><td>' + esc(r.businessName) + '</td><td class="num">' + money(r.volumeCents) + '</td><td class="num">' + r.cancellationPct + '%</td></tr>'; }).join('') +
+          m.topBusinesses.map(function (r) { return '<tr data-open-biz="' + r.id + '"><td>' + esc(r.businessName) + '</td><td class="num">' + money(r.volumeCents) + '</td><td class="num">' + r.cancellationPct + '%</td></tr>'; }).join('') +
           '</tbody></table>'
         : '<div class="empty-state">Sin datos todavía.</div>';
     }).catch(function (err) { document.getElementById('metrics-kpis').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
@@ -1185,7 +1302,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
       if (!rows.length) { document.getElementById('comm-log').innerHTML = '<div class="empty-state">Sin envíos todavía.</div>'; return; }
       var body = rows.map(function (m) {
         var statusChip = m.status === 'sent' ? '<span class="chip ok">Enviado</span>' : '<span class="chip off">Falló</span>';
-        return '<tr><td>' + esc({whatsapp:'WhatsApp',email:'Correo'}[m.channel] || m.channel) + '</td><td>' + esc(m.userName || '—') + '</td><td style="white-space:normal;max-width:280px">' + esc(m.body.slice(0, 120)) + '</td><td>' + statusChip + '</td><td>' + fmtDateTime(m.createdAt) + '</td></tr>';
+        return '<tr' + (m.userId ? ' data-open-user="' + m.userId + '"' : '') + '><td>' + esc({whatsapp:'WhatsApp',email:'Correo'}[m.channel] || m.channel) + '</td><td>' + esc(m.userName || '—') + '</td><td style="white-space:normal;max-width:280px">' + esc(m.body.slice(0, 120)) + '</td><td>' + statusChip + '</td><td>' + fmtDateTime(m.createdAt) + '</td></tr>';
       }).join('');
       document.getElementById('comm-log').innerHTML = '<table><thead><tr><th>Canal</th><th>Para</th><th>Mensaje</th><th>Estado</th><th>Cuándo</th></tr></thead><tbody>' + body + '</tbody></table>';
     }).catch(function (err) { document.getElementById('comm-log').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
@@ -1229,7 +1346,7 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
         return '<div class="support-msg ' + m.sender + '">' + esc(m.body) + '<time>' + fmtDateTime(m.created_at) + '</time></div>';
       }).join('');
       document.getElementById('support-thread').innerHTML =
-        '<div class="support-thread-head"><b>' + esc(t ? t.name : '') + '</b><small>' + esc(t ? t.phone || '' : '') + '</small></div>' +
+        '<div class="support-thread-head" style="display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><b>' + esc(t ? t.name : '') + '</b><small>' + esc(t ? t.phone || '' : '') + '</small></div>' + (t ? waButton(t.phone, t.name) : '') + '</div>' +
         '<div class="support-msgs" id="support-msgs">' + (bubbles || '<div class="empty-state">Sin mensajes.</div>') + '</div>' +
         '<div class="support-reply"><textarea id="support-reply-text" placeholder="Escribe tu respuesta…"></textarea><button class="btn btn-primary btn-sm" id="support-reply-send">Enviar</button></div>';
       var msgsEl = document.getElementById('support-msgs');
@@ -1262,6 +1379,58 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     });
   }
   loaders.support = loadSupport;
+
+  /* Escribir primero a los dueños: saludo y preguntas de cómo se sienten */
+  var DEFAULT_GREETING = 'Hola {nombre}, soy Víctor, de Bukea. Quería saludarte y darte las gracias por abrir {negocio} en Bukea.\\n\\nMe gustaría saber cómo te has sentido usando la app:\\n1. ¿Qué es lo que más te ha gustado?\\n2. ¿Qué te ha costado o te ha confundido?\\n3. ¿Qué te gustaría que Bukea hiciera y hoy no hace?\\n\\nRespóndeme aquí mismo cuando puedas. Cada comentario tuyo nos ayuda a mejorar. ¡Gracias!';
+  document.getElementById('support-compose-btn').addEventListener('click', function () {
+    openModal('<div class="modal-head"><h2>Escribir a dueños</h2><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div><div class="empty-state">Cargando dueños…</div>');
+    modalEl.querySelector('[data-close]').addEventListener('click', closeModal);
+    api('/support/owners').then(function (owners) {
+      if (!owners.length) { modalEl.querySelector('.empty-state').textContent = 'Todavía no hay dueños con negocio.'; return; }
+      var list = owners.map(function (o) {
+        return '<label><input type="checkbox" class="own-check" value="' + o.userId + '"' + (o.hasThread ? '' : ' checked') + '>' +
+          '<span class="own-meta"><b>' + esc(o.name) + '</b><small>' + esc(o.businessName) + (o.hasThread ? ' · ya tiene conversación' : '') + '</small></span>' + (waLink(o.phone, o.name) ? '<a class="btn btn-ghost btn-sm" href="' + esc(waLink(o.phone, o.name)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">WhatsApp</a>' : '') + '</label>';
+      }).join('');
+      openModal(
+        '<div class="modal-head"><h2>Escribir a dueños</h2><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div>' +
+        '<div class="modal-section"><h3>Para quién</h3>' +
+          '<label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:6px;cursor:pointer"><input type="checkbox" id="own-all" style="width:auto"> Seleccionar todos (' + owners.length + ')</label>' +
+          '<div class="owner-pick">' + list + '</div></div>' +
+        '<div class="modal-section"><h3>Mensaje</h3>' +
+          '<textarea class="compose-text" id="compose-text"></textarea>' +
+          '<small style="color:var(--faint);font-size:11.5px">{nombre} y {negocio} se reemplazan por los datos de cada dueño. Llega a su Soporte en la app y por correo.</small></div>' +
+        '<div class="compose-actions"><small id="compose-count"></small><button class="btn btn-primary" id="compose-send">Enviar</button></div>' +
+        '<div class="modal-msg"></div>'
+      );
+      modalEl.querySelector('[data-close]').addEventListener('click', closeModal);
+      var ta = document.getElementById('compose-text');
+      ta.value = DEFAULT_GREETING;
+      var checks = Array.prototype.slice.call(modalEl.querySelectorAll('.own-check'));
+      function refreshCount() {
+        var n = checks.filter(function (c) { return c.checked; }).length;
+        document.getElementById('compose-count').textContent = n + (n === 1 ? ' dueño elegido' : ' dueños elegidos');
+        document.getElementById('compose-send').disabled = n === 0;
+      }
+      checks.forEach(function (c) { c.addEventListener('change', refreshCount); });
+      document.getElementById('own-all').addEventListener('change', function (e) { checks.forEach(function (c) { c.checked = e.target.checked; }); refreshCount(); });
+      refreshCount();
+      document.getElementById('compose-send').addEventListener('click', function () {
+        var ids = checks.filter(function (c) { return c.checked; }).map(function (c) { return Number(c.value); });
+        var text = ta.value.trim();
+        if (!ids.length || !text) return;
+        if (!confirm('¿Enviar este mensaje a ' + ids.length + (ids.length === 1 ? ' dueño?' : ' dueños?'))) return;
+        var btn = document.getElementById('compose-send');
+        btn.disabled = true; btn.textContent = 'Enviando…';
+        api('/support/broadcast', { method: 'POST', body: { userIds: ids, message: text } })
+          .then(function (r) {
+            modalMsg('Enviado a ' + r.sent + '. Correo: ' + r.emailed + ', WhatsApp: ' + r.whatsapped + (r.notNotified ? ', sin aviso externo: ' + r.notNotified : '') + '. Lo verán en su Soporte.', true);
+            btn.textContent = 'Listo';
+            loadSupport();
+          })
+          .catch(function (err) { modalMsg(err.message, false); btn.disabled = false; btn.textContent = 'Enviar'; });
+      });
+    }).catch(function (err) { modalMsg(err.message, false); });
+  });
 
   /* ===== Configuración ===== */
   function loadSettings() {

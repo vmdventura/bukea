@@ -9,8 +9,11 @@ const authRouter = require('./routes/auth');
 const professionalsRouter = require('./routes/professionals');
 const bookingsRouter = require('./routes/bookings');
 const pagesRouter = require('./routes/pages');
+const entrarRouter = require('./routes/entrar');
+const reservarRouter = require('./routes/reservar');
 const adminApiRouter = require('./routes/admin');
 const { adminShell } = require('./views/admin');
+const { negocioShell } = require('./views/negocio');
 
 // Red de seguridad de proceso (2026-09-08, encontrada corriendo la suite de
 // pruebas: una promesa rechazada sin capturar en una ruta async — ej. un
@@ -99,6 +102,23 @@ const BASE = process.env.BASE_PATH || '/bukea';
 // reservar o unirse. req.baseUrlPrefix es cómo esas páginas arman esos
 // enlaces sin hardcodear el prefijo.
 app.use((req, res, next) => { req.baseUrlPrefix = BASE; next(); });
+
+// Portal de negocios en su propio subdominio (2026-10-11): negocio.bukeard.com
+// sirve el login/panel de dueños en su raíz, separado del marketplace de
+// clientes. El localStorage es por origen, así que una sesión de cliente en
+// bukeard.com nunca se mezcla con la de negocio. Mismo Express, misma base.
+app.get('/', (req, res, next) => {
+  if (!/^negocio\./i.test(req.hostname || '')) return next();
+  res.type('html').send(negocioShell({
+    base: BASE,
+    siteUrl: process.env.SITE_URL || 'https://www.bukeard.com/',
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    appleClientId: process.env.APPLE_CLIENT_ID || '',
+  }));
+});
+
+app.use('/', entrarRouter);
+app.use('/', reservarRouter);
 app.use('/', pagesRouter);
 
 app.use(BASE + '/api/auth', authRouter);

@@ -10,7 +10,7 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 // La política de uso de Nominatim exige un User-Agent identificable y
 // máximo 1 solicitud/segundo — nunca se llama desde el navegador del
 // cliente, solo desde el servidor al registrar o editar un negocio.
-const USER_AGENT = 'BukeaApp/1.0 (+https://www.bukeard.com; contacto: hola@bukeard.com)';
+const USER_AGENT = 'BukeaApp/1.0 (+https://www.bukeard.com; contacto: contacto@bukeard.com)';
 const TIMEOUT_MS = 5000;
 
 async function geocode(query) {

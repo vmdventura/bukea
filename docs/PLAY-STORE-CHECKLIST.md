@@ -52,7 +52,7 @@ Bukea es gratis para clientes y para negocios. Bukear nunca fue tan fácil.
 - **Etiquetas** (si Play Console las pide): belleza, citas, barbería, salón, República Dominicana
 
 ### Datos de contacto
-- **Correo:** `hola@bukeard.com`
+- **Correo:** `contacto@bukeard.com`
 - **Sitio web:** `https://www.bukeard.com`
 - **Teléfono:** (opcional — agregar si Víctor quiere exponer uno)
 - **Política de privacidad:** `https://www.bukeard.com/privacidad`
@@ -106,7 +106,7 @@ Mismos 9 tipos que ya se declararon (y Apple ya aprobó) en la sección "Privaci
 
 ### Prácticas de seguridad
 - **¿Los datos se transmiten cifrados?** Sí, todo el tráfico va sobre HTTPS.
-- **¿Se puede pedir que se borren los datos?** Sí — "Eliminar mi cuenta" dentro de la app (anonimiza nombre, teléfono, correo y oculta el negocio si tiene uno; `POST /api/auth/delete-account`), o escribiendo a `hola@bukeard.com`.
+- **¿Se puede pedir que se borren los datos?** Sí — "Eliminar mi cuenta" dentro de la app (anonimiza nombre, teléfono, correo y oculta el negocio si tiene uno; `POST /api/auth/delete-account`), o escribiendo a `contacto@bukeard.com`.
 - **¿Los datos son necesarios para la función principal de la app?** Sí (nombre, teléfono e historial de citas son indispensables para reservar).
 
 Play Console pide marcar cada tipo de dato individualmente en su propio formulario paso a paso — usar la tabla de arriba como guía para cada pantalla del cuestionario.

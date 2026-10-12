@@ -190,6 +190,18 @@ async function migrate() {
   await pool.query(
     "UPDATE users SET email_verified_at = created_at WHERE email_verified_at IS NULL AND created_at < '2026-08-27 12:00:00'"
   );
+  // Pase de registro por correo (2026-10-11): se emite al verificar el código
+  // de un correo sin cuenta y permite crearla sin PIN. Un solo uso, 30 min.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS signup_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      token_hash VARCHAR(64) NOT NULL,
+      email VARCHAR(190) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE INDEX idx_signup_tokens_hash (token_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS email_verifications (
       id INT AUTO_INCREMENT PRIMARY KEY,

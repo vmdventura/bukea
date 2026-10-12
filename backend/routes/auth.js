@@ -38,7 +38,7 @@ async function issueToken(userId) {
 // Busca una cuenta por proveedor social (o por email, para no duplicar la
 // cuenta de alguien que ya se había registrado con teléfono+PIN) y la crea
 // si no existe. Devuelve la misma forma de sesión que login/register.
-async function upsertSocialUser({ column, sub, email, name, accountType }) {
+async function upsertSocialUser({ column, sub, email, name, accountType, loginOnly }) {
   let [rows] = await pool.query(`SELECT * FROM users WHERE ${column} = ?`, [sub]);
   let user = rows[0];
 
@@ -50,6 +50,9 @@ async function upsertSocialUser({ column, sub, email, name, accountType }) {
   if (user && user.disabled_at) {
     throw new Error('disabled');
   }
+
+  // Acceso del portal (Mi Negocio): solo cuentas ya registradas, no crear.
+  if (!user && loginOnly) throw new Error('not_registered');
 
   if (user) {
     // El correo que da Google/Apple ya viene verificado por ellos — si la
@@ -69,6 +72,7 @@ async function upsertSocialUser({ column, sub, email, name, accountType }) {
       [name || 'Cliente Bukea', email, type, sub]
     );
     user = { id: result.insertId, name: name || 'Cliente Bukea', phone: null, email, account_type: type };
+    sendWelcomeEmail(email, user.name, type);
   }
 
   const token = await issueToken(user.id);
@@ -169,6 +173,11 @@ async function sendVerificationEmail(req, userId, email, name) {
   } catch (err) {
     console.error('No se pudo enviar el correo de verificación:', err.message);
   }
+}
+
+function sendWelcomeEmail(email, name, accountType) {
+  if (!email) return;
+  mailer.sendWelcome(email, name, accountType).catch(err => console.error('No se pudo enviar la bienvenida:', err.message));
 }
 
 const VERIFY_PAGE_STYLE = `<style>
@@ -442,6 +451,154 @@ router.post('/otp/verify', async (req, res) => {
   res.json({ verified: true, exists: false, phone });
 });
 
+/* ===== Entrar o crear cuenta con el correo (2026-10-11) =====
+   Igual que Fresha: una sola pantalla. Se pide el correo, llega un código de
+   6 dígitos y, al verificarlo, si la cuenta existe se entra; si no, se emite
+   un pase de un solo uso para crearla (nombre y, opcional, teléfono). Sin PIN. */
+function emailCodeDebug() {
+  return process.env.NODE_ENV !== 'production' && process.env.EMAIL_CODE_DEBUG === '1' && !mailer.isConfigured();
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+async function findUserByEmail(email) {
+  const [rows] = await pool.query('SELECT * FROM users WHERE LOWER(email) = ? ORDER BY id ASC LIMIT 1', [email]);
+  return rows[0] || null;
+}
+
+router.post('/email/send', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo válido' });
+
+  const wait = rateLimit.hit([{ key: 'email-code-ip:' + req.ip, max: 15, windowMs: 60 * 60 * 1000, blockMs: 30 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  const debug = emailCodeDebug();
+  if (!debug && !mailer.isConfigured()) {
+    return res.status(503).json({ error: 'El envío de correos aún no está activo' });
+  }
+
+  const [recent] = await pool.query(
+    'SELECT COUNT(*) AS n FROM auth_codes WHERE email = ? AND created_at > NOW() - INTERVAL 10 MINUTE',
+    [email]
+  );
+  if (recent[0].n >= 3) return res.status(429).json({ error: 'Demasiados intentos, espera unos minutos' });
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  const salt = crypto.randomBytes(16).toString('hex');
+  await pool.query(
+    'INSERT INTO auth_codes (email, code_hash, code_salt, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL 15 MINUTE)',
+    [email, hashPin(code, salt), salt]
+  );
+
+  if (debug) {
+    console.log(`[email-code] ${email}: ${code}`);
+    return res.json({ sent: true, devCode: code });
+  }
+  try {
+    await mailer.sendLoginCode(email, code);
+  } catch (err) {
+    console.error('Error enviando código por correo:', err.message);
+    return res.status(502).json({ error: 'No se pudo enviar el correo, intenta de nuevo' });
+  }
+  res.json({ sent: true });
+});
+
+router.post('/email/verify', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const code = String(req.body.code || '').trim();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Ingresa un correo válido' });
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'El código es de 6 dígitos' });
+
+  const [rows] = await pool.query(
+    'SELECT * FROM auth_codes WHERE email = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+    [email]
+  );
+  const record = rows[0];
+  if (!record) return res.status(404).json({ error: 'El código venció, pide uno nuevo' });
+  if (record.attempts >= 5) return res.status(429).json({ error: 'Demasiados intentos, pide un código nuevo' });
+  if (hashPin(code, record.code_salt) !== record.code_hash) {
+    await pool.query('UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ?', [record.id]);
+    return res.status(401).json({ error: 'Código incorrecto' });
+  }
+  await pool.query('DELETE FROM auth_codes WHERE email = ?', [email]);
+
+  const user = await findUserByEmail(email);
+  if (user && user.disabled_at) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
+  }
+  if (user) {
+    if (!user.email_verified_at) await pool.query('UPDATE users SET email_verified_at = NOW() WHERE id = ?', [user.id]);
+    const token = await issueToken(user.id);
+    const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+    const payload = await buildSessionPayload(fresh[0], { token });
+    return res.json({ verified: true, exists: true, ...payload });
+  }
+
+  const signupToken = crypto.randomBytes(24).toString('hex');
+  await pool.query('DELETE FROM signup_tokens WHERE email = ?', [email]);
+  await pool.query(
+    'INSERT INTO signup_tokens (token_hash, email, expires_at) VALUES (?, ?, NOW() + INTERVAL 30 MINUTE)',
+    [sha256(signupToken), email]
+  );
+  res.json({ verified: true, exists: false, email, signupToken });
+});
+
+router.post('/email/register', async (req, res) => {
+  const wait = rateLimit.hit([{ key: 'reg-ip:' + req.ip, max: 10, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 }]);
+  if (wait) return res.status(429).json({ error: rateLimit.waitMessage(wait) });
+
+  const signupToken = String(req.body.signupToken || '');
+  const name = String(req.body.name || '').trim();
+  const rawPhone = String(req.body.phone || '').trim();
+  const accountType = normalizeAccountType(req.body.accountType);
+  if (!signupToken) return res.status(400).json({ error: 'Falta verificar tu correo' });
+  if (!name) return res.status(400).json({ error: 'Dinos tu nombre' });
+
+  let phone = null;
+  if (rawPhone) {
+    phone = normalizePhone(rawPhone);
+    if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'Ingresa un número dominicano válido (809, 829 u 849)' });
+  }
+  if (accountType === 'owner' && !phone) {
+    return res.status(400).json({ error: 'Escribe el teléfono de tu negocio' });
+  }
+
+  const [tokens] = await pool.query(
+    'SELECT * FROM signup_tokens WHERE token_hash = ? AND expires_at > NOW() LIMIT 1',
+    [sha256(signupToken)]
+  );
+  const pass = tokens[0];
+  if (!pass) return res.status(400).json({ error: 'La verificación venció, vuelve a pedir el código' });
+
+  if (await findUserByEmail(pass.email)) {
+    await pool.query('DELETE FROM signup_tokens WHERE id = ?', [pass.id]);
+    return res.status(409).json({ error: 'Ese correo ya tiene cuenta, entra con tu código' });
+  }
+  if (phone) {
+    const [dup] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
+    if (dup.length) return res.status(409).json({ error: 'Ese teléfono ya tiene cuenta. Entra con tu correo o tu PIN' });
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  let result;
+  try {
+    [result] = await pool.query(
+      'INSERT INTO users (phone, name, email, email_verified_at, token, account_type) VALUES (?, ?, ?, NOW(), ?, ?)',
+      [phone, name, pass.email, token, accountType]
+    );
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ese teléfono ya tiene cuenta' });
+    throw err;
+  }
+  await pool.query('DELETE FROM signup_tokens WHERE id = ?', [pass.id]);
+  sendWelcomeEmail(pass.email, name, accountType);
+  const [fresh] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+  res.status(201).json(await buildSessionPayload(fresh[0], { token }));
+});
+
 /* ===== Olvidé mi PIN (2026-08-23) =====
    Recuperación por email en vez de WhatsApp: mismo motivo que llevó a
    agregar el email al registro — es gratis y no depende de tener la API de
@@ -541,9 +698,12 @@ router.post('/google', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Google' });
   try {
     const payload = await oauth.verifyGoogleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'google_sub', ...payload, accountType: req.body.accountType });
+    const session = await upsertSocialUser({ column: 'google_sub', ...payload, accountType: req.body.accountType, loginOnly: req.body.loginOnly === true });
     res.json(session);
   } catch (err) {
+    if (err.message === 'not_registered') {
+      return res.status(404).json({ error: 'Esta cuenta no está registrada. Únete a Bukea para registrar tu negocio' });
+    }
     if (err.message === 'disabled') {
       return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
     }
@@ -557,9 +717,12 @@ router.post('/apple', async (req, res) => {
   if (!idToken) return res.status(400).json({ error: 'Falta el idToken de Apple' });
   try {
     const payload = await oauth.verifyAppleIdToken(idToken);
-    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name, accountType: req.body.accountType });
+    const session = await upsertSocialUser({ column: 'apple_sub', ...payload, name: name || payload.name, accountType: req.body.accountType, loginOnly: req.body.loginOnly === true });
     res.json(session);
   } catch (err) {
+    if (err.message === 'not_registered') {
+      return res.status(404).json({ error: 'Esta cuenta no está registrada. Únete a Bukea para registrar tu negocio' });
+    }
     if (err.message === 'disabled') {
       return res.status(403).json({ error: 'Esta cuenta está desactivada. Escríbenos si crees que es un error' });
     }
