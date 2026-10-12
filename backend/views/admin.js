@@ -146,121 +146,6 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
   .alert span { opacity: 0.82; font-size: 12px; }
   .alert.empty { background: var(--good-100); color: var(--good); }
 
-  /* ===== Prospectos (2026-10-12) ===== */
-  var PROSPECT_STATUS = [['nuevo', 'Nuevo'], ['contactado', 'Contactado'], ['respondio', 'Respondió'], ['registrado', 'Registrado'], ['descartado', 'Descartado']];
-  var PROSPECT_MSG_KEY = 'bukea_prospect_msg';
-  var PROSPECT_MSG_DEFAULT = 'Hola {nombre}, soy Víctor de Bukea. Estamos armando la app de citas para barberías y salones de República Dominicana. Es gratis para tu negocio y sin comisión por cliente nuevo. Puedes tener tu perfil y tu agenda lista en menos de 5 minutos aquí: https://negocio.bukeard.com\n\n¿Te muestro cómo funciona?';
-  var prospectFilter = { status: '', noInstagram: false };
-  var prospectData = [];
-
-  function prospectMessage(p) {
-    var tpl = document.getElementById('prospects-msg').value || PROSPECT_MSG_DEFAULT;
-    return tpl.replace(/\{nombre\}/g, p.name).replace(/\{sector\}/g, p.sector || 'tu zona');
-  }
-
-  function renderProspectFilters(counts, total) {
-    var html = '<button class="f' + (!prospectFilter.status && !prospectFilter.noInstagram ? ' on' : '') + '" data-pf="">Todos (' + total + ')</button>';
-    PROSPECT_STATUS.forEach(function (st) {
-      html += '<button class="f' + (prospectFilter.status === st[0] ? ' on' : '') + '" data-pf="' + st[0] + '">' + st[1] + ' (' + (counts[st[0]] || 0) + ')</button>';
-    });
-    html += '<button class="f' + (prospectFilter.noInstagram ? ' on' : '') + '" data-pf="noig">Sin Instagram</button>';
-    document.getElementById('prospects-filters').innerHTML = html;
-  }
-
-  function renderProspectRows() {
-    var el = document.getElementById('prospects-table');
-    if (!prospectData.length) { el.innerHTML = '<div class="empty-state">Todavía no hay prospectos con este filtro. Busca un sector arriba.</div>'; return; }
-    var rows = prospectData.map(function (p) {
-      var cat = p.category === 'barberia' ? 'Barbería' : 'Uñas';
-      var igCell, action;
-      if (p.instagram) {
-        igCell = '<a href="https://instagram.com/' + esc(p.instagram) + '" target="_blank" rel="noopener">@' + esc(p.instagram) + '</a>';
-        action = '<button class="btn btn-primary btn-sm" data-dm="' + p.id + '">Copiar y abrir DM</button>';
-      } else {
-        var q = encodeURIComponent('site:instagram.com "' + p.name + '" ' + (p.sector || ''));
-        igCell = '<a href="https://www.google.com/search?q=' + q + '" target="_blank" rel="noopener">Buscar en Google</a>' +
-          '<div style="display:flex;gap:6px;margin-top:6px"><input type="text" data-ig-input="' + p.id + '" placeholder="@usuario" style="width:120px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"><button class="btn btn-ghost btn-sm" data-ig-save="' + p.id + '">Guardar</button></div>';
-        action = '<span class="phint" style="margin:0">Falta Instagram</span>';
-      }
-      var opts = PROSPECT_STATUS.map(function (st) { return '<option value="' + st[0] + '"' + (p.status === st[0] ? ' selected' : '') + '>' + st[1] + '</option>'; }).join('');
-      var rating = p.rating !== null ? ('★ ' + p.rating.toFixed(1) + ' (' + p.reviewsCount + ')') : '—';
-      return '<tr><td><b>' + esc(p.name) + '</b><div class="phint" style="margin:2px 0 0">' + esc(cat) + ', ' + esc(p.sector) + (p.address ? ' · ' + esc(p.address) : '') + '</div></td>' +
-        '<td>' + rating + '</td><td>' + igCell + '</td><td>' + esc(p.phone || '—') + '</td>' +
-        '<td><select data-status="' + p.id + '">' + opts + '</select></td><td>' + action + '</td></tr>';
-    }).join('');
-    el.innerHTML = '<table><thead><tr><th>Negocio</th><th>Reseñas</th><th>Instagram</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
-  }
-
-  function loadProspects() {
-    var msgBox = document.getElementById('prospects-msg');
-    if (!msgBox.dataset.ready) {
-      msgBox.dataset.ready = '1';
-      try { msgBox.value = localStorage.getItem(PROSPECT_MSG_KEY) || PROSPECT_MSG_DEFAULT; } catch (e) { msgBox.value = PROSPECT_MSG_DEFAULT; }
-      msgBox.addEventListener('input', function () { try { localStorage.setItem(PROSPECT_MSG_KEY, msgBox.value); } catch (e) {} });
-    }
-    var qs = [];
-    if (prospectFilter.status) qs.push('status=' + prospectFilter.status);
-    if (prospectFilter.noInstagram) qs.push('noInstagram=1');
-    api('/prospects' + (qs.length ? '?' + qs.join('&') : '')).then(function (d) {
-      prospectData = d.prospects;
-      var total = Object.keys(d.counts).reduce(function (a, k) { return a + d.counts[k]; }, 0);
-      document.getElementById('prospects-sub').textContent = total + ' prospectos guardados';
-      document.getElementById('prospects-sectors').innerHTML = d.sectors.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
-      if (!d.configured) document.getElementById('prospects-hint').textContent = 'La búsqueda aún no está activa: falta la variable GOOGLE_PLACES_API_KEY en el servidor. La lista de abajo sigue funcionando.';
-      document.getElementById('prospects-search-btn').disabled = !d.configured;
-      renderProspectFilters(d.counts, total);
-      renderProspectRows();
-    }).catch(function (err) { document.getElementById('prospects-table').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
-  }
-  loaders.prospects = loadProspects;
-
-  document.getElementById('prospects-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var btn = document.getElementById('prospects-search-btn');
-    var sector = document.getElementById('prospects-sector').value.trim();
-    if (!sector) return alert('Escribe el sector donde buscar.');
-    var out = document.getElementById('prospects-result');
-    btn.disabled = true; out.textContent = 'Buscando en Google Maps. Puede tardar unos segundos…';
-    api('/prospects/search', { method: 'POST', body: { category: document.getElementById('prospects-cat').value, sector: sector } })
-      .then(function (r) {
-        out.textContent = 'Google devolvió ' + r.found + ' negocios: ' + r.added + ' nuevos, ' + r.withInstagram + ' con Instagram encontrado.';
-        loadProspects();
-      })
-      .catch(function (err) { out.textContent = err.message; })
-      .finally(function () { btn.disabled = false; });
-  });
-
-  document.getElementById('prospects-filters').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-pf]'); if (!b) return;
-    var v = b.dataset.pf;
-    prospectFilter = { status: v && v !== 'noig' ? v : '', noInstagram: v === 'noig' };
-    loadProspects();
-  });
-
-  document.getElementById('prospects-table').addEventListener('click', function (e) {
-    var dm = e.target.closest('[data-dm]');
-    var save = e.target.closest('[data-ig-save]');
-    if (dm) {
-      var p = prospectData.filter(function (x) { return String(x.id) === dm.dataset.dm; })[0];
-      var text = prospectMessage(p);
-      var finish = function () {
-        window.open('https://ig.me/m/' + encodeURIComponent(p.instagram), '_blank', 'noopener');
-        if (p.status === 'nuevo') api('/prospects/' + p.id, { method: 'POST', body: { status: 'contactado' } }).then(loadProspects).catch(function () {});
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(finish, function () { alert('No se pudo copiar el mensaje. Cópialo del cuadro de arriba.'); finish(); });
-      else { alert('Copia el mensaje del cuadro de arriba.'); finish(); }
-    } else if (save) {
-      var id = save.dataset.igSave;
-      var input = document.querySelector('[data-ig-input="' + id + '"]');
-      if (!input.value.trim()) return;
-      api('/prospects/' + id, { method: 'POST', body: { instagram: input.value.trim() } }).then(loadProspects).catch(function (err) { alert(err.message); });
-    }
-  });
-  document.getElementById('prospects-table').addEventListener('change', function (e) {
-    var sel = e.target.closest('[data-status]'); if (!sel) return;
-    api('/prospects/' + sel.dataset.status, { method: 'POST', body: { status: sel.value } }).then(loadProspects).catch(function (err) { alert(err.message); });
-  });
-
   /* ===== Soporte (chat con dueños de negocio) ===== */
   .support-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; height: calc(100vh - 140px); }
   .support-threadlist { padding: 8px; overflow-y: auto; height: 100%; }
@@ -1455,6 +1340,121 @@ ${googleClientId ? '<script src="https://accounts.google.com/gsi/client" async d
     }).catch(function (err) { document.getElementById('comm-log').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
   }
   loaders.communication = loadCommunication;
+
+  /* ===== Prospectos (2026-10-12) ===== */
+  var PROSPECT_STATUS = [['nuevo', 'Nuevo'], ['contactado', 'Contactado'], ['respondio', 'Respondió'], ['registrado', 'Registrado'], ['descartado', 'Descartado']];
+  var PROSPECT_MSG_KEY = 'bukea_prospect_msg';
+  var PROSPECT_MSG_DEFAULT = 'Hola {nombre}, soy Víctor de Bukea. Estamos armando la app de citas para barberías y salones de República Dominicana. Es gratis para tu negocio y sin comisión por cliente nuevo. Puedes tener tu perfil y tu agenda lista en menos de 5 minutos aquí: https://negocio.bukeard.com\\n\\n¿Te muestro cómo funciona?';
+  var prospectFilter = { status: '', noInstagram: false };
+  var prospectData = [];
+
+  function prospectMessage(p) {
+    var tpl = document.getElementById('prospects-msg').value || PROSPECT_MSG_DEFAULT;
+    return tpl.replace(/\\{nombre\\}/g, p.name).replace(/\\{sector\\}/g, p.sector || 'tu zona');
+  }
+
+  function renderProspectFilters(counts, total) {
+    var html = '<button class="f' + (!prospectFilter.status && !prospectFilter.noInstagram ? ' on' : '') + '" data-pf="">Todos (' + total + ')</button>';
+    PROSPECT_STATUS.forEach(function (st) {
+      html += '<button class="f' + (prospectFilter.status === st[0] ? ' on' : '') + '" data-pf="' + st[0] + '">' + st[1] + ' (' + (counts[st[0]] || 0) + ')</button>';
+    });
+    html += '<button class="f' + (prospectFilter.noInstagram ? ' on' : '') + '" data-pf="noig">Sin Instagram</button>';
+    document.getElementById('prospects-filters').innerHTML = html;
+  }
+
+  function renderProspectRows() {
+    var el = document.getElementById('prospects-table');
+    if (!prospectData.length) { el.innerHTML = '<div class="empty-state">Todavía no hay prospectos con este filtro. Busca un sector arriba.</div>'; return; }
+    var rows = prospectData.map(function (p) {
+      var cat = p.category === 'barberia' ? 'Barbería' : 'Uñas';
+      var igCell, action;
+      if (p.instagram) {
+        igCell = '<a href="https://instagram.com/' + esc(p.instagram) + '" target="_blank" rel="noopener">@' + esc(p.instagram) + '</a>';
+        action = '<button class="btn btn-primary btn-sm" data-dm="' + p.id + '">Copiar y abrir DM</button>';
+      } else {
+        var q = encodeURIComponent('site:instagram.com "' + p.name + '" ' + (p.sector || ''));
+        igCell = '<a href="https://www.google.com/search?q=' + q + '" target="_blank" rel="noopener">Buscar en Google</a>' +
+          '<div style="display:flex;gap:6px;margin-top:6px"><input type="text" data-ig-input="' + p.id + '" placeholder="@usuario" style="width:120px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"><button class="btn btn-ghost btn-sm" data-ig-save="' + p.id + '">Guardar</button></div>';
+        action = '<span class="phint" style="margin:0">Falta Instagram</span>';
+      }
+      var opts = PROSPECT_STATUS.map(function (st) { return '<option value="' + st[0] + '"' + (p.status === st[0] ? ' selected' : '') + '>' + st[1] + '</option>'; }).join('');
+      var rating = p.rating !== null ? ('★ ' + p.rating.toFixed(1) + ' (' + p.reviewsCount + ')') : '—';
+      return '<tr><td><b>' + esc(p.name) + '</b><div class="phint" style="margin:2px 0 0">' + esc(cat) + ', ' + esc(p.sector) + (p.address ? ' · ' + esc(p.address) : '') + '</div></td>' +
+        '<td>' + rating + '</td><td>' + igCell + '</td><td>' + esc(p.phone || '—') + '</td>' +
+        '<td><select data-status="' + p.id + '">' + opts + '</select></td><td>' + action + '</td></tr>';
+    }).join('');
+    el.innerHTML = '<table><thead><tr><th>Negocio</th><th>Reseñas</th><th>Instagram</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function loadProspects() {
+    var msgBox = document.getElementById('prospects-msg');
+    if (!msgBox.dataset.ready) {
+      msgBox.dataset.ready = '1';
+      try { msgBox.value = localStorage.getItem(PROSPECT_MSG_KEY) || PROSPECT_MSG_DEFAULT; } catch (e) { msgBox.value = PROSPECT_MSG_DEFAULT; }
+      msgBox.addEventListener('input', function () { try { localStorage.setItem(PROSPECT_MSG_KEY, msgBox.value); } catch (e) {} });
+    }
+    var qs = [];
+    if (prospectFilter.status) qs.push('status=' + prospectFilter.status);
+    if (prospectFilter.noInstagram) qs.push('noInstagram=1');
+    api('/prospects' + (qs.length ? '?' + qs.join('&') : '')).then(function (d) {
+      prospectData = d.prospects;
+      var total = Object.keys(d.counts).reduce(function (a, k) { return a + d.counts[k]; }, 0);
+      document.getElementById('prospects-sub').textContent = total + ' prospectos guardados';
+      document.getElementById('prospects-sectors').innerHTML = d.sectors.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
+      if (!d.configured) document.getElementById('prospects-hint').textContent = 'La búsqueda aún no está activa: falta la variable GOOGLE_PLACES_API_KEY en el servidor. La lista de abajo sigue funcionando.';
+      document.getElementById('prospects-search-btn').disabled = !d.configured;
+      renderProspectFilters(d.counts, total);
+      renderProspectRows();
+    }).catch(function (err) { document.getElementById('prospects-table').innerHTML = '<div class="empty-state">' + esc(err.message) + '</div>'; });
+  }
+  loaders.prospects = loadProspects;
+
+  document.getElementById('prospects-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('prospects-search-btn');
+    var sector = document.getElementById('prospects-sector').value.trim();
+    if (!sector) return alert('Escribe el sector donde buscar.');
+    var out = document.getElementById('prospects-result');
+    btn.disabled = true; out.textContent = 'Buscando en Google Maps. Puede tardar unos segundos…';
+    api('/prospects/search', { method: 'POST', body: { category: document.getElementById('prospects-cat').value, sector: sector } })
+      .then(function (r) {
+        out.textContent = 'Google devolvió ' + r.found + ' negocios: ' + r.added + ' nuevos, ' + r.withInstagram + ' con Instagram encontrado.';
+        loadProspects();
+      })
+      .catch(function (err) { out.textContent = err.message; })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  document.getElementById('prospects-filters').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pf]'); if (!b) return;
+    var v = b.dataset.pf;
+    prospectFilter = { status: v && v !== 'noig' ? v : '', noInstagram: v === 'noig' };
+    loadProspects();
+  });
+
+  document.getElementById('prospects-table').addEventListener('click', function (e) {
+    var dm = e.target.closest('[data-dm]');
+    var save = e.target.closest('[data-ig-save]');
+    if (dm) {
+      var p = prospectData.filter(function (x) { return String(x.id) === dm.dataset.dm; })[0];
+      var text = prospectMessage(p);
+      var finish = function () {
+        window.open('https://ig.me/m/' + encodeURIComponent(p.instagram), '_blank', 'noopener');
+        if (p.status === 'nuevo') api('/prospects/' + p.id, { method: 'POST', body: { status: 'contactado' } }).then(loadProspects).catch(function () {});
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(finish, function () { alert('No se pudo copiar el mensaje. Cópialo del cuadro de arriba.'); finish(); });
+      else { alert('Copia el mensaje del cuadro de arriba.'); finish(); }
+    } else if (save) {
+      var id = save.dataset.igSave;
+      var input = document.querySelector('[data-ig-input="' + id + '"]');
+      if (!input.value.trim()) return;
+      api('/prospects/' + id, { method: 'POST', body: { instagram: input.value.trim() } }).then(loadProspects).catch(function (err) { alert(err.message); });
+    }
+  });
+  document.getElementById('prospects-table').addEventListener('change', function (e) {
+    var sel = e.target.closest('[data-status]'); if (!sel) return;
+    api('/prospects/' + sel.dataset.status, { method: 'POST', body: { status: sel.value } }).then(loadProspects).catch(function (err) { alert(err.message); });
+  });
 
   /* ===== Soporte (chat con dueños de negocio) ===== */
   var supportActiveUserId = null;
